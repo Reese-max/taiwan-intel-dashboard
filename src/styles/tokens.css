@@ -1,0 +1,89 @@
+/* ──────────────────────────────────────────────────────────────
+   Design tokens — "Intelligence Console" 深色情報指揮中心主題
+   舊變數名稱全數保留（向後相容既有規則），數值經重新校準；
+   新增分層表面 / 陰影 / 字級 / 動態 / 輝光 token。
+   ────────────────────────────────────────────────────────────── */
+:root {
+  /* ── 分層表面（elevation） ─────────────────────────────── */
+  --surface-0: #080c17; /* 頁面底 */
+  --surface-1: #111a2b; /* 卡片 / panel */
+  --surface-2: #18243b; /* 內嵌 KPI / chip */
+  --surface-3: #21304c; /* hover 抬升 */
+
+  /* 舊名稱對映（既有 global.css 仍引用） */
+  --color-surface: var(--surface-0);
+  --color-panel: var(--surface-1);
+  --color-panel-2: var(--surface-2);
+
+  /* ── 文字 ─────────────────────────────────────────────── */
+  --color-text: #e9eef7;
+  --color-muted: #98a6bd;
+  --color-dim: #6a7791;
+
+  /* ── 主色（cyan → indigo 訊號家族） ───────────────────── */
+  --color-accent: #38cdf5;
+  --accent-strong: #0ea5e9;
+  --accent-indigo: #6366f1;
+  --accent-soft: rgba(56, 205, 245, 0.14);
+  --accent-line: rgba(56, 205, 245, 0.42);
+  --on-accent: #041320;
+
+  /* ── 風險訊號 ─────────────────────────────────────────── */
+  --risk-low: #3b82f6;
+  --risk-medium: #f5b820;
+  --risk-high: #fb7a3c;
+  --risk-critical: #ef4444;
+  --signal-ok: #34d399;
+
+  /* ── 邊框 ─────────────────────────────────────────────── */
+  --color-border: rgba(150, 167, 196, 0.16);
+  --border-strong: rgba(150, 167, 196, 0.3);
+  --border-accent: var(--accent-line);
+
+  /* ── 間距尺度 ─────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 36px;
+  --space: 12px; /* 舊名稱 */
+
+  /* ── 圓角 ─────────────────────────────────────────────── */
+  --radius-sm: 7px;
+  --radius: 13px; /* 舊名稱，柔化 */
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* ── 陰影 / 輝光 ──────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(2, 6, 16, 0.4);
+  --shadow-md: 0 6px 20px -6px rgba(2, 6, 16, 0.55);
+  --shadow-lg: 0 18px 40px -12px rgba(2, 6, 16, 0.66);
+  --glow-accent: 0 0 0 1px rgba(56, 205, 245, 0.28),
+    0 10px 30px -8px rgba(56, 205, 245, 0.32);
+  --inset-hairline: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  /* ── 字體 ─────────────────────────────────────────────── */
+  --font-sans: "Noto Sans TC", "Microsoft JhengHei", system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", "Cascadia Code", Consolas,
+    "Courier New", monospace;
+
+  /* ── 字級（行內小字維持密度，標題流體放大） ───────────── */
+  --text-xs: 0.72rem;
+  --text-sm: 0.82rem;
+  --text-base: 0.92rem;
+  --text-md: 1rem;
+  --text-lg: 1.15rem;
+  --text-xl: clamp(1.25rem, 1.05rem + 0.6vw, 1.55rem);
+  --text-display: clamp(1.4rem, 1.15rem + 0.8vw, 1.85rem);
+
+  /* ── 動態 ─────────────────────────────────────────────── */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 140ms;
+  --dur: 240ms;
+
+  /* ── 漸層 ─────────────────────────────────────────────── */
+  --grad-accent: linear-gradient(135deg, #38cdf5, #6366f1);
+  --grad-header: linear-gradient(180deg, #131d30 0%, #0b1322 100%);
+}

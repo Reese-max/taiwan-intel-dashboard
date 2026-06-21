@@ -1,0 +1,103 @@
+name: 更新資料並部署
+
+# 全雲端自動更新：在 GitHub 的 runner 上跑現有 Node 爬蟲管線，
+# 把產出的靜態網站 force-push 到 gh-pages 分支（同時當「網站」與「增量狀態庫」）。
+on:
+  schedule:
+    - cron: "5 * * * *" # 每小時 :05 → police 增量（對應本機 hourly loop）
+    - cron: "30 18 * * *" # 每日 18:30 UTC ≈ 02:30 台北 → full refresh（news+LLM）
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "police（每小時增量）或 refresh（每日完整，含新聞+LLM）"
+        default: police
+        type: choice
+        options: [police, refresh]
+
+# peaceiris 需要 contents:write 才能推 gh-pages
+permissions:
+  contents: write
+
+# 避免每小時/手動觸發互相重疊踩 gh-pages；排隊不取消（別中斷爬到一半）
+concurrency:
+  group: update-and-deploy
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 取回 gh-pages 既有資料（上一輪增量狀態）
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: prev-site
+        continue-on-error: true # 第一輪 gh-pages 可能尚未存在
+
+      - name: 還原上一輪狀態到 public/data
+        run: |
+          mkdir -p public/data
+          if [ -d prev-site/data ]; then
+            cp -f prev-site/data/*.json public/data/ 2>/dev/null || true
+            echo "已還原 $(ls public/data | wc -l) 個狀態檔（去重指紋/歷史/快照得以延續）"
+          else
+            echo "尚無 gh-pages 舊資料 → 本輪從零開始（連續性自第二輪起建立）"
+          fi
+          rm -rf prev-site
+
+      - name: 安裝 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: 安裝相依
+        run: npm ci
+
+      - name: 由 Secrets 寫出臨時 .env（runner 即用即丟，不進版控）
+        run: |
+          cat > .env <<'EOF'
+          LLM_API_KEY=${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL=${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL=${{ secrets.LLM_MODEL }}
+          NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_BASE_URL=${{ secrets.NVIDIA_BASE_URL }}
+          NVIDIA_MODEL=${{ secrets.NVIDIA_MODEL }}
+          TWINKLE_MCP_URL=${{ secrets.TWINKLE_MCP_URL }}
+          TWINKLE_MCP_TOKEN=${{ secrets.TWINKLE_MCP_TOKEN }}
+          CWA_API_KEY=${{ secrets.CWA_API_KEY }}
+          EOF
+
+      - name: 決定抓取模式
+        id: mode
+        run: |
+          if [ "${{ github.event.schedule }}" = "30 18 * * *" ] || [ "${{ github.event.inputs.mode }}" = "refresh" ]; then
+            echo "args=--sources=police,missing,twnews --exclusive" >> "$GITHUB_OUTPUT"
+            echo "選用 refresh（完整，含新聞+LLM）"
+          else
+            echo "args=--sources=police" >> "$GITHUB_OUTPUT"
+            echo "選用 police（每小時增量）"
+          fi
+
+      - name: 抓取即時資料
+        run: node --env-file=.env scripts/fetch-live.mjs ${{ steps.mode.outputs.args }}
+
+      - name: 建置靜態網站
+        run: npm run build
+
+      - name: 清除臨時 .env
+        if: always()
+        run: rm -f .env
+
+      - name: 部署到 gh-pages（force-orphan：單一 commit，repo 體積有界）
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "auto: 更新資料快照並部署"

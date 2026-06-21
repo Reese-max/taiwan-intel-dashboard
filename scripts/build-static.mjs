@@ -1,0 +1,105 @@
+// Production build via esbuild CLI (workaround: vite/rollup AND esbuild JS-API crash
+// on Node 25 — exit 9 / 0xC0000409. esbuild CLI mode works fine).
+// 產出可部署的 dist/：bundle + index.html + data 快照。
+import { execFileSync } from "node:child_process";
+import {
+  mkdirSync,
+  copyFileSync,
+  readdirSync,
+  writeFileSync,
+  existsSync,
+  statSync,
+} from "node:fs";
+import { emptyDirContents } from "./lib/fs-safe.mjs";
+
+const OUT = "dist";
+if (existsSync(OUT)) emptyDirContents(OUT);
+mkdirSync(`${OUT}/assets`, { recursive: true });
+
+// 直接呼叫 esbuild 原生 binary（非 JS API、非 npx）：
+//  - JS API 在 Node 25 會 crash（exit 9）
+//  - npx 在某些 shell 不在 PATH（exit 127）
+//  - execFileSync 不經 shell，免 PATH/引號問題
+const ESBUILD_BIN = `node_modules/@esbuild/${process.platform}-${process.arch}/esbuild${
+  process.platform === "win32" ? ".exe" : ""
+}`;
+const esbuild = existsSync(ESBUILD_BIN) ? ESBUILD_BIN : "node_modules/.bin/esbuild";
+execFileSync(
+  esbuild,
+  [
+    "src/main.ts",
+    "src/query.ts",
+    "--bundle",
+    "--minify",
+    "--format=esm",
+    `--outdir=${OUT}/assets`,
+    "--loader:.png=dataurl",
+  ],
+  { stdio: "inherit" },
+);
+
+// 複製資料快照
+mkdirSync(`${OUT}/data`, { recursive: true });
+for (const f of readdirSync("public/data")) {
+  copyFileSync(`public/data/${f}`, `${OUT}/data/${f}`);
+}
+
+// 首頁＝美化後的儀表板（地圖＋清單＋情報網，吃 data/*.json）。
+// 與 dev 的 index.html 同步：含字型 preconnect/links、theme-color、description。
+const dashboardHtml = `<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080c17" />
+    <meta
+      name="description"
+      content="台灣公開資料情報儀表板：彙整警政、治安與公共安全資料源，提供地圖、時間軸、關聯情報網與資料源健康檢查。"
+    />
+    <title>台灣情報儀表板</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;800&display=swap"
+    />
+    <link rel="stylesheet" href="./assets/main.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./assets/main.js"></script>
+  </body>
+</html>
+`;
+writeFileSync(`${OUT}/index.html`, dashboardHtml);
+// classic.html 保留為儀表板別名（不破壞既有連結）。
+writeFileSync(`${OUT}/classic.html`, dashboardHtml);
+
+// 全球情報中心（globe.gl）移到 globe.html；intel.html 保留為別名。
+copyFileSync("static/intel.html", `${OUT}/globe.html`);
+copyFileSync("static/intel.html", `${OUT}/intel.html`);
+
+// 產出 query.html（警政查詢助手，獨立頁）
+writeFileSync(
+  `${OUT}/query.html`,
+  `<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>警政查詢助手</title>
+    <link rel="stylesheet" href="./assets/query.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./assets/query.js"></script>
+  </body>
+</html>
+`,
+);
+
+for (const f of readdirSync(`${OUT}/assets`)) {
+  const kb = (statSync(`${OUT}/assets/${f}`).size / 1024).toFixed(1);
+  console.log(`assets/${f}  ${kb} KB`);
+}
+console.log("Static build done -> dist/");

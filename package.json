@@ -1,0 +1,28 @@
+{
+  "name": "taiwan-intel-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && node scripts/build-network.mjs && node scripts/build-static.mjs",
+    "build:static": "tsc --noEmit && node scripts/build-network.mjs && node scripts/build-static.mjs",
+    "build:network": "node scripts/build-network.mjs",
+    "fetch:police": "node --env-file=.env scripts/fetch-live.mjs --sources=police",
+    "refresh": "node --env-file=.env scripts/fetch-live.mjs --sources=police,missing,twnews --exclusive",
+    "refresh:news": "node --env-file=.env scripts/fetch-live.mjs --sources=twnews,missing",
+    "watch:daily-refresh": "scripts\\daily-refresh-loop.cmd",
+    "watch:police-hourly": "scripts\\police-hourly-loop.cmd",
+    "preview": "node scripts/police-control-server.mjs",
+    "serve": "node --env-file=.env server/index.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.12",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "vitest": "^2.1.0"
+  }
+}

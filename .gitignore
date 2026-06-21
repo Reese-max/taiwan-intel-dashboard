@@ -1,0 +1,24 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+dist-esbuild/
+dist-*/
+*.log
+.gstack/
+
+# 資料快照與增量狀態：體積大且持續變動，存在 gh-pages 分支（狀態庫），不進 main
+public/data/
+
+# 備份與過時資料目錄（不進 main；正式資料走 gh-pages 狀態庫）
+_backups/
+/data/
+public/data.curated-backup/
+public/*-backup/
+tmp/
+
+# 雜項
+.DS_Store
+.serena/
+.playwright-mcp/
