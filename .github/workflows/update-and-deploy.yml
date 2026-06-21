@@ -93,11 +93,29 @@ jobs:
         if: always()
         run: rm -f .env
 
-      - name: 部署到 gh-pages（force-orphan：單一 commit，repo 體積有界）
+      # gh-pages 分支＝增量狀態庫（下一輪 restore 從這裡撈上一輪 ledger/history）。
+      # force-orphan：單一 commit，repo 體積有界。順帶在 GitHub Pages 留一個備援鏡像。
+      - name: 推送狀態庫到 gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           publish_branch: gh-pages
           force_orphan: true
-          commit_message: "auto: 更新資料快照並部署"
+          commit_message: "auto: 更新資料快照（狀態庫）"
+
+      # 主要對外服務＝Cloudflare Pages。專案不存在時先建（冪等，已存在則略過）。
+      - name: 建立 Cloudflare Pages 專案（冪等）
+        uses: cloudflare/wrangler-action@v3
+        continue-on-error: true
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create taiwan-intel-dashboard --production-branch=main
+
+      - name: 部署到 Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=taiwan-intel-dashboard --branch=main
