@@ -104,15 +104,7 @@ jobs:
           force_orphan: true
           commit_message: "auto: 更新資料快照（狀態庫）"
 
-      # 主要對外服務＝Cloudflare Pages。專案不存在時先建（冪等，已存在則略過）。
-      - name: 建立 Cloudflare Pages 專案（冪等）
-        uses: cloudflare/wrangler-action@v3
-        continue-on-error: true
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: "03d40efd3c60181edea80af8d927ddc1"
-          command: pages project create taiwan-intel-dashboard --production-branch=main
-
+      # 主要對外服務＝Cloudflare Pages（專案已存在，直接部署）。
       - name: 部署到 Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
