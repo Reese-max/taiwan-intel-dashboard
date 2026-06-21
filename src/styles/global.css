@@ -336,6 +336,38 @@ h4 {
   color: var(--color-muted);
 }
 
+/* 情報列表增量渲染：載入更多頁尾 */
+.list-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 4px 0 10px;
+}
+.load-more-btn {
+  background: var(--accent-soft);
+  color: var(--color-accent);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-pill);
+  padding: 8px 20px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.load-more-btn:hover {
+  background: var(--color-accent);
+  color: var(--on-accent);
+  transform: translateY(-1px);
+}
+.list-more-status {
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
 .risk-badge {
   padding: 2px 10px;
   border-radius: 999px;

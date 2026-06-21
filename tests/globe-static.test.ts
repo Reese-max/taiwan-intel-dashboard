@@ -13,11 +13,14 @@ describe("static/intel.html", () => {
     expect(html).toContain("可重現查詢");
   });
 
-  it("dev 與 production 都可用 /intel.html 開啟 globe 介面", () => {
+  it("儀表板為首頁，globe 介面移至 /globe.html（/intel.html 保留別名，dev/prod 皆可開）", () => {
     const buildScript = readFileSync("scripts/build-static.mjs", "utf8");
     const viteConfig = readFileSync("vite.config.ts", "utf8");
 
-    expect(buildScript).toContain('copyFileSync("static/intel.html", `${OUT}/index.html`)');
+    // 首頁＝美化後的儀表板
+    expect(buildScript).toContain("writeFileSync(`${OUT}/index.html`, dashboardHtml)");
+    // globe 介面移至 globe.html，intel.html 保留為別名
+    expect(buildScript).toContain('copyFileSync("static/intel.html", `${OUT}/globe.html`)');
     expect(buildScript).toContain('copyFileSync("static/intel.html", `${OUT}/intel.html`)');
     expect(viteConfig).toContain("configureServer");
     expect(viteConfig).toContain("/intel.html");
