@@ -4,6 +4,7 @@ import { getState, setState, subscribe } from "./store";
 import { loadEvents, filterEvents } from "./data/loader";
 import { edgeTypeLabel, loadNetwork, type NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
+import { renderRelationGraph, type RelationNode } from "./components/RelationGraph";
 import { renderFilterBar } from "./components/FilterBar";
 import { renderTimeline } from "./components/TimelineView";
 import { renderSourcePanel } from "./components/SourcePanel";
@@ -44,6 +45,7 @@ app.innerHTML = `
     <section class="col-list">
       <h2>${t.events} <span id="count" class="count-pill"></span></h2>
       <div id="focusbar" class="focusbar" hidden></div>
+      <div id="relationgraph" class="relation-graph" hidden></div>
       <div id="eventlist"></div>
     </section>
     <aside class="col-side">
@@ -207,6 +209,23 @@ async function refresh(): Promise<void> {
     relatedCount: (id) => net.count(id),
     relationOf: (id) => relationById.get(id),
   });
+  // 聚焦單一事件時，於清單上方畫出該事件的關聯網圖（cluster/一般清單不畫）。
+  const relGraph = document.getElementById("relationgraph")!;
+  if (focusId && all.some((e) => e.id === focusId)) {
+    const center = all.find((e) => e.id === focusId)!;
+    const byId = new Map(all.map((e) => [e.id, e] as const));
+    const neighbors = net
+      .related(focusId)
+      .map((r): RelationNode | null => {
+        const ev = byId.get(r.id);
+        return ev ? { event: ev, rel: r } : null;
+      })
+      .filter((n): n is RelationNode => n !== null);
+    renderRelationGraph(relGraph, center, neighbors);
+  } else {
+    relGraph.hidden = true;
+    relGraph.innerHTML = "";
+  }
   if (viewKey !== lastViewKey) {
     resetEventListScroll(eventList);
     lastViewKey = viewKey;
@@ -248,6 +267,23 @@ document.getElementById("eventlist")!.addEventListener("click", (ev) => {
   const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>(".rel-link");
   if (!btn?.dataset.rel) return;
   focusEvent(btn.dataset.rel);
+});
+
+// 點關聯網圖的節點 → 聚焦該情報（事件委派，含鍵盤 Enter/Space）。
+const relGraphEl = document.getElementById("relationgraph")!;
+relGraphEl.addEventListener("click", (ev) => {
+  const g = (ev.target as Element).closest(".rg-node-g");
+  const id = g?.getAttribute("data-rel");
+  if (id) focusEvent(id);
+});
+relGraphEl.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter" && ev.key !== " ") return;
+  const g = (ev.target as Element).closest(".rg-node-g");
+  const id = g?.getAttribute("data-rel");
+  if (id) {
+    ev.preventDefault();
+    focusEvent(id);
+  }
 });
 
 document.getElementById("topclusters")!.addEventListener("click", (ev) => {

@@ -916,6 +916,123 @@ h4 {
   padding: var(--space);
 }
 
+/* 關聯網視覺化（聚焦單一事件時顯示於清單上方） */
+.relation-graph {
+  background: linear-gradient(
+    180deg,
+    rgba(56, 205, 245, 0.07),
+    var(--color-panel) 62%
+  );
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-sm), var(--glow-accent);
+}
+.rg-head {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-bottom: 2px;
+  text-align: center;
+}
+.rg-head b {
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+.rg-svg {
+  width: 100%;
+  height: auto;
+  max-height: 340px;
+  display: block;
+}
+.rg-edge {
+  stroke-linecap: round;
+  opacity: 0.72;
+}
+.edge-same-incident {
+  stroke: #f5b820;
+}
+.edge-same-entity {
+  stroke: #b388ff;
+}
+.edge-same-topic {
+  stroke: #38cdf5;
+}
+.rg-node {
+  stroke: rgba(8, 12, 23, 0.85);
+  stroke-width: 1.5;
+  transition: filter var(--dur-fast) var(--ease);
+}
+.rg-node.risk-low {
+  fill: var(--risk-low);
+}
+.rg-node.risk-medium {
+  fill: var(--risk-medium);
+}
+.rg-node.risk-high {
+  fill: var(--risk-high);
+}
+.rg-node.risk-critical {
+  fill: var(--risk-critical);
+}
+.rg-node.rg-center {
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+}
+.rg-node-g {
+  cursor: pointer;
+  outline: none;
+}
+.rg-node-g:hover .rg-node,
+.rg-node-g:focus-visible .rg-node {
+  filter: brightness(1.35) drop-shadow(0 0 4px rgba(56, 205, 245, 0.6));
+}
+.rg-node-g:hover .rg-label,
+.rg-node-g:focus-visible .rg-label {
+  fill: var(--color-text);
+}
+.rg-label {
+  fill: var(--color-muted);
+  font-size: 8.5px;
+  font-family: var(--font-sans);
+  pointer-events: none;
+}
+.rg-center-label {
+  fill: var(--color-text);
+  font-size: 9.5px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  pointer-events: none;
+}
+.rg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  justify-content: center;
+  margin-top: 4px;
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+.rg-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.rg-legend i {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+.rg-legend i.edge-same-incident {
+  background: #f5b820;
+}
+.rg-legend i.edge-same-entity {
+  background: #b388ff;
+}
+.rg-legend i.edge-same-topic {
+  background: #38cdf5;
+}
+
 /* 情報網：關聯按鈕與聚焦橫幅 */
 .rel-link {
   margin-left: auto;
