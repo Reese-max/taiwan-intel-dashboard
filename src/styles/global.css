@@ -137,6 +137,75 @@ h4 {
 .filterbar input::placeholder {
   color: var(--color-dim);
 }
+
+/* 搜尋框：膠囊容器＋圖示＋focus 發光，明顯有別於下拉選單（主要搜尋入口） */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1 1 260px;
+  min-width: 220px;
+  max-width: 440px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 0 16px;
+  transition: border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.search-box:hover {
+  border-color: var(--border-strong);
+}
+.search-box:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  background: rgba(56, 205, 245, 0.05);
+}
+.search-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: var(--color-muted);
+  transition: color var(--dur-fast) var(--ease);
+}
+.search-box:focus-within .search-icon {
+  color: var(--color-accent);
+}
+/* 蓋掉 .filterbar input 的框/底（框由膠囊提供），用較高 specificity 免 !important */
+.filterbar .search-box input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 10px 0;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+.filterbar .search-box input:focus {
+  outline: none;
+}
+.filterbar .search-box input::placeholder {
+  color: var(--color-dim);
+}
+/* 原生 type=search 清除鈕：改成主題色小叉，hover 變 accent */
+.search-box input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  background: var(--color-muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cline x1='6' y1='6' x2='18' y2='18'/%3E%3Cline x1='18' y1='6' x2='6' y2='18'/%3E%3C/svg%3E")
+    center/11px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cline x1='6' y1='6' x2='18' y2='18'/%3E%3Cline x1='18' y1='6' x2='6' y2='18'/%3E%3C/svg%3E")
+    center/11px no-repeat;
+  transition: background var(--dur-fast) var(--ease);
+}
+.search-box input:hover::-webkit-search-cancel-button {
+  background: var(--color-accent);
+}
 .usage-tip {
   align-items: center;
   background: var(--accent-soft);
@@ -1093,6 +1162,11 @@ h4 {
   .filterbar input {
     min-height: 40px;
     width: 100%;
+  }
+  .search-box {
+    max-width: none;
+    flex-basis: 100%;
+    min-height: 44px;
   }
   .layout {
     padding: 0 10px 14px;
