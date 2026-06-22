@@ -209,11 +209,11 @@ async function refresh(): Promise<void> {
     relatedCount: (id) => net.count(id),
     relationOf: (id) => relationById.get(id),
   });
-  // 聚焦單一事件時，於清單上方畫出該事件的關聯網圖（cluster/一般清單不畫）。
+  // 聚焦時於清單上方畫關聯網圖：單一事件＝放射狀；情報群＝以核心成員展開（一般清單不畫）。
   const relGraph = document.getElementById("relationgraph")!;
   if (focusId && all.some((e) => e.id === focusId)) {
-    const center = all.find((e) => e.id === focusId)!;
     const byId = new Map(all.map((e) => [e.id, e] as const));
+    const center = byId.get(focusId)!;
     const neighbors = net
       .related(focusId)
       .map((r): RelationNode | null => {
@@ -222,6 +222,36 @@ async function refresh(): Promise<void> {
       })
       .filter((n): n is RelationNode => n !== null);
     renderRelationGraph(relGraph, center, neighbors);
+  } else if (focusCluster && net.cluster(focusCluster)) {
+    const c = net.cluster(focusCluster)!;
+    const byId = new Map(all.map((e) => [e.id, e] as const));
+    const memberIds = c.members.filter((id) => byId.has(id));
+    const memberSet = new Set(memberIds);
+    let hub = memberIds[0];
+    let hubDeg = -1;
+    for (const id of memberIds) {
+      const d = net.count(id);
+      if (d > hubDeg) {
+        hubDeg = d;
+        hub = id;
+      }
+    }
+    const hubEvent = hub ? byId.get(hub) : undefined;
+    if (hubEvent) {
+      const neighbors = net
+        .related(hub)
+        .filter((r) => memberSet.has(r.id))
+        .map((r): RelationNode | null => {
+          const ev = byId.get(r.id);
+          return ev ? { event: ev, rel: r } : null;
+        })
+        .filter((n): n is RelationNode => n !== null);
+      const head = `🕸 情報群網絡　<b>${c.size ?? memberIds.length}</b> 則 · 圖示核心成員的群內關聯`;
+      renderRelationGraph(relGraph, hubEvent, neighbors, head);
+    } else {
+      relGraph.hidden = true;
+      relGraph.innerHTML = "";
+    }
   } else {
     relGraph.hidden = true;
     relGraph.innerHTML = "";
@@ -283,6 +313,18 @@ relGraphEl.addEventListener("keydown", (ev) => {
   if (id) {
     ev.preventDefault();
     focusEvent(id);
+  }
+});
+
+// 「/」鍵快速聚焦搜尋框（非輸入/選單狀態時）。
+document.addEventListener("keydown", (ev) => {
+  if (ev.key !== "/" || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  const tag = (document.activeElement as HTMLElement | null)?.tagName;
+  if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+  const q = document.getElementById("f-query") as HTMLInputElement | null;
+  if (q) {
+    ev.preventDefault();
+    q.focus();
   }
 });
 

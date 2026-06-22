@@ -121,6 +121,24 @@ h4 {
   transition: border-color var(--dur-fast) var(--ease),
     box-shadow var(--dur-fast) var(--ease);
 }
+/* 下拉選單：移除原生外觀、自訂 chevron 箭頭，與搜尋框同級質感 */
+.filterbar select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2398a6bd' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 15px;
+}
+.filterbar select:hover {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338cdf5' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+.filterbar select option {
+  background: var(--color-panel);
+  color: var(--color-text);
+}
 .filterbar select:hover,
 .filterbar input:hover {
   border-color: var(--border-strong);
@@ -275,6 +293,43 @@ h4 {
   overflow: hidden;
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-md);
+}
+/* Leaflet 深色主題微調：底圖、popup、縮放鈕、標註 */
+.leaflet-container {
+  background: #0a0f1c;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--color-panel-2);
+  color: var(--color-text);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-lg);
+}
+.leaflet-popup-content {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.leaflet-popup-content b {
+  color: var(--color-accent);
+}
+.leaflet-popup-close-button {
+  color: var(--color-muted) !important;
+}
+.leaflet-bar a {
+  background: var(--color-panel-2);
+  color: var(--color-text);
+  border-bottom-color: var(--color-border);
+}
+.leaflet-bar a:hover {
+  background: var(--surface-3);
+  color: var(--color-accent);
+}
+.leaflet-control-attribution {
+  background: rgba(8, 12, 23, 0.72) !important;
+  color: var(--color-dim) !important;
+}
+.leaflet-control-attribution a {
+  color: var(--color-muted) !important;
 }
 
 .count-pill {

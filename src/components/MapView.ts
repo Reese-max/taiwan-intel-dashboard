@@ -16,9 +16,11 @@ export class MapView {
 
   constructor(el: HTMLElement) {
     this.map = L.map(el).setView([23.7, 121], 7);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
-      maxZoom: 18,
+    // 深色底圖（CartoDB dark_matter，免金鑰）以融入深色主題，風險色標點更突出。
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: "© OpenStreetMap © CARTO",
+      subdomains: "abcd",
+      maxZoom: 19,
     }).addTo(this.map);
     this.layer.addTo(this.map);
   }

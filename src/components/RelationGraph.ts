@@ -29,6 +29,7 @@ export function renderRelationGraph(
   container: HTMLElement,
   center: IntelEvent,
   neighbors: RelationNode[],
+  headHtml?: string,
 ): void {
   if (!neighbors.length) {
     container.hidden = true;
@@ -72,11 +73,15 @@ export function renderRelationGraph(
     <text class="rg-center-label" x="${CX}" y="${(CY + 31).toFixed(1)}" text-anchor="middle">${esc(trunc(center.title, 13))}</text>
   </g>`;
 
+  const head =
+    headHtml ??
+    `🕸 關聯網　<b>${neighbors.length}</b> 則直接關聯${
+      more > 0 ? `（圖示最強 ${MAX_NODES}，餘 ${more} 則見下方清單）` : ""
+    }`;
+
   container.hidden = false;
   container.innerHTML = `
-    <div class="rg-head">🕸 關聯網　<b>${neighbors.length}</b> 則直接關聯${
-      more > 0 ? `（圖示最強 ${MAX_NODES}，餘 ${more} 則見下方清單）` : ""
-    }</div>
+    <div class="rg-head">${head}</div>
     <svg class="rg-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="關聯網圖：點節點可聚焦該情報">
       ${edges}${centerNode}${nodes}
     </svg>
