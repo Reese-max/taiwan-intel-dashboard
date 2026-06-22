@@ -30,8 +30,11 @@ describe("eventCard", () => {
     expect(html).toContain("資料時間");
     expect(html).toContain("擷取時間");
     expect(html).toContain("開放資料");
-    expect(html).toContain("資料集 176455");
-    expect(html).toContain("原始編號 row-9");
+    expect(html).toContain("<b>資料集</b>176455");
+    expect(html).toContain("<b>原始編號</b>row-9");
+    // 標籤不應重複（修正前曾誤輸出「資料集 資料集」「原始編號 原始編號」）
+    expect(html).not.toContain("資料集 資料集");
+    expect(html).not.toContain("原始編號 原始編號");
     expect(html).toContain("可重現查詢");
     expect(html).toContain("關聯 3");
   });

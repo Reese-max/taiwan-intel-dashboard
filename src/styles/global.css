@@ -561,12 +561,20 @@ h4 {
   flex-basis: 100%;
 }
 .event-context span {
-  display: inline-flex;
-  gap: 4px;
+  display: inline-block;
+  min-width: 0;
+  /* 長值（如原始編號）允許在卡片內斷行，避免超出容器 */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .event-context b {
   color: var(--color-text);
   font-weight: 600;
+  margin-right: 4px;
+}
+/* 原始編號常是很長的記錄字串：獨佔一行並於卡片寬度內換行 */
+.event-context span.ctx-wide {
+  flex-basis: 100%;
 }
 .event-card footer {
   display: flex;

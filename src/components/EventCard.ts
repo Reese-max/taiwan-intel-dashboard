@@ -32,8 +32,9 @@ function eventContext(e: IntelEvent): string {
     `<span><b>擷取時間</b>${esc(fmtDate(e.source.fetchedAt))}</span>`,
     `<span><b>來源型態</b>${esc(sourceTypeLabel(e.source.type))}</span>`,
   ];
-  if (e.source.datasetId) parts.push(`<span><b>資料集</b>資料集 ${esc(e.source.datasetId)}</span>`);
-  if (e.source.recordRef) parts.push(`<span><b>原始編號</b>原始編號 ${esc(e.source.recordRef)}</span>`);
+  if (e.source.datasetId) parts.push(`<span><b>資料集</b>${esc(e.source.datasetId)}</span>`);
+  if (e.source.recordRef)
+    parts.push(`<span class="ctx-wide"><b>原始編號</b>${esc(e.source.recordRef)}</span>`);
   if (e.source.query) parts.push(`<span class="ctx-query" title="${esc(e.source.query)}"><b>查詢</b>可重現查詢</span>`);
   return `<div class="event-context" aria-label="完整脈絡"><strong>完整脈絡</strong>${parts.join("")}</div>`;
 }
