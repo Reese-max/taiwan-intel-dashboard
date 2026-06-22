@@ -22,7 +22,7 @@ import {
 } from "./lib/fetch-police.mjs";
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
 import { mapBulkNews, titleKey as bulkTitleKey, isPoliceRelevant } from "./lib/news-bulk.mjs";
-import { normalizeInternational, normalizeDomesticNews, summarize, llmModel } from "./lib/nvidia.mjs";
+import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
@@ -549,7 +549,7 @@ async function run() {
         count,
         fetchedAt: newsEvents.find((e) => e.source.name === name)?.source?.fetchedAt || nowIso,
         stale: !status.twnews?.ok || undefined,
-        query: `台灣社會新聞 RSS → LLM(${llmModel()}) 正規化`,
+        query: `台灣社會新聞 RSS → LLM(${respondedModel()}) 正規化`,
         license: "各新聞媒體著作權所有；本平台僅彙整標題/摘要與原文連結，分類與座標為 LLM 衍生",
       });
   }
@@ -563,7 +563,7 @@ async function run() {
         scope: "international",
         count: c,
         fetchedAt: nowIso,
-        query: `RSS ${f.label} → LLM(${llmModel()}) 正規化`,
+        query: `RSS ${f.label} → LLM(${respondedModel()}) 正規化`,
       });
     }
   } else {
@@ -578,7 +578,7 @@ async function run() {
         count,
         fetchedAt: intlEvents.find((e) => e.source.name === name)?.source?.fetchedAt || nowIso,
         stale: true,
-        query: `RSS ${name} → LLM(${llmModel()}) 正規化`,
+        query: `RSS ${name} → LLM(${respondedModel()}) 正規化`,
       });
   }
 
@@ -586,7 +586,7 @@ async function run() {
     generatedAt: nowIso,
     note:
       "Live 抓取。座標：採購為依機關所在縣市/區中心推估、新聞事件為 LLM 依事件地點推估，皆非原始資料欄位；地震為真實震央。風險等級為衍生指標（採購依決標金額、地震依規模、新聞由 LLM 依嚴重度判定），非原始欄位。新聞摘要與分類由 LLM " +
-      llmModel() +
+      respondedModel() +
       " 自 RSS 原文生成，原始連結保留可回溯。",
     pipeline: status,
     sources,

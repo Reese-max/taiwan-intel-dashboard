@@ -8,8 +8,13 @@
 const CATEGORIES = ["地緣政治", "災害", "資安", "金融", "其他"];
 const RISKS = ["low", "medium", "high", "critical"];
 
-// 目前使用的模型名稱（供 provenance 標註）。
-export const llmModel = () => process.env.LLM_MODEL || llmModel() || "";
+// 設定指定送出的模型名稱（請求用）。fallback：LLM_MODEL → NVIDIA_MODEL → ""。
+export const llmModel = () => process.env.LLM_MODEL || process.env.NVIDIA_MODEL || "";
+
+// 最近一次 LLM 回應實際使用的模型（OpenAI 相容 API 會在回應帶 model 欄位）。
+// provenance 用「真實回應模型」誠實標註，無則 fallback 設定值，避免錯標。
+let lastRespondedModel = "";
+export const respondedModel = () => lastRespondedModel || llmModel();
 
 function cfg() {
   const base = process.env.LLM_BASE_URL || process.env.NVIDIA_BASE_URL;
@@ -28,6 +33,8 @@ async function chat(messages, { maxTokens = 1024, temperature = 0.3 } = {}) {
   });
   if (!res.ok) throw new Error(`LLM HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const json = await res.json();
+  // 記下實際回應的模型名（誠實 provenance）；端點未回則維持上次/設定值。
+  if (typeof json.model === "string" && json.model) lastRespondedModel = json.model;
   let content = json.choices?.[0]?.message?.content || "";
   // 推理模型（如 MiniMax-M2）會輸出 <think>…</think>，need 剝除避免污染摘要/JSON。
   content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
@@ -259,7 +266,8 @@ export async function summarize({ domestic, international }) {
   return {
     domestic: dom,
     international: intl,
-    model: llmModel(),
+    // 用實際回應的模型名（chat 已記錄），避免標示成不符的設定值。
+    model: respondedModel(),
     generatedAt: new Date().toISOString(),
   };
 }
