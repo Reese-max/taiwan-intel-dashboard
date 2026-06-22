@@ -63,6 +63,22 @@ function extractJson(text) {
 const clampRisk = (r) => (RISKS.includes(r) ? r : "medium");
 const clampCat = (c) => (CATEGORIES.includes(c) ? c : "其他");
 
+// LLM 萃取的語意訊號清洗（供 correlate 做語意關聯）。
+function cleanEntities(v) {
+  if (!Array.isArray(v)) return undefined;
+  const out = [];
+  for (const x of v) {
+    const s = String(x || "").trim();
+    if (s.length >= 2 && s.length <= 14 && !out.includes(s)) out.push(s);
+    if (out.length >= 5) break;
+  }
+  return out.length ? out : undefined;
+}
+function cleanTopic(v) {
+  const s = String(v || "").trim();
+  return s.length >= 4 && s.length <= 30 ? s : undefined;
+}
+
 // items: [{title, link, description, source, sourceUrl, hint}]
 // 回傳 IntelEvent[]（scope=international）
 export async function normalizeInternational(items, { max = 10 } = {}) {
@@ -84,6 +100,8 @@ ${listing}
 - riskLevel: 必為其一 ${JSON.stringify(RISKS)}（依事件嚴重度）
 - region: 事件主要地點名稱（中文，如「烏克蘭」「荷莫茲海峽」）
 - lat, lng: 該地點的概略經緯度（你的最佳估計，浮點數）
+- entities: 此事件可跨則比對的具名實體陣列（精簡專名：國家/組織/人物/地點等；最多 5 個；無則 []）
+- topic: 此事件的「具體事件/故事線」短描述（10-18 字，能跨來源辨識同一起事件；非分類）
 
 只輸出 JSON 陣列，不要任何說明文字。`;
 
@@ -113,6 +131,8 @@ ${listing}
       scope: "international",
       riskLevel: clampRisk(o.riskLevel),
       summary: o.summary_zh || it.description?.slice(0, 200) || "",
+      aiEntities: cleanEntities(o.entities),
+      aiTopic: cleanTopic(o.topic),
       source: {
         name: it.source,
         type: "news-rss",
@@ -148,6 +168,8 @@ ${listing}
 - riskLevel: 必為其一 ${JSON.stringify(RISKS)}（依事件嚴重度）
 - region: 事件發生的台灣縣市（中文，如「臺北市」「高雄市」；無法判斷填「全國」）
 - lat, lng: 該縣市的概略經緯度（你的最佳估計，浮點數；全國填台灣中心 23.8,120.9）
+- entities: 此事件可跨則比對的具名實體陣列（精簡專名：人名/化名、機關分局、地檢署、路名/地標、集團/園區名等；最多 5 個；無則 []）
+- topic: 此事件的「具體事件/故事線」短描述（10-18 字，能跨來源辨識同一起事件，如「柬埔寨人口販運詐騙集團案」；非分類，是這一則的具體題目）
 
 只輸出 JSON 陣列，不要任何說明文字。`;
 
@@ -177,6 +199,8 @@ ${listing}
       scope: "domestic",
       riskLevel: clampRisk(o.riskLevel),
       summary: o.summary_zh || it.description?.slice(0, 200) || "",
+      aiEntities: cleanEntities(o.entities),
+      aiTopic: cleanTopic(o.topic),
       source: {
         name: it.source,
         type: "news-rss",

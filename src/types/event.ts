@@ -24,6 +24,9 @@ export interface IntelEvent {
   riskLevel: RiskLevel;
   summary: string;
   source: Provenance;
+  // LLM 萃取的語意訊號（僅新聞精修批次有）：供關聯網做語意關聯。
+  aiEntities?: string[];
+  aiTopic?: string;
 }
 
 export const RISK_ORDER: Record<RiskLevel, number> = {
