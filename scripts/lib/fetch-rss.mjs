@@ -137,6 +137,20 @@ export const TW_NEWS_FEEDS = [
   { label: "GN 公共場所性騷", url: gq("偷拍 捷運 OR 公共場所 性騷"), hint: "治安" },
   { label: "GN 網軍假訊息", url: gq("網軍 OR 假訊息 OR 假帳號 起訴"), hint: "治安" },
   { label: "GN 八大臨檢", url: gq("酒店 OR 8大行業 臨檢 OR 查緝"), hint: "治安" },
+
+  // ══ 第四輪擴充（2026-06：經 _audit-candidates.mjs 實測 ≥3 則、去重後保留）══
+  // 直連媒體＋官方來源（可溯源）
+  { label: "newtalk 社會", url: "https://newtalk.tw/rss/category/2", hint: "治安" },
+  { label: "警政署官網", url: gq("site:npa.gov.tw"), hint: "治安" },
+  { label: "海巡署官網", url: gq("site:cga.gov.tw"), hint: "治安" },
+  // 新主題角度（既有未涵蓋）
+  { label: "GN 假網拍一頁式", url: gq("假網拍 OR 一頁式 OR 假購物 詐騙"), hint: "反詐" },
+  { label: "GN 投資飆股群組", url: gq("飆股 OR 投資群組 OR 老師帶單 OR 存股社團 詐騙"), hint: "反詐" },
+  { label: "GN 銀髮長者詐騙", url: gq("長者 OR 銀髮 OR 老翁 OR 老婦 詐騙"), hint: "反詐" },
+  { label: "GN 假冒客服公務員", url: gq("假冒 客服 OR 假冒 公務員 詐騙"), hint: "反詐" },
+  { label: "GN 一氧化碳中毒", url: gq("一氧化碳 中毒 死亡 OR 送醫"), hint: "災防" },
+  { label: "GN 溺水戲水", url: gq("溺水 OR 戲水 OR 落水 搜救 OR 死亡"), hint: "災防" },
+  { label: "GN 登山山域事故", url: gq("登山 OR 山域 迷途 OR 受困 OR 搜救"), hint: "災防" },
 ];
 
 function decode(s) {
