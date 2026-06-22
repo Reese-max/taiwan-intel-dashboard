@@ -1188,6 +1188,8 @@ h4 {
   padding: var(--space-3) var(--space-3) var(--space-2);
   margin-bottom: var(--space-3);
   box-shadow: var(--shadow-sm), var(--glow-accent);
+  /* 聚焦捲動時讓圖頂避開 sticky topbar（約 83px） */
+  scroll-margin-top: 92px;
 }
 .rg-head {
   font-size: var(--text-xs);

@@ -290,18 +290,32 @@ async function refresh(): Promise<void> {
   document.getElementById("count")!.textContent = `${display.length}`;
 }
 
+// 聚焦後把關聯網捲進視窗：手機單欄時入口（事件卡／情報群）常遠離圖渲染處（列表頂），
+// 不捲過去會看起來「沒反應」。桌面圖已在頂端可視 → 不在視窗外就 no-op，不打擾。
+function revealRelationGraph(): void {
+  requestAnimationFrame(() => {
+    const rg = document.getElementById("relationgraph");
+    if (!rg || rg.hidden) return;
+    const r = rg.getBoundingClientRect();
+    if (r.top >= 0 && r.top < window.innerHeight * 0.7) return;
+    // scrollIntoView 會自動處理正確的捲動容器（window.scrollTo 在本頁 html/body 全高時失效）；
+    // CSS 的 scroll-margin-top 讓圖頂避開 sticky topbar。
+    rg.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 function focusEvent(id: string): void {
   focusId = id;
   focusCluster = null;
   writeHash("push");
-  void refresh();
+  void refresh().then(revealRelationGraph);
 }
 
 function focusClusterById(id: string): void {
   focusCluster = id;
   focusId = null;
   writeHash("push");
-  void refresh();
+  void refresh().then(revealRelationGraph);
 }
 
 function renderUsageTip(): void {
