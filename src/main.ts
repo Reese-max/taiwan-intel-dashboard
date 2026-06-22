@@ -56,9 +56,28 @@ app.innerHTML = `
       <div id="policehealth"></div>
       <div id="sourcepanel"></div>
     </aside>
-  </main>`;
+  </main>
+  <nav class="mobile-quickbar" aria-label="快捷操作">
+    <div class="search-box mq-search">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>
+      <input id="mq-query" type="search" aria-label="搜尋情報" placeholder="搜尋情報…">
+    </div>
+    <button id="mq-filter" type="button">篩選</button>
+  </nav>`;
 
 const mapView = new MapView(document.getElementById("map")!);
+
+// 手機底部快捷列：搜尋同步寫入 store；篩選鈕捲到頂並聚焦篩選器。
+const mqQuery = document.getElementById("mq-query") as HTMLInputElement | null;
+if (mqQuery)
+  mqQuery.oninput = (ev) =>
+    setState({ query: (ev.target as HTMLInputElement).value.trim() || undefined });
+const mqFilter = document.getElementById("mq-filter");
+if (mqFilter)
+  mqFilter.onclick = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.getElementById("f-cat")?.focus();
+  };
 const cache: Partial<Record<Scope, IntelEvent[]>> = {};
 const netCache: Partial<Record<Scope, NetworkIndex>> = {};
 let summary: AiSummary | null = null;
@@ -358,6 +377,12 @@ subscribe((s) => {
   if (!applyingHash) writeHash("replace");
   void refresh();
   setActiveScopeTab(s.scope);
+  // 桌面搜尋與手機快捷搜尋雙向同步（不覆蓋正在輸入的那個）。
+  const qv = s.query ?? "";
+  const mqEl = document.getElementById("mq-query") as HTMLInputElement | null;
+  const fqEl = document.getElementById("f-query") as HTMLInputElement | null;
+  if (mqEl && document.activeElement !== mqEl) mqEl.value = qv;
+  if (fqEl && document.activeElement !== fqEl) fqEl.value = qv;
 });
 
 window.addEventListener("hashchange", () => {

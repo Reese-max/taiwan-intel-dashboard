@@ -10,6 +10,13 @@ const RISK_COLOR: Record<RiskLevel, string> = {
   critical: "#ef4444",
 };
 
+// 危急／高風險標點加 class，由 CSS 套脈衝光暈動畫。
+function markerClass(level: RiskLevel): string {
+  if (level === "critical") return "mk mk-critical";
+  if (level === "high") return "mk mk-high";
+  return "mk";
+}
+
 export class MapView {
   private map: L.Map;
   private layer = L.layerGroup();
@@ -23,6 +30,11 @@ export class MapView {
       maxZoom: 19,
     }).addTo(this.map);
     this.layer.addTo(this.map);
+    // 雷達掃描裝飾層（pointer-events:none，不擋地圖拖曳/縮放）。
+    const radar = document.createElement("div");
+    radar.className = "map-radar";
+    radar.setAttribute("aria-hidden", "true");
+    el.appendChild(radar);
   }
 
   render(events: IntelEvent[]): void {
@@ -35,6 +47,7 @@ export class MapView {
         fillColor: RISK_COLOR[e.riskLevel],
         fillOpacity: 0.7,
         weight: 2,
+        className: markerClass(e.riskLevel),
       })
         .bindPopup(`<b>${esc(e.title)}</b><br>${esc(e.region)}｜${esc(e.category)}`)
         .addTo(this.layer);
