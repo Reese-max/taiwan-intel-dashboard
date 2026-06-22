@@ -26,6 +26,7 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
     <div class="search-box">
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>
       <input id="f-query" type="search" aria-label="關鍵字搜尋" placeholder="搜尋情報關鍵字…（自動帶出關聯）" value="${esc(state.query ?? "")}">
+      <kbd class="search-hint" aria-hidden="true">/</kbd>
     </div>`;
   container.querySelector<HTMLSelectElement>("#f-cat")!.value = state.category ?? "";
   container.querySelector<HTMLSelectElement>("#f-risk")!.value = state.minRisk ?? "";

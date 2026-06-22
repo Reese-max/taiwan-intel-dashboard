@@ -224,6 +224,29 @@ h4 {
 .search-box input:hover::-webkit-search-cancel-button {
   background: var(--color-accent);
 }
+/* 鍵盤捷徑提示「/」：僅在靜止空狀態顯示，聚焦或輸入時淡出免擋字 */
+.search-hint {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--color-muted);
+  background: var(--surface-3);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  padding: 3px 6px;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.search-box:focus-within .search-hint,
+.search-box input:not(:placeholder-shown) ~ .search-hint {
+  opacity: 0;
+  visibility: hidden;
+}
+@media (max-width: 640px) {
+  .search-hint {
+    display: none;
+  }
+}
 .usage-tip {
   align-items: center;
   background: var(--accent-soft);
@@ -284,6 +307,19 @@ h4 {
   .col-list,
   .col-side {
     min-width: 0;
+  }
+}
+/* 寬螢幕：地圖與情報列表黏附視窗頂端，捲動長右欄時左側控制台持續可見，
+   消除原本左下因三欄高度不均產生的大片空白；列表撐滿可視高度多顯示卡片。 */
+@media (min-width: 1001px) {
+  .col-map,
+  .col-list {
+    align-self: start;
+    position: sticky;
+    top: 92px;
+  }
+  .col-list {
+    max-height: calc(100vh - 108px);
   }
 }
 

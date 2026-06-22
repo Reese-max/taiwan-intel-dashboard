@@ -52,6 +52,7 @@ const dashboardHtml = `<!doctype html>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#080c17" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2032%2032'%3E%3Crect%20width%3D'32'%20height%3D'32'%20rx%3D'7'%20fill%3D'%23080c17'%2F%3E%3Ccircle%20cx%3D'16'%20cy%3D'16'%20r%3D'9'%20fill%3D'none'%20stroke%3D'%231f6f86'%20stroke-width%3D'1.5'%2F%3E%3Ccircle%20cx%3D'16'%20cy%3D'16'%20r%3D'5'%20fill%3D'none'%20stroke%3D'%232a8aa8'%20stroke-width%3D'1.5'%2F%3E%3Cline%20x1%3D'16'%20y1%3D'16'%20x2%3D'16'%20y2%3D'6'%20stroke%3D'%2338cdf5'%20stroke-width%3D'1.8'%20stroke-linecap%3D'round'%2F%3E%3Ccircle%20cx%3D'16'%20cy%3D'16'%20r%3D'2.3'%20fill%3D'%2338cdf5'%2F%3E%3Ccircle%20cx%3D'23'%20cy%3D'10'%20r%3D'1.5'%20fill%3D'%236366f1'%2F%3E%3C%2Fsvg%3E" />
     <meta
       name="description"
       content="台灣公開資料情報儀表板：彙整警政、治安與公共安全資料源，提供地圖、時間軸、關聯情報網與資料源健康檢查。"
