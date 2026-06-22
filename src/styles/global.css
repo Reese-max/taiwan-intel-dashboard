@@ -1294,6 +1294,129 @@ h4 {
 .rg-legend i.edge-same-topic {
   background: #38cdf5;
 }
+/* 關聯網 Slice 1：曲線邊繪入動畫、中心發光、標籤描邊、命中區 */
+.rg-edge {
+  fill: none;
+  animation: rg-draw 0.5s var(--ease);
+}
+.rg-node-g {
+  animation: rg-fade 0.4s var(--ease);
+}
+@keyframes rg-draw {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes rg-fade {
+  from {
+    opacity: 0;
+  }
+}
+.rg-node.rg-center {
+  filter: drop-shadow(0 0 6px rgba(56, 205, 245, 0.55));
+}
+.rg-label {
+  paint-order: stroke;
+  stroke: rgba(8, 12, 23, 0.85);
+  stroke-width: 2.5px;
+}
+.rg-hit {
+  cursor: pointer;
+}
+/* hover/tap 高亮：聚焦節點時其連線與節點突出，其餘淡化 */
+.rg-svg.has-active .rg-edge:not(.is-active) {
+  opacity: 0.12;
+}
+.rg-svg.has-active .rg-node-g:not(.is-active):not(.rg-center-g) {
+  opacity: 0.32;
+}
+.rg-edge.is-active {
+  opacity: 1;
+}
+.rg-node-g.is-active .rg-node {
+  filter: brightness(1.4) drop-shadow(0 0 5px rgba(56, 205, 245, 0.7));
+}
+/* 型別篩選：關閉的型別淡出且不可點 */
+.rg-edge.flt-off,
+.rg-node-g.flt-off {
+  opacity: 0.08;
+  pointer-events: none;
+}
+/* 圖例改為可切換型別的按鈕 */
+.rg-legend-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  padding: 3px 9px;
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.rg-legend-btn:hover {
+  border-color: var(--color-border);
+}
+.rg-legend-btn[aria-pressed="false"] {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+/* 節點預覽面板（觸控替代 hover tooltip） */
+.rg-preview {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--color-panel);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.rg-pv-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.rg-pv-title {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  line-height: 1.35;
+}
+.rg-pv-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+.rg-pv-rel {
+  margin-top: 5px;
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+.rg-pv-rel b {
+  color: var(--color-accent);
+}
+.rg-go {
+  margin-top: 9px;
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-accent);
+  background: var(--accent-soft);
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.rg-go:hover {
+  background: var(--color-accent);
+  color: var(--on-accent);
+}
 
 /* 情報網：關聯按鈕與聚焦橫幅 */
 .rel-link {

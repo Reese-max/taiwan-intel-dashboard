@@ -6,6 +6,8 @@ import { edgeTypeLabel, loadNetwork, type NetworkIndex, type RelatedRef } from "
 import { renderEventList, resetEventListScroll } from "./components/EventList";
 import { renderKpiStrip } from "./components/KpiStrip";
 import { renderRelationGraph, type RelationNode } from "./components/RelationGraph";
+import { riskBadge } from "./components/RiskBadge";
+import { esc } from "./utils/escape";
 import { renderFilterBar } from "./components/FilterBar";
 import { renderTimeline } from "./components/TimelineView";
 import { renderSourcePanel } from "./components/SourcePanel";
@@ -244,6 +246,7 @@ async function refresh(): Promise<void> {
       })
       .filter((n): n is RelationNode => n !== null);
     renderRelationGraph(relGraph, center, neighbors);
+    resetRelationGraphState();
   } else if (focusCluster && net.cluster(focusCluster)) {
     const c = net.cluster(focusCluster)!;
     const byId = new Map(all.map((e) => [e.id, e] as const));
@@ -270,6 +273,7 @@ async function refresh(): Promise<void> {
         .filter((n): n is RelationNode => n !== null);
       const head = `🕸 情報群網絡　<b>${c.size ?? memberIds.length}</b> 則 · 圖示核心成員的群內關聯`;
       renderRelationGraph(relGraph, hubEvent, neighbors, head);
+      resetRelationGraphState();
     } else {
       relGraph.hidden = true;
       relGraph.innerHTML = "";
@@ -335,22 +339,122 @@ document.getElementById("eventlist")!.addEventListener("click", (ev) => {
   focusEvent(btn.dataset.rel);
 });
 
-// 點關聯網圖的節點 → 聚焦該情報（事件委派，含鍵盤 Enter/Space）。
+// 關聯網互動：點節點先看預覽（觸控無 hover），按「前往」才聚焦；hover/tap 高亮；圖例篩選型別。
 const relGraphEl = document.getElementById("relationgraph")!;
+const REL_TYPES = ["same-incident", "same-entity", "same-topic"];
+let rgPinned: string | null = null; // 被點選（釘住）的節點 id
+
+// 渲染新圖後重置互動狀態（由 refresh 呼叫）。
+function resetRelationGraphState(): void {
+  rgPinned = null;
+}
+
+function rgSvg(): SVGSVGElement | null {
+  return relGraphEl.querySelector("svg.rg-svg");
+}
+
+function applyHighlight(id: string | null): void {
+  const svg = rgSvg();
+  if (!svg) return;
+  svg.querySelectorAll(".is-active").forEach((el) => el.classList.remove("is-active"));
+  svg.classList.toggle("has-active", !!id);
+  if (!id) return;
+  svg
+    .querySelectorAll(`.rg-node-g[data-rel="${CSS.escape(id)}"], .rg-edge[data-rel="${CSS.escape(id)}"]`)
+    .forEach((el) => el.classList.add("is-active"));
+}
+
+function showPreview(g: Element): void {
+  const preview = relGraphEl.querySelector<HTMLElement>(".rg-preview");
+  if (!preview) return;
+  const d = (k: string): string => g.getAttribute(`data-${k}`) ?? "";
+  const id = d("rel");
+  const why = d("why");
+  preview.innerHTML = `
+    <div class="rg-pv-head">${riskBadge(d("risk") as RiskLevel)}<span class="rg-pv-title">${esc(d("title"))}</span></div>
+    <div class="rg-pv-meta"><span>${esc(d("time"))}</span><span>${esc(d("region"))}・${esc(d("cat"))}</span></div>
+    <div class="rg-pv-rel"><b>${esc(d("rtype"))}</b>${why ? `：${esc(why)}` : ""}</div>
+    <button type="button" class="rg-go" data-rel="${esc(id)}">前往 →</button>`;
+  preview.hidden = false;
+}
+
+function clearSelection(): void {
+  rgPinned = null;
+  applyHighlight(null);
+  const preview = relGraphEl.querySelector<HTMLElement>(".rg-preview");
+  if (preview) {
+    preview.hidden = true;
+    preview.innerHTML = "";
+  }
+}
+
+function applyTypeFilter(): void {
+  const svg = rgSvg();
+  if (!svg) return;
+  const off = REL_TYPES.filter(
+    (type) => relGraphEl.querySelector(`.rg-legend-btn[data-type="${type}"]`)?.getAttribute("aria-pressed") === "false",
+  );
+  svg.querySelectorAll<SVGElement>(".rg-edge, .rg-node-g").forEach((el) => {
+    const type = el.classList.contains("rg-edge")
+      ? REL_TYPES.find((t) => el.classList.contains(`edge-${t}`))
+      : el.getAttribute("data-rtype-key");
+    el.classList.toggle("flt-off", !!type && off.includes(type));
+  });
+}
+
+function selectNode(g: Element): void {
+  const id = g.getAttribute("data-rel");
+  if (!id) return;
+  rgPinned = id;
+  applyHighlight(id);
+  showPreview(g);
+}
+
 relGraphEl.addEventListener("click", (ev) => {
-  const g = (ev.target as Element).closest(".rg-node-g");
-  const id = g?.getAttribute("data-rel");
-  if (id) focusEvent(id);
-});
-relGraphEl.addEventListener("keydown", (ev) => {
-  if (ev.key !== "Enter" && ev.key !== " ") return;
-  const g = (ev.target as Element).closest(".rg-node-g");
-  const id = g?.getAttribute("data-rel");
-  if (id) {
-    ev.preventDefault();
-    focusEvent(id);
+  const target = ev.target as Element;
+  const go = target.closest<HTMLButtonElement>(".rg-go");
+  if (go?.dataset.rel) {
+    focusEvent(go.dataset.rel);
+    return;
+  }
+  const legendBtn = target.closest<HTMLButtonElement>(".rg-legend-btn");
+  if (legendBtn) {
+    const pressed = legendBtn.getAttribute("aria-pressed") === "true";
+    legendBtn.setAttribute("aria-pressed", pressed ? "false" : "true");
+    applyTypeFilter();
+    return;
+  }
+  const node = target.closest(".rg-node-g");
+  if (node && !node.classList.contains("flt-off")) {
+    selectNode(node);
+  } else if (target.closest(".rg-center-g") || target.closest("svg.rg-svg")) {
+    clearSelection();
   }
 });
+
+relGraphEl.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter" && ev.key !== " ") return;
+  const node = (ev.target as Element).closest(".rg-node-g");
+  if (node && !node.classList.contains("flt-off")) {
+    ev.preventDefault();
+    selectNode(node);
+  }
+});
+
+// hover/focus 暫態高亮：離開時還原到釘住的節點。
+relGraphEl.addEventListener("mouseover", (ev) => {
+  const node = (ev.target as Element).closest(".rg-node-g");
+  if (node && !node.classList.contains("flt-off")) applyHighlight(node.getAttribute("data-rel"));
+});
+relGraphEl.addEventListener("mouseout", (ev) => {
+  if (!(ev.target as Element).closest(".rg-node-g")) return;
+  applyHighlight(rgPinned);
+});
+relGraphEl.addEventListener("focusin", (ev) => {
+  const node = (ev.target as Element).closest(".rg-node-g");
+  if (node && !node.classList.contains("flt-off")) applyHighlight(node.getAttribute("data-rel"));
+});
+relGraphEl.addEventListener("focusout", () => applyHighlight(rgPinned));
 
 // 「/」鍵快速聚焦搜尋框（非輸入/選單狀態時）。
 document.addEventListener("keydown", (ev) => {
