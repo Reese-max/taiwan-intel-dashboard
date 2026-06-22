@@ -4,6 +4,7 @@ import { getState, setState, subscribe } from "./store";
 import { loadEvents, filterEvents } from "./data/loader";
 import { edgeTypeLabel, loadNetwork, type NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
+import { renderKpiStrip } from "./components/KpiStrip";
 import { renderRelationGraph, type RelationNode } from "./components/RelationGraph";
 import { renderFilterBar } from "./components/FilterBar";
 import { renderTimeline } from "./components/TimelineView";
@@ -35,6 +36,7 @@ app.innerHTML = `
     <button type="button" id="close-tip">我知道了</button>
   </div>
   <div id="filterbar" class="filterbar"></div>
+  <section id="kpistrip" class="kpi-strip" aria-label="關鍵指標"></section>
   <main class="layout">
     <section class="col-map">
       <h2>${t.map}</h2>
@@ -180,6 +182,7 @@ async function refresh(): Promise<void> {
   if (!netCache[s.scope]) netCache[s.scope] = await loadNetwork(s.scope);
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
+  renderKpiStrip(document.getElementById("kpistrip")!, all);
 
   let display: IntelEvent[];
   const viewKey = focusCluster
