@@ -17,6 +17,10 @@ const CY = H / 2;
 const R = 116;
 // 邊曲線控制點偏移量（垂直於連線），輕微弧度減少重疊。
 const BOW = 14;
+// 2-hop 就地展開：子節點距父節點半徑、最多顯示數。
+const RSUB = 44;
+const SUB_MAX = 5;
+const PAD = 14;
 
 function angle(i: number, n: number): number {
   return (-90 + (i * 360) / n) * (Math.PI / 180);
@@ -40,14 +44,49 @@ function fmtTime(value: string): string {
 
 // 由中心到 (x,y) 的二次貝茲曲線：控制點＝中點沿垂直方向偏移 BOW。
 function curvePath(x: number, y: number): string {
-  const mx = (CX + x) / 2;
-  const my = (CY + y) / 2;
-  const dx = x - CX;
-  const dy = y - CY;
+  return curveBetween(CX, CY, x, y, BOW);
+}
+
+// 任兩點間的二次貝茲曲線（控制點＝中點沿垂直方向偏移 bow）。
+function curveBetween(x1: number, y1: number, x2: number, y2: number, bow: number): string {
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
   const len = Math.hypot(dx, dy) || 1;
-  const cx = mx + (-dy / len) * BOW;
-  const cy = my + (dx / len) * BOW;
-  return `M${CX},${CY} Q${cx.toFixed(1)},${cy.toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`;
+  const cx = mx + (-dy / len) * bow;
+  const cy = my + (dx / len) * bow;
+  return `M${x1.toFixed(1)},${y1.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+}
+
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+// 共用節點 markup（主環與第二圈共用；子節點較小、無文字標籤、靠點擊預覽看內容）。
+function nodeMarkup(
+  n: RelationNode,
+  x: number,
+  y: number,
+  opts: { sub?: boolean; expanded?: boolean; label?: string; lx?: number; anchor?: "start" | "end" },
+): string {
+  const e = n.event;
+  const why = cleanWhy(edgeTypeLabel(n.rel.type), n.rel.why ?? "");
+  const tip = `${e.title}\n${edgeTypeLabel(n.rel.type)}${why ? `：${why}` : ""}`;
+  const cls = `rg-node-g${opts.sub ? " rg-subnode" : ""}${opts.expanded ? " is-expanded" : ""}`;
+  const label =
+    opts.label != null
+      ? `<text class="rg-label" x="${opts.lx!.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="${opts.anchor}">${esc(opts.label)}</text>`
+      : "";
+  return `<g class="${cls}" data-rel="${esc(e.id)}" data-rtype-key="${esc(n.rel.type)}"
+    data-title="${esc(e.title)}" data-time="${esc(fmtTime(e.timestamp))}" data-risk="${esc(e.riskLevel)}"
+    data-cat="${esc(e.category)}" data-region="${esc(e.region)}" data-rtype="${esc(edgeTypeLabel(n.rel.type))}"
+    data-why="${esc(why)}" tabindex="0" role="button" aria-label="${esc(e.title)}">
+    <title>${esc(tip)}</title>
+    <circle class="rg-hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${opts.sub ? 12 : 15}" fill="transparent" />
+    <circle class="rg-node risk-${e.riskLevel}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${opts.sub ? 5 : 7}" />
+    ${label}
+  </g>`;
 }
 
 export function renderRelationGraph(
@@ -55,6 +94,7 @@ export function renderRelationGraph(
   center: IntelEvent,
   neighbors: RelationNode[],
   headHtml?: string,
+  expand?: { nodeId: string; subs: RelationNode[] },
 ): void {
   if (!neighbors.length) {
     container.hidden = true;
@@ -81,24 +121,33 @@ export function renderRelationGraph(
     .join("");
 
   const nodes = placed
-    .map(({ n, x, y, right }) => {
-      const lx = x + (right ? 12 : -12);
-      const anchor = right ? "start" : "end";
-      const e = n.event;
-      const why = cleanWhy(edgeTypeLabel(n.rel.type), n.rel.why ?? "");
-      const tip = `${e.title}\n${edgeTypeLabel(n.rel.type)}${why ? `：${why}` : ""}`;
-      // data-* 供 main.ts 組預覽（觸控無 hover，<title> 在手機無效）。
-      return `<g class="rg-node-g" data-rel="${esc(e.id)}" data-rtype-key="${esc(n.rel.type)}"
-        data-title="${esc(e.title)}" data-time="${esc(fmtTime(e.timestamp))}" data-risk="${esc(e.riskLevel)}"
-        data-cat="${esc(e.category)}" data-region="${esc(e.region)}" data-rtype="${esc(edgeTypeLabel(n.rel.type))}"
-        data-why="${esc(why)}" tabindex="0" role="button" aria-label="${esc(e.title)}">
-        <title>${esc(tip)}</title>
-        <circle class="rg-hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15" fill="transparent" />
-        <circle class="rg-node risk-${e.riskLevel}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" />
-        <text class="rg-label" x="${lx.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="${anchor}">${esc(trunc(e.title, 8))}</text>
-      </g>`;
-    })
+    .map(({ n, x, y, right }) =>
+      nodeMarkup(n, x, y, {
+        label: trunc(n.event.title, 8),
+        lx: x + (right ? 12 : -12),
+        anchor: right ? "start" : "end",
+        expanded: expand?.nodeId === n.event.id,
+      }),
+    )
     .join("");
+
+  // 2-hop 就地展開：在被展開的主環節點朝外側長出第二圈（細淡虛線邊，最多 SUB_MAX 個）。
+  let subEdges = "";
+  let subNodes = "";
+  const parent = expand && placed.find((p) => p.n.event.id === expand.nodeId);
+  if (expand && parent) {
+    const subs = expand.subs.slice(0, SUB_MAX);
+    const pa = Math.atan2(parent.y - CY, parent.x - CX); // 由中心指向父節點＝朝外方向
+    const span = (Math.min(120, 40 * Math.max(1, subs.length - 1)) * Math.PI) / 180;
+    subs.forEach((s, j) => {
+      const t = subs.length <= 1 ? 0 : (j / (subs.length - 1) - 0.5) * span;
+      const sa = pa + t;
+      const sx = clamp(parent.x + RSUB * Math.cos(sa), PAD, W - PAD);
+      const sy = clamp(parent.y + RSUB * Math.sin(sa), PAD, H - PAD);
+      subEdges += `<path class="rg-edge rg-subedge edge-${s.rel.type}" data-rel="${esc(s.event.id)}" d="${curveBetween(parent.x, parent.y, sx, sy, 6)}" fill="none" stroke-width="1"><title>${esc(edgeTypeLabel(s.rel.type))}</title></path>`;
+      subNodes += nodeMarkup(s, sx, sy, { sub: true });
+    });
+  }
 
   const centerNode = `<g class="rg-center-g">
     <title>${esc(center.title)}</title>
@@ -116,7 +165,7 @@ export function renderRelationGraph(
   container.innerHTML = `
     <div class="rg-head">${head}</div>
     <svg class="rg-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="關聯網圖：點節點看預覽，再按前往聚焦">
-      ${edges}${centerNode}${nodes}
+      ${edges}${subEdges}${centerNode}${nodes}${subNodes}
     </svg>
     <div class="rg-preview" hidden></div>
     <div class="rg-legend" role="group" aria-label="依關聯型別篩選">

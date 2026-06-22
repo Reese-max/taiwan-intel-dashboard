@@ -245,8 +245,9 @@ async function refresh(): Promise<void> {
         return ev ? { event: ev, rel: r } : null;
       })
       .filter((n): n is RelationNode => n !== null);
-    renderRelationGraph(relGraph, center, neighbors);
+    rgCtx = { center, neighbors, net, byId };
     resetRelationGraphState();
+    drawRelationGraph();
   } else if (focusCluster && net.cluster(focusCluster)) {
     const c = net.cluster(focusCluster)!;
     const byId = new Map(all.map((e) => [e.id, e] as const));
@@ -272,13 +273,16 @@ async function refresh(): Promise<void> {
         })
         .filter((n): n is RelationNode => n !== null);
       const head = `🕸 情報群網絡　<b>${c.size ?? memberIds.length}</b> 則 · 圖示核心成員的群內關聯`;
-      renderRelationGraph(relGraph, hubEvent, neighbors, head);
+      rgCtx = { center: hubEvent, neighbors, net, byId, headHtml: head };
       resetRelationGraphState();
+      drawRelationGraph();
     } else {
+      rgCtx = null;
       relGraph.hidden = true;
       relGraph.innerHTML = "";
     }
   } else {
+    rgCtx = null;
     relGraph.hidden = true;
     relGraph.innerHTML = "";
   }
@@ -343,14 +347,62 @@ document.getElementById("eventlist")!.addEventListener("click", (ev) => {
 const relGraphEl = document.getElementById("relationgraph")!;
 const REL_TYPES = ["same-incident", "same-entity", "same-topic"];
 let rgPinned: string | null = null; // 被點選（釘住）的節點 id
+let expandId: string | null = null; // 被就地展開（顯示第二圈）的節點 id
+const rgOffTypes = new Set<string>(); // 被關閉的關聯型別（跨重畫保留，否則展開後篩選會掉）
+// 當前關聯圖上下文，供「展開」互動不經 refresh 就地重畫。
+let rgCtx: {
+  center: IntelEvent;
+  neighbors: RelationNode[];
+  net: NetworkIndex;
+  byId: Map<string, IntelEvent>;
+  headHtml?: string;
+} | null = null;
 
 // 渲染新圖後重置互動狀態（由 refresh 呼叫）。
 function resetRelationGraphState(): void {
   rgPinned = null;
+  expandId = null;
+  rgOffTypes.clear();
 }
 
 function rgSvg(): SVGSVGElement | null {
   return relGraphEl.querySelector("svg.rg-svg");
+}
+
+// 某節點可再展開的關聯數（排除中心與已在主環者）。
+function expandableCount(id: string): number {
+  if (!rgCtx) return 0;
+  const ctx = rgCtx;
+  const existing = new Set([ctx.center.id, ...ctx.neighbors.map((n) => n.event.id)]);
+  return ctx.net.related(id).filter((r) => ctx.byId.has(r.id) && !existing.has(r.id)).length;
+}
+
+// 依 rgCtx＋expandId 就地重畫關聯圖（含 2-hop 第二圈），不經 refresh、不重置中心。
+function drawRelationGraph(): void {
+  if (!rgCtx) return;
+  const { center, neighbors, net, byId, headHtml } = rgCtx;
+  let expand: { nodeId: string; subs: RelationNode[] } | undefined;
+  if (expandId && neighbors.some((n) => n.event.id === expandId)) {
+    const existing = new Set([center.id, ...neighbors.map((n) => n.event.id)]);
+    const subs = net
+      .related(expandId)
+      .map((r): RelationNode | null => {
+        const ev = byId.get(r.id);
+        return ev ? { event: ev, rel: r } : null;
+      })
+      .filter((n): n is RelationNode => n !== null)
+      .filter((n) => !existing.has(n.event.id))
+      .slice(0, 5);
+    if (subs.length) expand = { nodeId: expandId, subs };
+  }
+  renderRelationGraph(relGraphEl, center, neighbors, headHtml, expand);
+  // 重畫會重建圖例（預設全開）；還原型別篩選狀態並重新套用。
+  if (rgOffTypes.size) {
+    rgOffTypes.forEach((type) =>
+      relGraphEl.querySelector(`.rg-legend-btn[data-type="${type}"]`)?.setAttribute("aria-pressed", "false"),
+    );
+    applyTypeFilter();
+  }
 }
 
 function applyHighlight(id: string | null): void {
@@ -370,11 +422,22 @@ function showPreview(g: Element): void {
   const d = (k: string): string => g.getAttribute(`data-${k}`) ?? "";
   const id = d("rel");
   const why = d("why");
+  // 主環節點若還有可展開的關聯，提供「展開關聯 N／收合」；子節點不再提供（避免無限展開）。
+  const exCount = g.classList.contains("rg-subnode") ? 0 : expandableCount(id);
+  const expandBtn =
+    exCount > 0
+      ? `<button type="button" class="rg-expand" data-rel="${esc(id)}">${
+          expandId === id ? "收合" : `展開關聯 ${exCount}`
+        }</button>`
+      : "";
   preview.innerHTML = `
     <div class="rg-pv-head">${riskBadge(d("risk") as RiskLevel)}<span class="rg-pv-title">${esc(d("title"))}</span></div>
     <div class="rg-pv-meta"><span>${esc(d("time"))}</span><span>${esc(d("region"))}・${esc(d("cat"))}</span></div>
     <div class="rg-pv-rel"><b>${esc(d("rtype"))}</b>${why ? `：${esc(why)}` : ""}</div>
-    <button type="button" class="rg-go" data-rel="${esc(id)}">前往 →</button>`;
+    <div class="rg-pv-actions">
+      <button type="button" class="rg-go" data-rel="${esc(id)}">前往 →</button>
+      ${expandBtn}
+    </div>`;
   preview.hidden = false;
 }
 
@@ -391,14 +454,11 @@ function clearSelection(): void {
 function applyTypeFilter(): void {
   const svg = rgSvg();
   if (!svg) return;
-  const off = REL_TYPES.filter(
-    (type) => relGraphEl.querySelector(`.rg-legend-btn[data-type="${type}"]`)?.getAttribute("aria-pressed") === "false",
-  );
   svg.querySelectorAll<SVGElement>(".rg-edge, .rg-node-g").forEach((el) => {
     const type = el.classList.contains("rg-edge")
       ? REL_TYPES.find((t) => el.classList.contains(`edge-${t}`))
       : el.getAttribute("data-rtype-key");
-    el.classList.toggle("flt-off", !!type && off.includes(type));
+    el.classList.toggle("flt-off", !!type && rgOffTypes.has(type));
   });
 }
 
@@ -417,10 +477,23 @@ relGraphEl.addEventListener("click", (ev) => {
     focusEvent(go.dataset.rel);
     return;
   }
+  // 2-hop：展開/收合該節點的第二圈，就地重畫、不導航、不重置中心。
+  const expandBtn = target.closest<HTMLButtonElement>(".rg-expand");
+  if (expandBtn?.dataset.rel) {
+    const eid = expandBtn.dataset.rel;
+    expandId = expandId === eid ? null : eid;
+    drawRelationGraph();
+    rgPinned = null; // 展開時不釘住高亮，讓第二圈完整可見
+    const g = rgSvg()?.querySelector(`.rg-node-g[data-rel="${CSS.escape(eid)}"]`);
+    if (g) showPreview(g);
+    return;
+  }
   const legendBtn = target.closest<HTMLButtonElement>(".rg-legend-btn");
-  if (legendBtn) {
-    const pressed = legendBtn.getAttribute("aria-pressed") === "true";
-    legendBtn.setAttribute("aria-pressed", pressed ? "false" : "true");
+  if (legendBtn?.dataset.type) {
+    const type = legendBtn.dataset.type;
+    if (rgOffTypes.has(type)) rgOffTypes.delete(type);
+    else rgOffTypes.add(type);
+    legendBtn.setAttribute("aria-pressed", rgOffTypes.has(type) ? "false" : "true");
     applyTypeFilter();
     return;
   }
