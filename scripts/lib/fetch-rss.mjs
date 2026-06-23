@@ -164,6 +164,8 @@ function decode(s) {
     .replace(/&quot;/g, '"')
     .replace(/&#39;|&apos;/g, "'")
     .replace(/&nbsp;/g, " ")
+    // 實體解碼後可能現形的標籤（RSS 常見 &lt;p style=…&gt;）：再剝一次。
+    .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }

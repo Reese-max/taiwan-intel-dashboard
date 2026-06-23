@@ -1,6 +1,6 @@
 import type { IntelEvent } from "../types/event";
 import { riskBadge } from "./RiskBadge";
-import { esc } from "../utils/escape";
+import { esc, stripHtml } from "../utils/escape";
 
 export interface RelationChip {
   label: string;
@@ -61,7 +61,7 @@ export function eventCard(e: IntelEvent, relatedCount = 0, relation?: RelationCh
       <header>${riskBadge(e.riskLevel)} <span class="cat">${esc(e.category)}</span>
         <span class="region">${esc(e.region)}</span>${relationChip}${rel}</header>
       <h3>${esc(e.title)}</h3>
-      <p class="summary">${esc(e.summary)}</p>
+      <p class="summary">${esc(stripHtml(e.summary))}</p>
       ${eventContext(e)}
       <footer>
         <time>${esc(time)}</time>
