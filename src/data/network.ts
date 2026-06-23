@@ -24,7 +24,8 @@ export interface NetCluster {
 }
 
 export interface ScopeNetwork {
-  nodes: { id: string; degree: number }[];
+  // nodes 由 build-static 自部署檔剝除（前端只用 edges/clusters；count() 由 edges 算）→ optional。
+  nodes?: { id: string; degree: number }[];
   edges: NetEdge[];
   clusters: NetCluster[];
   stats: Record<string, unknown>;

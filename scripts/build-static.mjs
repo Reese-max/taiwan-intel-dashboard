@@ -56,12 +56,25 @@ function trimEvent(e) {
   }
   return rest;
 }
+// network.json 的 nodes 陣列（佔 ~23%）前端與 globe 皆未使用：NetworkIndex 只讀 edges/clusters，
+// count() 由 edges 建鄰接表算（非 node.degree），globe 不引用 nodes → 整段丟棄。
+function trimNetwork(net) {
+  const dropNodes = (sec) => {
+    if (!sec || typeof sec !== "object" || Array.isArray(sec)) return sec;
+    const { nodes, ...rest } = sec;
+    return rest;
+  };
+  return { ...net, domestic: dropNodes(net.domestic), international: dropNodes(net.international) };
+}
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
 for (const f of readdirSync("public/data")) {
   if (TRIM_FIELDS.has(f)) {
     const arr = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
     const trimmed = Array.isArray(arr) ? arr.map(trimEvent) : arr;
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimmed));
+  } else if (f === "network.json") {
+    const net = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
+    writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimNetwork(net)));
   } else {
     copyFileSync(`public/data/${f}`, `${OUT}/data/${f}`);
   }
