@@ -24,23 +24,81 @@ function cfg() {
   return { base, key, model };
 }
 
+// LLM 防護設定（全部 env 可調）：
+//  - LLM_MAX_CONCURRENCY：全域同時在途呼叫上限（免費 NVIDIA 易排隊/掛死 → 設 2；付費 MiniMax 可 4）
+//  - LLM_TIMEOUT_MS：單次呼叫逾時（無 timeout 時一個 hung call 會占住槽位拖死整輪）
+//  - LLM_MAX_RETRIES：對 429 / 5xx / 逾時 / 網路錯誤的重試次數（429 依 retry-after 退避）
+const LLM_MAX_CONCURRENCY = Math.max(1, Number(process.env.LLM_MAX_CONCURRENCY) || 4);
+const LLM_TIMEOUT_MS = Math.max(1000, Number(process.env.LLM_TIMEOUT_MS) || 90000);
+const LLM_MAX_RETRIES = Math.max(0, Number(process.env.LLM_MAX_RETRIES ?? 2));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// 全域信號量（並發閘）：跨所有呼叫共用，避免一次噴太多 burst 觸發限流/排隊。
+let llmActive = 0;
+const llmQueue = [];
+function llmAcquire() {
+  return new Promise((resolve) => {
+    if (llmActive < LLM_MAX_CONCURRENCY) {
+      llmActive++;
+      resolve();
+    } else {
+      llmQueue.push(resolve);
+    }
+  });
+}
+function llmRelease() {
+  const next = llmQueue.shift();
+  if (next) next(); // 把槽位轉交等待者（llmActive 不變）
+  else llmActive--;
+}
+
 async function chat(messages, { maxTokens = 1024, temperature = 0.3 } = {}) {
   const { base, key, model } = cfg();
-  const res = await fetch(`${base}/chat/completions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature }),
-  });
-  if (!res.ok) throw new Error(`LLM HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const json = await res.json();
-  // 記下實際回應的模型名（誠實 provenance）；端點未回則維持上次/設定值。
-  if (typeof json.model === "string" && json.model) lastRespondedModel = json.model;
-  let content = json.choices?.[0]?.message?.content || "";
-  // 推理模型（如 MiniMax-M2）會輸出 <think>…</think>，need 剝除避免污染摘要/JSON。
-  content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-  // 殘留未閉合 <think> ＝ 推理被 max_tokens 截斷、無有效輸出。
-  if (/<think>/i.test(content)) return "";
-  return content;
+  const body = JSON.stringify({ model, messages, max_tokens: maxTokens, temperature });
+  await llmAcquire();
+  try {
+    for (let attempt = 0; ; attempt++) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), LLM_TIMEOUT_MS);
+      try {
+        const res = await fetch(`${base}/chat/completions`, {
+          method: "POST",
+          signal: ctrl.signal,
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+          body,
+        });
+        // 429 / 5xx 可重試（429 優先依 retry-after 退避）。
+        if ((res.status === 429 || res.status >= 500) && attempt < LLM_MAX_RETRIES) {
+          const ra = Number(res.headers.get("retry-after"));
+          await sleep(Number.isFinite(ra) && ra > 0 ? ra * 1000 : 1000 * 2 ** attempt);
+          continue;
+        }
+        if (!res.ok) throw new Error(`LLM HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        const json = await res.json();
+        // 記下實際回應的模型名（誠實 provenance）；端點未回則維持上次/設定值。
+        if (typeof json.model === "string" && json.model) lastRespondedModel = json.model;
+        let content = json.choices?.[0]?.message?.content || "";
+        // 推理模型（如 MiniMax）會輸出 <think>…</think>，need 剝除避免污染摘要/JSON。
+        content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+        // 殘留未閉合 <think> ＝ 推理被 max_tokens 截斷、無有效輸出。
+        if (/<think>/i.test(content)) return "";
+        return content;
+      } catch (e) {
+        // 逾時（AbortError）或網路錯誤 → 可重試；其餘（含 4xx）直接拋。
+        const retriable =
+          e.name === "AbortError" || /fetch failed|network|ECONN|ETIMEDOUT|terminated/i.test(e.message || "");
+        if (retriable && attempt < LLM_MAX_RETRIES) {
+          await sleep(1000 * 2 ** attempt);
+          continue;
+        }
+        throw e;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+  } finally {
+    llmRelease();
+  }
 }
 
 // 從回應中萃取 JSON（容忍 ```json 圍欄與前後雜訊）
