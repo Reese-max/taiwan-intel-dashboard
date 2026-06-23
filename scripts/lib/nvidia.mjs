@@ -16,59 +16,83 @@ export const llmModel = () => process.env.LLM_MODEL || process.env.NVIDIA_MODEL 
 let lastRespondedModel = "";
 export const respondedModel = () => lastRespondedModel || llmModel();
 
-function cfg() {
-  const base = process.env.LLM_BASE_URL || process.env.NVIDIA_BASE_URL;
-  const key = process.env.LLM_API_KEY || process.env.NVIDIA_API_KEY;
-  const model = llmModel();
-  if (!key) throw new Error("缺少 LLM_API_KEY / NVIDIA_API_KEY（請於 .env 設定）");
-  return { base, key, model };
-}
-
-// LLM 防護設定（全部 env 可調）：
-//  - LLM_MAX_CONCURRENCY：全域同時在途呼叫上限（免費 NVIDIA 易排隊/掛死 → 設 2；付費 MiniMax 可 4）
-//  - LLM_TIMEOUT_MS：單次呼叫逾時（無 timeout 時一個 hung call 會占住槽位拖死整輪）
-//  - LLM_MAX_RETRIES：對 429 / 5xx / 逾時 / 網路錯誤的重試次數（429 依 retry-after 退避）
-const LLM_MAX_CONCURRENCY = Math.max(1, Number(process.env.LLM_MAX_CONCURRENCY) || 4);
-const LLM_TIMEOUT_MS = Math.max(1000, Number(process.env.LLM_TIMEOUT_MS) || 90000);
-const LLM_MAX_RETRIES = Math.max(0, Number(process.env.LLM_MAX_RETRIES ?? 2));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// 全域信號量（並發閘）：跨所有呼叫共用，避免一次噴太多 burst 觸發限流/排隊。
-let llmActive = 0;
-const llmQueue = [];
-function llmAcquire() {
-  return new Promise((resolve) => {
-    if (llmActive < LLM_MAX_CONCURRENCY) {
-      llmActive++;
-      resolve();
-    } else {
-      llmQueue.push(resolve);
-    }
-  });
-}
-function llmRelease() {
-  const next = llmQueue.shift();
-  if (next) next(); // 把槽位轉交等待者（llmActive 不變）
-  else llmActive--;
+// 雙端點 LLM profile（防護設定全部 env 可調）：
+//  - primary：新聞正規化（大量、需可靠）→ 付費端點（LLM_*，預設 MiniMax）。
+//  - summary：AI 摘要（少量、可容忍偶發失敗）→ 可選獨立端點（設 SUMMARY_*，如免費 NVIDIA）；
+//    未設則 fallback 回 primary（向後相容、零行為改變）。
+// 每 profile 各自獨立並發閘 / 逾時 / 重試（互不爭用槽位）。
+function profileCfg(profile) {
+  // 啟用 summary 端點的條件：設了 SUMMARY_API_KEY / SUMMARY_BASE_URL，或旗標 SUMMARY_LLM
+  //（旗標模式複用既有 NVIDIA_* 金鑰/端點/模型，免另設重複 secret）。
+  const summaryOn = process.env.SUMMARY_API_KEY || process.env.SUMMARY_BASE_URL || process.env.SUMMARY_LLM;
+  if (profile === "summary" && summaryOn) {
+    return {
+      name: "summary",
+      base: process.env.SUMMARY_BASE_URL || process.env.NVIDIA_BASE_URL || process.env.LLM_BASE_URL,
+      key: process.env.SUMMARY_API_KEY || process.env.NVIDIA_API_KEY,
+      model: process.env.SUMMARY_MODEL || process.env.NVIDIA_MODEL || "",
+      maxConc: Math.max(1, Number(process.env.SUMMARY_MAX_CONCURRENCY) || 2),
+      timeout: Math.max(1000, Number(process.env.SUMMARY_TIMEOUT_MS) || 30000),
+      retries: Math.max(0, Number(process.env.SUMMARY_MAX_RETRIES ?? 1)),
+    };
+  }
+  // primary（也是 summary 未配置時的 fallback）
+  return {
+    name: "primary",
+    base: process.env.LLM_BASE_URL || process.env.NVIDIA_BASE_URL,
+    key: process.env.LLM_API_KEY || process.env.NVIDIA_API_KEY,
+    model: llmModel(),
+    maxConc: Math.max(1, Number(process.env.LLM_MAX_CONCURRENCY) || 4),
+    timeout: Math.max(1000, Number(process.env.LLM_TIMEOUT_MS) || 90000),
+    retries: Math.max(0, Number(process.env.LLM_MAX_RETRIES ?? 2)),
+  };
 }
 
-async function chat(messages, { maxTokens = 1024, temperature = 0.3 } = {}) {
-  const { base, key, model } = cfg();
-  const body = JSON.stringify({ model, messages, max_tokens: maxTokens, temperature });
-  await llmAcquire();
+// 每 profile 一個並發閘（信號量）。
+function makeGate(max) {
+  let active = 0;
+  const queue = [];
+  return {
+    acquire: () =>
+      new Promise((resolve) => {
+        if (active < max) {
+          active++;
+          resolve();
+        } else {
+          queue.push(resolve);
+        }
+      }),
+    release: () => {
+      const next = queue.shift();
+      if (next) next(); // 槽位轉交等待者（active 不變）
+      else active--;
+    },
+  };
+}
+const llmGates = {};
+const gateFor = (c) => (llmGates[c.name] ||= makeGate(c.maxConc));
+
+async function chat(messages, { maxTokens = 1024, temperature = 0.3, profile = "primary" } = {}) {
+  const c = profileCfg(profile);
+  if (!c.key) throw new Error("缺少 API key（LLM_API_KEY / NVIDIA_API_KEY / SUMMARY_API_KEY）");
+  const gate = gateFor(c);
+  const body = JSON.stringify({ model: c.model, messages, max_tokens: maxTokens, temperature });
+  await gate.acquire();
   try {
     for (let attempt = 0; ; attempt++) {
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), LLM_TIMEOUT_MS);
+      const timer = setTimeout(() => ctrl.abort(), c.timeout);
       try {
-        const res = await fetch(`${base}/chat/completions`, {
+        const res = await fetch(`${c.base}/chat/completions`, {
           method: "POST",
           signal: ctrl.signal,
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${c.key}` },
           body,
         });
         // 429 / 5xx 可重試（429 優先依 retry-after 退避）。
-        if ((res.status === 429 || res.status >= 500) && attempt < LLM_MAX_RETRIES) {
+        if ((res.status === 429 || res.status >= 500) && attempt < c.retries) {
           const ra = Number(res.headers.get("retry-after"));
           await sleep(Number.isFinite(ra) && ra > 0 ? ra * 1000 : 1000 * 2 ** attempt);
           continue;
@@ -87,7 +111,7 @@ async function chat(messages, { maxTokens = 1024, temperature = 0.3 } = {}) {
         // 逾時（AbortError）或網路錯誤 → 可重試；其餘（含 4xx）直接拋。
         const retriable =
           e.name === "AbortError" || /fetch failed|network|ECONN|ETIMEDOUT|terminated/i.test(e.message || "");
-        if (retriable && attempt < LLM_MAX_RETRIES) {
+        if (retriable && attempt < c.retries) {
           await sleep(1000 * 2 ** attempt);
           continue;
         }
@@ -97,7 +121,7 @@ async function chat(messages, { maxTokens = 1024, temperature = 0.3 } = {}) {
       }
     }
   } finally {
-    llmRelease();
+    gate.release();
   }
 }
 
@@ -342,7 +366,7 @@ async function briefEvents(label, events, instruction, maxTokens = 2048) {
             { role: "system", content: "你是情報儀表板的分析助理，用繁體中文寫精煉的情勢摘要。" },
             { role: "user", content: `以下是${label}：\n${lines}\n\n${instruction}` },
           ],
-          { maxTokens, temperature: 0.4 }
+          { maxTokens, temperature: 0.4, profile: "summary" }
         )) || ""
       ).trim();
     } catch {
@@ -415,7 +439,7 @@ export async function summarize({ domestic = [], international = [], clusters = 
             content: `近 5 日每日事件數（最舊到最新）：${dailyCounts.join(", ")}。請用一句 25-45 字的繁體中文描述整體趨勢（上升／下降／持平與幅度感），不要逐日列出、不要前言。`,
           },
         ],
-        { maxTokens: 1500, temperature: 0.3 }
+        { maxTokens: 1500, temperature: 0.3, profile: "summary" }
       );
     } catch {
       trend = "";
@@ -458,7 +482,7 @@ async function summarizeClusters(clusters, domestic, topN = Number(process.env.C
               content: `以下是一個情報群（${c.size} 則相關事件）的代表事件：\n${lines}\n\n請用一句 25-45 字的繁體中文點出這群事件共同在講什麼，不要前言、不要逐條列出。`,
             },
           ],
-          { maxTokens: 1500, temperature: 0.4 }
+          { maxTokens: 1500, temperature: 0.4, profile: "summary" }
         );
         return [c.id, (t || "").trim()];
       } catch {

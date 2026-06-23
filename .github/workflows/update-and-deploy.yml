@@ -67,6 +67,13 @@ jobs:
           NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}
           NVIDIA_BASE_URL=${{ secrets.NVIDIA_BASE_URL }}
           NVIDIA_MODEL=${{ secrets.NVIDIA_MODEL }}
+          SUMMARY_LLM=${{ secrets.SUMMARY_LLM }}
+          SUMMARY_API_KEY=${{ secrets.SUMMARY_API_KEY }}
+          SUMMARY_BASE_URL=${{ secrets.SUMMARY_BASE_URL }}
+          SUMMARY_MODEL=${{ secrets.SUMMARY_MODEL }}
+          SUMMARY_MAX_CONCURRENCY=${{ secrets.SUMMARY_MAX_CONCURRENCY }}
+          SUMMARY_TIMEOUT_MS=${{ secrets.SUMMARY_TIMEOUT_MS }}
+          SUMMARY_MAX_RETRIES=${{ secrets.SUMMARY_MAX_RETRIES }}
           TWINKLE_MCP_URL=${{ secrets.TWINKLE_MCP_URL }}
           TWINKLE_MCP_TOKEN=${{ secrets.TWINKLE_MCP_TOKEN }}
           CWA_API_KEY=${{ secrets.CWA_API_KEY }}
