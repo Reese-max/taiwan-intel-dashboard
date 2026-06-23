@@ -280,7 +280,10 @@ async function refresh(): Promise<void> {
           return ev ? { event: ev, rel: r } : null;
         })
         .filter((n): n is RelationNode => n !== null);
-      const head = `🕸 情報群網絡　<b>${c.size ?? memberIds.length}</b> 則 · 圖示核心成員的群內關聯`;
+      const clusterAi = summary?.clusterSummaries?.[focusCluster];
+      const head = `🕸 情報群網絡　<b>${c.size ?? memberIds.length}</b> 則 · 圖示核心成員的群內關聯${
+        clusterAi ? `<span class="rg-ai-summary">🤖 ${esc(clusterAi)}</span>` : ""
+      }`;
       rgCtx = { center: hubEvent, neighbors, net, byId, headHtml: head };
       resetRelationGraphState();
       drawRelationGraph();
@@ -299,7 +302,7 @@ async function refresh(): Promise<void> {
     lastViewKey = viewKey;
   }
   renderFocusBar(display, net);
-  renderTopClusters(document.getElementById("topclusters")!, net.clusters());
+  renderTopClusters(document.getElementById("topclusters")!, net.clusters(), summary?.clusterSummaries ?? {});
   void mapView.render(display);
   renderTimeline(document.getElementById("timeline")!, display);
   renderAiBrief(document.getElementById("aibrief")!, summary, s.scope);
@@ -618,6 +621,8 @@ void loadSummary().then((s) => {
   summary = s;
   renderAiBrief(document.getElementById("aibrief")!, summary, getState().scope);
   renderDataFreshness(s);
+  // 摘要含 clusterSummaries → 重渲染一次讓 TopClusters/聚焦群標題帶上群摘要。
+  void refresh();
 });
 void refresh();
 setInterval(() => {

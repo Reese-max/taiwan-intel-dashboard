@@ -4,6 +4,11 @@ import type { Scope } from "../types/event";
 export interface AiSummary {
   domestic: string;
   international: string;
+  recent24h?: string;
+  byCategory?: Record<string, string>;
+  trend?: string;
+  dailyCounts?: number[];
+  clusterSummaries?: Record<string, string>;
   model?: string;
   generatedAt: string;
 }
@@ -23,11 +28,26 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
     container.innerHTML = `<div class="ai-brief-head">🤖 AI 情勢摘要</div><p class="empty">摘要尚未生成</p>`;
     return;
   }
-  const text = scope === "domestic" ? summary.domestic : summary.international;
+  const head = `<div class="ai-brief-head">🤖 AI 情勢摘要</div>`;
   const gen = new Date(summary.generatedAt).toLocaleString("zh-TW", { hour12: false });
-  const by = summary.model ? `由 ${esc(summary.model)} 生成` : "AI 生成";
-  container.innerHTML = `
-    <div class="ai-brief-head">🤖 AI 情勢摘要</div>
-    <p class="ai-brief-body">${esc(text)}</p>
-    <p class="ai-brief-meta">${by} · ${esc(gen)}</p>`;
+  const meta = `<p class="ai-brief-meta">${summary.model ? `由 ${esc(summary.model)} 生成` : "AI 生成"} · ${esc(gen)}</p>`;
+
+  // 國際 scope：只顯示國際每日摘要（近24h/趨勢/分類為國內資料）。
+  if (scope !== "domestic") {
+    container.innerHTML = `${head}<p class="ai-brief-body">${esc(summary.international)}</p>${meta}`;
+    return;
+  }
+
+  // 國內：每日 + 近 24h 即時 + 趨勢 + 分類別。
+  const parts = [`<p class="ai-brief-body">${esc(summary.domestic)}</p>`];
+  if (summary.recent24h)
+    parts.push(`<div class="ai-sub"><span class="ai-sub-tag">⚡ 近 24 小時</span>${esc(summary.recent24h)}</div>`);
+  if (summary.trend)
+    parts.push(`<div class="ai-sub"><span class="ai-sub-tag">📈 趨勢</span>${esc(summary.trend)}</div>`);
+  const cats = summary.byCategory ? Object.entries(summary.byCategory) : [];
+  if (cats.length) {
+    const items = cats.map(([c, t]) => `<li><b>${esc(c)}</b>${esc(t)}</li>`).join("");
+    parts.push(`<ul class="ai-cats">${items}</ul>`);
+  }
+  container.innerHTML = `${head}${parts.join("")}${meta}`;
 }

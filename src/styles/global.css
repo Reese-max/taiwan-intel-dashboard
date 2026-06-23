@@ -740,6 +740,53 @@ h4 {
   font-size: 0.72rem;
   margin: 0;
 }
+/* AI 摘要細項：近 24h / 趨勢 / 分類別 */
+.ai-sub {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--color-text);
+  margin: 0 0 0.45em;
+  padding-left: 0.6em;
+  border-left: 2px solid var(--color-accent, #38cdf5);
+}
+.ai-sub-tag {
+  display: inline-block;
+  margin-right: 0.4em;
+  font-weight: 700;
+  color: var(--color-accent, #38cdf5);
+}
+.ai-cats {
+  list-style: none;
+  margin: 0.2em 0 0.6em;
+  padding: 0;
+  display: grid;
+  gap: 0.3em;
+}
+.ai-cats li {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+.ai-cats li b {
+  color: var(--color-text);
+  margin-right: 0.4em;
+}
+/* 情報群 AI 摘要（TopClusters 與聚焦群標題） */
+.cluster-summary {
+  display: block;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--color-accent, #38cdf5);
+  margin: 0.15em 0;
+}
+.rg-ai-summary {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-accent, #38cdf5);
+  margin-top: 0.3em;
+}
 .ai-brief .empty {
   color: var(--color-muted);
   font-size: 0.85rem;

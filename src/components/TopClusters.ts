@@ -8,7 +8,12 @@ function fmtDate(ts?: string): string {
   return d.toLocaleString("zh-TW", { hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
-export function renderTopClusters(container: HTMLElement, clusters: NetCluster[], limit = 8): void {
+export function renderTopClusters(
+  container: HTMLElement,
+  clusters: NetCluster[],
+  summaries: Record<string, string> = {},
+  limit = 8,
+): void {
   const top = clusters
     .slice()
     .sort((a, b) => b.size - a.size || Date.parse(b.latestTs ?? "") - Date.parse(a.latestTs ?? ""))
@@ -20,15 +25,17 @@ export function renderTopClusters(container: HTMLElement, clusters: NetCluster[]
       ${
         top.length
           ? `<ol class="cluster-list">${top
-              .map(
-                (c) => `<li>
+              .map((c) => {
+                const ai = summaries[c.id];
+                return `<li>
                   <button type="button" class="cluster-link" data-cluster="${esc(c.id)}">
                     <span class="cluster-title">${esc(c.representativeTitle || c.id)}</span>
+                    ${ai ? `<span class="cluster-summary">🤖 ${esc(ai)}</span>` : ""}
                     <span class="cluster-meta">${esc(c.topCategory || "情報")}｜${esc((c.regions ?? []).join("、") || "未標地區")}｜${c.sourceCount ?? 0} 源 · ${c.size} 則</span>
                     <span class="cluster-time">${esc(fmtDate(c.latestTs))}</span>
                   </button>
-                </li>`,
-              )
+                </li>`;
+              })
               .join("")}</ol>`
           : `<p class="empty compact">尚無可展開的情報群</p>`
       }

@@ -267,33 +267,142 @@ export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, 
   return merged.slice(0, max);
 }
 
-// 每日情勢摘要（國內 / 國際各一段）
-export async function summarize({ domestic, international }) {
-  const brief = async (label, events) => {
-    if (!events.length) return "（暫無資料）";
-    const lines = events
-      .slice(0, 20)
-      .map((e) => `- [${e.riskLevel}] ${e.category}｜${e.title}：${e.summary}`)
-      .join("\n");
-    return chat(
+// 情勢摘要：每日國內/國際 + 近24h即時 + 分類別 + 趨勢（單一函式集中產生，全部 graceful）。
+const DAY_MS = 86400000;
+// 通用 brief：給事件清單與指令，回繁中摘要；失敗回 "" 不中斷。
+async function briefEvents(label, events, instruction, maxTokens = 2048) {
+  if (!events?.length) return "";
+  const lines = events
+    .slice(0, 20)
+    .map((e) => `- [${e.riskLevel}] ${e.category}｜${e.title}：${e.summary}`)
+    .join("\n");
+  try {
+    return await chat(
       [
-        { role: "system", content: "你是情報儀表板的分析助理，用繁體中文寫精煉的每日情勢摘要。" },
-        {
-          role: "user",
-          content: `以下是${label}今日重點事件：\n${lines}\n\n請寫一段 80-150 字的繁體中文情勢摘要，點出最關鍵的趨勢與風險，不要逐條列出、不要前言。`,
-        },
+        { role: "system", content: "你是情報儀表板的分析助理，用繁體中文寫精煉的情勢摘要。" },
+        { role: "user", content: `以下是${label}：\n${lines}\n\n${instruction}` },
       ],
-      { maxTokens: 2048, temperature: 0.4 }
+      { maxTokens, temperature: 0.4 }
     );
-  };
-  const [dom, intl] = await Promise.all([brief("國內", domestic), brief("國際", international)]);
+  } catch {
+    return "";
+  }
+}
+
+export async function summarize({ domestic = [], international = [], clusters = [] }) {
+  const now = Date.now();
+  const dailyInstr =
+    "請寫一段 80-150 字的繁體中文情勢摘要，點出最關鍵的趨勢與風險，不要逐條列出、不要前言。";
+
+  // 近 24 小時事件（即時脈動）
+  const recent = domestic.filter((e) => {
+    const t = Date.parse(e.timestamp);
+    return Number.isFinite(t) && now - t < DAY_MS;
+  });
+
+  const [dom, intl, recent24h] = await Promise.all([
+    briefEvents("國內今日重點事件", domestic, dailyInstr),
+    briefEvents("國際今日重點事件", international, dailyInstr),
+    briefEvents(
+      "國內最近 24 小時事件",
+      recent,
+      "請寫一段 60-100 字的繁體中文即時脈動摘要，聚焦最近 24 小時最值得注意的動態，不要前言。"
+    ),
+  ]);
+
+  // 分類別摘要（事件量 top 4 類各一句）
+  const byCat = {};
+  for (const e of domestic) (byCat[e.category] ??= []).push(e);
+  const topCats = Object.entries(byCat)
+    .sort((a, b) => b[1].length - a[1].length)
+    .slice(0, 4);
+  const catResults = await Promise.all(
+    topCats.map(([cat, evs]) =>
+      briefEvents(
+        `「${cat}」類事件`,
+        evs,
+        "請用一句 25-45 字的繁體中文點出此類別目前的重點與態勢，不要前言。",
+        1500
+      ).then((t) => [cat, (t || "").trim()])
+    )
+  );
+  const byCategory = Object.fromEntries(catResults.filter(([, t]) => t));
+
+  // 趨勢摘要：5 天每日計數（確定性）→ LLM 敘事一句
+  const dailyCounts = [];
+  for (let i = 4; i >= 0; i--) {
+    const from = now - (i + 1) * DAY_MS;
+    const to = now - i * DAY_MS;
+    dailyCounts.push(
+      domestic.filter((e) => {
+        const t = Date.parse(e.timestamp);
+        return Number.isFinite(t) && t >= from && t < to;
+      }).length
+    );
+  }
+  let trend = "";
+  if (domestic.length) {
+    try {
+      trend = await chat(
+        [
+          { role: "system", content: "你是情報儀表板的趨勢分析助理，用繁體中文寫精煉敘述。" },
+          {
+            role: "user",
+            content: `近 5 日每日事件數（最舊到最新）：${dailyCounts.join(", ")}。請用一句 25-45 字的繁體中文描述整體趨勢（上升／下降／持平與幅度感），不要逐日列出、不要前言。`,
+          },
+        ],
+        { maxTokens: 1500, temperature: 0.3 }
+      );
+    } catch {
+      trend = "";
+    }
+  }
+
   return {
-    domestic: dom,
-    international: intl,
+    domestic: dom || "（暫無資料）",
+    international: intl || "（暫無資料）",
+    recent24h: (recent24h || "").trim(),
+    byCategory,
+    trend: (trend || "").trim(),
+    dailyCounts,
+    clusterSummaries: await summarizeClusters(clusters, domestic),
     // 用實際回應的模型名（chat 已記錄），避免標示成不符的設定值。
     model: respondedModel(),
     generatedAt: new Date().toISOString(),
   };
+}
+
+// 情報群摘要：top N cluster（依成員數）各產一句「這群在講什麼」。存 summary.json，前端用 cluster id join。
+async function summarizeClusters(clusters, domestic, topN = Number(process.env.CLUSTER_SUMMARY_N) || 8) {
+  if (!clusters?.length || !domestic?.length) return {};
+  const byId = new Map(domestic.map((e) => [e.id, e]));
+  const top = [...clusters].sort((a, b) => (b.size ?? 0) - (a.size ?? 0)).slice(0, topN);
+  const results = await Promise.all(
+    top.map(async (c) => {
+      const members = (c.members || [])
+        .map((id) => byId.get(id))
+        .filter(Boolean)
+        .slice(0, 16);
+      if (members.length < 2) return [c.id, ""];
+      const lines = members.map((e) => `- ${e.category}｜${e.title}`).join("\n");
+      try {
+        const t = await chat(
+          [
+            { role: "system", content: "你是情報儀表板的分析助理，用繁體中文一句話概括一組相關事件的共同主題。" },
+            {
+              role: "user",
+              content: `以下是一個情報群（${c.size} 則相關事件）的代表事件：\n${lines}\n\n請用一句 25-45 字的繁體中文點出這群事件共同在講什麼，不要前言、不要逐條列出。`,
+            },
+          ],
+          { maxTokens: 1500, temperature: 0.4 }
+        );
+        return [c.id, (t || "").trim()];
+      } catch {
+        return [c.id, ""];
+      }
+    })
+  );
+  return Object.fromEntries(results.filter(([, t]) => t));
 }
 
 function slug(link, idx) {

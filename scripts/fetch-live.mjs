@@ -396,6 +396,7 @@ async function run() {
   }
 
   // --- 情報網：把新聞事件串成關聯圖（純加法，不影響既有輸出）---
+  let domesticClusters = []; // 供 AI 群摘要用（cluster id 與 build-network 一致，因同 correlateEvents/同 domestic.json）
   try {
     const domesticNews = domesticEvents.filter(isNewsLikeEvent);
     const intlNews = intlEvents.filter(isNewsLikeEvent);
@@ -410,6 +411,7 @@ async function run() {
       },
     };
     writeJson("network.json", network);
+    domesticClusters = network.domestic.clusters || [];
     status.network = { ok: true, edges: network.domestic.stats.edges, clusters: network.domestic.stats.clusters };
     console.log(`情報網：國內新聞 ${network.domestic.stats.events} 事件 → ${network.domestic.stats.edges} 連結、${network.domestic.stats.clusters} 群集`);
   } catch (e) {
@@ -419,7 +421,7 @@ async function run() {
 
   // --- AI 摘要（NVIDIA）---
   try {
-    const summary = await summarize({ domestic: domesticEvents, international: intlEvents });
+    const summary = await summarize({ domestic: domesticEvents, international: intlEvents, clusters: domesticClusters });
     writeJson("summary.json", summary);
     status.summary = { ok: true };
     console.log("AI 摘要：完成");
