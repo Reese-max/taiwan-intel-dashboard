@@ -276,17 +276,23 @@ async function briefEvents(label, events, instruction, maxTokens = 2048) {
     .slice(0, 20)
     .map((e) => `- [${e.riskLevel}] ${e.category}｜${e.title}：${e.summary}`)
     .join("\n");
-  try {
-    return await chat(
-      [
-        { role: "system", content: "你是情報儀表板的分析助理，用繁體中文寫精煉的情勢摘要。" },
-        { role: "user", content: `以下是${label}：\n${lines}\n\n${instruction}` },
-      ],
-      { maxTokens, temperature: 0.4 }
-    );
-  } catch {
-    return "";
-  }
+  const ask = async () => {
+    try {
+      return (
+        (await chat(
+          [
+            { role: "system", content: "你是情報儀表板的分析助理，用繁體中文寫精煉的情勢摘要。" },
+            { role: "user", content: `以下是${label}：\n${lines}\n\n${instruction}` },
+          ],
+          { maxTokens, temperature: 0.4 }
+        )) || ""
+      ).trim();
+    } catch {
+      return "";
+    }
+  };
+  // reasoning model（MiniMax）偶發整段 <think> 吃光 token → 剝除後為空；重試一次。
+  return (await ask()) || (await ask());
 }
 
 export async function summarize({ domestic = [], international = [], clusters = [] }) {
