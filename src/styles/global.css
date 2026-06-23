@@ -81,6 +81,32 @@ h4 {
   border-radius: var(--radius-pill);
   padding: 4px;
 }
+/* 第三個 topbar 子元素（更新徽章）：把 tabs 推到右側群組，避免 space-between 把 tabs 擠到中央。 */
+.topbar .tabs {
+  margin-left: auto;
+}
+.data-freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.df-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.5);
+}
+@media (max-width: 640px) {
+  .data-freshness {
+    display: none;
+  }
+}
 .tabs button {
   background: transparent;
   color: var(--color-muted);

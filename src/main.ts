@@ -32,6 +32,7 @@ app.innerHTML = `
       <button data-scope="domestic" class="active" role="tab">${t.tabDomestic}</button>
       <button data-scope="international" role="tab">${t.tabInternational}</button>
     </nav>
+    <div id="data-freshness" class="data-freshness" aria-live="polite"></div>
   </header>
   <div id="usage-tip" class="usage-tip" hidden>
     <span>🔗＝點我看關聯；點事件可追整張情報網。</span>
@@ -299,7 +300,7 @@ async function refresh(): Promise<void> {
   }
   renderFocusBar(display, net);
   renderTopClusters(document.getElementById("topclusters")!, net.clusters());
-  mapView.render(display);
+  void mapView.render(display);
   renderTimeline(document.getElementById("timeline")!, display);
   renderAiBrief(document.getElementById("aibrief")!, summary, s.scope);
   document.getElementById("count")!.textContent = `${display.length}`;
@@ -596,9 +597,27 @@ applyHash();
 renderUsageTip();
 void renderPoliceHealthPanel(document.getElementById("policehealth")!);
 void renderSourcePanel(document.getElementById("sourcepanel")!);
+// 資料新鮮度徽章（topbar）：吃已載入的 summary（含 generatedAt + model），免額外 fetch。
+function renderDataFreshness(s: AiSummary | null): void {
+  const el = document.getElementById("data-freshness");
+  if (!el || !s?.generatedAt) return;
+  const d = new Date(s.generatedAt);
+  const when = d.toLocaleString("zh-TW", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const model = s.model ? ` · ${esc(s.model)}` : "";
+  el.innerHTML = `<span class="df-dot" aria-hidden="true"></span>資料更新於 ${esc(when)}${model}`;
+  el.title = `資料管線最後生成時間：${d.toLocaleString("zh-TW", { hour12: false })}`;
+}
+
 void loadSummary().then((s) => {
   summary = s;
   renderAiBrief(document.getElementById("aibrief")!, summary, getState().scope);
+  renderDataFreshness(s);
 });
 void refresh();
 setInterval(() => {

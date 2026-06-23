@@ -1,5 +1,5 @@
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import type * as L from "leaflet";
 import type { IntelEvent, RiskLevel } from "../types/event";
 import { esc } from "../utils/escape";
 
@@ -21,18 +21,30 @@ function markerClass(level: RiskLevel): string {
 }
 
 export class MapView {
-  private map: L.Map;
-  private layer = L.layerGroup();
+  private lib!: typeof L;
+  private map!: L.Map;
+  private layer!: L.LayerGroup;
   private located: IntelEvent[] = [];
+  private ready: Promise<void>;
 
   constructor(el: HTMLElement) {
-    this.map = L.map(el).setView([23.7, 121], 7);
+    this.ready = this.init(el);
+  }
+
+  // Leaflet 動態載入：把 ~44KB JS 移出初始 bundle，地圖區塊就緒後才下載並建圖。
+  private async init(el: HTMLElement): Promise<void> {
+    const lib = ((await import("leaflet")) as unknown as { default: typeof L }).default;
+    this.lib = lib;
+    this.layer = lib.layerGroup();
+    this.map = lib.map(el).setView([23.7, 121], 7);
     // 深色底圖（CartoDB dark_matter，免金鑰）以融入深色主題，風險色標點更突出。
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: "© OpenStreetMap © CARTO",
-      subdomains: "abcd",
-      maxZoom: 19,
-    }).addTo(this.map);
+    lib
+      .tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+        attribution: "© OpenStreetMap © CARTO",
+        subdomains: "abcd",
+        maxZoom: 19,
+      })
+      .addTo(this.map);
     this.layer.addTo(this.map);
     // 縮放改變重疊程度 → 縮放結束後重新聚合。
     this.map.on("zoomend", () => this.redraw());
@@ -43,17 +55,20 @@ export class MapView {
     el.appendChild(radar);
   }
 
-  render(events: IntelEvent[]): void {
+  async render(events: IntelEvent[]): Promise<void> {
     this.located = events.filter((e) => e.lat != null && e.lng != null);
+    await this.ready;
     this.redraw();
     if (this.located.length) {
-      const bounds = L.latLngBounds(this.located.map((e) => [e.lat!, e.lng!] as [number, number]));
+      const bounds = this.lib.latLngBounds(
+        this.located.map((e) => [e.lat!, e.lng!] as [number, number]),
+      );
       this.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 8 });
     }
   }
 
   private singleMarker(e: IntelEvent): L.CircleMarker {
-    return L.circleMarker([e.lat!, e.lng!], {
+    return this.lib.circleMarker([e.lat!, e.lng!], {
       radius: 7,
       color: RISK_COLOR[e.riskLevel],
       fillColor: RISK_COLOR[e.riskLevel],
@@ -89,13 +104,14 @@ export class MapView {
       const centroid = this.map.unproject([c.sx / n, c.sy / n], z);
       const top = c.events.reduce((a, b) => (RISK_RANK[b.riskLevel] > RISK_RANK[a.riskLevel] ? b : a)).riskLevel;
       const size = Math.min(48, 26 + Math.round(Math.log2(n) * 6));
-      const icon = L.divIcon({
+      const icon = this.lib.divIcon({
         html: `<div class="map-cluster risk-${top}" style="width:${size}px;height:${size}px">${n}</div>`,
         className: "",
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });
-      L.marker(centroid, { icon, keyboard: false })
+      this.lib
+        .marker(centroid, { icon, keyboard: false })
         .on("click", () => this.map.flyTo(centroid, Math.min(z + 2, 12)))
         .addTo(this.layer);
     }

@@ -33,6 +33,7 @@ execFileSync(
     "--bundle",
     "--minify",
     "--format=esm",
+    "--splitting", // 動態 import（Leaflet）切出獨立 chunk，縮減 main.js 初始體積
     `--outdir=${OUT}/assets`,
     "--loader:.png=dataurl",
   ],
@@ -107,6 +108,33 @@ writeFileSync(
     <script type="module" src="./assets/query.js"></script>
   </body>
 </html>
+`,
+);
+
+// Cloudflare Pages 安全標頭（_headers）。單一寬鬆但有意義的 CSP：全頁適用（含用 unpkg
+// globe.gl + inline script 的 globe.html），仍鎖 frame-ancestors/object-src/base-uri/default-src。
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://unpkg.com blob:",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: https:",
+  "connect-src 'self' https://unpkg.com",
+  "worker-src 'self' blob:",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "form-action 'self'",
+].join("; ");
+writeFileSync(
+  `${OUT}/_headers`,
+  `/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), browsing-topics=()
+  Content-Security-Policy: ${CSP}
 `,
 );
 
