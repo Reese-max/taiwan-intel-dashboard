@@ -16,10 +16,10 @@ const gnews = (q) =>
   `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant`;
 
 // 台灣警政相關每日新聞來源（目標：盡可能收集所有）。已稽核 2026-06-20（scripts/_audit-candidates.mjs 實測 item 數）。
-// 主力＝Google News RSS（聚合全台媒體、含個別被擋的 ETtoday/三立/TVBS/聯合），OR 串同義詞、when:2d 限近 2 日。
+// 主力＝Google News RSS（聚合全台媒體、含個別被擋的 ETtoday/三立/TVBS/聯合），OR 串同義詞、when:5d 限近 5 日。
 // 重複新聞由 nvidia.normalizeDomesticNews 依標題去重。剔除：命案/兒少/應召等查詢回 0、ETtoday-feedburner、
 // 警政署/交通部 RSS（回 0）、Focus Taiwan（404）、聯合報 UDN（被擋）。新增來源前先用 _audit-candidates.mjs 稽核。
-const gq = (q) => gnews(q + " when:2d");
+const gq = (q) => gnews(q + " when:5d");
 export const TW_NEWS_FEEDS = [
   // ── 直連媒體 RSS（穩定）──
   { label: "中央社 社會", url: "https://feeds.feedburner.com/rsscna/social", hint: "治安" },

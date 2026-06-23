@@ -237,7 +237,7 @@ async function run() {
       const policeUniq = uniq.filter((it) => isPoliceRelevant(it.title, it.description));
       policeUniq.sort((a, b) => (Date.parse(b.pubDate) || 0) - (Date.parse(a.pubDate) || 0));
       // LLM 精修最近 N 筆（語意分類＋座標→上地球儀），其餘全量輕量收錄。
-      const ENRICH_N = Number(process.env.NEWS_ENRICH_N) || 300;
+      const ENRICH_N = Number(process.env.NEWS_ENRICH_N) || 500;
       let enriched = [];
       try {
         enriched = await normalizeDomesticNews(policeUniq.slice(0, ENRICH_N), { max: ENRICH_N });
@@ -287,13 +287,31 @@ async function run() {
   if (!status.cwaWarnings?.ok && warningEvents.length)
     console.warn(`天氣警特報${why(status.cwaWarnings)}，沿用舊快照 ${warningEvents.length} 筆`);
   if (!status.pcc?.ok && tenderEvents.length) console.warn(`採購${why(status.pcc)}，沿用舊快照 ${tenderEvents.length} 筆`);
-  const newsEvents =
-    status.twnews?.ok && twnews.length
-      ? twnews
-      : dropStale(status.twnews)
-        ? []
-        : oldDomestic.filter((e) => e.source?.datasetId === "tw-news");
-  if (!status.twnews?.ok && newsEvents.length) console.warn(`台灣新聞${why(status.twnews)}，沿用舊快照 ${newsEvents.length} 筆`);
+  // 跨輪累積 + 保留窗：成功時 union 本輪與舊 tw-news（recordRef→標題去重，本輪優先以保留 LLM 精修版），
+  // 再剪掉超過保留窗者 → 量隨時間複利成長到保留窗深度，每輪仍只 when:Nd 抓增量、LLM 成本不變。
+  const RETENTION_DAYS = Number(process.env.NEWS_RETENTION_DAYS) || 14;
+  const retentionFrom = Date.now() - RETENTION_DAYS * 864e5;
+  const oldNews = oldDomestic.filter((e) => e.source?.datasetId === "tw-news");
+  const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
+  let newsEvents;
+  if (status.twnews?.ok && twnews.length) {
+    const seen = new Set();
+    newsEvents = [];
+    for (const e of [...twnews, ...oldNews]) {
+      const k = newsDedupKey(e);
+      if (k && seen.has(k)) continue;
+      const t = Date.parse(e.timestamp);
+      if (Number.isFinite(t) && t < retentionFrom) continue; // 超過保留窗丟棄
+      if (k) seen.add(k);
+      newsEvents.push(e);
+    }
+    console.log(
+      `台灣新聞累積：本輪 ${twnews.length}＋舊 ${oldNews.length} → 去重保留 ${newsEvents.length} 筆（保留窗 ${RETENTION_DAYS} 天）`,
+    );
+  } else {
+    newsEvents = dropStale(status.twnews) ? [] : oldNews;
+    if (!status.twnews?.ok && newsEvents.length) console.warn(`台灣新聞${why(status.twnews)}，沿用舊快照 ${newsEvents.length} 筆`);
+  }
 
   let policeEvents = [];
   let policeHourly = null;
