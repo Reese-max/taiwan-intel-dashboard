@@ -34,8 +34,9 @@ function profileCfg(profile) {
       key: process.env.SUMMARY_API_KEY || process.env.NVIDIA_API_KEY,
       model: process.env.SUMMARY_MODEL || process.env.NVIDIA_MODEL || "",
       maxConc: Math.max(1, Number(process.env.SUMMARY_MAX_CONCURRENCY) || 2),
-      timeout: Math.max(1000, Number(process.env.SUMMARY_TIMEOUT_MS) || 30000),
-      retries: Math.max(0, Number(process.env.SUMMARY_MAX_RETRIES ?? 1)),
+      // 有 primary fallback 當安全網 → 摘要端點快速失敗即退回（重試掛死的免費層無意義）。
+      timeout: Math.max(1000, Number(process.env.SUMMARY_TIMEOUT_MS) || 25000),
+      retries: Math.max(0, Number(process.env.SUMMARY_MAX_RETRIES ?? 0)),
     };
   }
   // primary（也是 summary 未配置時的 fallback）
@@ -74,8 +75,8 @@ function makeGate(max) {
 const llmGates = {};
 const gateFor = (c) => (llmGates[c.name] ||= makeGate(c.maxConc));
 
-async function chat(messages, { maxTokens = 1024, temperature = 0.3, profile = "primary" } = {}) {
-  const c = profileCfg(profile);
+// 對單一端點發請求（含並發閘 / 逾時 / 重試）。回空字串＝推理被截斷無有效輸出。
+async function chatVia(c, messages, maxTokens, temperature) {
   if (!c.key) throw new Error("缺少 API key（LLM_API_KEY / NVIDIA_API_KEY / SUMMARY_API_KEY）");
   const gate = gateFor(c);
   const body = JSON.stringify({ model: c.model, messages, max_tokens: maxTokens, temperature });
@@ -122,6 +123,22 @@ async function chat(messages, { maxTokens = 1024, temperature = 0.3, profile = "
     }
   } finally {
     gate.release();
+  }
+}
+
+// 編排：summary profile 先試摘要端點（如免費 NVIDIA）；空或失敗則退回 primary（付費 MiniMax）補上，
+// 確保摘要永遠完整、又能在 NVIDIA 成功時省成本。其餘 profile 直走對應端點。
+async function chat(messages, { maxTokens = 1024, temperature = 0.3, profile = "primary" } = {}) {
+  const c = profileCfg(profile);
+  const primary = profileCfg("primary");
+  const hasFallback = profile === "summary" && c.name !== primary.name;
+  try {
+    const out = await chatVia(c, messages, maxTokens, temperature);
+    if (!out && hasFallback) return await chatVia(primary, messages, maxTokens, temperature);
+    return out;
+  } catch (e) {
+    if (hasFallback) return await chatVia(primary, messages, maxTokens, temperature);
+    throw e;
   }
 }
 
