@@ -97,18 +97,24 @@ async function fetchProvStat(): Promise<ProvStat | null> {
 export function renderKpiStrip(container: HTMLElement, events: IntelEvent[]): void {
   const eventsSpark = dailyCounts(events);
   const riskSpark = dailyCounts(events, isElevated);
-  const today = eventsSpark[eventsSpark.length - 1] ?? 0;
-  const yesterday = eventsSpark[eventsSpark.length - 2] ?? 0;
-  const delta = today - yesterday;
+  // 近 24 小時滾動視窗取代「日曆當日」：不會清晨偏低、跨午夜歸零、無嚇人負值。
+  const now = Date.now();
+  const inWindow = (e: IntelEvent, fromAgo: number, toAgo: number): boolean => {
+    const t = Date.parse(e.timestamp);
+    return Number.isFinite(t) && now - t >= fromAgo && now - t < toAgo;
+  };
+  const last24h = events.filter((e) => inWindow(e, 0, DAY_MS)).length;
+  const prev24h = events.filter((e) => inWindow(e, DAY_MS, 2 * DAY_MS)).length;
+  const delta = last24h - prev24h;
   const riskCount = events.filter(isElevated).length;
   const riskPct = events.length ? Math.round((riskCount / events.length) * 100) : 0;
 
   const todayCard = card(
     "is-accent",
-    "今日事件數",
-    String(today),
+    "近 24 小時",
+    String(last24h),
     eventsSpark,
-    delta >= 0 ? `+${delta} 近時` : `${delta} 近時`,
+    delta >= 0 ? `+${delta} 較前日` : `${delta} 較前日`,
   );
   const riskCard = card("is-risk", "危急 / 高風險", String(riskCount), riskSpark, `${riskPct}% 占比`);
 
