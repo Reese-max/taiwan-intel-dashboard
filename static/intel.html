@@ -397,7 +397,7 @@ function mapEvent(ev) {
     time: fmtTime(ev.timestamp || ev.source?.fetchedAt),
     iso: ev.timestamp || ev.source?.fetchedAt || '',
     desc: ev.summary || '',
-    url: ev.source?.url || '',
+    url: ev.source?.url || ev.source?.recordRef || '',
     srcName: ev.source?.name || '',
     sourceType: ev.source?.type || '',
     sourceFetchedAt: ev.source?.fetchedAt || '',

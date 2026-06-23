@@ -42,9 +42,12 @@ function eventContext(e: IntelEvent): string {
 export function eventCard(e: IntelEvent, relatedCount = 0, relation?: RelationChip): string {
   const time = fmtDate(e.timestamp);
   const fetched = fmtDate(e.source.fetchedAt);
-  const src = e.source.url
-    ? `<a class="src-link" href="${esc(e.source.url)}" target="_blank" rel="noopener">↗ ${esc(e.source.name)}</a>`
-    : `<span class="src-link src-none" title="無原始連結">${esc(e.source.name)}（無原始連結）</span>`;
+  // url 與 recordRef 相同時 build-static 會省略 url（剝肥），故 fallback 至 recordRef。
+  const linkUrl = e.source.url ?? e.source.recordRef;
+  const src =
+    linkUrl && /^https?:\/\//.test(linkUrl)
+      ? `<a class="src-link" href="${esc(linkUrl)}" target="_blank" rel="noopener">↗ ${esc(e.source.name)}</a>`
+      : `<span class="src-link src-none" title="無原始連結">${esc(e.source.name)}（無原始連結）</span>`;
   const ref = e.source.recordRef
     ? `<span class="ref" title="原始識別">編號 ${esc(e.source.recordRef)}</span>`
     : "";

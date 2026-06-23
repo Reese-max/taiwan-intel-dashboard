@@ -43,13 +43,24 @@ execFileSync(
 // 複製資料快照。domestic/international：剝掉前端用不到的 aiEntities/aiTopic（僅供
 // build-network 關聯用，已先跑完）並壓掉縮排，縮減前端 payload；其餘原樣複製。
 mkdirSync(`${OUT}/data`, { recursive: true });
+// 前端 payload 剝肥：除 aiEntities/aiTopic（僅供 build-network）外，
+//  - source.query：每事件重複存的 GN 查詢字串（per-source 相同、佔 ~13%），來源級資訊已在 provenance/SourcePanel。
+//  - source.url：99.7% 與 recordRef 相同（佔 ~20%），相同則省略，前端 fallback 至 recordRef；少數 gov（url≠ref）才保留。
+// 兩刀約省 domestic 三分之一體積。前端（EventCard）與 globe（intel.html）皆已對缺欄位 fallback。
+function trimEvent(e) {
+  const { aiEntities, aiTopic, ...rest } = e;
+  if (rest.source && typeof rest.source === "object") {
+    const { query, url, ...src } = rest.source;
+    if (url && url !== src.recordRef) src.url = url; // 與 recordRef 不同才保留
+    rest.source = src;
+  }
+  return rest;
+}
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
 for (const f of readdirSync("public/data")) {
   if (TRIM_FIELDS.has(f)) {
     const arr = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
-    const trimmed = Array.isArray(arr)
-      ? arr.map(({ aiEntities, aiTopic, ...rest }) => rest)
-      : arr;
+    const trimmed = Array.isArray(arr) ? arr.map(trimEvent) : arr;
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimmed));
   } else {
     copyFileSync(`public/data/${f}`, `${OUT}/data/${f}`);
