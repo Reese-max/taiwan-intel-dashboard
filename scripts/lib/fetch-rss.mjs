@@ -161,6 +161,12 @@ export const TW_NEWS_FEEDS = [
   { label: "調查局官網", url: gq("site:mjib.gov.tw"), hint: "治安" },
   { label: "央廣 RTI 治安", url: gq("site:rti.org.tw 警 OR 詐 OR 毒 OR 案"), hint: "治安" },
   { label: "Taiwan News EN 治安", url: gq("site:taiwannews.com.tw 警 OR 詐 OR 毒 OR 案 OR 逮 OR 起訴"), hint: "治安" },
+
+  // ══ 第六輪擴充（2026-06-23 第二輪官方平台稽核 ≥3；臺南改用正確域名 tnpd.gov.tw）══
+  { label: "臺南市警局官網", url: gq("site:tnpd.gov.tw"), hint: "治安" },
+  { label: "彰化縣警局官網", url: gq("site:chpb.gov.tw"), hint: "治安" },
+  { label: "高檢署官網", url: gq("site:tph.moj.gov.tw"), hint: "治安" },
+  { label: "新北市消防局官網", url: gq("site:fire.ntpc.gov.tw"), hint: "災防" },
 ];
 
 function decode(s) {
