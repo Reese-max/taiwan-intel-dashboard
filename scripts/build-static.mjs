@@ -6,6 +6,7 @@ import {
   mkdirSync,
   copyFileSync,
   readdirSync,
+  readFileSync,
   writeFileSync,
   existsSync,
   statSync,
@@ -38,10 +39,20 @@ execFileSync(
   { stdio: "inherit" },
 );
 
-// 複製資料快照
+// 複製資料快照。domestic/international：剝掉前端用不到的 aiEntities/aiTopic（僅供
+// build-network 關聯用，已先跑完）並壓掉縮排，縮減前端 payload；其餘原樣複製。
 mkdirSync(`${OUT}/data`, { recursive: true });
+const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
 for (const f of readdirSync("public/data")) {
-  copyFileSync(`public/data/${f}`, `${OUT}/data/${f}`);
+  if (TRIM_FIELDS.has(f)) {
+    const arr = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
+    const trimmed = Array.isArray(arr)
+      ? arr.map(({ aiEntities, aiTopic, ...rest }) => rest)
+      : arr;
+    writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimmed));
+  } else {
+    copyFileSync(`public/data/${f}`, `${OUT}/data/${f}`);
+  }
 }
 
 // 首頁＝美化後的儀表板（地圖＋清單＋情報網，吃 data/*.json）。

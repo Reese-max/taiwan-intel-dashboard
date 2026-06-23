@@ -199,8 +199,15 @@ function renderFocusBar(events: IntelEvent[], net: NetworkIndex): void {
 
 async function refresh(): Promise<void> {
   const s = getState();
-  if (!cache[s.scope]) cache[s.scope] = await loadEvents(s.scope);
-  if (!netCache[s.scope]) netCache[s.scope] = await loadNetwork(s.scope);
+  // 事件與情報網兩支 fetch 並行（原本串行，第二支要等第一支完成才開始）。
+  if (!cache[s.scope] || !netCache[s.scope]) {
+    const [ev, net] = await Promise.all([
+      cache[s.scope] ?? loadEvents(s.scope),
+      netCache[s.scope] ?? loadNetwork(s.scope),
+    ]);
+    cache[s.scope] = ev;
+    netCache[s.scope] = net;
+  }
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
   renderKpiStrip(document.getElementById("kpistrip")!, all);
