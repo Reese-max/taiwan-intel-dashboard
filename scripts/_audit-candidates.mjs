@@ -1,6 +1,6 @@
 // 一次性：稽核候選新聞來源可靠度。讀 JSON {queries:[], feeds:[{label,url}]}。
 // 用法：node --env-file=.env scripts/_audit-candidates.mjs <candidates.json>
-// 輸出：每條的 item 數（Google News 查詢自動套 when:2d）；可靠門檻預設 >=3。用後刪。
+// 輸出：每條的 item 數（Google News 查詢自動套 when:5d，與 production gq() 對齊）；可靠門檻預設 >=3。用後刪。
 import { readFileSync } from "node:fs";
 import { fetchRssItems } from "./lib/fetch-rss.mjs";
 
@@ -9,7 +9,7 @@ if (!path) { console.error("需要 candidates.json 路徑"); process.exit(1); }
 const { queries = [], feeds = [] } = JSON.parse(readFileSync(path, "utf8"));
 
 const gnews = (q) =>
-  `https://news.google.com/rss/search?q=${encodeURIComponent(q + " when:2d")}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant`;
+  `https://news.google.com/rss/search?q=${encodeURIComponent(q + " when:5d")}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant`;
 
 // 候選：Google News 查詢 + 直連 RSS
 const targets = [

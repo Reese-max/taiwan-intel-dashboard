@@ -151,6 +151,16 @@ export const TW_NEWS_FEEDS = [
   { label: "GN 一氧化碳中毒", url: gq("一氧化碳 中毒 死亡 OR 送醫"), hint: "災防" },
   { label: "GN 溺水戲水", url: gq("溺水 OR 戲水 OR 落水 搜救 OR 死亡"), hint: "災防" },
   { label: "GN 登山山域事故", url: gq("登山 OR 山域 迷途 OR 受困 OR 搜救"), hint: "災防" },
+
+  // ══ 第五輪擴充（2026-06-23 _audit-candidates 實測 when:5d ≥3；聚焦第一手官方平台，提升官方來源占比）══
+  // 直連媒體 RSS 經測全數 403/404（中時/三立/風傳媒/ETtoday/TVBS…），故新平台一律走 GN site: 路徑。
+  { label: "消防署官網", url: gq("site:nfa.gov.tw"), hint: "災防" },
+  { label: "臺北市警局官網", url: gq("site:police.gov.taipei"), hint: "治安" },
+  { label: "臺中市警局官網", url: gq("site:police.taichung.gov.tw"), hint: "治安" },
+  { label: "刑事警察局官網", url: gq("site:cib.npa.gov.tw"), hint: "治安" },
+  { label: "調查局官網", url: gq("site:mjib.gov.tw"), hint: "治安" },
+  { label: "央廣 RTI 治安", url: gq("site:rti.org.tw 警 OR 詐 OR 毒 OR 案"), hint: "治安" },
+  { label: "Taiwan News EN 治安", url: gq("site:taiwannews.com.tw 警 OR 詐 OR 毒 OR 案 OR 逮 OR 起訴"), hint: "治安" },
 ];
 
 function decode(s) {
