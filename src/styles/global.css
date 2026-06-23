@@ -1662,6 +1662,39 @@ html {
     filter: drop-shadow(0 0 5px rgba(249, 115, 22, 0.9));
   }
 }
+/* 地圖聚合泡泡：同網格多事件聚成一顆計數圓，依群內最高風險上色，點擊放大去聚合。 */
+.map-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  border: 2px solid rgba(8, 12, 23, 0.85);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.22), 0 0 12px rgba(56, 205, 245, 0.28);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease);
+}
+.map-cluster:hover {
+  transform: scale(1.12);
+}
+.map-cluster.risk-low {
+  background: rgba(59, 130, 246, 0.92);
+}
+.map-cluster.risk-medium {
+  background: rgba(234, 179, 8, 0.92);
+  color: #1a1205;
+}
+.map-cluster.risk-high {
+  background: rgba(249, 115, 22, 0.92);
+}
+.map-cluster.risk-critical {
+  background: rgba(239, 68, 68, 0.94);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25), 0 0 14px rgba(239, 68, 68, 0.5);
+}
 /* 手機底部固定快捷列（桌面隱藏，≤640px 顯示；觸控目標 ≥44px）。 */
 .mobile-quickbar {
   display: none;
