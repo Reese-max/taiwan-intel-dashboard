@@ -20,7 +20,7 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
     </select>
     <select id="f-range" aria-label="時間範圍">
       <option value="3">近 3 天</option>
-      <option value="7">近 7 天</option>
+      <option value="5">近 5 天</option>
       <option value="">全部時間</option>
     </select>
     <div class="search-box">

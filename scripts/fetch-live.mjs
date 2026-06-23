@@ -289,7 +289,7 @@ async function run() {
   if (!status.pcc?.ok && tenderEvents.length) console.warn(`採購${why(status.pcc)}，沿用舊快照 ${tenderEvents.length} 筆`);
   // 跨輪累積 + 保留窗：成功時 union 本輪與舊 tw-news（recordRef→標題去重，本輪優先以保留 LLM 精修版），
   // 再剪掉超過保留窗者 → 量隨時間複利成長到保留窗深度，每輪仍只 when:Nd 抓增量、LLM 成本不變。
-  const RETENTION_DAYS = Number(process.env.NEWS_RETENTION_DAYS) || 14;
+  const RETENTION_DAYS = Number(process.env.NEWS_RETENTION_DAYS) || 5;
   const retentionFrom = Date.now() - RETENTION_DAYS * 864e5;
   const oldNews = oldDomestic.filter((e) => e.source?.datasetId === "tw-news");
   const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");

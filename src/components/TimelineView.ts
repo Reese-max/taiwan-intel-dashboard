@@ -3,7 +3,8 @@ import { esc } from "../utils/escape";
 
 export function renderTimeline(container: HTMLElement, events: IntelEvent[]): void {
   const days: { label: string; count: number }[] = [];
-  for (let i = 6; i >= 0; i--) {
+  // 5 天視窗，對齊 5 天保留窗（超窗事件已被剪除，畫 7 天會出現誤導的空日）。
+  for (let i = 4; i >= 0; i--) {
     const d = new Date(Date.now() - i * 86400000);
     const label = `${d.getMonth() + 1}/${d.getDate()}`;
     const count = events.filter((e) => {
@@ -32,7 +33,7 @@ export function renderTimeline(container: HTMLElement, events: IntelEvent[]): vo
       .map((e) => new Date(e.timestamp).getTime())
       .reduce((a, b) => Math.max(a, b), 0);
     const latestLabel = new Date(latest).toLocaleDateString("zh-TW");
-    hint = `<p class="tl-hint">近 7 天無事件，最近事件於 ${esc(latestLabel)}</p>`;
+    hint = `<p class="tl-hint">近 5 天無事件，最近事件於 ${esc(latestLabel)}</p>`;
   }
 
   container.innerHTML = `<div class="timeline">${bars}</div>${hint}`;

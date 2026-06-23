@@ -5,6 +5,6 @@ export const t = {
   tabInternational: "國際",
   map: "情勢地圖",
   events: "情報列表",
-  timeline: "近 7 天",
+  timeline: "近 5 天",
   sources: "資料來源",
 };

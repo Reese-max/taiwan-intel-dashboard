@@ -12,10 +12,10 @@ interface ProvStat {
 // undefined＝尚未抓取；null＝抓取失敗；物件＝已抓取（module 內快取，僅 fetch 一次）
 let provCache: ProvStat | null | undefined;
 
-// 最近 7 天每日計數（依本地日期分桶），沿用 TimelineView 的分桶邏輯
+// 最近 5 天每日計數（對齊 5 天保留窗，避免顯示被剪掉的空日），沿用 TimelineView 的分桶邏輯
 function dailyCounts(events: IntelEvent[], predicate?: (e: IntelEvent) => boolean): number[] {
   const out: number[] = [];
-  for (let i = 6; i >= 0; i--) {
+  for (let i = 4; i >= 0; i--) {
     const d = new Date(Date.now() - i * DAY_MS);
     const count = events.filter((e) => {
       if (predicate && !predicate(e)) return false;
