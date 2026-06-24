@@ -1,17 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { resolveFetchMode } from "../scripts/ci-fetch-mode.mjs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import {
+  FETCH_MODE_CHOICES,
+  resolveFetchMode,
+  writeGithubOutput,
+} from "../scripts/ci-fetch-mode.mjs";
 
 describe("resolveFetchMode", () => {
   it("maps hourly cron to CWA + police + missing + Taiwan news + international RSS", () => {
     const mode = resolveFetchMode({ schedule: "5 * * * *" });
     expect(mode.label).toBe("hourly");
     expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("maps daily refresh cron to full exclusive refresh including CWA and international RSS", () => {
     const mode = resolveFetchMode({ schedule: "30 18 * * *" });
     expect(mode.label).toBe("refresh");
     expect(mode.args).toBe("--sources=cwa,pcc,police,missing,twnews,rss,judicial --exclusive");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("accepts explicit daily mode alias", () => {
@@ -19,6 +28,40 @@ describe("resolveFetchMode", () => {
     expect(mode.label).toBe("refresh");
     expect(mode.args).toContain("judicial");
     expect(mode.args).toContain("--exclusive");
+  });
+
+  it("supports a manual CWA-only mode with matching assertions", () => {
+    const mode = resolveFetchMode({ mode: "cwa" });
+    expect(mode.label).toBe("cwa");
+    expect(mode.args).toBe("--sources=cwa");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings");
+  });
+
+  it("supports a manual international-only RSS mode with feed diversity assertions", () => {
+    const mode = resolveFetchMode({ mode: "international" });
+    expect(mode.label).toBe("international");
+    expect(mode.args).toBe("--sources=rss");
+    expect(mode.assertArgs).toBe("--require=international --min-international-feeds=10 --min-international-raw=50");
+  });
+
+  it("accepts rss as an alias for international-only mode", () => {
+    const mode = resolveFetchMode({ mode: "rss" });
+    expect(mode.label).toBe("international");
+    expect(mode.args).toBe("--sources=rss");
+  });
+
+  it("supports a manual CWA + international smoke mode", () => {
+    const mode = resolveFetchMode({ mode: "cwa-international" });
+    expect(mode.label).toBe("cwa-international");
+    expect(mode.args).toBe("--sources=cwa,rss");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50");
+  });
+
+  it("supports a manual Taiwan news mode with source-specific assertions", () => {
+    const mode = resolveFetchMode({ mode: "twnews" });
+    expect(mode.label).toBe("twnews");
+    expect(mode.args).toBe("--sources=twnews,missing");
+    expect(mode.assertArgs).toBe("--require=twnews");
   });
 
   it("keeps legacy manual police mode as hourly-compatible mode", () => {
@@ -64,5 +107,31 @@ describe("resolveFetchMode", () => {
     expect(mode.label).toBe("refresh");
     expect(mode.args).toContain("judicial");
     expect(mode.args).toContain("--exclusive");
+  });
+
+  it("keeps workflow_dispatch choices in sync with resolver choices", () => {
+    const workflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
+    const match = workflow.match(/options:\s*\[([^\]]+)\]/);
+    expect(match?.[1]).toBeTruthy();
+    const workflowChoices = match![1].split(",").map((s) => s.trim());
+    expect(workflowChoices).toEqual(FETCH_MODE_CHOICES);
+  });
+
+  it("writes GitHub output for label, fetch args, and assertion args", () => {
+    const dir = mkdtempSync(join(tmpdir(), "ci-fetch-mode-"));
+    const out = join(dir, "output");
+    try {
+      writeGithubOutput(resolveFetchMode({ mode: "international" }), out);
+      expect(readFileSync(out, "utf8")).toBe(
+        [
+          "label=international",
+          "args=--sources=rss",
+          "assert_args=--require=international --min-international-feeds=10 --min-international-raw=50",
+          "",
+        ].join("\n"),
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

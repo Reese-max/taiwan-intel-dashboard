@@ -9,10 +9,10 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "hourly（CWA+國際+警政+新聞）或 refresh（每日完整，含 LLM）"
+        description: "hourly / cwa / international / cwa-international / twnews / daily / refresh"
         default: hourly
         type: choice
-        options: [hourly, police, refresh]
+        options: [hourly, cwa, international, cwa-international, twnews, daily, refresh, police]
 
 # peaceiris 需要 contents:write 才能推 gh-pages
 permissions:
@@ -93,7 +93,7 @@ jobs:
       - name: 驗證必要來源已更新
         env:
           ALLOW_STALE_CWA: ${{ vars.ALLOW_STALE_CWA }}
-        run: node scripts/assert-pipeline-sources.mjs --require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50
+        run: node scripts/assert-pipeline-sources.mjs ${{ steps.mode.outputs.assert_args }}
 
       - name: 建置靜態網站
         run: npm run build
