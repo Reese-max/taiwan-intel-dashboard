@@ -4,15 +4,15 @@ name: 更新資料並部署
 # 把產出的靜態網站 force-push 到 gh-pages 分支（同時當「網站」與「增量狀態庫」）。
 on:
   schedule:
-    - cron: "5 * * * *" # 每小時 :05 → police+news 增量（警政、新聞、失蹤人口）
+    - cron: "5 * * * *" # 每小時 :05 → CWA+國際+警政+新聞+失蹤人口（非 exclusive）
     - cron: "30 18 * * *" # 每日 18:30 UTC ≈ 02:30 台北 → full refresh（exclusive 清重建）
   workflow_dispatch:
     inputs:
       mode:
-        description: "police（每小時增量）或 refresh（每日完整，含新聞+LLM）"
-        default: police
+        description: "hourly（CWA+國際+警政+新聞）或 refresh（每日完整，含 LLM）"
+        default: hourly
         type: choice
-        options: [police, refresh]
+        options: [hourly, police, refresh]
 
 # peaceiris 需要 contents:write 才能推 gh-pages
 permissions:
@@ -82,16 +82,18 @@ jobs:
       - name: 決定抓取模式
         id: mode
         run: |
-          if [ "${{ github.event.schedule }}" = "30 18 * * *" ] || [ "${{ github.event.inputs.mode }}" = "refresh" ]; then
-            echo "args=--sources=police,missing,twnews --exclusive" >> "$GITHUB_OUTPUT"
-            echo "選用 refresh（完整，含新聞+LLM）"
-          else
-            echo "args=--sources=police,missing,twnews" >> "$GITHUB_OUTPUT"
-            echo "選用 police+news（每小時增量，含警政、新聞、失蹤人口；非 exclusive 保留其他資料）"
-          fi
+          node scripts/ci-fetch-mode.mjs \
+            --schedule="${{ github.event.schedule }}" \
+            --mode="${{ github.event.inputs.mode }}" \
+            --github-output="$GITHUB_OUTPUT"
 
       - name: 抓取即時資料
         run: node --env-file=.env scripts/fetch-live.mjs ${{ steps.mode.outputs.args }}
+
+      - name: 驗證必要來源已更新
+        env:
+          ALLOW_STALE_CWA: ${{ vars.ALLOW_STALE_CWA }}
+        run: node scripts/assert-pipeline-sources.mjs --require=cwa,cwaWarnings,international
 
       - name: 建置靜態網站
         run: npm run build
