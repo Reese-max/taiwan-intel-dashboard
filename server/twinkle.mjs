@@ -2,6 +2,7 @@
 // 三個查詢：詐騙（query_rows × 3 清單）、判決（search_judicial）、毒品（search_drug）。
 
 import { McpClient } from "../scripts/lib/mcp-client.mjs";
+import { parseTwinkleRowsText } from "../scripts/lib/twinkle-query.mjs";
 import { sqlEscape } from "./normalize.mjs";
 
 const FRAUD_LIMIT = 25;
@@ -18,7 +19,7 @@ async function callTool(name, args) {
   const { url, token } = getCreds();
   const client = new McpClient(url, token);
   await client.init();
-  return JSON.parse(await client.callTool(name, args));
+  return parseTwinkleRowsText(await client.callTool(name, args), name);
 }
 
 // 詐騙查驗：三份清單並行查（皆 ILIKE 子字串）。回 { stopped, gambling, debunk }。
@@ -28,7 +29,7 @@ export async function fraudLookup(q) {
   const client = new McpClient(url, token);
   await client.init();
   const rows = async (dataset_id, where) =>
-    JSON.parse(await client.callTool("query_rows", { dataset_id, where, limit: FRAUD_LIMIT }));
+    parseTwinkleRowsText(await client.callTool("query_rows", { dataset_id, where, limit: FRAUD_LIMIT }), "query_rows");
   const [stopped, gambling, debunk] = await Promise.all([
     rows("176455", `網域 ILIKE '%${safe}%'`),
     rows("160055", `WEBURL ILIKE '%${safe}%' OR WEBSITE_NM ILIKE '%${safe}%'`),

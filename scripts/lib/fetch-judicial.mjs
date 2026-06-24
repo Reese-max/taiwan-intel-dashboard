@@ -3,6 +3,7 @@
 // 法院代碼前兩碼 → 城市中心座標（衍生定位，供地球儀標點）。
 import { McpClient } from "./mcp-client.mjs";
 import { COUNTY_CENTER } from "./coords.mjs";
+import { parseTwinkleRowsText } from "./twinkle-query.mjs";
 
 // 法院代碼前綴（jid 開頭 2 碼）→ 縣市（取 COUNTY_CENTER 座標）。
 const COURT_PREFIX_CITY = {
@@ -104,7 +105,7 @@ export async function fetchJudicialBulk({ url, token, perQuery = 30, queryCount 
   for (const q of queries) {
     try {
       const raw = await client.callTool("search_judicial", { query: q, limit: perQuery });
-      const parsed = JSON.parse(raw);
+      const parsed = parseTwinkleRowsText(raw, "search_judicial");
       for (const h of parsed.hits || []) all.push(h);
     } catch {
       // 單一查詢失敗不影響其餘

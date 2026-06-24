@@ -1,6 +1,7 @@
 // 採購 live fetcher：twinkle-hub MCP query_rows(pcc-tender) → IntelEvent[]
 import { McpClient } from "./mcp-client.mjs";
 import { countyCoordFromAddr } from "./coords.mjs";
+import { parseTwinkleRowsText } from "./twinkle-query.mjs";
 
 const QUERY =
   "announcement_type='決標公告' AND award_price != '' AND date <= '{TODAY}' ORDER BY date DESC";
@@ -29,7 +30,7 @@ export async function fetchPcc({ url, token, today, limit = 15 }) {
     where,
     limit,
   });
-  const parsed = JSON.parse(raw);
+  const parsed = parseTwinkleRowsText(raw, "query_rows");
   const cols = parsed.columns;
   const idx = (name) => cols.indexOf(name);
   const iTitle = idx("title"),
