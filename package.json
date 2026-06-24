@@ -13,6 +13,7 @@
     "refresh:ci:hourly": "node --env-file=.env scripts/fetch-live.mjs --sources=cwa,police,missing,twnews,rss",
     "refresh:ci:daily": "node --env-file=.env scripts/fetch-live.mjs --sources=cwa,pcc,police,missing,twnews,rss,judicial --exclusive",
     "validate:ci-mode": "npm test -- tests/ci-fetch-mode.test.ts tests/assert-pipeline-sources.test.ts && node scripts/validate-ci-mode.mjs",
+    "audit:international-feeds": "node scripts/audit-international-feeds.mjs --min-ok-feeds=10 --min-raw-items=50",
     "watch:daily-refresh": "scripts\\daily-refresh-loop.cmd",
     "watch:police-hourly": "scripts\\police-hourly-loop.cmd",
     "preview": "node scripts/police-control-server.mjs",
