@@ -93,7 +93,7 @@ jobs:
       - name: 驗證必要來源已更新
         env:
           ALLOW_STALE_CWA: ${{ vars.ALLOW_STALE_CWA }}
-        run: node scripts/assert-pipeline-sources.mjs --require=cwa,cwaWarnings,international
+        run: node scripts/assert-pipeline-sources.mjs --require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50
 
       - name: 建置靜態網站
         run: npm run build

@@ -32,6 +32,18 @@ export function assertRequiredPipelineSources(pipeline, requiredSources, options
   }
 }
 
+export function assertInternationalFeedCoverage(status, { minFeeds = 0, minRawItems = 0 } = {}) {
+  if (!status || status.ok !== true) return;
+  if (minFeeds > 0) {
+    const okFeeds = Number(status.okFeeds || 0);
+    if (okFeeds < minFeeds) throw new Error(`International feed coverage too low: ${okFeeds}/${minFeeds} live feeds`);
+  }
+  if (minRawItems > 0) {
+    const rawCount = Number(status.rawCount || 0);
+    if (rawCount < minRawItems) throw new Error(`International raw item count too low: ${rawCount}/${minRawItems}`);
+  }
+}
+
 export function readPipeline(path = "public/data/provenance.json") {
   const file = JSON.parse(readFileSync(path, "utf8"));
   return file.pipeline || {};
@@ -43,9 +55,16 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
     .map((s) => s.trim())
     .filter(Boolean);
   const path = argValue("file") || "public/data/provenance.json";
+  const minInternationalFeeds = Number(argValue("min-international-feeds") || 0);
+  const minInternationalRaw = Number(argValue("min-international-raw") || 0);
   const allowStaleCwa = parseAllowStaleCwaValue(
     argValue("allow-stale-cwa") || process.env.ALLOW_STALE_CWA,
   );
-  assertRequiredPipelineSources(readPipeline(path), required, { allowStaleCwa });
+  const pipeline = readPipeline(path);
+  assertRequiredPipelineSources(pipeline, required, { allowStaleCwa });
+  assertInternationalFeedCoverage(pipeline.international, {
+    minFeeds: minInternationalFeeds,
+    minRawItems: minInternationalRaw,
+  });
   console.log(`Required pipeline sources ok: ${required.join(", ")}`);
 }

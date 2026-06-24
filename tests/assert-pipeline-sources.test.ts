@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { assertRequiredPipelineSources } from "../scripts/assert-pipeline-sources.mjs";
+import {
+  assertInternationalFeedCoverage,
+  assertRequiredPipelineSources,
+} from "../scripts/assert-pipeline-sources.mjs";
 
 describe("assertRequiredPipelineSources", () => {
   it("accepts required sources that are ok, including zero weather warnings", () => {
@@ -67,5 +70,34 @@ describe("assertRequiredPipelineSources", () => {
         { allowStaleCwa: false },
       ),
     ).toThrow("Required pipeline source cwa failed: 暫時性 API 連線失敗");
+  });
+});
+
+describe("assertInternationalFeedCoverage", () => {
+  it("accepts international status with enough live feeds and raw items", () => {
+    expect(() =>
+      assertInternationalFeedCoverage(
+        { ok: true, count: 20, okFeeds: 15, rawCount: 120 },
+        { minFeeds: 10, minRawItems: 50 },
+      ),
+    ).not.toThrow();
+  });
+
+  it("rejects international status with too few live feeds", () => {
+    expect(() =>
+      assertInternationalFeedCoverage(
+        { ok: true, count: 20, okFeeds: 4, rawCount: 120 },
+        { minFeeds: 10, minRawItems: 50 },
+      ),
+    ).toThrow("International feed coverage too low: 4/10 live feeds");
+  });
+
+  it("rejects international status with too few raw items", () => {
+    expect(() =>
+      assertInternationalFeedCoverage(
+        { ok: true, count: 3, okFeeds: 15, rawCount: 12 },
+        { minFeeds: 10, minRawItems: 50 },
+      ),
+    ).toThrow("International raw item count too low: 12/50");
   });
 });
