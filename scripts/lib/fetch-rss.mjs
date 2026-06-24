@@ -1,14 +1,10 @@
 // 國際情報 RSS 抓取（zero-dep，支援 RSS <item> 與 Atom <entry>）。
 // 只負責「抓原文」；中文摘要/分類/風險/座標由 nvidia.mjs 正規化。
 
-// 來源清單（category 僅為提示，最終分類由 LLM 重新判定；source.name 用 label）
-export const FEEDS = [
-  { label: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml", hint: "地緣政治" },
-  { label: "NPR World", url: "https://feeds.npr.org/1004/rss.xml", hint: "災害" },
-  { label: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml", hint: "地緣政治" },
-  { label: "The Hacker News", url: "https://feeds.feedburner.com/TheHackersNews", hint: "資安" },
-  { label: "CNBC Finance", url: "https://www.cnbc.com/id/10000664/device/rss/rss.html", hint: "金融" },
-];
+import { INTERNATIONAL_FEEDS } from "./international-feeds.mjs";
+
+// 向後相容：既有呼叫未指定 feeds 時，預設使用國際新聞池。
+export const FEEDS = INTERNATIONAL_FEEDS;
 
 // Google News RSS（標準 RSS、Google 基礎設施穩定，且聚合全台媒體——含個別被擋的 ETtoday/三立/TVBS/聯合）。
 // 用關鍵字鎖定主題；when:Nd 限定近 N 天確保新鮮。查詢詞勿過多（隱含 AND，太多會回 0）。
