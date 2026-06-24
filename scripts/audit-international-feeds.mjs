@@ -19,7 +19,7 @@ export function summarizeInternationalFeedAudit(feedStatus, { minOkFeeds = 10, m
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const cfg = getInternationalRuntimeConfig(process.env);
-  const feeds = selectInternationalFeeds({ tier: cfg.tier });
+  const feeds = selectInternationalFeeds({ tier: cfg.tier, topic: cfg.topic });
   const minOkFeeds = Number(argValue("min-ok-feeds") || process.env.INTERNATIONAL_MIN_OK_FEEDS || 10);
   const minRawItems = Number(argValue("min-raw-items") || process.env.INTERNATIONAL_MIN_RAW_ITEMS || 50);
   const result = await fetchRssItems({ perFeed: cfg.perFeed, feeds, concurrency: cfg.concurrency });
@@ -29,7 +29,9 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
   }
 
   const summary = summarizeInternationalFeedAudit(result.feedStatus, { minOkFeeds, minRawItems });
-  console.log(`International feed audit: ${summary.okFeeds}/${feeds.length} live feeds, ${summary.rawItems} raw items`);
+  console.log(
+    `International feed audit: ${summary.okFeeds}/${feeds.length} live feeds, ${summary.rawItems} raw items, tier=${cfg.tier}, topic=${cfg.topic}`,
+  );
   if (!summary.ok) {
     console.error(`International feed audit failed: ${summary.errors.join(", ")}`);
     process.exit(1);

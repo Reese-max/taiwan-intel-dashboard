@@ -42,6 +42,36 @@ describe("resolveFetchMode", () => {
     expect(mode.label).toBe("international");
     expect(mode.args).toBe("--sources=rss");
     expect(mode.assertArgs).toBe("--require=international --min-international-feeds=10 --min-international-raw=50");
+    expect(mode.internationalFeedTier).toBe("expanded");
+    expect(mode.internationalFeedTopic).toBe("all");
+  });
+
+  it("supports explicit expanded and core international tier modes", () => {
+    const expanded = resolveFetchMode({ mode: "international-expanded" });
+    expect(expanded.label).toBe("international");
+    expect(expanded.internationalFeedTier).toBe("expanded");
+    expect(expanded.assertArgs).toBe("--require=international --min-international-feeds=10 --min-international-raw=50");
+
+    const core = resolveFetchMode({ mode: "international-core" });
+    expect(core.label).toBe("international-core");
+    expect(core.args).toBe("--sources=rss");
+    expect(core.internationalFeedTier).toBe("core");
+    expect(core.internationalFeedTopic).toBe("all");
+    expect(core.assertArgs).toBe("--require=international --min-international-feeds=3 --min-international-raw=10");
+  });
+
+  it("supports manual international topic modes with topic-specific assertions", () => {
+    const cyber = resolveFetchMode({ mode: "international-cyber" });
+    expect(cyber.label).toBe("international-cyber");
+    expect(cyber.args).toBe("--sources=rss");
+    expect(cyber.internationalFeedTier).toBe("expanded");
+    expect(cyber.internationalFeedTopic).toBe("cyber");
+    expect(cyber.assertArgs).toBe("--require=international --min-international-feeds=4 --min-international-raw=10");
+
+    const finance = resolveFetchMode({ mode: "international-finance" });
+    expect(finance.label).toBe("international-finance");
+    expect(finance.internationalFeedTopic).toBe("finance");
+    expect(finance.assertArgs).toBe("--require=international --min-international-feeds=1 --min-international-raw=3");
   });
 
   it("accepts rss as an alias for international-only mode", () => {
@@ -127,6 +157,8 @@ describe("resolveFetchMode", () => {
           "label=international",
           "args=--sources=rss",
           "assert_args=--require=international --min-international-feeds=10 --min-international-raw=50",
+          "international_feed_tier=expanded",
+          "international_feed_topic=all",
           "",
         ].join("\n"),
       );

@@ -203,7 +203,7 @@ async function run() {
   if (want("rss")) {
     try {
       const intlCfg = getInternationalRuntimeConfig();
-      const intlFeeds = selectInternationalFeeds({ tier: intlCfg.tier });
+      const intlFeeds = selectInternationalFeeds({ tier: intlCfg.tier, topic: intlCfg.topic });
       const rss = await fetchRssItems({
         perFeed: intlCfg.perFeed,
         feeds: intlFeeds,
@@ -224,6 +224,7 @@ async function run() {
         okFeeds,
         totalFeeds: intlFeeds.length,
         tier: intlCfg.tier,
+        topic: intlCfg.topic,
         perFeed: intlCfg.perFeed,
         maxEvents: intlCfg.maxEvents,
         feeds: feedStatus,
