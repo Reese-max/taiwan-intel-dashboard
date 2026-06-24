@@ -57,4 +57,10 @@ describe("international feed registry", () => {
     expect(cfg.concurrency).toBe(1);
     expect(cfg.maxEvents).toBe(40);
   });
+
+  it("uses expanded feed count for CI-scale international pool", () => {
+    const cfg = getInternationalRuntimeConfig({ INTERNATIONAL_FEED_TIER: "expanded" });
+    const feeds = selectInternationalFeeds({ tier: cfg.tier });
+    expect(feeds.length).toBeGreaterThanOrEqual(21);
+  });
 });

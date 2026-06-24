@@ -21,6 +21,7 @@ import {
   POLICE_TAIPEI_IDS,
 } from "./lib/fetch-police.mjs";
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
+import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
 import { mapBulkNews, titleKey as bulkTitleKey, isPoliceRelevant } from "./lib/news-bulk.mjs";
 import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
@@ -201,11 +202,32 @@ async function run() {
   let feedStatus = [];
   if (want("rss")) {
     try {
-      const rss = await fetchRssItems({ perFeed: 5 });
+      const intlCfg = getInternationalRuntimeConfig();
+      const intlFeeds = selectInternationalFeeds({ tier: intlCfg.tier });
+      const rss = await fetchRssItems({
+        perFeed: intlCfg.perFeed,
+        feeds: intlFeeds,
+        concurrency: intlCfg.concurrency,
+      });
       feedStatus = rss.feedStatus;
-      console.log(`RSS：${rss.items.length} 則原文（${feedStatus.map((f) => `${f.label}:${f.ok ? f.count : "X"}`).join(" ")}）`);
-      intl = await normalizeInternational(rss.items, { max: 10 });
-      status.international = { ok: true, count: intl.length, feeds: feedStatus };
+      const okFeeds = feedStatus.filter((f) => f.ok && f.count).length;
+      console.log(
+        `RSS：${rss.items.length} 則原文（${okFeeds}/${intlFeeds.length} 來源有回；${feedStatus
+          .map((f) => `${f.label}:${f.ok ? f.count : "X"}`)
+          .join(" ")}）`,
+      );
+      intl = await normalizeInternational(rss.items, { max: intlCfg.maxEvents });
+      status.international = {
+        ok: true,
+        count: intl.length,
+        rawCount: rss.items.length,
+        okFeeds,
+        totalFeeds: intlFeeds.length,
+        tier: intlCfg.tier,
+        perFeed: intlCfg.perFeed,
+        maxEvents: intlCfg.maxEvents,
+        feeds: feedStatus,
+      };
       console.log(`國際正規化：${intl.length} 筆`);
     } catch (e) {
       status.international = { ok: false, error: e.message, feeds: feedStatus };
