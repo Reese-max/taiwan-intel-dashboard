@@ -2,6 +2,7 @@
 // 分類用來源主題(hint)、風險用標題關鍵字、座標用標題短名縣市偵測。
 // 與 LLM 精修層(nvidia.normalizeDomesticNews)互補：LLM 精修最近一批，其餘走這裡，達成「全量下載」。
 import { COUNTY_CENTER } from "./coords.mjs";
+import { deriveNewsProvenance } from "./fetch-rss.mjs";
 
 // 標題正規化鍵（與 nvidia 相同）：去媒體尾綴 + 去非中英數 → 跨來源/跨查詢去重。
 export function titleKey(title) {
@@ -91,6 +92,7 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
     if (!k || seen.has(k) || excludeKeys.has(k)) continue;
     seen.add(k);
     const loc = detectCounty(it.title);
+    const source = deriveNewsProvenance({ ...it, link: it.link || k }, { fetchedAt });
     events.push({
       id: `twnews-${hash(it.link || it.title)}`,
       title: cleanTitle(it.title),
@@ -102,14 +104,11 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
       scope: "domestic",
       riskLevel: riskFromTitle(it.title),
       summary: (it.description || "").slice(0, 200),
+      locationPrecision: loc.lat != null && loc.lng != null ? "city" : "unknown",
+      locationNote: loc.lat != null && loc.lng != null ? "依新聞地區推論，非精準事發地址" : undefined,
       source: {
-        name: it.source,
-        type: "news-rss",
-        datasetId: "tw-news",
-        recordRef: it.link || k,
-        url: it.link || "",
-        fetchedAt,
-        query: `RSS ${it.sourceUrl || ""}（全量收錄）`,
+        ...source,
+        query: `${source.query}（全量收錄）`,
       },
     });
   }

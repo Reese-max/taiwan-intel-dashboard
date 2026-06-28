@@ -1,4 +1,4 @@
-import type { IntelEvent } from "../types/event";
+import type { IntelEvent, Scope } from "../types/event";
 import { esc } from "../utils/escape";
 
 const DAY_MS = 86400000;
@@ -9,8 +9,21 @@ interface ProvStat {
   officialPct: number;
 }
 
-// undefined＝尚未抓取；null＝抓取失敗；物件＝已抓取（module 內快取，僅 fetch 一次）
-let provCache: ProvStat | null | undefined;
+interface ProvSource {
+  type?: string;
+  scope?: Scope;
+  fetchedAt: string;
+  lastSuccessAt?: string;
+}
+
+interface ProvManifest {
+  generatedAt: string;
+  sources: ProvSource[];
+}
+
+// undefined＝尚未抓取；null＝抓取失敗；物件＝已抓取（原始 manifest，module 內快取僅 fetch 一次；
+// 各 scope 的統計由 computeProvStat 即時依 scope 過濾後算出，避免全域數字誤套到單一 scope）
+let provCache: ProvManifest | null | undefined;
 
 // 最近 5 天每日計數（對齊 5 天保留窗，避免顯示被剪掉的空日），沿用 TimelineView 的分桶邏輯
 function dailyCounts(events: IntelEvent[], predicate?: (e: IntelEvent) => boolean): number[] {
@@ -72,29 +85,33 @@ function sourceCards(stat: ProvStat | null, spark: number[]): string {
   );
 }
 
-async function fetchProvStat(): Promise<ProvStat | null> {
+async function fetchProvManifest(): Promise<ProvManifest | null> {
   try {
     const res = await fetch("./data/provenance.json");
     if (!res.ok) return null;
-    const m = (await res.json()) as {
-      generatedAt: string;
-      sources: { type?: string; fetchedAt: string; lastSuccessAt?: string }[];
-    };
-    const total = m.sources.length;
-    const reference = Date.parse(m.generatedAt);
-    const active = m.sources.filter((s) => {
-      const last = Date.parse(s.lastSuccessAt ?? s.fetchedAt);
-      return Number.isFinite(reference) && Number.isFinite(last) && reference - last <= DAY_MS;
-    }).length;
-    const official = m.sources.filter((s) => s.type === "gov-open-data" || s.type === "cwa").length;
-    const officialPct = total ? Math.round((official / total) * 100) : 0;
-    return { total, active, officialPct };
+    return (await res.json()) as ProvManifest;
   } catch {
     return null;
   }
 }
 
-export function renderKpiStrip(container: HTMLElement, events: IntelEvent[]): void {
+// 依 scope 過濾來源後計算統計：來源 manifest 每筆帶 scope（domestic/international），
+// 各 scope 的「活躍資料源／官方來源占比」須只算該 scope 的來源，否則國際頁會誤顯國內主導的全域數字。
+export function computeProvStat(manifest: ProvManifest | null, scope: Scope): ProvStat | null {
+  if (!manifest) return null;
+  const sources = manifest.sources.filter((s) => s.scope === scope);
+  const total = sources.length;
+  const reference = Date.parse(manifest.generatedAt);
+  const active = sources.filter((s) => {
+    const last = Date.parse(s.lastSuccessAt ?? s.fetchedAt);
+    return Number.isFinite(reference) && Number.isFinite(last) && reference - last <= DAY_MS;
+  }).length;
+  const official = sources.filter((s) => s.type === "gov-open-data" || s.type === "cwa").length;
+  const officialPct = total ? Math.round((official / total) * 100) : 0;
+  return { total, active, officialPct };
+}
+
+export function renderKpiStrip(container: HTMLElement, events: IntelEvent[], scope: Scope): void {
   const eventsSpark = dailyCounts(events);
   const riskSpark = dailyCounts(events, isElevated);
   // 近 24 小時滾動視窗取代「日曆當日」：不會清晨偏低、跨午夜歸零、無嚇人負值。
@@ -118,16 +135,16 @@ export function renderKpiStrip(container: HTMLElement, events: IntelEvent[]): vo
   );
   const riskCard = card("is-risk", "危急 / 高風險", String(riskCount), riskSpark, `${riskPct}% 占比`);
 
-  const paint = (stat: ProvStat | null): void => {
-    container.innerHTML = todayCard + riskCard + sourceCards(stat, eventsSpark);
+  const paint = (manifest: ProvManifest | null): void => {
+    container.innerHTML = todayCard + riskCard + sourceCards(computeProvStat(manifest, scope), eventsSpark);
   };
 
   paint(provCache ?? null);
 
   if (provCache === undefined) {
-    void fetchProvStat().then((stat) => {
-      provCache = stat;
-      paint(stat);
+    void fetchProvManifest().then((manifest) => {
+      provCache = manifest;
+      paint(manifest);
     });
   }
 }

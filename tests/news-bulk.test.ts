@@ -5,8 +5,8 @@ const FETCHED_AT = "2026-06-20T00:00:00.000Z";
 
 const ITEMS = [
   { title: "高雄街頭砍人 男子背部受傷送醫 - 自由時報", link: "https://x/1", description: "街頭鬥毆", source: "自由時報 社會", sourceUrl: "u1", hint: "治安", pubDate: "Fri, 20 Jun 2026 01:00:00 +0800" },
-  { title: "新北詐騙集團車手落網", link: "https://x/2", description: "假檢警詐騙", source: "GN 詐騙逮捕", sourceUrl: "u2", hint: "反詐", pubDate: "Fri, 20 Jun 2026 02:00:00 +0800" },
-  { title: "台南工廠火警濃煙竄天", link: "https://x/3", description: "消防搶救", source: "GN 火警氣爆", sourceUrl: "u3", hint: "災防", pubDate: "Fri, 20 Jun 2026 03:00:00 +0800" },
+  { title: "新北詐騙集團車手落網", link: "https://news.google.com/rss/articles/2?oc=5", description: "假檢警詐騙", source: "GN 詐騙逮捕", sourceUrl: "https://news.google.com/rss/search?q=詐騙逮捕", hint: "反詐", pubDate: "Fri, 20 Jun 2026 02:00:00 +0800" },
+  { title: "台南工廠火警濃煙竄天", link: "https://news.google.com/rss/articles/3?oc=5", description: "消防搶救", source: "GN 火警氣爆", sourceUrl: "https://news.google.com/rss/search?q=火警氣爆", hint: "災防", pubDate: "Fri, 20 Jun 2026 03:00:00 +0800" },
   // 重複標題（不同連結/媒體）→ 去重
   { title: "高雄街頭砍人 男子背部受傷送醫 - ETtoday", link: "https://x/4", description: "...", source: "GN 傷害鬥毆", sourceUrl: "u4", hint: "治安", pubDate: "x" },
 ];
@@ -34,6 +34,9 @@ describe("mapBulkNews", () => {
     expect(fraud!.region).toBe("新北市");
     expect(fraud!.category).toBe("反詐");
     expect(fraud!.riskLevel).toBe("medium"); // 詐騙
+    expect(fraud!.source.name.startsWith("GN ")).toBe(false);
+    expect(fraud!.source.aggregatorName).toBe("Google News");
+    expect(fraud!.locationPrecision).toBe("city");
 
     const fire = ev.find((e) => e.title.includes("火警"));
     expect(fire!.region).toBe("臺南市");

@@ -23,6 +23,7 @@ import {
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
 import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
 import { mapBulkNews, titleKey as bulkTitleKey, isPoliceRelevant } from "./lib/news-bulk.mjs";
+import { buildNewsSourceContribution, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
 import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
@@ -271,6 +272,13 @@ async function run() {
       const enrichedLinks = new Set(enriched.map((e) => e.source?.recordRef).filter(Boolean));
       const bulk = mapBulkNews(policeUniq.filter((it) => !enrichedLinks.has(it.link)), { fetchedAt: nowIso });
       twnews = [...enriched, ...bulk];
+      const sourceContribution = buildNewsSourceContribution({
+        rawItems: rss.items,
+        uniqueItems: uniq,
+        policeItems: policeUniq,
+        finalEvents: twnews,
+        feedStatus: twFeedStatus,
+      });
       status.twnews = {
         ok: true,
         count: twnews.length,
@@ -278,9 +286,13 @@ async function run() {
         bulk: bulk.length,
         policeRelevant: policeUniq.length,
         rawUnique,
+        sourceContribution: sourceContribution.rows,
+        sourceContributionTotals: sourceContribution.totals,
+        lowContributionFeeds: sourceContribution.lowContributionFeeds,
         feeds: twFeedStatus,
       };
       console.log(`台灣新聞：警政 ${twnews.length} 筆（LLM 精修 ${enriched.length}＋輕量 ${bulk.length}；警政相關 ${policeUniq.length}／全量去重 ${rawUnique}）`);
+      console.log(formatNewsSourceContributionReport(sourceContribution, { limit: 20 }));
     } catch (e) {
       status.twnews = { ok: false, error: e.message, feeds: twFeedStatus };
       console.error(`台灣新聞失敗：${e.message}`);

@@ -163,6 +163,47 @@ export const TW_NEWS_FEEDS = [
   { label: "彰化縣警局官網", url: gq("site:chpb.gov.tw"), hint: "治安" },
   { label: "高檢署官網", url: gq("site:tph.moj.gov.tw"), hint: "治安" },
   { label: "新北市消防局官網", url: gq("site:fire.ntpc.gov.tw"), hint: "災防" },
+
+  // ══ 第七輪擴充（2026-06-27 _audit-candidates 實測 ≥13；新機關第一手官方平台 + 未涵蓋題材）══
+  // ── 新增第一手官方機關（提升官方來源占比；直連政府 RSS 仍全數 404，故走 GN site:）──
+  { label: "司法院官網", url: gq("site:judicial.gov.tw"), hint: "治安" },
+  { label: "環境部官網", url: gq("site:moenv.gov.tw 污染 OR 稽查 OR 裁罰"), hint: "災防" },
+  { label: "疾管署官網", url: gq("site:cdc.gov.tw 疫情 OR 防疫 OR 群聚"), hint: "災防" },
+  { label: "農業部官網", url: gq("site:moa.gov.tw 走私 OR 防疫 OR 查獲"), hint: "治安" },
+  { label: "食藥署官網", url: gq("site:fda.gov.tw 查獲 OR 違規 OR 回收"), hint: "治安" },
+  { label: "內政部官網", url: gq("site:moi.gov.tw 治安 OR 警 OR 災"), hint: "治安" },
+  // ── 未涵蓋題材角度 ──
+  { label: "GN 土石流坍方", url: gq("土石流 OR 坍方 OR 邊坡 災情 OR 預警"), hint: "災防" },
+  { label: "GN 虛擬資產交易所", url: gq("虛擬資產 OR 交易所 監管 OR 詐騙"), hint: "反詐" },
+  { label: "GN 假冒銀行檢警", url: gq("假冒 銀行 OR 假冒 金管會 OR 假冒 檢警 詐騙"), hint: "反詐" },
+  { label: "GN 詐騙簡訊釣魚", url: gq("詐騙 簡訊 OR 釣魚 連結 OR 假簡訊"), hint: "反詐" },
+  { label: "GN 校園毒品咖啡包", url: gq("毒品 咖啡包 OR 上癮 OR 青少年 吸毒"), hint: "治安" },
+  { label: "GN 租屋詐騙", url: gq("租屋 詐騙 OR 假房東 OR 二房東"), hint: "反詐" },
+
+  // ══ 第八輪最大覆蓋（2026-06-27 _audit-candidates 實測 ≥3；接受更多 Google News 聚合來源）══
+  // ── 可直連 RSS（避免全靠聚合，來源可溯）──
+  { label: "中央廣播電臺 RSS", url: "https://www.rti.org.tw/rss", hint: "治安" },
+  { label: "TechNews 科技新報 RSS", url: "https://technews.tw/feed/", hint: "資安" },
+  { label: "iThome Security RSS", url: "https://www.ithome.com.tw/rss/security", hint: "資安" },
+  { label: "iThome News RSS", url: "https://www.ithome.com.tw/rss/news", hint: "資安" },
+  { label: "報導者 RSS", url: "https://www.twreporter.org/a/rss2.xml", hint: "治安" },
+  { label: "INSIDE RSS", url: "https://www.inside.com.tw/feed/rss", hint: "資安" },
+  // ── 主流／專題媒體 site-scoped Google News（直連 RSS 多為 403/404/410，故用聚合補覆蓋）──
+  { label: "GN UDN 綜合治安", url: gq("site:udn.com/news 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
+  { label: "GN ETtoday 綜合治安", url: gq("site:ettoday.net/news 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
+  { label: "GN TVBS 綜合治安", url: gq("site:tvbs.com.tw/news 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
+  { label: "GN 三立綜合治安", url: gq("site:setn.com 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
+  { label: "GN CTWANT 綜合治安", url: gq("site:ctwant.com 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
+  { label: "GN 風傳媒綜合治安", url: gq("site:storm.mg 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
+  { label: "GN 上報綜合治安", url: gq("site:upmedia.mg 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
+  { label: "GN 今周刊詐騙資安", url: gq("site:businesstoday.com.tw 詐騙 OR 洗錢 OR 個資 OR 資安"), hint: "反詐" },
+  { label: "GN iThome 資安", url: gq("site:ithome.com.tw 資安 OR 個資 OR 駭客 OR 勒索"), hint: "資安" },
+  { label: "GN TechNews 資安", url: gq("site:technews.tw 資安 OR 詐騙 OR 個資 OR 駭客"), hint: "資安" },
+  { label: "GN 經濟日報詐騙金融", url: gq("site:money.udn.com 詐騙 OR 洗錢 OR 金管會 OR 虛擬資產"), hint: "反詐" },
+  { label: "GN 數位時代資安", url: gq("site:bnext.com.tw 詐騙 OR 資安 OR 個資 OR 駭客"), hint: "資安" },
+  // ── 補地方災防高回量來源 ──
+  { label: "彰化縣消防局官網", url: gq("site:chfd.gov.tw 災害 OR 火警 OR 消防 OR 救護"), hint: "災防" },
+  { label: "高雄市交通局災防", url: gq("site:tbkc.gov.tw 災害 OR 火警 OR 消防 OR 救護"), hint: "災防" },
 ];
 
 function decode(s) {
@@ -198,15 +239,55 @@ function pickLink(block) {
   return atom ? atom[1] : "";
 }
 
+function isGoogleNewsUrl(url = "") {
+  try {
+    return new URL(url).hostname === "news.google.com";
+  } catch {
+    return false;
+  }
+}
+
+function feedQueryLabel(label = "") {
+  return String(label || "").startsWith("GN ") ? label : undefined;
+}
+
+export function deriveNewsProvenance(item, { fetchedAt, model } = {}) {
+  const viaGoogle = isGoogleNewsUrl(item.sourceUrl) || isGoogleNewsUrl(item.link);
+  const queryLabel = feedQueryLabel(item.source);
+  const publisherName = item.publisherName || (viaGoogle ? undefined : item.source);
+  const normalization = model ? ` → LLM(${model}) 正規化` : "";
+
+  return {
+    name: publisherName || (viaGoogle ? "Google News 聚合" : item.source),
+    type: "news-rss",
+    datasetId: "tw-news",
+    recordRef: item.link,
+    url: item.link,
+    fetchedAt,
+    publisherName,
+    publisherUrl: item.publisherUrl,
+    aggregatorName: viaGoogle ? "Google News" : undefined,
+    aggregatorUrl: viaGoogle ? item.sourceUrl : undefined,
+    ingestMethod: viaGoogle ? "google-news-rss" : "direct-rss",
+    sourceConfidence: viaGoogle ? "aggregated" : "verified",
+    query: queryLabel
+      ? `${queryLabel}｜RSS ${item.sourceUrl || ""}${normalization}`
+      : `RSS ${item.sourceUrl || ""}${normalization}`,
+  };
+}
+
 function parseFeed(xml) {
   const items = [];
   const blocks = xml.match(/<(item|entry)[\s>][\s\S]*?<\/(item|entry)>/gi) || [];
   for (const b of blocks) {
+    const sourceMatch = b.match(/<source(?:\s+url="([^"]+)")?[^>]*>([\s\S]*?)<\/source>/i);
     items.push({
       title: pick(b, ["title"]),
       link: pickLink(b),
       description: pick(b, ["description", "summary", "content"]),
       pubDate: pick(b, ["pubDate", "updated", "published"]),
+      publisherName: sourceMatch ? decode(sourceMatch[2]) : undefined,
+      publisherUrl: sourceMatch?.[1],
     });
   }
   return items;

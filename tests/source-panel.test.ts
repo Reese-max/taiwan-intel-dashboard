@@ -52,4 +52,39 @@ describe("renderSourcePanel", () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it("顯示台灣新聞低貢獻來源，提醒新增來源可能被去重或過濾掉", async () => {
+    const manifest = {
+      generatedAt: "2026-06-21T00:00:00+08:00",
+      pipeline: {
+        twnews: {
+          ok: true,
+          lowContributionFeeds: ["GN 數位時代資安", "司法院官網"],
+          sourceContributionTotals: {
+            raw: 200,
+            rawUnique: 150,
+            policeRelevant: 20,
+            finalEvents: 1,
+          },
+        },
+      },
+      sources: [],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify(manifest), { status: 200 })),
+    );
+    const container = { innerHTML: "" } as HTMLElement;
+
+    try {
+      await renderSourcePanel(container);
+
+      expect(container.innerHTML).toContain("新聞來源低貢獻警示");
+      expect(container.innerHTML).toContain("GN 數位時代資安");
+      expect(container.innerHTML).toContain("司法院官網");
+      expect(container.innerHTML).toContain("最終 1／原始 200");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

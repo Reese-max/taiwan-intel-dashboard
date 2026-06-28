@@ -9,15 +9,97 @@ const RISK_COLOR: Record<RiskLevel, string> = {
   high: "#f97316",
   critical: "#ef4444",
 };
+const RISK_LABEL: Record<RiskLevel, string> = {
+  low: "低",
+  medium: "中",
+  high: "高",
+  critical: "危急",
+};
 const RISK_RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, critical: 3 };
 // 聚合網格邊長（像素）：同網格內多個事件聚成一顆計數泡泡，避免市區大量標點重疊。
 const CELL = 46;
 
 // 危急／高風險標點加 class，由 CSS 套脈衝光暈動畫。
-function markerClass(level: RiskLevel): string {
-  if (level === "critical") return "mk mk-critical";
-  if (level === "high") return "mk mk-high";
-  return "mk";
+export function markerClass(level: RiskLevel, event?: IntelEvent): string {
+  const base = level === "critical" ? "mk mk-critical" : level === "high" ? "mk mk-high" : "mk";
+  const confidence = event?.source.sourceConfidence ? ` source-${event.source.sourceConfidence}` : "";
+  const precision = event?.locationPrecision ? ` loc-${event.locationPrecision}` : "";
+  return `${base}${confidence}${precision}`;
+}
+
+function sourceDisplayName(e: IntelEvent): string {
+  if (e.source.publisherName) return e.source.publisherName;
+  if (e.source.aggregatorName) return `${e.source.aggregatorName} 聚合`;
+  return e.source.name;
+}
+
+function locationPrecisionLabel(value: IntelEvent["locationPrecision"]): string {
+  switch (value) {
+    case "exact":
+    case "address":
+      return "精準位置";
+    case "district":
+      return "行政區推論";
+    case "city":
+      return "縣市推論";
+    case "country":
+      return "國家層級";
+    case "global":
+      return "全球概略";
+    default:
+      return "未知";
+  }
+}
+
+export function eventFocusHash(e: IntelEvent): string {
+  const params = new URLSearchParams();
+  params.set("scope", e.scope);
+  params.set("focus", e.id);
+  return `#${params.toString()}`;
+}
+
+export function mapPopupHtml(e: IntelEvent): string {
+  const via = e.source.aggregatorName
+    ? `<br><span class="map-popup-warn">經由：${esc(e.source.aggregatorName)}，請點開原文確認</span>`
+    : "";
+  const loc = e.locationPrecision
+    ? `<br><span class="map-popup-muted">定位：${esc(locationPrecisionLabel(e.locationPrecision))}</span>`
+    : "";
+  return `<b>${esc(e.title)}</b><br>${esc(e.region)}｜${esc(e.category)}<br>來源：${esc(sourceDisplayName(e))}${via}${loc}
+    <br><a class="map-popup-action" href="${esc(eventFocusHash(e))}">查看關聯網 →</a>`;
+}
+
+export function clusterPopupHtml(events: IntelEvent[]): string {
+  const shown = events
+    .slice()
+    .sort((a, b) => {
+      const risk = RISK_RANK[b.riskLevel] - RISK_RANK[a.riskLevel];
+      if (risk) return risk;
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    })
+    .slice(0, 6);
+  const hidden = Math.max(0, events.length - shown.length);
+  const items = shown
+    .map(
+      (e) => `<li>
+        <span class="map-cluster-risk risk-${esc(e.riskLevel)}">${esc(RISK_LABEL[e.riskLevel])}</span>
+        <span class="map-cluster-title">${esc(e.title)}</span>
+        <span class="map-cluster-meta">${esc(e.region)}｜${esc(e.category)}｜來源：${esc(sourceDisplayName(e))}</span>
+        <a class="map-cluster-action" href="${esc(eventFocusHash(e))}">查看</a>
+      </li>`,
+    )
+    .join("");
+  const more = hidden ? `<div class="map-cluster-more">另有 ${hidden} 則未列出，放大地圖可拆分重疊標點。</div>` : "";
+  return `<div class="map-cluster-popup">
+    <b>此區有 ${events.length} 則情報</b>
+    <div class="map-cluster-hint">雙擊或放大地圖可拆分重疊標點；下列先顯示風險較高與較新的事件。</div>
+    <ul>${items}</ul>
+    ${more}
+  </div>`;
+}
+
+export function isMapDisplayable(e: IntelEvent): boolean {
+  return e.lat != null && e.lng != null && !(e.lat === 0 && e.lng === 0) && e.locationPrecision !== "global";
 }
 
 export class MapView {
@@ -56,7 +138,7 @@ export class MapView {
   }
 
   async render(events: IntelEvent[]): Promise<void> {
-    this.located = events.filter((e) => e.lat != null && e.lng != null);
+    this.located = events.filter(isMapDisplayable);
     await this.ready;
     this.redraw();
     if (this.located.length) {
@@ -74,8 +156,8 @@ export class MapView {
       fillColor: RISK_COLOR[e.riskLevel],
       fillOpacity: 0.7,
       weight: 2,
-      className: markerClass(e.riskLevel),
-    }).bindPopup(`<b>${esc(e.title)}</b><br>${esc(e.region)}｜${esc(e.category)}`);
+      className: markerClass(e.riskLevel, e),
+    }).bindPopup(mapPopupHtml(e));
   }
 
   // 依目前 zoom 將鄰近事件聚成網格群：單一→風險點；多個→計數泡泡（點擊放大去聚合）。
@@ -112,7 +194,10 @@ export class MapView {
       });
       this.lib
         .marker(centroid, { icon, keyboard: false })
-        .on("click", () => this.map.flyTo(centroid, Math.min(z + 2, 12)))
+        .bindPopup(clusterPopupHtml(c.events), { maxWidth: 360 })
+        .on("dblclick", () => {
+          this.map.flyTo(centroid, Math.min(z + 2, 12));
+        })
         .addTo(this.layer);
     }
   }

@@ -1165,6 +1165,38 @@ h4 {
 .source-generated {
   margin: 8px 0 0;
 }
+.source-alert {
+  margin: 10px 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.76rem;
+}
+.source-alert-warn {
+  background: color-mix(in srgb, var(--color-warn) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-warn) 42%, var(--color-border));
+}
+.source-alert h5 {
+  margin: 0 0 4px;
+  color: var(--color-warn);
+  font-size: 0.82rem;
+}
+.source-alert p {
+  margin: 0 0 8px;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+.source-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.source-chip-list span {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: var(--color-panel-2);
+  color: var(--color-text);
+}
 .source-list {
   list-style: none;
   padding: 0;
@@ -1767,6 +1799,99 @@ html {
 .map-cluster.risk-critical {
   background: rgba(239, 68, 68, 0.94);
   box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25), 0 0 14px rgba(239, 68, 68, 0.5);
+}
+.leaflet-interactive.source-aggregated {
+  stroke-dasharray: 4 3;
+  fill-opacity: 0.45;
+}
+.leaflet-interactive.loc-city,
+.leaflet-interactive.loc-district,
+.leaflet-interactive.loc-country {
+  opacity: 0.75;
+}
+.map-popup-warn {
+  color: #facc15;
+  font-weight: 700;
+}
+.map-popup-muted {
+  color: #94a3b8;
+}
+.map-popup-action,
+.map-cluster-action {
+  color: var(--color-accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+.map-popup-action:hover,
+.map-cluster-action:hover {
+  text-decoration: underline;
+}
+.map-cluster-popup {
+  display: grid;
+  gap: 8px;
+  min-width: 260px;
+}
+.map-cluster-popup b {
+  color: var(--color-accent);
+}
+.map-cluster-hint,
+.map-cluster-more {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+.map-cluster-popup ul {
+  display: grid;
+  gap: 7px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.map-cluster-popup li {
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  display: grid;
+  gap: 2px;
+  grid-template-columns: auto 1fr;
+  padding-top: 7px;
+}
+.map-cluster-risk {
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  line-height: 1;
+  min-width: 2.1em;
+  padding: 4px 6px;
+  text-align: center;
+}
+.map-cluster-risk.risk-low {
+  background: var(--risk-low);
+}
+.map-cluster-risk.risk-medium {
+  background: var(--risk-medium);
+  color: #1a1205;
+}
+.map-cluster-risk.risk-high {
+  background: var(--risk-high);
+}
+.map-cluster-risk.risk-critical {
+  background: var(--risk-critical);
+}
+.map-cluster-title {
+  color: var(--color-text);
+  font-weight: 700;
+  line-height: 1.35;
+}
+.map-cluster-meta {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  grid-column: 2;
+  line-height: 1.35;
+}
+.map-cluster-action {
+  grid-column: 2;
+  justify-self: start;
 }
 /* 手機底部固定快捷列（桌面隱藏，≤640px 顯示；觸控目標 ≥44px）。 */
 .mobile-quickbar {

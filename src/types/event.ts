@@ -1,6 +1,9 @@
 export type Scope = "domestic" | "international";
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 export type SourceType = "gov-open-data" | "news-rss" | "cwa" | "manual";
+export type IngestMethod = "direct-rss" | "google-news-rss" | "gov-open-data" | "manual";
+export type SourceConfidence = "verified" | "aggregated" | "inferred";
+export type LocationPrecision = "exact" | "address" | "district" | "city" | "country" | "global" | "unknown";
 
 export interface Provenance {
   name: string;
@@ -10,6 +13,12 @@ export interface Provenance {
   url?: string;
   fetchedAt: string; // ISO8601
   query?: string;
+  publisherName?: string;
+  publisherUrl?: string;
+  aggregatorName?: string;
+  aggregatorUrl?: string;
+  ingestMethod?: IngestMethod;
+  sourceConfidence?: SourceConfidence;
 }
 
 export interface IntelEvent {
@@ -18,6 +27,8 @@ export interface IntelEvent {
   region: string;
   lat?: number;
   lng?: number;
+  locationPrecision?: LocationPrecision;
+  locationNote?: string;
   timestamp: string; // ISO8601
   category: string;
   scope: Scope;

@@ -183,6 +183,29 @@
     background: transparent; border: 1px solid var(--border); border-radius: 999px;
     color: var(--accent); cursor: pointer; padding: 2px 8px; white-space: nowrap;
   }
+  .net-controls {
+    position: absolute; right: 14px; bottom: 14px; z-index: 54;
+    width: min(360px, calc(100% - 28px)); background: rgba(13,21,32,0.88);
+    border: 1px solid #2a3a4a; border-radius: 10px; padding: 10px 12px;
+    font-size: 11px; color: #9ab; line-height: 1.55; box-shadow: 0 0 24px #0009;
+    backdrop-filter: blur(8px);
+  }
+  .net-title { color: #cfe; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; gap: 8px; }
+  .net-title span { color: var(--accent3); font-family: var(--mono); font-weight: 400; }
+  .arc-filter-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 7px 0; }
+  .arc-toggle {
+    background: rgba(0,200,255,0.04); border: 1px solid var(--border); border-radius: 999px;
+    color: var(--text-dim); cursor: pointer; font-size: 10px; padding: 4px 8px;
+  }
+  .arc-toggle.active { color: var(--text); border-color: var(--accent); background: rgba(0,200,255,0.09); }
+  .arc-toggle.off { opacity: 0.45; text-decoration: line-through; }
+  .arc-chip { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+  .net-switch, .strength-control { display: grid; gap: 4px; margin-top: 7px; }
+  .net-switch label { display: flex; align-items: center; gap: 7px; cursor: pointer; }
+  .net-switch input { accent-color: var(--accent); }
+  .strength-head { display: flex; justify-content: space-between; gap: 10px; }
+  #arc-strength { width: 100%; accent-color: var(--accent); }
+  .net-note { color: var(--text-dim); border-top: 1px solid rgba(90,122,154,0.25); margin-top: 7px; padding-top: 6px; }
   @media (max-width: 760px) {
     body { height: auto; min-height: 100vh; overflow: auto; }
     header { height: auto; padding: 10px; align-items: flex-start; gap: 8px; flex-direction: column; }
@@ -194,6 +217,7 @@
     .mini-card { min-width: 150px; padding: 8px 10px; }
     .detail-panel { left: 10px; right: 10px; bottom: 10px; width: auto; max-height: 58vh; overflow: auto; }
     .globe-tip { left: 10px; right: 10px; top: auto; bottom: 10px; max-width: none; }
+    .net-controls { position: static; width: auto; margin: 10px; order: 2; }
     .filter-btn, .rel-row, .cluster-btn { min-height: 38px; }
   }
 </style>
@@ -225,6 +249,29 @@
     <div class="globe-tip" id="globe-tip">
       <span>🔗＝點我看關聯；點事件可追整張情報網。</span>
       <button type="button" onclick="dismissTip()">我知道了</button>
+    </div>
+    <div class="net-controls" id="net-controls" aria-label="關聯線分析控制">
+      <div class="net-title">🕸 關聯線分析 <span id="net-count">—</span></div>
+      <div class="arc-filter-row" aria-label="關聯型別篩選">
+        <button type="button" class="arc-toggle active" data-arc-type="same-incident" onclick="toggleArcType('same-incident')">
+          <i class="arc-chip" style="background:#ffc107;"></i>跨源佐證
+        </button>
+        <button type="button" class="arc-toggle active" data-arc-type="same-entity" onclick="toggleArcType('same-entity')">
+          <i class="arc-chip" style="background:#b388ff;"></i>共享實體
+        </button>
+        <button type="button" class="arc-toggle off" data-arc-type="same-topic" onclick="toggleArcType('same-topic')">
+          <i class="arc-chip" style="background:#00c8ff;"></i>同題情勢（弱關聯）
+        </button>
+      </div>
+      <div class="net-switch">
+        <label><input id="toggle-weak-arcs" type="checkbox" onchange="setShowWeakArcs(this.checked)"> 顯示同題弱關聯線</label>
+      </div>
+      <label class="strength-control">
+        <span class="strength-head"><span>關聯強度門檻</span><b id="arc-strength-value">0.0</b></span>
+        <input id="arc-strength" type="range" min="0" max="5" step="0.5" value="0" oninput="setArcMinWeight(this.value)">
+      </label>
+      <div id="net-legend"></div>
+      <div class="net-note">弧線代表資料關聯線索，不等於同案；弱關聯預設關閉。</div>
     </div>
 
     <div class="left-panel">
@@ -305,11 +352,13 @@ const LIST_MAX = 1000;    // 列表最多顯示
 const GLOBE_MAX = 700;    // 地球儀標點上限（避免過載）
 const REFRESH_MS = 300000; // 5 分鐘自動重抓
 const NET_ARC_MAX = 600;  // 情報網弧線上限（效能；超出依關聯強度取前 N）
+const NET_WEAK_ARC_MAX = 350; // 弱關聯另設上限，避免同題線一開就變毛球。
 
 const LEVEL_COLOR = { critical: '#ff4444', warning: '#ffc107', info: '#00c8ff', normal: '#44ff88' };
-// 情報網弧線配色（依關聯型別）：佐證=琥珀、共享實體=紫
+// 情報網弧線配色（依關聯型別）：佐證=琥珀、共享實體=紫、弱關聯=青。
 const ARC_COLOR = { 'same-incident': '#ffc107', 'same-entity': '#b388ff', 'same-topic': '#00c8ff' };
-const ARC_TYPE_LABEL = { 'same-incident': '跨源佐證', 'same-entity': '共享實體', 'same-topic': '同題情勢' };
+const ARC_TYPE_LABEL = { 'same-incident': '跨源佐證', 'same-entity': '共享實體', 'same-topic': '同題情勢（弱關聯）' };
+const ARC_TYPE_ENABLED = { 'same-incident': true, 'same-entity': true, 'same-topic': false };
 const LEVEL_LABEL = { critical: '高威脅', warning: '需關注', info: '一般情資', normal: '已解除' };
 const RISK_TO_LEVEL = { critical: 'critical', high: 'warning', medium: 'info', low: 'normal' };
 
@@ -321,6 +370,7 @@ let NET_ADJ = new Map();
 let NET_CLUSTERS = [];
 let NET_CLUSTER_BY_ID = new Map();
 let netStats = null;   // { shown, hiddenNational }
+let arcMinWeight = 0;
 let focusArcId = null;
 let focusClusterId = null;
 let focusClusterMembers = null;
@@ -599,26 +649,36 @@ function buildNetworkIndex(net) {
   for (const list of NET_ADJ.values()) list.sort((a, b) => b.weight - a.weight);
   window.NET_ADJ = NET_ADJ;
   window.NET_CLUSTERS = NET_CLUSTERS;
-  window.__NET_ACTIVE_ARCS = () => NET_ARCS.filter(isArcActive).length;
+  window.__NET_ACTIVE_ARCS = () => visibleNetworkArcs().filter(isArcActive).length;
 }
 
 // 把 network.json 的關聯邊轉成 globe 弧線：兩端皆有座標者上圖（依強度取前 N）；
 // 全國性（缺座標）關聯無法定位，計數誠實標註、不靜默丟棄。
 function buildNetworkArcs(net) {
   NET_ARCS = [];
-  netStats = { shown: 0, hiddenNational: 0 };
+  netStats = { shown: 0, strong: 0, weak: 0, hiddenNational: 0 };
   if (!net || !Array.isArray(net.edges)) return;
   const coord = new Map();
   for (const d of ALL) if (d.lat != null && d.lng != null) coord.set(d.id, d);
   const JIT = 0.22;
-  // 只畫強連結（佐證／共享實體）；same-topic 量大且弱，不上圖避免糊成一片。
-  const strong = net.edges.filter((e) => e.type !== 'same-topic').sort((a, b) => b.weight - a.weight);
+  // 強連結預設顯示；同題弱關聯保留為可切換圖層，預設關閉，避免一進頁面糊成毛球。
+  const ranked = net.edges
+    .slice()
+    .sort((a, b) => (a.type === 'same-topic') - (b.type === 'same-topic') || b.weight - a.weight);
   const arcs = [];
   let hiddenNational = 0;
-  for (const e of strong) {
+  let strongShown = 0;
+  let weakShown = 0;
+  for (const e of ranked) {
     const A = coord.get(e.a); const B = coord.get(e.b);
     if (!A || !B) { hiddenNational++; continue; }
-    if (arcs.length >= NET_ARC_MAX) continue;
+    if (e.type === 'same-topic') {
+      if (weakShown >= NET_WEAK_ARC_MAX) continue;
+      weakShown++;
+    } else {
+      if (strongShown >= NET_ARC_MAX) continue;
+      strongShown++;
+    }
     arcs.push({
       srcId: e.a, dstId: e.b, why: e.why,
       startLat: A.lat + hashJit(e.a + ':la', JIT), startLng: A.lng + hashJit(e.a + ':lo', JIT),
@@ -628,7 +688,7 @@ function buildNetworkArcs(net) {
   }
   NET_ARCS = arcs;
   window.NET_ARCS = NET_ARCS;
-  netStats = { shown: arcs.length, hiddenNational };
+  netStats = { shown: arcs.length, strong: strongShown, weak: weakShown, hiddenNational };
 }
 
 // 判決依城市分群（密度＝件數）；非判決事件保留個別座標。
@@ -667,7 +727,7 @@ function clusterLabel(c) {
   return `<div style="background:rgba(13,21,32,0.92);border:1px solid ${LEVEL_COLOR[c.level]};border-radius:6px;padding:10px 14px;font-family:'Noto Sans TC',sans-serif;min-width:200px;box-shadow:0 0 24px ${LEVEL_COLOR[c.level]}55;">
     <div style="font-size:13px;color:#fff;font-weight:600;margin-bottom:6px;">${esc(c.city)}｜判決 ${c.count} 件</div>
     <div style="font-size:10px;color:#9ab;">${top || '—'}</div>
-    <div style="font-size:9px;color:#5a7a9a;margin-top:4px;">點擊聚焦並列出該市判決</div>
+    <div style="font-size:9px;color:#5a7a9a;margin-top:4px;">點擊查看聚合詳情與單筆資料</div>
   </div>`;
 }
 
@@ -679,14 +739,77 @@ function pointLabelHtml(d) {
   </div>`;
 }
 
+function clusterDetailHtml(c) {
+  const items = (c.items || []).slice(0, 8);
+  const sample = items.map((it) => `
+    <button type="button" class="rel-row" onclick="selectIntel('${esc(it.id)}')">
+      <span class="rel-type">${esc(LEVEL_LABEL[it.level] || it.level)} · ${esc(it.time || '')}</span>
+      <span class="rel-title">${esc(it.title)}</span>
+      <span class="rel-why">${esc(it.location)} · ${esc(it.type)}${it.srcName ? ' · 來源：' + esc(it.srcName) : ''}</span>
+    </button>`).join('');
+  return `<div>
+    <div><b>城市聚合</b>：此圓點代表同一城市內多筆資料，不是單一案件。</div>
+    <div style="margin-top:6px;">點下列單筆情報查看完整來源脈絡。</div>
+    ${sample || '<div class="meta-label" style="margin-top:6px;">此聚合目前沒有可列出的單筆情報。</div>'}
+  </div>`;
+}
+
 // 點擊城市分群：聚焦該市 + 列表過濾為該市判決。
 function focusCity(c) {
   if (window.globeInstance) window.globeInstance.pointOfView({ lat: c.lat, lng: c.lng, altitude: 1.5 }, 1000);
   const data = ALL.filter((d) => d.type === '司法判決' && d.location === c.city).slice(0, LIST_MAX);
   document.getElementById('list-count').textContent = `(${c.city} 判決 ${data.length})`;
   renderListData(data);
+  document.getElementById('d-tag').textContent = '城市聚合 · 司法判決';
+  document.getElementById('d-title').textContent = `${c.city}｜判決 ${data.length} 件`;
+  document.getElementById('d-loc').textContent = c.city;
+  document.getElementById('d-level').innerHTML = `<span style="color:${LEVEL_COLOR[c.level]}">${LEVEL_LABEL[c.level] || c.level}</span>`;
+  document.getElementById('d-type').textContent = '司法判決聚合';
+  document.getElementById('d-time').textContent = (data[0] && data[0].time) || '—';
+  document.getElementById('d-desc').innerHTML = clusterDetailHtml(Object.assign({}, c, { items: data }));
+  document.getElementById('d-src').innerHTML = '<div class="meta-label">聚合說明：這是地圖視覺聚合；請點單筆情報查看原始來源與完整脈絡。</div>';
+  document.getElementById('d-related').innerHTML = '';
+  document.getElementById('detail-panel').classList.add('show');
 }
 
+function isArcEnabledByControls(d) {
+  return ARC_TYPE_ENABLED[d.type] !== false && Number(d.weight || 0) >= arcMinWeight;
+}
+function visibleNetworkArcs() {
+  return NET_ARCS.filter(isArcEnabledByControls);
+}
+function syncArcControls() {
+  document.querySelectorAll('[data-arc-type]').forEach((btn) => {
+    const type = btn.getAttribute('data-arc-type');
+    const on = ARC_TYPE_ENABLED[type] !== false;
+    btn.classList.toggle('active', on);
+    btn.classList.toggle('off', !on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  const weak = document.getElementById('toggle-weak-arcs');
+  if (weak) weak.checked = ARC_TYPE_ENABLED['same-topic'] !== false;
+  const slider = document.getElementById('arc-strength');
+  if (slider) slider.value = String(arcMinWeight);
+  const value = document.getElementById('arc-strength-value');
+  if (value) value.textContent = Number(arcMinWeight).toFixed(1);
+}
+function toggleArcType(type) {
+  if (!Object.prototype.hasOwnProperty.call(ARC_TYPE_ENABLED, type)) return;
+  ARC_TYPE_ENABLED[type] = !ARC_TYPE_ENABLED[type];
+  syncArcControls();
+  redrawArcs();
+}
+function setShowWeakArcs(checked) {
+  ARC_TYPE_ENABLED['same-topic'] = !!checked;
+  syncArcControls();
+  redrawArcs();
+}
+function setArcMinWeight(value) {
+  const next = Number(value);
+  arcMinWeight = Number.isFinite(next) ? Math.max(0, next) : 0;
+  syncArcControls();
+  redrawArcs();
+}
 function isArcActive(d) {
   if (focusArcId) return d.srcId === focusArcId || d.dstId === focusArcId;
   if (focusClusterMembers) return focusClusterMembers.has(d.srcId) && focusClusterMembers.has(d.dstId);
@@ -694,7 +817,7 @@ function isArcActive(d) {
 }
 function redrawArcs() {
   const g = window.globeInstance;
-  if (g) g.arcsData(NET_ARCS.slice());
+  if (g) g.arcsData(visibleNetworkArcs());
   updateNetLegend();
 }
 function highlightArcsFor(id) {
@@ -797,7 +920,7 @@ function updateGlobe() {
   const critPoints = combined.filter((d) => d.kind === 'point' && d.level === 'critical').slice(0, 30);
   const topCities = [...clusters].sort((a, b) => b.count - a.count).slice(0, 6);
   g.ringsData([...critPoints, ...topCities]);
-  g.arcsData(NET_ARCS.slice());
+  g.arcsData(visibleNetworkArcs());
   updateNetLegend();
 }
 
@@ -807,18 +930,21 @@ function updateNetLegend() {
   if (!el) {
     el = document.createElement('div');
     el.id = 'net-legend';
-    el.style.cssText = 'position:fixed;left:14px;bottom:14px;z-index:50;background:rgba(13,21,32,0.86);' +
-      'border:1px solid #2a3a4a;border-radius:8px;padding:9px 12px;font-family:"Noto Sans TC",sans-serif;' +
-      'font-size:11px;color:#9ab;line-height:1.7;box-shadow:0 0 20px #0008;pointer-events:none;';
     document.body.appendChild(el);
   }
-  const s = netStats || { shown: 0, hiddenNational: 0 };
-  const active = NET_ARCS.filter(isArcActive).length;
-  const chip = (c, t) => `<span style="display:inline-block;width:18px;height:3px;background:${c};vertical-align:middle;margin-right:5px;border-radius:2px;"></span>${t}`;
+  syncArcControls();
+  const s = netStats || { shown: 0, strong: 0, weak: 0, hiddenNational: 0 };
+  const visible = visibleNetworkArcs();
+  const active = visible.filter(isArcActive).length;
+  const byType = (type) => visible.filter((d) => d.type === type).length;
+  const count = document.getElementById('net-count');
+  if (count) count.textContent = `${focusArcId || focusClusterId ? active + '/' : ''}${visible.length}/${s.shown}`;
+  const chip = (c, t, n) => `<span class="arc-chip" style="background:${c};"></span>${t} <span style="color:#5a7a9a;">${n}</span>`;
   el.innerHTML =
-    `<div style="color:#cfe;font-weight:600;margin-bottom:3px;">🕸 情報網　<span style="color:#ffc107;">${focusArcId || focusClusterId ? active + '/' : ''}${s.shown}</span> 條關聯</div>` +
-    `<div>${chip(ARC_COLOR['same-incident'], ARC_TYPE_LABEL['same-incident'])}</div>` +
-    `<div>${chip(ARC_COLOR['same-entity'], ARC_TYPE_LABEL['same-entity'])}</div>` +
+    `<div>${chip(ARC_COLOR['same-incident'], ARC_TYPE_LABEL['same-incident'], byType('same-incident'))}</div>` +
+    `<div>${chip(ARC_COLOR['same-entity'], ARC_TYPE_LABEL['same-entity'], byType('same-entity'))}</div>` +
+    `<div>${chip(ARC_COLOR['same-topic'], ARC_TYPE_LABEL['same-topic'], byType('same-topic'))}</div>` +
+    (arcMinWeight > 0 ? `<div style="color:#5a7a9a;margin-top:3px;">已套用強度門檻 ≥ ${Number(arcMinWeight).toFixed(1)}</div>` : '') +
     (s.hiddenNational ? `<div style="color:#5a7a9a;margin-top:3px;">另 ${s.hiddenNational} 條全國性關聯未在圖上</div>` : '');
 }
 function initGlobe() {
@@ -845,9 +971,11 @@ function initGlobe() {
     .arcColor((d) => {
       const c = ARC_COLOR[d.type] || '#00c8ff';
       const on = isArcActive(d);
-      return on ? [c + '00', c + 'ee', c + '00'] : [c + '00', c + '22', c + '00'];
+      const hi = d.type === 'same-topic' ? '88' : 'ee';
+      const lo = d.type === 'same-topic' ? '12' : '22';
+      return on ? [c + '00', c + hi, c + '00'] : [c + '00', c + lo, c + '00'];
     })
-    .arcStroke((d) => (isArcActive(d) ? (d.type === 'same-incident' ? 0.72 : 0.56) : 0.12))
+    .arcStroke((d) => (isArcActive(d) ? (d.type === 'same-topic' ? 0.28 : d.type === 'same-incident' ? 0.72 : 0.56) : 0.1))
     .arcLabel((d) => `${ARC_TYPE_LABEL[d.type] || d.type}（強度 ${Number(d.weight).toFixed(1)}）${d.why ? '｜' + esc(d.why) : ''}`)
     .arcDashLength(0.5).arcDashGap(0.25).arcDashAnimateTime(1800).arcAltitudeAutoScale((d) => (isArcActive(d) ? 0.45 : 0.18))
     .pointOfView({ lat: 23.5, lng: 121, altitude: 2.2 }, 0);

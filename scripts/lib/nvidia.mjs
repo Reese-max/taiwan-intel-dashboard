@@ -5,6 +5,8 @@
 // 例如 MiniMax：LLM_BASE_URL=https://api.minimax.io/v1、LLM_MODEL=MiniMax-M2。
 // 座標為 LLM 推估（非原始資料），呼叫端需在 provenance 誠實標註。
 
+import { deriveNewsProvenance } from "./fetch-rss.mjs";
+
 const CATEGORIES = ["地緣政治", "災害", "資安", "金融", "其他"];
 const RISKS = ["low", "medium", "high", "critical"];
 
@@ -178,6 +180,13 @@ function cleanTopic(v) {
   return s.length >= 4 && s.length <= 30 ? s : undefined;
 }
 
+function inferredLocationPrecision(scope, region, lat, lng) {
+  if (lat === 0 && lng === 0) return "global";
+  if (scope === "domestic") return region && region !== "全國" ? "city" : "country";
+  if (String(region || "").includes("全球")) return "global";
+  return lat != null && lng != null ? "country" : "unknown";
+}
+
 // items: [{title, link, description, source, sourceUrl, hint}]
 // 回傳 IntelEvent[]（scope=international）
 export async function normalizeInternational(items, { max = 10 } = {}) {
@@ -225,6 +234,8 @@ ${listing}
       region: o.region || "國際",
       lat: typeof o.lat === "number" ? o.lat : undefined,
       lng: typeof o.lng === "number" ? o.lng : undefined,
+      locationPrecision: inferredLocationPrecision("international", o.region, o.lat, o.lng),
+      locationNote: "LLM 依新聞內容推估位置，非原始精準座標",
       timestamp: toIso(it.pubDate),
       category: clampCat(o.category),
       scope: "international",
@@ -233,11 +244,8 @@ ${listing}
       aiEntities: cleanEntities(o.entities),
       aiTopic: cleanTopic(o.topic),
       source: {
-        name: it.source,
-        type: "news-rss",
-        url: it.link,
-        fetchedAt,
-        query: `RSS ${it.sourceUrl} → LLM(${model}) 正規化`,
+        ...deriveNewsProvenance(it, { fetchedAt, model }),
+        datasetId: undefined,
       },
     });
   }
@@ -293,6 +301,8 @@ ${listing}
       region: o.region || "全國",
       lat: typeof o.lat === "number" ? o.lat : undefined,
       lng: typeof o.lng === "number" ? o.lng : undefined,
+      locationPrecision: inferredLocationPrecision("domestic", o.region, o.lat, o.lng),
+      locationNote: "LLM 依新聞內容推估位置，非原始精準座標",
       timestamp: toIso(it.pubDate),
       category: clampTwCat(o.category),
       scope: "domestic",
@@ -300,15 +310,7 @@ ${listing}
       summary: o.summary_zh || it.description?.slice(0, 200) || "",
       aiEntities: cleanEntities(o.entities),
       aiTopic: cleanTopic(o.topic),
-      source: {
-        name: it.source,
-        type: "news-rss",
-        datasetId: "tw-news",
-        recordRef: it.link,
-        url: it.link,
-        fetchedAt,
-        query: `RSS ${it.sourceUrl} → LLM(${model}) 正規化`,
-      },
+      source: deriveNewsProvenance(it, { fetchedAt, model }),
     });
   }
   return events;

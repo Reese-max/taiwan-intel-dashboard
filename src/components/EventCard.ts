@@ -26,6 +26,37 @@ function sourceTypeLabel(type: IntelEvent["source"]["type"]): string {
   }
 }
 
+function sourceDisplayName(e: IntelEvent): string {
+  if (e.source.publisherName) return e.source.publisherName;
+  if (e.source.aggregatorName) return `${e.source.aggregatorName} 聚合`;
+  return e.source.name;
+}
+
+function sourceChain(e: IntelEvent): string {
+  const bits = [`來源：${sourceDisplayName(e)}`];
+  if (e.source.aggregatorName) bits.push(`經由：${e.source.aggregatorName}`);
+  if (e.source.sourceConfidence === "aggregated") bits.push("聚合來源，請點開原文確認");
+  return bits.join("｜");
+}
+
+function locationPrecisionLabel(value: IntelEvent["locationPrecision"]): string {
+  switch (value) {
+    case "exact":
+    case "address":
+      return "精準位置";
+    case "district":
+      return "行政區推論";
+    case "city":
+      return "縣市推論";
+    case "country":
+      return "國家層級";
+    case "global":
+      return "全球概略";
+    default:
+      return "未知";
+  }
+}
+
 function eventContext(e: IntelEvent): string {
   const parts = [
     `<span><b>資料時間</b>${esc(fmtDate(e.timestamp))}</span>`,
@@ -35,6 +66,10 @@ function eventContext(e: IntelEvent): string {
   if (e.source.datasetId) parts.push(`<span><b>資料集</b>${esc(e.source.datasetId)}</span>`);
   if (e.source.recordRef)
     parts.push(`<span class="ctx-wide"><b>原始編號</b>${esc(e.source.recordRef)}</span>`);
+  if (e.source.aggregatorName)
+    parts.push(`<span class="ctx-aggregator"><b>經由</b>${esc(e.source.aggregatorName)}</span>`);
+  if (e.locationPrecision)
+    parts.push(`<span class="ctx-location"><b>定位</b>${esc(locationPrecisionLabel(e.locationPrecision))}</span>`);
   if (e.source.query) parts.push(`<span class="ctx-query" title="${esc(e.source.query)}"><b>查詢</b>可重現查詢</span>`);
   return `<div class="event-context" aria-label="完整脈絡"><strong>完整脈絡</strong>${parts.join("")}</div>`;
 }
@@ -44,10 +79,11 @@ export function eventCard(e: IntelEvent, relatedCount = 0, relation?: RelationCh
   const fetched = fmtDate(e.source.fetchedAt);
   // url 與 recordRef 相同時 build-static 會省略 url（剝肥），故 fallback 至 recordRef。
   const linkUrl = e.source.url ?? e.source.recordRef;
+  const displaySource = sourceDisplayName(e);
   const src =
     linkUrl && /^https?:\/\//.test(linkUrl)
-      ? `<a class="src-link" href="${esc(linkUrl)}" target="_blank" rel="noopener">↗ ${esc(e.source.name)}</a>`
-      : `<span class="src-link src-none" title="無原始連結">${esc(e.source.name)}（無原始連結）</span>`;
+      ? `<a class="src-link" href="${esc(linkUrl)}" target="_blank" rel="noopener" title="${esc(sourceChain(e))}">↗ ${esc(displaySource)}</a>`
+      : `<span class="src-link src-none" title="無原始連結">${esc(displaySource)}（無原始連結）</span>`;
   const ref = e.source.recordRef
     ? `<span class="ref" title="原始識別">編號 ${esc(e.source.recordRef)}</span>`
     : "";

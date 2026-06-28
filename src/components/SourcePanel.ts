@@ -17,6 +17,17 @@ interface ProvSource {
 interface Manifest {
   generatedAt: string;
   note?: string;
+  pipeline?: {
+    twnews?: {
+      lowContributionFeeds?: string[];
+      sourceContributionTotals?: {
+        raw?: number;
+        rawUnique?: number;
+        policeRelevant?: number;
+        finalEvents?: number;
+      };
+    };
+  };
   sources: ProvSource[];
 }
 
@@ -91,6 +102,28 @@ function sourceItem(source: ProvSource, generatedAt: string): string {
   </li>`;
 }
 
+function lowContributionBlock(manifest: Manifest): string {
+  const twnews = manifest.pipeline?.twnews;
+  const feeds = twnews?.lowContributionFeeds || [];
+  if (!feeds.length) return "";
+  const totals = twnews?.sourceContributionTotals || {};
+  const totalLine =
+    typeof totals.raw === "number"
+      ? `最終 ${totals.finalEvents ?? 0}／原始 ${totals.raw}`
+      : "最終貢獻偏低";
+  const detail = [
+    typeof totals.rawUnique === "number" ? `去重後 ${totals.rawUnique}` : undefined,
+    typeof totals.policeRelevant === "number" ? `警政相關 ${totals.policeRelevant}` : undefined,
+  ]
+    .filter(Boolean)
+    .join("，");
+  return `<section class="source-alert source-alert-warn" aria-label="新聞來源低貢獻警示">
+    <h5>新聞來源低貢獻警示</h5>
+    <p>${esc(totalLine)}${detail ? `（${esc(detail)}）` : ""}；以下來源有原始量，但幾乎未進入最終事件，可能被標題去重或警政相關性過濾。</p>
+    <div class="source-chip-list">${feeds.map((feed) => `<span>${esc(feed)}</span>`).join("")}</div>
+  </section>`;
+}
+
 export async function renderSourcePanel(container: HTMLElement): Promise<void> {
   const res = await fetch("./data/provenance.json");
   if (!res.ok) {
@@ -116,6 +149,7 @@ export async function renderSourcePanel(container: HTMLElement): Promise<void> {
         <div><b>官方來源 ${official}</b><span>政府／氣象署</span></div>
       </div>
       <p class="source-generated">擷取於 ${esc(generated)}</p>
+      ${lowContributionBlock(m)}
       <ul class="source-list">${items}</ul>
       ${hiddenCount ? `<p class="prov-note">另有 ${hiddenCount} 個低量來源已收合；可在 provenance.json 檢視完整清單。</p>` : ""}
     </section>

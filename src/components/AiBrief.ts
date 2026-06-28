@@ -13,6 +13,14 @@ export interface AiSummary {
   generatedAt: string;
 }
 
+// clusterSummaries 僅針對「國內」群生成（見 scripts/lib/nvidia.mjs：只 summarizeClusters(domesticClusters)）。
+// cluster id 是各 scope 網路內的流水號（c0/c1/c2…），跨 scope 會撞號，故國際 scope 若直接套用，
+// 國際群會誤掛同號的國內群摘要。此處依 scope 收斂：非國內一律回空，杜絕跨 scope 摘要污染。
+export function clusterSummariesForScope(summary: AiSummary | null, scope: Scope): Record<string, string> {
+  if (!summary || scope !== "domestic") return {};
+  return summary.clusterSummaries ?? {};
+}
+
 export async function loadSummary(): Promise<AiSummary | null> {
   try {
     const res = await fetch("./data/summary.json");

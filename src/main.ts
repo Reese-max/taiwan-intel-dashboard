@@ -11,7 +11,7 @@ import { esc } from "./utils/escape";
 import { renderFilterBar } from "./components/FilterBar";
 import { renderTimeline } from "./components/TimelineView";
 import { renderSourcePanel } from "./components/SourcePanel";
-import { loadSummary, renderAiBrief, type AiSummary } from "./components/AiBrief";
+import { clusterSummariesForScope, loadSummary, renderAiBrief, type AiSummary } from "./components/AiBrief";
 import { renderPoliceHealthPanel } from "./components/PoliceHealthPanel";
 import { renderTopClusters } from "./components/TopClusters";
 import { MapView } from "./components/MapView";
@@ -211,7 +211,7 @@ async function refresh(): Promise<void> {
   }
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
-  renderKpiStrip(document.getElementById("kpistrip")!, all);
+  renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope);
 
   let display: IntelEvent[];
   const viewKey = focusCluster
@@ -280,7 +280,7 @@ async function refresh(): Promise<void> {
           return ev ? { event: ev, rel: r } : null;
         })
         .filter((n): n is RelationNode => n !== null);
-      const clusterAi = summary?.clusterSummaries?.[focusCluster];
+      const clusterAi = clusterSummariesForScope(summary, s.scope)[focusCluster];
       const head = `🕸 情報群網絡　<b>${c.size ?? memberIds.length}</b> 則 · 圖示核心成員的群內關聯${
         clusterAi ? `<span class="rg-ai-summary">🤖 ${esc(clusterAi)}</span>` : ""
       }`;
@@ -302,7 +302,7 @@ async function refresh(): Promise<void> {
     lastViewKey = viewKey;
   }
   renderFocusBar(display, net);
-  renderTopClusters(document.getElementById("topclusters")!, net.clusters(), summary?.clusterSummaries ?? {});
+  renderTopClusters(document.getElementById("topclusters")!, net.clusters(), clusterSummariesForScope(summary, s.scope));
   void mapView.render(display);
   renderTimeline(document.getElementById("timeline")!, display);
   renderAiBrief(document.getElementById("aibrief")!, summary, s.scope);

@@ -147,6 +147,12 @@ describe("resolveFetchMode", () => {
     expect(workflowChoices).toEqual(FETCH_MODE_CHOICES);
   });
 
+  it("runs Taiwan news contribution audit as a CI warning step when twnews is fetched", () => {
+    const workflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
+    expect(workflow).toContain("if: contains(steps.mode.outputs.args, 'twnews')");
+    expect(workflow).toContain("npm run audit:news-source-contribution");
+  });
+
   it("writes GitHub output for label, fetch args, and assertion args", () => {
     const dir = mkdtempSync(join(tmpdir(), "ci-fetch-mode-"));
     const out = join(dir, "output");

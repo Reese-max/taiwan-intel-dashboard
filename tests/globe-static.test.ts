@@ -26,4 +26,30 @@ describe("static/intel.html", () => {
     expect(viteConfig).toContain("/intel.html");
     expect(viteConfig).toContain("static/intel.html");
   });
+
+  it("世界地圖提供分析工具型關聯線控制", () => {
+    const html = readFileSync("static/intel.html", "utf8");
+
+    expect(html).toContain('id="net-controls"');
+    expect(html).toContain('data-arc-type="same-incident"');
+    expect(html).toContain('data-arc-type="same-entity"');
+    expect(html).toContain('data-arc-type="same-topic"');
+    expect(html).toContain('id="toggle-weak-arcs"');
+    expect(html).toContain('id="arc-strength"');
+    expect(html).toContain("同題情勢（弱關聯）");
+    expect(html).toContain("function visibleNetworkArcs()");
+    expect(html).toContain("function toggleArcType(type)");
+    expect(html).toContain("function setShowWeakArcs(checked)");
+    expect(html).toContain("function setArcMinWeight(value)");
+    expect(html).toContain("g.arcsData(visibleNetworkArcs())");
+  });
+
+  it("世界地圖城市聚合點點擊後會開啟可讀詳情", () => {
+    const html = readFileSync("static/intel.html", "utf8");
+
+    expect(html).toContain("function clusterDetailHtml(c)");
+    expect(html).toContain("城市聚合");
+    expect(html).toContain("點下列單筆情報查看完整來源脈絡");
+    expect(html).toContain("document.getElementById('detail-panel').classList.add('show')");
+  });
 });

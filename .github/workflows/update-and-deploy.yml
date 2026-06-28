@@ -98,8 +98,15 @@ jobs:
           ALLOW_STALE_CWA: ${{ vars.ALLOW_STALE_CWA }}
         run: node scripts/assert-pipeline-sources.mjs ${{ steps.mode.outputs.assert_args }}
 
+      - name: 檢查新聞來源實際貢獻
+        if: contains(steps.mode.outputs.args, 'twnews')
+        run: npm run audit:news-source-contribution
+
       - name: 建置靜態網站
         run: npm run build
+
+      - name: 檢查情報網品質
+        run: npm run audit:network-quality
 
       - name: 清除臨時 .env
         if: always()
