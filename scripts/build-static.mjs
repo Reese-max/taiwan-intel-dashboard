@@ -159,6 +159,12 @@ writeFileSync(
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   Permissions-Policy: camera=(), microphone=(), geolocation=(), browsing-topics=()
   Content-Security-Policy: ${CSP}
+
+/data/*.json
+  Cache-Control: public, max-age=120, stale-while-revalidate=600
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
 `,
 );
 
