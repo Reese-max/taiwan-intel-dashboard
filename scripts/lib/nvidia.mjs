@@ -195,6 +195,25 @@ export function cleanActors(v) {
   }
   return out.length ? out : undefined;
 }
+// 實體關係清洗（餵關係圖）：每項須有非空字串 from/to/type 且各 ≤24；去重；cap 8；非陣列 → undefined。export 供單元測試。
+export function cleanRelations(v) {
+  if (!Array.isArray(v)) return undefined;
+  const out = [];
+  const seen = new Set();
+  for (const r of v) {
+    if (!r || typeof r !== "object") continue;
+    const from = String(r.from || "").trim();
+    const to = String(r.to || "").trim();
+    const type = String(r.type || "").trim();
+    if (!from || !to || !type || from.length > 24 || to.length > 24 || type.length > 24) continue;
+    const key = `${from}|${to}|${type}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ from, to, type });
+    if (out.length >= 8) break;
+  }
+  return out.length ? out : undefined;
+}
 function cleanTopic(v) {
   const s = String(v || "").trim();
   return s.length >= 4 && s.length <= 30 ? s : undefined;
@@ -234,6 +253,7 @@ ${listing}
 - twRelevance: 對台灣的相關度（0-100 整數；台海/兩岸/盟友/供應鏈/半導體/在台或赴台僑民越相關越高，與台灣幾乎無關則低）
 - sentiment: 事件情緒傾向（必為其一 ["negative","neutral","positive","mixed"]）
 - threatActors: 涉及的威脅行為者/敵對組織具名陣列（駭客組織、詐騙/犯罪集團、恐怖組織、敵國軍警單位等；最多 5；無則 []）
+- relations: 此事件中關鍵實體間的關係陣列，每項物件 {from, to, type}（type 為關係類型如「軍援」「制裁」「衝突」「結盟」「談判」；最多 8；無則 []）
 
 只輸出 JSON 陣列，不要任何說明文字。`;
 
@@ -270,6 +290,7 @@ ${listing}
       twRelevance: clampTwRelevance(o.twRelevance),
       sentiment: clampSentiment(o.sentiment),
       threatActors: cleanActors(o.threatActors),
+      relations: cleanRelations(o.relations),
       source: {
         ...deriveNewsProvenance(it, { fetchedAt, model }),
         datasetId: undefined,

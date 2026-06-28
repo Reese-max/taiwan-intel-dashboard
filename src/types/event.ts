@@ -41,6 +41,7 @@ export interface IntelEvent {
   twRelevance?: number; // 對台灣的相關度 0-100（LLM 估計，僅國際事件）
   sentiment?: "negative" | "neutral" | "positive" | "mixed"; // LLM 估計的事件情緒傾向
   threatActors?: string[]; // LLM 抽取的威脅行為者/敵對組織具名
+  relations?: { from: string; to: string; type: string }[]; // LLM 抽取的實體關係（餵關係圖，僅國際事件）
 }
 
 export const RISK_ORDER: Record<RiskLevel, number> = {

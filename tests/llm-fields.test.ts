@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { clampTwRelevance, clampSentiment, cleanActors } from "../scripts/lib/nvidia.mjs";
+import { clampTwRelevance, clampSentiment, cleanActors, cleanRelations } from "../scripts/lib/nvidia.mjs";
 
 describe("LLM optional field clamps", () => {
   it("clampTwRelevance: clamp 0-100, round, non-number/null -> undefined", () => {
@@ -37,5 +37,18 @@ describe("LLM optional field clamps", () => {
     expect(cleanActors([])).toBe(undefined);
     expect(cleanActors("not-array")).toBe(undefined);
     expect(cleanActors(undefined)).toBe(undefined);
+  });
+
+  it("cleanRelations: keeps valid {from,to,type}, drops malformed, dedupes, caps 8", () => {
+    expect(cleanRelations([{ from: "美國", to: "烏克蘭", type: "軍援" }, { from: " 美國 ", to: "烏克蘭", type: "軍援" }])).toEqual([
+      { from: "美國", to: "烏克蘭", type: "軍援" },
+    ]);
+    expect(cleanRelations([{ from: "A", to: "", type: "x" }, { from: "A", to: "B" }])).toBe(undefined); // missing/empty fields
+    expect(cleanRelations([{ from: "a".repeat(30), to: "B", type: "t" }])).toBe(undefined); // too long
+    expect(
+      cleanRelations(Array.from({ length: 12 }, (_, i) => ({ from: `甲${i}`, to: `乙${i}`, type: "關" }))).length,
+    ).toBe(8); // caps at 8
+    expect(cleanRelations("not-array")).toBe(undefined);
+    expect(cleanRelations([])).toBe(undefined);
   });
 });
