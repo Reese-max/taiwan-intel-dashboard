@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { clampTwRelevance, clampSentiment } from "../scripts/lib/nvidia.mjs";
+import { clampTwRelevance, clampSentiment, cleanActors } from "../scripts/lib/nvidia.mjs";
 
 describe("LLM optional field clamps", () => {
   it("clampTwRelevance: clamp 0-100, round, non-number/null -> undefined", () => {
@@ -26,5 +26,16 @@ describe("LLM optional field clamps", () => {
     expect(clampSentiment("")).toBe(undefined);
     expect(clampSentiment(undefined)).toBe(undefined);
     expect(clampSentiment(null)).toBe(undefined);
+  });
+
+  it("cleanActors: trims, dedupes, caps 5, drops too-short/long, non-array -> undefined", () => {
+    expect(cleanActors(["Lazarus Group", " APT28 ", "APT28", "x"])).toEqual(["Lazarus Group", "APT28"]);
+    expect(cleanActors(["柬埔寨詐騙集團", "竹聯幫"])).toEqual(["柬埔寨詐騙集團", "竹聯幫"]);
+    expect(cleanActors(["a".repeat(30)])).toBe(undefined); // too long dropped
+    expect(cleanActors(["A", "B"])).toBe(undefined); // single chars (len<2) all dropped -> undefined
+    expect(cleanActors(["集團甲", "集團乙", "集團丙", "集團丁", "集團戊", "集團己"]).length).toBe(5); // caps at 5
+    expect(cleanActors([])).toBe(undefined);
+    expect(cleanActors("not-array")).toBe(undefined);
+    expect(cleanActors(undefined)).toBe(undefined);
   });
 });
