@@ -90,6 +90,7 @@ let focusCluster: string | null = null;
 let applyingHash = false;
 let lastQuery = "";
 let lastViewKey = "";
+let lastGeneratedAt: string | null = null;
 
 function isScope(v: string | null): v is Scope {
   return v === "domestic" || v === "international";
@@ -626,8 +627,15 @@ void loadSummary().then((s) => {
 });
 void refresh();
 setInterval(() => {
-  const scope = getState().scope;
-  delete cache[scope];
-  delete netCache[scope];
-  void refresh();
+  void fetch("./data/summary.json")
+    .then((res) => (res.ok ? (res.json() as Promise<AiSummary>) : null))
+    .then((data) => {
+      if (!data?.generatedAt || data.generatedAt === lastGeneratedAt) return;
+      lastGeneratedAt = data.generatedAt;
+      const scope = getState().scope;
+      delete cache[scope];
+      delete netCache[scope];
+      void refresh();
+    })
+    .catch(() => {});
 }, REFRESH_MS);
