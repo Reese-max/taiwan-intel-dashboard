@@ -118,7 +118,7 @@ export class MapView {
     const lib = ((await import("leaflet")) as unknown as { default: typeof L }).default;
     this.lib = lib;
     this.layer = lib.layerGroup();
-    this.map = lib.map(el).setView([23.7, 121], 7);
+    this.map = lib.map(el, { preferCanvas: true }).setView([23.7, 121], 7);
     // 深色底圖（CartoDB dark_matter，免金鑰）以融入深色主題，風險色標點更突出。
     lib
       .tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
