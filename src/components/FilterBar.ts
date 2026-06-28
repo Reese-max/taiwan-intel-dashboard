@@ -1,6 +1,7 @@
 import { getState, setState } from "../store";
 import type { RiskLevel, Scope } from "../types/event";
 import { esc } from "../utils/escape";
+import { debounce } from "../utils/debounce";
 
 const CATS: Record<Scope, string[]> = {
   domestic: ["治安", "反詐", "災防", "採購", "交通"],
@@ -41,6 +42,8 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
     const v = (ev.target as HTMLSelectElement).value;
     setState({ sinceDays: v ? Number(v) : undefined });
   };
-  container.querySelector<HTMLInputElement>("#f-query")!.oninput = (ev) =>
-    setState({ query: (ev.target as HTMLInputElement).value.trim() || undefined });
+  container.querySelector<HTMLInputElement>("#f-query")!.oninput = debounce((ev: unknown) => {
+    const input = (ev as Event).target as HTMLInputElement;
+    setState({ query: input.value.trim() || undefined });
+  }, 200);
 }

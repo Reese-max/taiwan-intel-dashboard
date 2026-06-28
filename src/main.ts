@@ -8,6 +8,7 @@ import { renderKpiStrip } from "./components/KpiStrip";
 import { renderRelationGraph, type RelationNode } from "./components/RelationGraph";
 import { riskBadge } from "./components/RiskBadge";
 import { esc } from "./utils/escape";
+import { debounce } from "./utils/debounce";
 import { renderFilterBar } from "./components/FilterBar";
 import { renderTimeline } from "./components/TimelineView";
 import { renderSourcePanel } from "./components/SourcePanel";
@@ -73,8 +74,10 @@ const mapView = new MapView(document.getElementById("map")!);
 // 手機底部快捷列：搜尋同步寫入 store；篩選鈕捲到頂並聚焦篩選器。
 const mqQuery = document.getElementById("mq-query") as HTMLInputElement | null;
 if (mqQuery)
-  mqQuery.oninput = (ev) =>
-    setState({ query: (ev.target as HTMLInputElement).value.trim() || undefined });
+  mqQuery.oninput = debounce((ev: unknown) => {
+    const input = (ev as Event).target as HTMLInputElement;
+    setState({ query: input.value.trim() || undefined });
+  }, 200);
 const mqFilter = document.getElementById("mq-filter");
 if (mqFilter)
   mqFilter.onclick = () => {

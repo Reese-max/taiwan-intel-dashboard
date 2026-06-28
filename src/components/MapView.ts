@@ -19,6 +19,31 @@ const RISK_RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, criti
 // 聚合網格邊長（像素）：同網格內多個事件聚成一顆計數泡泡，避免市區大量標點重疊。
 const CELL = 46;
 
+export type MapDisplayable = IntelEvent & { lat: number; lng: number };
+
+function throttle<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
+  let last = 0;
+  let timer: number | undefined;
+  return ((...args: Parameters<T>) => {
+    const now = Date.now();
+    const remaining = ms - (now - last);
+    if (remaining <= 0) {
+      window.clearTimeout(timer);
+      timer = undefined;
+      last = now;
+      fn(...args);
+      return;
+    }
+    if (timer === undefined) {
+      timer = window.setTimeout(() => {
+        last = Date.now();
+        timer = undefined;
+        fn(...args);
+      }, remaining);
+    }
+  }) as T;
+}
+
 // 危急／高風險標點加 class，由 CSS 套脈衝光暈動畫。
 export function markerClass(level: RiskLevel, event?: IntelEvent): string {
   const base = level === "critical" ? "mk mk-critical" : level === "high" ? "mk mk-high" : "mk";
@@ -98,7 +123,7 @@ export function clusterPopupHtml(events: IntelEvent[]): string {
   </div>`;
 }
 
-export function isMapDisplayable(e: IntelEvent): boolean {
+export function isMapDisplayable(e: IntelEvent): e is MapDisplayable {
   return e.lat != null && e.lng != null && !(e.lat === 0 && e.lng === 0) && e.locationPrecision !== "global";
 }
 
@@ -106,7 +131,9 @@ export class MapView {
   private lib!: typeof L;
   private map!: L.Map;
   private layer!: L.LayerGroup;
-  private located: IntelEvent[] = [];
+  private located: MapDisplayable[] = [];
+  private _cachedEvents: IntelEvent[] | null = null;
+  private _cachedLocated: MapDisplayable[] = [];
   private ready: Promise<void>;
 
   constructor(el: HTMLElement) {
@@ -129,7 +156,7 @@ export class MapView {
       .addTo(this.map);
     this.layer.addTo(this.map);
     // 縮放改變重疊程度 → 縮放結束後重新聚合。
-    this.map.on("zoomend", () => this.redraw());
+    this.map.on("zoomend", throttle(() => this.redraw(), 150));
     // 雷達掃描裝飾層（pointer-events:none，不擋地圖拖曳/縮放）。
     const radar = document.createElement("div");
     radar.className = "map-radar";
@@ -138,7 +165,13 @@ export class MapView {
   }
 
   async render(events: IntelEvent[]): Promise<void> {
-    this.located = events.filter(isMapDisplayable);
+    if (events === this._cachedEvents) {
+      this.located = this._cachedLocated;
+    } else {
+      this._cachedEvents = events;
+      this._cachedLocated = events.filter(isMapDisplayable);
+      this.located = this._cachedLocated;
+    }
     await this.ready;
     this.redraw();
     if (this.located.length) {
