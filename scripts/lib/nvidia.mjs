@@ -256,12 +256,33 @@ ${listing}
 // 國際正規化（對外）：先標題去重 → 分批並行（每批挑該批最重要的數則）→ 合併去重 → 依風險排序取前 max。
 // 動機：擴增到數百個 feed 後，單一 prompt 會塞入數千則（~數十萬 token）→ 爆 context／成本暴增／被截斷。
 // 批次化把規模問題拆開，與 normalizeDomesticNews 同模式。max/batchSize/concurrency 皆 env 可調。
+// 事件 id 由連結決定（與各 normalize 函式一致）→ 用於跨輪快取比對。
+export const eventIdFor = (scope, link) => (link ? `${scope === "domestic" ? "twnews" : "intl"}-${slug(link)}` : null);
+
+// 跨輪快取分流：依「連結決定的 id」把輸入拆成「已正規化可重用（priorById 命中）」與「需送 LLM 的新項」。
+// 同一篇（同連結）重用前一輪事件、跳過 LLM；priorById 未提供時全部視為新項（向後相容）。
+function partitionByCache(items, scope, priorById) {
+  if (!priorById?.size) return { reused: [], fresh: items };
+  const reused = [];
+  const fresh = [];
+  for (const it of items) {
+    const key = eventIdFor(scope, it.link);
+    const hit = key && priorById.get(key);
+    if (hit) reused.push(hit);
+    else fresh.push(it);
+  }
+  return { reused, fresh };
+}
+
+const RISK_RANK = { critical: 3, high: 2, medium: 1, low: 0 };
+
 export async function normalizeInternational(
   items,
   {
     max = 20,
     batchSize = Math.max(8, Number(process.env.INTL_NORMALIZE_BATCH) || 30),
     concurrency = Math.max(1, Number(process.env.INTL_NORMALIZE_CONCURRENCY) || 4),
+    priorById = null,
   } = {}
 ) {
   if (!items.length) return [];
@@ -274,30 +295,36 @@ export async function normalizeInternational(
     seenTitle.add(k);
     deduped.push(it);
   }
-  // 小量直接單批；大量才分批。
-  if (deduped.length <= batchSize) {
-    return (await normalizeInternationalBatch(deduped, { max })).slice(0, max);
+  // 跨輪快取：命中前一輪者重用、跳過 LLM；只有新項才送 LLM。
+  const { reused, fresh } = partitionByCache(deduped, "international", priorById);
+
+  let llmEvents = [];
+  if (fresh.length) {
+    if (fresh.length <= batchSize) {
+      llmEvents = await normalizeInternationalBatch(fresh, { max });
+    } else {
+      const batches = [];
+      for (let i = 0; i < fresh.length; i += batchSize) batches.push(fresh.slice(i, i + batchSize));
+      // 每批挑 top（總候選量約 max 的 2 倍，最後再全域排序取 max）。
+      const perBatch = Math.max(4, Math.ceil((max * 2) / batches.length));
+      // 推理模型偶發截斷／解析失敗 → 單批重試一次，仍失敗才放棄該批（不拖垮整體）。
+      const runBatch = (b) =>
+        normalizeInternationalBatch(b, { max: perBatch }).catch(() =>
+          normalizeInternationalBatch(b, { max: perBatch }).catch(() => [])
+        );
+      llmEvents = (await mapLimit(batches, concurrency, runBatch)).flat();
+    }
   }
-  const batches = [];
-  for (let i = 0; i < deduped.length; i += batchSize) batches.push(deduped.slice(i, i + batchSize));
-  // 每批挑 top（總候選量約 max 的 2 倍，最後再全域排序取 max）。
-  const perBatch = Math.max(4, Math.ceil((max * 2) / batches.length));
-  // 推理模型偶發截斷／解析失敗 → 單批重試一次，仍失敗才放棄該批（不拖垮整體）。
-  const runBatch = (b) =>
-    normalizeInternationalBatch(b, { max: perBatch }).catch(() =>
-      normalizeInternationalBatch(b, { max: perBatch }).catch(() => [])
-    );
-  const results = await mapLimit(batches, concurrency, runBatch);
+
+  // 合併「重用 + 新正規化」→ 依 id 去重 → 依風險排序取前 max。
   const seen = new Set();
   const merged = [];
-  for (const ev of results.flat()) {
-    if (seen.has(ev.id)) continue;
+  for (const ev of [...reused, ...llmEvents]) {
+    if (!ev || seen.has(ev.id)) continue;
     seen.add(ev.id);
     merged.push(ev);
   }
-  // 全域以風險等級排序後取前 max（跨批近似挑出最重要者）。
-  const riskRank = { critical: 3, high: 2, medium: 1, low: 0 };
-  merged.sort((a, b) => (riskRank[b.riskLevel] ?? 1) - (riskRank[a.riskLevel] ?? 1));
+  merged.sort((a, b) => (RISK_RANK[b.riskLevel] ?? 1) - (RISK_RANK[a.riskLevel] ?? 1));
   return merged.slice(0, max);
 }
 
@@ -390,7 +417,7 @@ function newsTitleKey(title) {
     .slice(0, 40);
 }
 
-export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, concurrency = 4 } = {}) {
+export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, concurrency = 4, priorById = null } = {}) {
   if (!items.length) return [];
   // 入口先依標題去重（Google News 多查詢＋直連媒體會大量重複同一則）→ 省 LLM、避免重複輸出。
   const seenTitle = new Set();
@@ -401,16 +428,17 @@ export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, 
     seenTitle.add(k);
     deduped.push(it);
   }
-  items = deduped;
+  // 跨輪快取：命中前一輪者重用、跳過 LLM；只有新項才送 LLM。
+  const { reused, fresh } = partitionByCache(deduped, "domestic", priorById);
   const batches = [];
-  for (let i = 0; i < items.length; i += batchSize) batches.push(items.slice(i, i + batchSize));
+  for (let i = 0; i < fresh.length; i += batchSize) batches.push(fresh.slice(i, i + batchSize));
   // 推理模型偶發截斷/解析失敗 → 單批重試一次，仍失敗才放棄該批（不拖垮整體）。
   const runBatch = (b) => normalizeNewsBatch(b).catch(() => normalizeNewsBatch(b).catch(() => []));
   const results = await mapLimit(batches, concurrency, runBatch);
   const seen = new Set();
   const merged = [];
-  for (const ev of results.flat()) {
-    if (seen.has(ev.id)) continue;
+  for (const ev of [...reused, ...results.flat()]) {
+    if (!ev || seen.has(ev.id)) continue;
     seen.add(ev.id);
     merged.push(ev);
   }

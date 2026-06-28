@@ -217,7 +217,9 @@ async function run() {
           .map((f) => `${f.label}:${f.ok ? f.count : "X"}`)
           .join(" ")}）`,
       );
-      intl = await normalizeInternational(rss.items, { max: intlCfg.maxEvents });
+      // 跨輪快取：重用前一輪 international.json 已正規化的同一篇（依連結 id），跳過 LLM 省成本。
+      const priorIntl = new Map(readOld("international.json").map((e) => [e.id, e]));
+      intl = await normalizeInternational(rss.items, { max: intlCfg.maxEvents, priorById: priorIntl });
       status.international = {
         ok: true,
         count: intl.length,
