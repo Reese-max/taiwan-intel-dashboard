@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { clampTwRelevance } from "../scripts/lib/nvidia.mjs";
+import { clampTwRelevance, clampSentiment } from "../scripts/lib/nvidia.mjs";
 
 describe("LLM optional field clamps", () => {
   it("clampTwRelevance: clamp 0-100, round, non-number/null -> undefined", () => {
@@ -15,5 +15,16 @@ describe("LLM optional field clamps", () => {
     expect(clampTwRelevance(undefined)).toBe(undefined);
     expect(clampTwRelevance(null)).toBe(undefined);
     expect(clampTwRelevance("")).toBe(undefined);
+  });
+
+  it("clampSentiment: only the four enum values, else undefined", () => {
+    expect(clampSentiment("negative")).toBe("negative");
+    expect(clampSentiment("neutral")).toBe("neutral");
+    expect(clampSentiment("positive")).toBe("positive");
+    expect(clampSentiment("mixed")).toBe("mixed");
+    expect(clampSentiment("angry")).toBe(undefined);
+    expect(clampSentiment("")).toBe(undefined);
+    expect(clampSentiment(undefined)).toBe(undefined);
+    expect(clampSentiment(null)).toBe(undefined);
   });
 });

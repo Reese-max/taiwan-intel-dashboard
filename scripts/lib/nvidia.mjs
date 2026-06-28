@@ -169,6 +169,9 @@ export const clampTwRelevance = (v) => {
   const n = Math.round(Number(v));
   return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : undefined;
 };
+const SENTIMENTS = ["negative", "neutral", "positive", "mixed"];
+// 事件情緒傾向枚舉。非枚舉值 → undefined（向後相容）。export 供單元測試。
+export const clampSentiment = (v) => (SENTIMENTS.includes(v) ? v : undefined);
 
 // LLM 萃取的語意訊號清洗（供 correlate 做語意關聯）。
 function cleanEntities(v) {
@@ -218,6 +221,7 @@ ${listing}
 - entities: 此事件可跨則比對的具名實體陣列（精簡專名：國家/組織/人物/地點等；最多 5 個；無則 []）
 - topic: 此事件的「具體事件/故事線」短描述（10-18 字，能跨來源辨識同一起事件；非分類）
 - twRelevance: 對台灣的相關度（0-100 整數；台海/兩岸/盟友/供應鏈/半導體/在台或赴台僑民越相關越高，與台灣幾乎無關則低）
+- sentiment: 事件情緒傾向（必為其一 ["negative","neutral","positive","mixed"]）
 
 只輸出 JSON 陣列，不要任何說明文字。`;
 
@@ -252,6 +256,7 @@ ${listing}
       aiEntities: cleanEntities(o.entities),
       aiTopic: cleanTopic(o.topic),
       twRelevance: clampTwRelevance(o.twRelevance),
+      sentiment: clampSentiment(o.sentiment),
       source: {
         ...deriveNewsProvenance(it, { fetchedAt, model }),
         datasetId: undefined,
@@ -361,6 +366,7 @@ ${listing}
 - lat, lng: 該縣市的概略經緯度（你的最佳估計，浮點數；全國填台灣中心 23.8,120.9）
 - entities: 此事件可跨則比對的具名實體陣列（精簡專名：人名/化名、機關分局、地檢署、路名/地標、集團/園區名等；最多 5 個；無則 []）
 - topic: 此事件的「具體事件/故事線」短描述（10-18 字，能跨來源辨識同一起事件，如「柬埔寨人口販運詐騙集團案」；非分類，是這一則的具體題目）
+- sentiment: 事件情緒傾向（必為其一 ["negative","neutral","positive","mixed"]）
 
 只輸出 JSON 陣列，不要任何說明文字。`;
 
@@ -394,6 +400,7 @@ ${listing}
       summary: o.summary_zh || it.description?.slice(0, 200) || "",
       aiEntities: cleanEntities(o.entities),
       aiTopic: cleanTopic(o.topic),
+      sentiment: clampSentiment(o.sentiment),
       source: deriveNewsProvenance(it, { fetchedAt, model }),
     });
   }

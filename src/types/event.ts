@@ -39,6 +39,7 @@ export interface IntelEvent {
   aiEntities?: string[];
   aiTopic?: string;
   twRelevance?: number; // 對台灣的相關度 0-100（LLM 估計，僅國際事件）
+  sentiment?: "negative" | "neutral" | "positive" | "mixed"; // LLM 估計的事件情緒傾向
 }
 
 export const RISK_ORDER: Record<RiskLevel, number> = {
