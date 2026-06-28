@@ -50,7 +50,7 @@ mkdirSync(`${OUT}/data`, { recursive: true });
 function trimEvent(e) {
   const { aiEntities, aiTopic, ...rest } = e;
   if (rest.source && typeof rest.source === "object") {
-    const { query, url, ...src } = rest.source;
+    const { query, url, aggregatorUrl, publisherUrl, ...src } = rest.source;
     if (url && url !== src.recordRef) src.url = url; // 與 recordRef 不同才保留
     rest.source = src;
   }
