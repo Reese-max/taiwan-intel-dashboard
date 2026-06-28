@@ -163,6 +163,12 @@ function extractJson(text) {
 
 const clampRisk = (r) => (RISKS.includes(r) ? r : "medium");
 const clampCat = (c) => (CATEGORIES.includes(c) ? c : "其他");
+// 台灣相關度（0-100 整數）。非數字 → undefined（欄位省略，向後相容）。export 供單元測試。
+export const clampTwRelevance = (v) => {
+  if (v == null || v === "") return undefined;
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : undefined;
+};
 
 // LLM 萃取的語意訊號清洗（供 correlate 做語意關聯）。
 function cleanEntities(v) {
@@ -211,6 +217,7 @@ ${listing}
 - lat, lng: 該地點的概略經緯度（你的最佳估計，浮點數）
 - entities: 此事件可跨則比對的具名實體陣列（精簡專名：國家/組織/人物/地點等；最多 5 個；無則 []）
 - topic: 此事件的「具體事件/故事線」短描述（10-18 字，能跨來源辨識同一起事件；非分類）
+- twRelevance: 對台灣的相關度（0-100 整數；台海/兩岸/盟友/供應鏈/半導體/在台或赴台僑民越相關越高，與台灣幾乎無關則低）
 
 只輸出 JSON 陣列，不要任何說明文字。`;
 
@@ -244,6 +251,7 @@ ${listing}
       summary: o.summary_zh || it.description?.slice(0, 200) || "",
       aiEntities: cleanEntities(o.entities),
       aiTopic: cleanTopic(o.topic),
+      twRelevance: clampTwRelevance(o.twRelevance),
       source: {
         ...deriveNewsProvenance(it, { fetchedAt, model }),
         datasetId: undefined,

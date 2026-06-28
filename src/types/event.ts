@@ -38,6 +38,7 @@ export interface IntelEvent {
   // LLM 萃取的語意訊號（僅新聞精修批次有）：供關聯網做語意關聯。
   aiEntities?: string[];
   aiTopic?: string;
+  twRelevance?: number; // 對台灣的相關度 0-100（LLM 估計，僅國際事件）
 }
 
 export const RISK_ORDER: Record<RiskLevel, number> = {
