@@ -155,8 +155,8 @@ export class MapView {
       })
       .addTo(this.map);
     this.layer.addTo(this.map);
-    // 縮放改變重疊程度 → 縮放結束後重新聚合。
-    this.map.on("zoomend", throttle(() => this.redraw(), 150));
+    // 平移/縮放改變可見範圍與重疊程度 → 結束後依視口重新聚合（moveend 涵蓋 pan + zoom）。
+    this.map.on("moveend", throttle(() => this.redraw(), 150));
     // 雷達掃描裝飾層（pointer-events:none，不擋地圖拖曳/縮放）。
     const radar = document.createElement("div");
     radar.className = "map-radar";
@@ -197,8 +197,12 @@ export class MapView {
   private redraw(): void {
     this.layer.clearLayers();
     const z = this.map.getZoom();
+    // 視口裁切：只聚合/渲染目前可見範圍（含 20% 邊距，讓小幅平移前邊緣標點已在）內的事件；
+    // 縮放越深、跳過的離畫面事件越多。moveend 已掛重繪 → 平移後補上新視口標點。
+    const bounds = this.map.getBounds().pad(0.2);
     const grid = new Map<string, { events: IntelEvent[]; sx: number; sy: number }>();
     for (const e of this.located) {
+      if (!bounds.contains([e.lat, e.lng])) continue;
       const p = this.map.project([e.lat!, e.lng!], z);
       const key = `${Math.floor(p.x / CELL)}:${Math.floor(p.y / CELL)}`;
       let c = grid.get(key);
