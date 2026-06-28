@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { normalizeInternational, eventIdFor } from "../scripts/lib/nvidia.mjs";
+import { normalizeInternational, normalizeDomesticNews, eventIdFor } from "../scripts/lib/nvidia.mjs";
 
 describe("normalize cross-run cache", () => {
   it("derives a deterministic link-based event id", () => {
@@ -33,5 +33,21 @@ describe("normalize cross-run cache", () => {
     expect(out.map((e: { id: string }) => e.id).sort()).toEqual(
       [eventIdFor("international", "https://example.com/a"), eventIdFor("international", "https://example.com/b")].sort(),
     );
+  });
+
+  it("reuses prior enriched domestic events from cache without the LLM", async () => {
+    const items = [
+      { title: "詐騙案甲", link: "https://ltn.com.tw/a", description: "", source: "自由時報", sourceUrl: "https://ltn.com.tw" },
+      { title: "車禍乙", link: "https://ltn.com.tw/b", description: "", source: "自由時報", sourceUrl: "https://ltn.com.tw" },
+    ];
+    const priorById = new Map(
+      items.map((it) => {
+        const id = eventIdFor("domestic", it.link);
+        return [id, { id, title: it.title, riskLevel: "medium", scope: "domestic", aiTopic: "舊事件主題", source: { name: "自由時報" } }];
+      }),
+    );
+    const out = await normalizeDomesticNews(items, { max: 250, priorById });
+    expect(out.length).toBe(2);
+    expect(out.every((e: { aiTopic?: string }) => e.aiTopic === "舊事件主題")).toBe(true);
   });
 });

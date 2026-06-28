@@ -266,7 +266,14 @@ async function run() {
       const ENRICH_N = Number(process.env.NEWS_ENRICH_N) || 500;
       let enriched = [];
       try {
-        enriched = await normalizeDomesticNews(policeUniq.slice(0, ENRICH_N), { max: ENRICH_N });
+        // 跨輪快取：只重用前一輪「LLM enriched」事件（有 aiTopic/aiEntities 標記；
+        // bulk 輕量事件 id 用不同雜湊、且無 LLM 標記，不會被重用）。命中即跳過 LLM。
+        const priorDom = new Map(
+          readOld("domestic.json")
+            .filter((e) => e && (e.aiTopic || (Array.isArray(e.aiEntities) && e.aiEntities.length)))
+            .map((e) => [e.id, e]),
+        );
+        enriched = await normalizeDomesticNews(policeUniq.slice(0, ENRICH_N), { max: ENRICH_N, priorById: priorDom });
       } catch (e) {
         console.error(`新聞 LLM 精修失敗（改全走輕量）：${e.message}`);
       }
