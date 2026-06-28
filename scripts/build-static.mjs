@@ -56,6 +56,32 @@ function trimEvent(e) {
   }
   return rest;
 }
+// 地圖 first-paint 精簡點：只取「可定位」事件、只留地圖渲染與 filterEvents 所需欄位
+// （捨 recordRef/AI 等詳情專用欄），讓地圖不必等完整 <scope>.json 即可先繪標點。
+function isLocated(e) {
+  return e.lat != null && e.lng != null && !(e.lat === 0 && e.lng === 0) && e.locationPrecision !== "global";
+}
+function mapTrim(e) {
+  const s = e.source && typeof e.source === "object" ? e.source : {};
+  return {
+    id: e.id,
+    title: e.title,
+    region: e.region,
+    lat: e.lat,
+    lng: e.lng,
+    locationPrecision: e.locationPrecision,
+    timestamp: e.timestamp,
+    category: e.category,
+    scope: e.scope,
+    riskLevel: e.riskLevel,
+    source: {
+      name: s.name,
+      publisherName: s.publisherName,
+      aggregatorName: s.aggregatorName,
+      sourceConfidence: s.sourceConfidence,
+    },
+  };
+}
 // network.json 的 nodes 陣列（佔 ~23%）前端與 globe 皆未使用：NetworkIndex 只讀 edges/clusters，
 // count() 由 edges 建鄰接表算（非 node.degree），globe 不引用 nodes → 整段丟棄。
 function trimNetwork(net) {
@@ -72,6 +98,11 @@ for (const f of readdirSync("public/data")) {
     const arr = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
     const trimmed = Array.isArray(arr) ? arr.map(trimEvent) : arr;
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimmed));
+    // 同時輸出地圖 first-paint 精簡檔 <scope>.map.json（僅可定位事件 + 精簡欄位）。
+    if (Array.isArray(arr)) {
+      const scope = f.replace(/\.json$/, "");
+      writeFileSync(`${OUT}/data/${scope}.map.json`, JSON.stringify(arr.filter(isLocated).map(mapTrim)));
+    }
   } else if (f === "network.json") {
     const net = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimNetwork(net)));

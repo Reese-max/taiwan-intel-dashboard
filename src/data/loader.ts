@@ -31,3 +31,15 @@ export async function loadEvents(scope: Scope): Promise<IntelEvent[]> {
   if (!res.ok) throw new Error(`載入 ${scope}.json 失敗: ${res.status}`);
   return (await res.json()) as IntelEvent[];
 }
+
+// 地圖 first-paint 精簡點：只含可定位事件與地圖/篩選所需欄位，體積遠小於完整 <scope>.json，
+// 讓地圖標點不必等完整事件即可先繪。載入失敗（如尚未產出）回 null，呼叫端 fallback 至完整事件。
+export async function loadMapEvents(scope: Scope): Promise<IntelEvent[] | null> {
+  try {
+    const res = await fetch(`./data/${scope}.map.json`);
+    if (!res.ok) return null;
+    return (await res.json()) as IntelEvent[];
+  } catch {
+    return null;
+  }
+}

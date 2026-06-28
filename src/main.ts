@@ -1,7 +1,7 @@
 import "./styles/global.css";
 import { t } from "./i18n/zh-TW";
 import { getState, setState, subscribe } from "./store";
-import { loadEvents, filterEvents } from "./data/loader";
+import { loadEvents, filterEvents, loadMapEvents } from "./data/loader";
 import { edgeTypeLabel, loadNetwork, type NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
 import { renderKpiStrip } from "./components/KpiStrip";
@@ -86,6 +86,11 @@ if (mqFilter)
   };
 const cache: Partial<Record<Scope, IntelEvent[]>> = {};
 const netCache: Partial<Record<Scope, NetworkIndex>> = {};
+// 地圖 first-paint：先用精簡 map.json 即時繪出標點，不必等完整事件（給清單用）載入；
+// refresh() 隨後以完整集重繪校正。slim 載入失敗則無早繪、行為不變。
+void loadMapEvents(getState().scope).then((pts) => {
+  if (pts && !cache[getState().scope]) void mapView.render(filterEvents(pts, getState()));
+});
 let summary: AiSummary | null = null;
 // 情報網聚焦：可選單一事件，或選一個 cluster 展開整群。
 let focusId: string | null = null;
