@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { clampTwRelevance, clampSentiment, cleanActors, cleanRelations } from "../scripts/lib/nvidia.mjs";
+import { clampTwRelevance, clampSentiment, cleanActors, cleanRelations, buildDeepAnalysisPrompt } from "../scripts/lib/nvidia.mjs";
 
 describe("LLM optional field clamps", () => {
   it("clampTwRelevance: clamp 0-100, round, non-number/null -> undefined", () => {
@@ -50,5 +50,21 @@ describe("LLM optional field clamps", () => {
     ).toBe(8); // caps at 8
     expect(cleanRelations("not-array")).toBe(undefined);
     expect(cleanRelations([])).toBe(undefined);
+  });
+
+  it("buildDeepAnalysisPrompt: 2-message prompt embedding the event fields", () => {
+    const msgs = buildDeepAnalysisPrompt({
+      title: "南海對峙升溫",
+      region: "南海",
+      category: "地緣政治",
+      riskLevel: "critical",
+      summary: "兩國艦艇對峙",
+    });
+    expect(msgs).toHaveLength(2);
+    expect(msgs[0].role).toBe("system");
+    expect(msgs[1].role).toBe("user");
+    expect(msgs[1].content).toContain("南海對峙升溫");
+    expect(msgs[1].content).toContain("兩國艦艇對峙");
+    expect(msgs[1].content).toContain("影響評估");
   });
 });

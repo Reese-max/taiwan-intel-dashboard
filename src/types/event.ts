@@ -42,6 +42,7 @@ export interface IntelEvent {
   sentiment?: "negative" | "neutral" | "positive" | "mixed"; // LLM 估計的事件情緒傾向
   threatActors?: string[]; // LLM 抽取的威脅行為者/敵對組織具名
   relations?: { from: string; to: string; type: string }[]; // LLM 抽取的實體關係（餵關係圖，僅國際事件）
+  implications?: string; // 高風險國際事件的二次深度「影響評估」短文
 }
 
 export const RISK_ORDER: Record<RiskLevel, number> = {

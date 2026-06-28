@@ -323,6 +323,48 @@ function partitionByCache(items, scope, priorById) {
 
 const RISK_RANK = { critical: 3, high: 2, medium: 1, low: 0 };
 
+// 高風險事件二次深度分析：對 critical/high 事件補一段繁中「影響評估」（implications）。
+// prompt 組裝抽成純函式，便於無 LLM 單元測試。
+export function buildDeepAnalysisPrompt(event) {
+  return [
+    { role: "system", content: "你是台灣的國際情勢分析助理，針對單一高風險事件做精煉的影響評估。" },
+    {
+      role: "user",
+      content: `事件：${event.title}
+地區：${event.region}｜分類：${event.category}｜風險：${event.riskLevel}
+摘要：${event.summary}
+
+請用一段 60-120 字的繁體中文寫「影響評估」，聚焦此事件對台灣與所在區域的後續影響與風險外溢，不要前言、不要重複事件描述。`,
+    },
+  ];
+}
+
+// 對前段 critical/high 事件（上限 max；已有 implications 者跳過，配合跨輪快取）並行補影響評估；單則失敗 graceful 保留原事件。
+async function deepAnalyzeHighRisk(events, { max = Math.max(0, Number(process.env.INTL_DEEP_ANALYSIS_MAX) || 5) } = {}) {
+  const off = process.env.INTL_DEEP_ANALYSIS === "0" || process.env.INTL_DEEP_ANALYSIS === "false";
+  if (off || !events.length) return events;
+  const targetIds = new Set();
+  for (const ev of events) {
+    if (targetIds.size >= max) break;
+    if (!ev.implications && (ev.riskLevel === "critical" || ev.riskLevel === "high")) targetIds.add(ev.id);
+  }
+  if (!targetIds.size) return events;
+  const deepened = new Map();
+  await Promise.all(
+    [...targetIds].map(async (id) => {
+      const ev = events.find((e) => e.id === id);
+      try {
+        const text = (await chat(buildDeepAnalysisPrompt(ev), { maxTokens: 1500, temperature: 0.3, profile: "summary" })) || "";
+        const s = text.trim();
+        if (s) deepened.set(id, s);
+      } catch {
+        /* graceful：保留原事件 */
+      }
+    }),
+  );
+  return events.map((ev) => (deepened.has(ev.id) ? { ...ev, implications: deepened.get(ev.id) } : ev));
+}
+
 export async function normalizeInternational(
   items,
   {
@@ -372,7 +414,8 @@ export async function normalizeInternational(
     merged.push(ev);
   }
   merged.sort((a, b) => (RISK_RANK[b.riskLevel] ?? 1) - (RISK_RANK[a.riskLevel] ?? 1));
-  return merged.slice(0, max);
+  // 高風險事件二次深度分析（補 implications；env INTL_DEEP_ANALYSIS=0 可關，失敗 graceful）。
+  return await deepAnalyzeHighRisk(merged.slice(0, max));
 }
 
 // 台灣社會/犯罪新聞分類（domestic）
