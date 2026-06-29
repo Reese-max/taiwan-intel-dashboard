@@ -194,8 +194,11 @@ writeFileSync(
 /data/*.json
   Cache-Control: public, max-age=120, stale-while-revalidate=600
 
-/assets/*
+/assets/chunk-*
   Cache-Control: public, max-age=31536000, immutable
+
+/assets/*
+  Cache-Control: public, max-age=600, stale-while-revalidate=86400
 `,
 );
 
