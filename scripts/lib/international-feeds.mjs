@@ -1507,9 +1507,9 @@ export function getInternationalRuntimeConfig(env = process.env) {
   return {
     tier: ((t) => (t === "core" || t === "bulk" ? t : "expanded"))(String(env.INTERNATIONAL_FEED_TIER || "expanded").trim().toLowerCase()),
     topic: normalizeTopic(env.INTERNATIONAL_FEED_TOPIC),
-    perFeed: numberEnv(env, "INTERNATIONAL_RSS_PER_FEED", 5, 1, 25),
+    perFeed: numberEnv(env, "INTERNATIONAL_RSS_PER_FEED", 8, 1, 25),
     concurrency: numberEnv(env, "INTERNATIONAL_RSS_CONCURRENCY", 5, 1, 10),
-    maxEvents: numberEnv(env, "INTERNATIONAL_NORMALIZE_MAX", 20, 1, 40),
+    maxEvents: numberEnv(env, "INTERNATIONAL_NORMALIZE_MAX", 50, 1, 100),
   };
 }
 
