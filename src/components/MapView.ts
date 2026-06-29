@@ -173,13 +173,15 @@ export class MapView {
       this.located = this._cachedLocated;
     }
     await this.ready;
-    this.redraw();
     if (this.located.length) {
       const bounds = this.lib.latLngBounds(
         this.located.map((e) => [e.lat!, e.lng!] as [number, number]),
       );
-      this.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 8 });
+      // 先（無動畫）對齊視口、再 redraw：⑦ 的視口裁切只渲染可見範圍，若先 redraw 再 fitBounds，
+      // 切換 scope（如國內→國際時地圖仍停在台灣）會把新範圍外的標點剪掉而看不到。
+      this.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 8, animate: false });
     }
+    this.redraw();
   }
 
   private singleMarker(e: IntelEvent): L.CircleMarker {
