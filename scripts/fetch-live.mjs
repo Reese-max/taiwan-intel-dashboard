@@ -22,6 +22,7 @@ import {
 } from "./lib/fetch-police.mjs";
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
 import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
+import { accumulateInternational } from "./lib/intl-accumulate.mjs";
 import { mapBulkNews, titleKey as bulkTitleKey, isPoliceRelevant } from "./lib/news-bulk.mjs";
 import { buildNewsSourceContribution, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
 import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel } from "./lib/nvidia.mjs";
@@ -431,7 +432,16 @@ async function run() {
   // --- 國際快照（carry-over：失敗或未抓則沿用舊快照；EXCLUSIVE 且未選則清空）---
   const oldIntl = readOld("international.json");
   const intlOk = status.international?.ok && intl.length;
-  const intlEvents = intlOk ? [...intl].sort(byTimeDesc) : dropStale(status.international) ? [] : oldIntl;
+  // 累積式滾動視窗：成功時合併本輪 + 舊快照（依 id 去重、保留近 INTL_RETENTION_DAYS 天、
+  // 分主題輪詢挑選至 INTL_ACCUM_CAP），取代「每輪只留當輪 ≤maxEvents」，讓國際數量穩定更多、主題分布更廣。
+  const intlEvents = intlOk
+    ? accumulateInternational(intl, oldIntl, {
+        retentionDays: Number(process.env.INTL_RETENTION_DAYS) || 5,
+        cap: Number(process.env.INTL_ACCUM_CAP) || 250,
+      })
+    : dropStale(status.international)
+      ? []
+      : oldIntl;
   if (intlOk) {
     writeJson("international.json", intlEvents);
   } else if (dropStale(status.international)) {

@@ -76,9 +76,9 @@ describe("international feed registry", () => {
     const cfg = getInternationalRuntimeConfig({});
     expect(cfg.tier).toBe("expanded");
     expect(cfg.topic).toBe("all");
-    expect(cfg.perFeed).toBe(8);
+    expect(cfg.perFeed).toBe(10);
     expect(cfg.concurrency).toBe(5);
-    expect(cfg.maxEvents).toBe(100);
+    expect(cfg.maxEvents).toBe(150);
   });
 
   it("clamps runtime config to safe ranges", () => {
@@ -93,7 +93,7 @@ describe("international feed registry", () => {
     expect(cfg.topic).toBe("cyber");
     expect(cfg.perFeed).toBe(25);
     expect(cfg.concurrency).toBe(1);
-    expect(cfg.maxEvents).toBe(150);
+    expect(cfg.maxEvents).toBe(250);
   });
 
   it("falls back to all topics when runtime topic is unknown", () => {
