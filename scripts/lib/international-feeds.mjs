@@ -1509,7 +1509,7 @@ export function getInternationalRuntimeConfig(env = process.env) {
     topic: normalizeTopic(env.INTERNATIONAL_FEED_TOPIC),
     perFeed: numberEnv(env, "INTERNATIONAL_RSS_PER_FEED", 8, 1, 25),
     concurrency: numberEnv(env, "INTERNATIONAL_RSS_CONCURRENCY", 5, 1, 10),
-    maxEvents: numberEnv(env, "INTERNATIONAL_NORMALIZE_MAX", 50, 1, 100),
+    maxEvents: numberEnv(env, "INTERNATIONAL_NORMALIZE_MAX", 100, 1, 150),
   };
 }
 
