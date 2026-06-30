@@ -13,6 +13,10 @@ on:
         default: hourly
         type: choice
         options: [hourly, cwa, international, international-expanded, international-core, international-general, international-cyber, international-disaster, international-health, international-humanitarian, international-finance, cwa-international, twnews, daily, refresh, police]
+      renorm_intl:
+        description: "忽略國際快取、全部重新正規化（一次性，用於套用新風險校準）"
+        default: false
+        type: boolean
 
 # peaceiris 需要 contents:write 才能推 gh-pages
 permissions:
@@ -91,6 +95,7 @@ jobs:
         env:
           INTERNATIONAL_FEED_TIER: ${{ steps.mode.outputs.international_feed_tier }}
           INTERNATIONAL_FEED_TOPIC: ${{ steps.mode.outputs.international_feed_topic }}
+          INTL_RENORM_ALL: ${{ github.event.inputs.renorm_intl }}
         run: node --env-file=.env scripts/fetch-live.mjs ${{ steps.mode.outputs.args }}
 
       - name: 驗證必要來源已更新

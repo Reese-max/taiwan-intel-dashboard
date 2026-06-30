@@ -245,7 +245,11 @@ ${listing}
 - title_zh: 繁體中文標題（精簡）
 - summary_zh: 繁體中文摘要（1-2 句，具體）
 - category: 必為其一 ${JSON.stringify(CATEGORIES)}
-- riskLevel: 必為其一 ${JSON.stringify(RISKS)}（依事件嚴重度）
+- riskLevel: 必為其一 ${JSON.stringify(RISKS)}。分級準則（重要：多數國際新聞屬 medium/low，勿一律標 critical，須拉開分布）：
+    · critical＝迫近或正在發生的大規模威脅（戰爭爆發或重大升級、重大恐攻、核子或大規模傷亡事件、直接衝擊台海的軍事行動）
+    · high＝重大但未達災難級（區域武裝衝突、重要制裁/外交決裂、被實際利用的重大資安漏洞、衝擊全球供應鏈的事件）
+    · medium＝一般國際動態（外交會談、政策/選舉、常規軍演、例行經濟金融消息）
+    · low＝低衝擊或例行消息
 - region: 事件主要地點名稱（中文，如「烏克蘭」「荷莫茲海峽」）
 - lat, lng: 該地點的概略經緯度（你的最佳估計，浮點數）
 - entities: 此事件可跨則比對的具名實體陣列（精簡專名：國家/組織/人物/地點等；最多 5 個；無則 []）

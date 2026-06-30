@@ -218,7 +218,11 @@ async function run() {
           .join(" ")}）`,
       );
       // 跨輪快取：重用前一輪 international.json 已正規化的同一篇（依連結 id），跳過 LLM 省成本。
-      const priorIntl = new Map(readOld("international.json").map((e) => [e.id, e]));
+      // INTL_RENORM_ALL=true 時忽略快取、全部重新正規化（一次性，用於套用風險校準等 prompt 變更）。
+      const priorIntl =
+        process.env.INTL_RENORM_ALL === "true"
+          ? new Map()
+          : new Map(readOld("international.json").map((e) => [e.id, e]));
       intl = await normalizeInternational(rss.items, { max: intlCfg.maxEvents, priorById: priorIntl });
       status.international = {
         ok: true,
