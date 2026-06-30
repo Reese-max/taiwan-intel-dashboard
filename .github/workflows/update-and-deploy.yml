@@ -95,7 +95,7 @@ jobs:
         env:
           INTERNATIONAL_FEED_TIER: ${{ steps.mode.outputs.international_feed_tier }}
           INTERNATIONAL_FEED_TOPIC: ${{ steps.mode.outputs.international_feed_topic }}
-          INTL_RENORM_ALL: "true" # TEMP：一次性全重評以套用新風險校準；驗證後改回 ${{ github.event.inputs.renorm_intl }}
+          INTL_RENORM_ALL: ${{ github.event.inputs.renorm_intl }}
         run: node --env-file=.env scripts/fetch-live.mjs ${{ steps.mode.outputs.args }}
 
       - name: 驗證必要來源已更新
