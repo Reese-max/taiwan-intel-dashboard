@@ -22,3 +22,6 @@ tmp/
 .DS_Store
 .serena/
 .playwright-mcp/
+
+# 臨時 poll/run 輸出（session 殘留）
+/_*.txt
