@@ -6,6 +6,7 @@
 // 座標為 LLM 推估（非原始資料），呼叫端需在 provenance 誠實標註。
 
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
+import { selectDiverseByCategory } from "./intl-accumulate.mjs";
 
 const CATEGORIES = ["地緣政治", "災害", "資安", "金融", "其他"];
 const RISKS = ["low", "medium", "high", "critical"];
@@ -163,6 +164,27 @@ function extractJson(text) {
 
 const clampRisk = (r) => (RISKS.includes(r) ? r : "medium");
 const clampCat = (c) => (CATEGORIES.includes(c) ? c : "其他");
+
+// 危機關鍵字：命中則視為真正的重大事件，calibrateIntlRisk 不對其降級。
+const CRISIS_KEYWORDS =
+  /戰爭|開戰|侵略|入侵|核[子武彈]|飛彈|轟炸|空襲|恐攻|恐怖攻擊|政變|崩盤|違約|斷交|宣戰|封鎖|大規模|罹難|死亡|地震|海嘯|颶風|疫情爆發|大流行|屠殺|種族清洗/;
+
+// 後處理風險校準（deterministic 安全網）。動機：LLM（推理模型）有 anchoring bias，
+// 傾向把國際新聞一律當「重要＝高風險」，即使 prompt 已明列分布目標仍過度評 high
+// （實測：金融類 83% 被評 high、224 筆 high 中 70 筆台灣關聯度 <30）。
+// 規則：與台灣關聯度低（twRelevance < twRelFloor）且未命中危機關鍵字者，
+//   critical → high、high → medium 各降一級；真危機（命中關鍵字）與高關聯事件不動。
+// 不升級、不可變（回傳新物件）。export 供單元測試。
+export function calibrateIntlRisk(event, { twRelFloor = 30 } = {}) {
+  if (!event) return event;
+  const text = `${event.title || ""}${event.summary || ""}`;
+  if (CRISIS_KEYWORDS.test(text)) return event;
+  const tw = typeof event.twRelevance === "number" ? event.twRelevance : 0;
+  if (tw >= twRelFloor) return event;
+  const downgrade = { critical: "high", high: "medium" };
+  const next = downgrade[event.riskLevel];
+  return next ? { ...event, riskLevel: next } : event;
+}
 // 台灣相關度（0-100 整數）。非數字 → undefined（欄位省略，向後相容）。export 供單元測試。
 export const clampTwRelevance = (v) => {
   if (v == null || v === "") return undefined;
@@ -328,8 +350,6 @@ function partitionByCache(items, scope, priorById) {
   return { reused, fresh };
 }
 
-const RISK_RANK = { critical: 3, high: 2, medium: 1, low: 0 };
-
 // 高風險事件二次深度分析：對 critical/high 事件補一段繁中「影響評估」（implications）。
 // prompt 組裝抽成純函式，便於無 LLM 單元測試。
 export function buildDeepAnalysisPrompt(event) {
@@ -412,17 +432,20 @@ export async function normalizeInternational(
     }
   }
 
-  // 合併「重用 + 新正規化」→ 依 id 去重 → 依風險排序取前 max。
+  // 合併「重用 + 新正規化」→ 對新正規化事件套後處理風險校準（reused 於原生成輪已校準，
+  // 不重複降級以維持 idempotent）→ 依 id 去重 → 分主題多元挑選取前 max。
+  // 不再用純風險排序截斷：那會讓 low/medium 在進累積池前被高風險洗光；
+  // 最終榜單交由下游 accumulateInternational 再依主題多元挑選。
+  const calibratedFresh = llmEvents.map((e) => calibrateIntlRisk(e));
   const seen = new Set();
   const merged = [];
-  for (const ev of [...reused, ...llmEvents]) {
+  for (const ev of [...reused, ...calibratedFresh]) {
     if (!ev || seen.has(ev.id)) continue;
     seen.add(ev.id);
     merged.push(ev);
   }
-  merged.sort((a, b) => (RISK_RANK[b.riskLevel] ?? 1) - (RISK_RANK[a.riskLevel] ?? 1));
   // 高風險事件二次深度分析（補 implications；env INTL_DEEP_ANALYSIS=0 可關，失敗 graceful）。
-  return await deepAnalyzeHighRisk(merged.slice(0, max));
+  return await deepAnalyzeHighRisk(selectDiverseByCategory(merged, max));
 }
 
 // 台灣社會/犯罪新聞分類（domestic）
