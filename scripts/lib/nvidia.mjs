@@ -377,14 +377,23 @@ export const eventIdFor = (scope, link) => (link ? `${scope === "domestic" ? "tw
 
 // 跨輪快取分流：依「連結決定的 id」把輸入拆成「已正規化可重用（priorById 命中）」與「需送 LLM 的新項」。
 // 同一篇（同連結）重用前一輪事件、跳過 LLM；priorById 未提供時全部視為新項（向後相容）。
-function partitionByCache(items, scope, priorById) {
+// maxAgeMs：評級生命週期 — 命中但正規化時間（source.fetchedAt）超齡者改判 fresh 重送 LLM，
+// 讓 prompt/校準變更在 N 天內自然換血全池，取代手動 INTL_RENORM_ALL 全量重評。
+// 只作用於「仍出現在本輪 RSS 的事件」→ 每輪重評增量有自然上限。fetchedAt 缺失視為超齡（重評一次補齊）。
+// export 供單元測試。
+export function partitionByCache(items, scope, priorById, { maxAgeMs = null, now = Date.now() } = {}) {
   if (!priorById?.size) return { reused: [], fresh: items };
+  const isStale = (ev) => {
+    if (!maxAgeMs) return false;
+    const t = new Date(ev?.source?.fetchedAt || 0).getTime();
+    return !(Number.isFinite(t) && t > 0) || now - t > maxAgeMs;
+  };
   const reused = [];
   const fresh = [];
   for (const it of items) {
     const key = eventIdFor(scope, it.link);
     const hit = key && priorById.get(key);
-    if (hit) reused.push(hit);
+    if (hit && !isStale(hit)) reused.push(hit);
     else fresh.push(it);
   }
   return { reused, fresh };
@@ -452,7 +461,10 @@ export async function normalizeInternational(
     deduped.push(it);
   }
   // 跨輪快取：命中前一輪者重用、跳過 LLM；只有新項才送 LLM。
-  const { reused, fresh } = partitionByCache(deduped, "international", priorById);
+  // 評級生命週期：快取超過 INTL_RECALIBRATE_DAYS（預設 3 天，0 停用）者重評。
+  const recalDays = Number(process.env.INTL_RECALIBRATE_DAYS ?? 3);
+  const maxAgeMs = recalDays > 0 ? recalDays * 86400000 : null;
+  const { reused, fresh } = partitionByCache(deduped, "international", priorById, { maxAgeMs });
 
   let llmEvents = [];
   lastIntlNormalizeFailed = false;
