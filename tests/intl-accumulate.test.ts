@@ -33,6 +33,30 @@ describe("intl accumulate", () => {
     expect(cats.filter((c: string) => c === "地緣政治").length).toBe(2);
   });
 
+  it("selectDiverseByCategory: 主題內風險分層比例取樣 — 池超過 cap 時 low 按占比存活", () => {
+    // 同主題 100 high + 100 low，cap 100 → 舊邏輯（風險排序取頭）low 全滅；
+    // 分層取樣應各留約一半。
+    const events = [
+      ...Array.from({ length: 100 }, (_, i) => ev(`h${i}`, "資安", "high")),
+      ...Array.from({ length: 100 }, (_, i) => ev(`l${i}`, "資安", "low")),
+    ];
+    const out = selectDiverseByCategory(events, 100);
+    expect(out).toHaveLength(100);
+    const lows = out.filter((e: { riskLevel: string }) => e.riskLevel === "low").length;
+    expect(lows).toBeGreaterThanOrEqual(40); // 比例存活（50±容差），絕不歸零
+    expect(lows).toBeLessThanOrEqual(60);
+  });
+
+  it("selectDiverseByCategory: 少數 critical 在分層取樣下仍優先進榜", () => {
+    const events = [
+      ev("c1", "地緣政治", "critical"),
+      ...Array.from({ length: 99 }, (_, i) => ev(`m${i}`, "地緣政治", "medium")),
+      ...Array.from({ length: 100 }, (_, i) => ev(`l${i}`, "地緣政治", "low")),
+    ];
+    const out = selectDiverseByCategory(events, 50);
+    expect(out.some((e: { id: string }) => e.id === "c1")).toBe(true);
+  });
+
   it("selectDiverseByCategory: returns all (risk-sorted) when under cap", () => {
     const events = [ev("a", "x", "medium"), ev("b", "y", "critical")];
     expect(selectDiverseByCategory(events, 10).map((e: { id: string }) => e.id)).toEqual(["b", "a"]);

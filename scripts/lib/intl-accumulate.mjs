@@ -16,8 +16,32 @@ export function byRiskThenTime(a, b) {
   return r || ts(b) - ts(a);
 }
 
-// 分主題（category）輪詢挑選至 cap：每個主題輪流貢獻一則（同主題內依風險+新近排序），
-// 避免單一主題（如地緣政治）洗版，且讓較低風險的其他主題事件也能進榜。最後再依風險排序輸出。
+// 主題內「風險分層比例取樣」排序：依 riskLevel 分層（層內新者先），每事件給
+// 正規化名次 (層內序位+1)/層大小 → 依名次升冪、同名次高風險先。輪詢取頭時，
+// 各風險層按其在池中占比存活，低風險不再因純風險排序墊底而被 cap 截斷滅絕
+//（實測：生產池 >cap 時 low 被洗到 0%，觸發 audit 病態訊號）。
+function stratifiedByRisk(arr) {
+  const bands = new Map();
+  for (const e of arr) {
+    const k = e.riskLevel || "medium";
+    if (!bands.has(k)) bands.set(k, []);
+    bands.get(k).push(e);
+  }
+  const keyed = [];
+  for (const band of bands.values()) {
+    band.sort((a, b) => ts(b) - ts(a));
+    // 名次 i/層大小（每層頭名=0）：各層頭部保證早進榜——孤例 critical 不因層小而墊底；
+    // 同名次以高風險先破平。
+    band.forEach((e, i) => keyed.push([i / band.length, e]));
+  }
+  keyed.sort(
+    (a, b) => a[0] - b[0] || (RISK_RANK[b[1].riskLevel] ?? 1) - (RISK_RANK[a[1].riskLevel] ?? 1),
+  );
+  return keyed.map(([, e]) => e);
+}
+
+// 分主題（category）輪詢挑選至 cap：每個主題輪流貢獻一則（同主題內風險分層比例取樣），
+// 避免單一主題（如地緣政治）洗版，且讓較低風險事件按占比存活。最後再依風險排序輸出。
 export function selectDiverseByCategory(events, cap) {
   const list = Array.isArray(events) ? events.filter(Boolean) : [];
   if (list.length <= cap) return list.sort(byRiskThenTime);
@@ -27,8 +51,7 @@ export function selectDiverseByCategory(events, cap) {
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(e);
   }
-  for (const arr of groups.values()) arr.sort(byRiskThenTime);
-  const lists = [...groups.values()];
+  const lists = [...groups.values()].map(stratifiedByRisk);
   const out = [];
   let i = 0;
   while (out.length < cap && lists.some((l) => l.length)) {
