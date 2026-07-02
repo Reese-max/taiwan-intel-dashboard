@@ -25,3 +25,8 @@ tmp/
 
 # 臨時 poll/run 輸出（session 殘留）
 /_*.txt
+
+# E2E 產物
+/e2e-artifacts/
+/test-results/
+/playwright-report/
