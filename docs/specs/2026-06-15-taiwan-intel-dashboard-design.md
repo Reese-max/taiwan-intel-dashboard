@@ -1,7 +1,7 @@
 # 台灣情報儀表板 — 設計文件
 
 - 日期：2026-06-15
-- 狀態：待使用者 review
+- 狀態：已實作並上線（taiwan-intel-dashboard.pages.dev）；本文件保留為歷史設計參考
 - 路線：輕量自建台灣版（參考 koala73/worldmonitor 的資訊架構與呈現方式，不 fork 其 codebase）
 
 ## 1. 目標與非目標
