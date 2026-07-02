@@ -113,6 +113,12 @@ jobs:
       - name: 檢查情報網品質
         run: npm run audit:network-quality
 
+      # 國際風險分布健康稽核：偵測明顯病態（high 洗版／low 被洗光／medium 崩塌）。
+      # 觀察期先不擋部署（continue-on-error），穩定兩週後再決定是否升級為 gate。
+      - name: 檢查國際風險分布
+        continue-on-error: true
+        run: npm run audit:intl-risk
+
       - name: 清除臨時 .env
         if: always()
         run: rm -f .env
