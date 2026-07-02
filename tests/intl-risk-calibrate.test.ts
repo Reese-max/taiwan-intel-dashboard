@@ -40,6 +40,28 @@ describe("calibrateIntlRisk (deterministic 安全網)", () => {
     expect(calibrateIntlRisk(ev("critical", 5, "俄烏戰爭升溫", "前線爆發大規模衝突")).riskLevel).toBe("critical");
   });
 
+  // false-positive 防護：一般商業新聞的常見詞（大規模/違約/死亡）不應誤觸危機擋降級
+  it("金融「大規模擴廠」低關聯：不被裸詞誤觸，high → medium", () => {
+    expect(calibrateIntlRisk(ev("high", 10, "某科技公司宣布大規模擴廠計畫", "投資設廠")).riskLevel).toBe("medium");
+  });
+
+  it("金融「企業違約風險」低關聯：不被裸詞誤觸，high → medium", () => {
+    expect(calibrateIntlRisk(ev("high", 10, "債券市場傳企業違約風險上升", "信評下調")).riskLevel).toBe("medium");
+  });
+
+  it("其他「企業家病逝」低關聯：不被裸詞誤觸，high → medium", () => {
+    expect(calibrateIntlRisk(ev("high", 10, "知名企業家因病死亡享壽82歲", "業界追悼", "其他")).riskLevel).toBe("medium");
+  });
+
+  // 真危機用複合詞精確表達，仍應擋降級
+  it("金融「主權違約」：真危機不降級", () => {
+    expect(calibrateIntlRisk(ev("critical", 10, "某國宣布主權違約", "債務重組談判破裂")).riskLevel).toBe("critical");
+  });
+
+  it("「大規模傷亡」：真危機不降級", () => {
+    expect(calibrateIntlRisk(ev("critical", 10, "工業事故釀大規模傷亡", "數百人罹難", "其他")).riskLevel).toBe("critical");
+  });
+
   it("medium / low 不受影響（不升級、不亂動）", () => {
     expect(calibrateIntlRisk(ev("medium", 5)).riskLevel).toBe("medium");
     expect(calibrateIntlRisk(ev("low", 5)).riskLevel).toBe("low");
