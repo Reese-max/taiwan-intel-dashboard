@@ -47,7 +47,21 @@ function profileCfg(profile) {
       retries: Math.max(0, Number(process.env.SUMMARY_MAX_RETRIES ?? 0)),
     };
   }
-  // primary（也是 summary 未配置時的 fallback）
+  // fallback：primary 失敗時的備援端點（設 LLM_FALLBACK_* 才啟用；未設 → 落到下方 primary，
+  // chat() 以 name 判斷未配置）。防單一供應商全面異常（實測 MiniMax 曾偶發全批失敗）。
+  const fallbackOn = process.env.LLM_FALLBACK_API_KEY || process.env.LLM_FALLBACK_BASE_URL;
+  if (profile === "fallback" && fallbackOn) {
+    return {
+      name: "fallback",
+      base: process.env.LLM_FALLBACK_BASE_URL || process.env.LLM_BASE_URL || process.env.NVIDIA_BASE_URL,
+      key: process.env.LLM_FALLBACK_API_KEY || process.env.LLM_API_KEY || process.env.NVIDIA_API_KEY,
+      model: process.env.LLM_FALLBACK_MODEL || llmModel(),
+      maxConc: Math.max(1, Number(process.env.LLM_FALLBACK_MAX_CONCURRENCY) || 2),
+      timeout: Math.max(1000, Number(process.env.LLM_FALLBACK_TIMEOUT_MS) || 90000),
+      retries: Math.max(0, Number(process.env.LLM_FALLBACK_MAX_RETRIES ?? 1)),
+    };
+  }
+  // primary（也是 summary / fallback 未配置時的 fallback）
   return {
     name: "primary",
     base: process.env.LLM_BASE_URL || process.env.NVIDIA_BASE_URL,
@@ -140,12 +154,21 @@ async function chat(messages, { maxTokens = 1024, temperature = 0.3, profile = "
   const c = profileCfg(profile);
   const primary = profileCfg("primary");
   const hasFallback = profile === "summary" && c.name !== primary.name;
+  // primary 的備援：LLM_FALLBACK_* 有配置才啟用（profileCfg 未配置時回 primary，以 name 判斷）。
+  const fb = profile === "primary" ? profileCfg("fallback") : null;
+  const hasPrimaryFallback = !!fb && fb.name === "fallback";
+  const viaFallback = async (why) => {
+    console.warn(`primary LLM ${why}，改走 fallback 端點（${fb.model || fb.base}）`);
+    return chatVia(fb, messages, maxTokens, temperature);
+  };
   try {
     const out = await chatVia(c, messages, maxTokens, temperature);
     if (!out && hasFallback) return await chatVia(primary, messages, maxTokens, temperature);
+    if (!out && hasPrimaryFallback) return await viaFallback("空輸出（推理截斷）");
     return out;
   } catch (e) {
     if (hasFallback) return await chatVia(primary, messages, maxTokens, temperature);
+    if (hasPrimaryFallback) return await viaFallback(`失敗（${String(e?.message || e).slice(0, 120)}）`);
     throw e;
   }
 }
