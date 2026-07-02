@@ -3,10 +3,16 @@ import { describe, expect, it } from "vitest";
 // @ts-expect-error — JS ESM module without types
 import { calibrateIntlRisk } from "../scripts/lib/nvidia.mjs";
 
-const ev = (riskLevel: string, twRelevance: number, title = "一般外交會談", summary = "兩國外長會晤討論經貿") => ({
+const ev = (
+  riskLevel: string,
+  twRelevance: number,
+  title = "一般外交會談",
+  summary = "兩國外長會晤討論經貿",
+  category = "金融",
+) => ({
   id: "intl-x",
   scope: "international",
-  category: "金融",
+  category,
   riskLevel,
   twRelevance,
   title,
@@ -46,8 +52,24 @@ describe("calibrateIntlRisk (deterministic 安全網)", () => {
     expect(out).not.toBe(original);
   });
 
-  it("twRelevance 缺失視為 0（低關聯）：high → medium", () => {
-    const e: Record<string, unknown> = { id: "intl-y", riskLevel: "high", title: "科技新品發表", summary: "某公司推出新手機" };
+  it("twRelevance 缺失視為 0（低關聯）：金融類 high → medium", () => {
+    const e: Record<string, unknown> = { id: "intl-y", category: "金融", riskLevel: "high", title: "科技新品發表", summary: "某公司推出新手機" };
     expect(calibrateIntlRisk(e).riskLevel).toBe("medium");
+  });
+
+  it("地緣政治類：即使低關聯也不降級（保護全球重大衝突）", () => {
+    expect(calibrateIntlRisk(ev("high", 5, "他國邊境衝突", "兩國交火", "地緣政治")).riskLevel).toBe("high");
+  });
+
+  it("災害類：即使低關聯也不降級（保護全球天災）", () => {
+    expect(calibrateIntlRisk(ev("critical", 5, "他國強震", "傷亡慘重", "災害")).riskLevel).toBe("critical");
+  });
+
+  it("資安類：即使低關聯也不降級（保護重大漏洞）", () => {
+    expect(calibrateIntlRisk(ev("high", 5, "某產品漏洞遭利用", "全球受影響", "資安")).riskLevel).toBe("high");
+  });
+
+  it("其他類（產業）：低關聯 high → medium（與金融同屬可降級類）", () => {
+    expect(calibrateIntlRisk(ev("high", 5, "某新技術問世", "業界關注", "其他")).riskLevel).toBe("medium");
   });
 });

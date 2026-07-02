@@ -169,14 +169,21 @@ const clampCat = (c) => (CATEGORIES.includes(c) ? c : "其他");
 const CRISIS_KEYWORDS =
   /戰爭|開戰|侵略|入侵|核[子武彈]|飛彈|轟炸|空襲|恐攻|恐怖攻擊|政變|崩盤|違約|斷交|宣戰|封鎖|大規模|罹難|死亡|地震|海嘯|颶風|疫情爆發|大流行|屠殺|種族清洗/;
 
+// 僅對產業/商業/科技類（金融、其他）套用關聯度降級。地緣政治/災害/資安/人道類
+// 即使與台灣關聯低，也可能是全球重大事件（他國戰爭、天災、重大漏洞），不可因「與台無關」
+// 而降級——否則情報儀表板會系統性漏報全球重大但非台灣中心的事件。
+const DOWNGRADABLE_CATEGORIES = new Set(["金融", "其他"]);
+
 // 後處理風險校準（deterministic 安全網）。動機：LLM（推理模型）有 anchoring bias，
 // 傾向把國際新聞一律當「重要＝高風險」，即使 prompt 已明列分布目標仍過度評 high
 // （實測：金融類 83% 被評 high、224 筆 high 中 70 筆台灣關聯度 <30）。
-// 規則：與台灣關聯度低（twRelevance < twRelFloor）且未命中危機關鍵字者，
-//   critical → high、high → medium 各降一級；真危機（命中關鍵字）與高關聯事件不動。
+// 規則：僅限產業/商業類（DOWNGRADABLE_CATEGORIES）中，與台灣關聯度低（twRelevance < twRelFloor）
+//   且未命中危機關鍵字者，critical → high、high → medium 各降一級；
+//   非產業類、真危機（命中關鍵字）、高關聯事件皆不動。
 // 不升級、不可變（回傳新物件）。export 供單元測試。
 export function calibrateIntlRisk(event, { twRelFloor = 30 } = {}) {
   if (!event) return event;
+  if (!DOWNGRADABLE_CATEGORIES.has(event.category)) return event;
   const text = `${event.title || ""}${event.summary || ""}`;
   if (CRISIS_KEYWORDS.test(text)) return event;
   const tw = typeof event.twRelevance === "number" ? event.twRelevance : 0;
