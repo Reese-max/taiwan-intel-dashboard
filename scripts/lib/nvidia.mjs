@@ -379,14 +379,15 @@ export const eventIdFor = (scope, link) => (link ? `${scope === "domestic" ? "tw
 // 同一篇（同連結）重用前一輪事件、跳過 LLM；priorById 未提供時全部視為新項（向後相容）。
 // maxAgeMs：評級生命週期 — 命中但正規化時間（source.fetchedAt）超齡者改判 fresh 重送 LLM，
 // 讓 prompt/校準變更在 N 天內自然換血全池，取代手動 INTL_RENORM_ALL 全量重評。
-// 只作用於「仍出現在本輪 RSS 的事件」→ 每輪重評增量有自然上限。fetchedAt 缺失視為超齡（重評一次補齊）。
+// 只作用於「仍出現在本輪 RSS 的事件」→ 每輪重評增量有自然上限。fetchedAt 缺失視為未超齡
+//（維持快取重用契約向後相容；生產事件 provenance 必有 fetchedAt，缺失僅見於 legacy）。
 // export 供單元測試。
 export function partitionByCache(items, scope, priorById, { maxAgeMs = null, now = Date.now() } = {}) {
   if (!priorById?.size) return { reused: [], fresh: items };
   const isStale = (ev) => {
     if (!maxAgeMs) return false;
     const t = new Date(ev?.source?.fetchedAt || 0).getTime();
-    return !(Number.isFinite(t) && t > 0) || now - t > maxAgeMs;
+    return Number.isFinite(t) && t > 0 && now - t > maxAgeMs;
   };
   const reused = [];
   const fresh = [];

@@ -30,11 +30,12 @@ describe("partitionByCache 評級生命週期（C2）", () => {
     expect(fresh).toHaveLength(1);
   });
 
-  it("fetchedAt 缺失 → 視為超齡重評（補齊 provenance）", () => {
+  it("fetchedAt 缺失 → 視為未超齡照常重用（維持快取契約向後相容）", () => {
     const link = "https://x.test/c";
     const prior = new Map([[eventIdFor("international", link), cached(link)]]);
-    const { fresh } = partitionByCache([rssItem(link)], "international", prior, { maxAgeMs: 3 * DAY, now: NOW });
-    expect(fresh).toHaveLength(1);
+    const { reused, fresh } = partitionByCache([rssItem(link)], "international", prior, { maxAgeMs: 3 * DAY, now: NOW });
+    expect(reused).toHaveLength(1);
+    expect(fresh).toHaveLength(0);
   });
 
   it("maxAgeMs 未設（停用）→ 超齡照樣 reused（向後相容）", () => {
