@@ -119,6 +119,11 @@ jobs:
         continue-on-error: true
         run: npm run audit:intl-risk
 
+      # 資料檔尺寸保險絲：Cloudflare Pages 單檔 25MiB 上限，超過整個部署失敗。
+      # 24MB 硬擋（本次仍可部署，但逼近上限必須立刻處理保留窗）。
+      - name: 檢查資料檔尺寸
+        run: npm run audit:data-size -- --max-mb=24
+
       - name: 清除臨時 .env
         if: always()
         run: rm -f .env
