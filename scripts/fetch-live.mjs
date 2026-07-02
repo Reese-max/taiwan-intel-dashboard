@@ -25,7 +25,7 @@ import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/i
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
 import { mapBulkNews, titleKey as bulkTitleKey, isPoliceRelevant } from "./lib/news-bulk.mjs";
 import { buildNewsSourceContribution, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
-import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel } from "./lib/nvidia.mjs";
+import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel, intlNormalizeFailed } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
@@ -227,6 +227,8 @@ async function run() {
       intl = await normalizeInternational(rss.items, { max: intlCfg.maxEvents, priorById: priorIntl });
       status.international = {
         ok: true,
+        // 全批失敗（有新項卻零 LLM 產出）＝管線級故障：本輪只剩快取重用，需告警追查。
+        normalizeFailed: intlNormalizeFailed(),
         count: intl.length,
         rawCount: rss.items.length,
         okFeeds,

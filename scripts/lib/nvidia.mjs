@@ -19,6 +19,11 @@ export const llmModel = () => process.env.LLM_MODEL || process.env.NVIDIA_MODEL 
 let lastRespondedModel = "";
 export const respondedModel = () => lastRespondedModel || llmModel();
 
+// 最近一次 normalizeInternational 是否「全批失敗」（有新項卻零產出）。
+// 單批失敗屬可容忍的偶發（graceful 放棄）；全批失敗＝管線級故障，呼叫端應標示告警。
+let lastIntlNormalizeFailed = false;
+export const intlNormalizeFailed = () => lastIntlNormalizeFailed;
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // 雙端點 LLM profile（防護設定全部 env 可調）：
@@ -427,6 +432,7 @@ export async function normalizeInternational(
   const { reused, fresh } = partitionByCache(deduped, "international", priorById);
 
   let llmEvents = [];
+  lastIntlNormalizeFailed = false;
   if (fresh.length) {
     if (fresh.length <= batchSize) {
       llmEvents = await normalizeInternationalBatch(fresh, { max });
@@ -436,11 +442,20 @@ export async function normalizeInternational(
       // 每批挑 top（總候選量約 max 的 2 倍，最後再全域排序取 max）。
       const perBatch = Math.max(4, Math.ceil((max * 2) / batches.length));
       // 推理模型偶發截斷／解析失敗 → 單批重試一次，仍失敗才放棄該批（不拖垮整體）。
-      const runBatch = (b) =>
+      // 放棄時必留痕（批次序號＋錯誤頭）——靜默吞錯曾造成「正規化 0 筆、log 零錯誤」的啞死。
+      const runBatch = (b, i) =>
         normalizeInternationalBatch(b, { max: perBatch }).catch(() =>
-          normalizeInternationalBatch(b, { max: perBatch }).catch(() => [])
+          normalizeInternationalBatch(b, { max: perBatch }).catch((e) => {
+            console.warn(`國際正規化批次 ${i + 1}/${batches.length} 重試仍失敗，放棄該批：${String(e?.message || e).slice(0, 200)}`);
+            return [];
+          })
         );
       llmEvents = (await mapLimit(batches, concurrency, runBatch)).flat();
+    }
+    // 全批失敗（有新項卻零產出）＝管線級故障，非單批偶發；標旗供呼叫端/稽核判讀。
+    if (!llmEvents.length) {
+      lastIntlNormalizeFailed = true;
+      console.error(`國際正規化全批失敗：fresh ${fresh.length} 筆 → 0 筆產出（LLM 端點或解析全面異常）`);
     }
   }
 
