@@ -37,3 +37,20 @@ describe("TW_NEWS_FEEDS", () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 });
+
+describe("主題來源 hint（2026-07-04 漏斗診斷處置）", () => {
+  const hintOf = (label: string) => TW_NEWS_FEEDS.find((f) => f.label === label)?.hint;
+  it("食安/衛生/環境來源掛上主題 hint", () => {
+    expect(hintOf("GN 食安黑心")).toBe("食安");
+    expect(hintOf("農業部官網")).toBe("食安");
+    expect(hintOf("食藥署官網")).toBe("食安");
+    expect(hintOf("疾管署官網")).toBe("衛生");
+    expect(hintOf("GN 環境污染偷排")).toBe("環境");
+    expect(hintOf("環境部官網")).toBe("環境");
+  });
+  it("資安與 EN 來源 hint 不變", () => {
+    expect(hintOf("TechNews 科技新報 RSS")).toBe("資安");
+    expect(hintOf("Focus Taiwan (EN)")).toBe("治安");
+    expect(hintOf("Taipei Times (EN)")).toBe("治安");
+  });
+});

@@ -101,7 +101,7 @@ export const TW_NEWS_FEEDS = [
   { label: "GN 擄人勒贖", url: gq("擄人 OR 勒贖 OR 撕票"), hint: "治安" },
   { label: "GN 縱火死傷", url: gq("縱火 死傷 OR 燒死"), hint: "災防" },
   // ── 食安/動物/環境/校園/工安 ──
-  { label: "GN 食安黑心", url: gq("黑心食品 OR 食安 OR 病死豬 OR 餿水油"), hint: "治安" },
+  { label: "GN 食安黑心", url: gq("黑心食品 OR 食安 OR 病死豬 OR 餿水油"), hint: "食安" },
   { label: "GN 校園安全", url: gq("校園 安全 OR 霸凌 OR 割喉 OR 侵入"), hint: "治安" },
   { label: "GN 虐待動物", url: gq("虐待動物 OR 虐狗 OR 虐貓 OR 動保"), hint: "治安" },
   { label: "GN 廢棄物污染", url: gq("非法 廢棄物 OR 爐渣 OR 偷倒 污染"), hint: "災防" },
@@ -125,7 +125,7 @@ export const TW_NEWS_FEEDS = [
   { label: "GN 走私動物", url: gq("走私 保育類 OR 象牙 OR 動物"), hint: "治安" },
   { label: "GN 失智走失", url: gq("失智 走失 OR 老人 協尋"), hint: "治安" },
   { label: "GN 職棒簽賭打假球", url: gq("職棒 簽賭 OR 打假球 OR 運動賭博"), hint: "治安" },
-  { label: "GN 環境污染偷排", url: gq("環境 污染 OR 廢水 OR 偷排"), hint: "災防" },
+  { label: "GN 環境污染偷排", url: gq("環境 污染 OR 廢水 OR 偷排"), hint: "環境" },
   { label: "GN 海關緝私", url: gq("海關 緝私 OR 機場 查獲"), hint: "治安" },
   { label: "GN 車手取款面交", url: gq("詐欺 提領 OR 面交 OR 取款 車手"), hint: "反詐" },
   { label: "GN 密醫違法醫美", url: gq("密醫 OR 違法醫美 OR 號販"), hint: "治安" },
@@ -167,10 +167,10 @@ export const TW_NEWS_FEEDS = [
   // ══ 第七輪擴充（2026-06-27 _audit-candidates 實測 ≥13；新機關第一手官方平台 + 未涵蓋題材）══
   // ── 新增第一手官方機關（提升官方來源占比；直連政府 RSS 仍全數 404，故走 GN site:）──
   { label: "司法院官網", url: gq("site:judicial.gov.tw"), hint: "治安" },
-  { label: "環境部官網", url: gq("site:moenv.gov.tw 污染 OR 稽查 OR 裁罰"), hint: "災防" },
-  { label: "疾管署官網", url: gq("site:cdc.gov.tw 疫情 OR 防疫 OR 群聚"), hint: "災防" },
-  { label: "農業部官網", url: gq("site:moa.gov.tw 走私 OR 防疫 OR 查獲"), hint: "治安" },
-  { label: "食藥署官網", url: gq("site:fda.gov.tw 查獲 OR 違規 OR 回收"), hint: "治安" },
+  { label: "環境部官網", url: gq("site:moenv.gov.tw 污染 OR 稽查 OR 裁罰"), hint: "環境" },
+  { label: "疾管署官網", url: gq("site:cdc.gov.tw 疫情 OR 防疫 OR 群聚"), hint: "衛生" },
+  { label: "農業部官網", url: gq("site:moa.gov.tw 走私 OR 防疫 OR 查獲"), hint: "食安" },
+  { label: "食藥署官網", url: gq("site:fda.gov.tw 查獲 OR 違規 OR 回收"), hint: "食安" },
   { label: "內政部官網", url: gq("site:moi.gov.tw 治安 OR 警 OR 災"), hint: "治安" },
   // ── 未涵蓋題材角度 ──
   { label: "GN 土石流坍方", url: gq("土石流 OR 坍方 OR 邊坡 災情 OR 預警"), hint: "災防" },
