@@ -147,3 +147,25 @@ describe("mapBulkNews 新主題分類", () => {
     expect(ev.find((e) => e.title.includes("勒索病毒"))!.category).toBe("資安");
   });
 });
+
+describe("EN 來源支援（Focus Taiwan / Taipei Times）", () => {
+  const mk = (title: string) => ({ title, hint: "治安", description: "", link: "https://x/en", source: "Focus Taiwan (EN)", sourceUrl: "u", pubDate: "x" });
+
+  it("英文警政標題通過相關性漏斗", () => {
+    expect(isRelevantNewsItem(mk("Police arrest fraud ring leader in Taipei"))).toBe(true);
+    expect(isRelevantNewsItem(mk("Drug smuggling suspects detained at port"))).toBe(true);
+    expect(isRelevantNewsItem(mk("Taiwan shares close higher on tech gains"))).toBe(false);
+  });
+
+  it("英文標題風險評級正確（不再全判 low）", () => {
+    const ev = mapBulkNews(
+      [
+        { ...mk("Man killed in Kaohsiung shooting incident"), link: "https://x/en1" },
+        { ...mk("Police arrest fraud suspects in Taichung"), link: "https://x/en2" },
+      ],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(ev.find((e) => e.title.includes("killed"))!.riskLevel).toBe("high");
+    expect(ev.find((e) => e.title.includes("fraud"))!.riskLevel).toBe("medium");
+  });
+});
