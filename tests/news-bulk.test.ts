@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mapBulkNews, titleKey, cleanTitle } from "../scripts/lib/news-bulk.mjs";
+import { mapBulkNews, titleKey, cleanTitle, isRelevantNewsItem } from "../scripts/lib/news-bulk.mjs";
 
 const FETCHED_AT = "2026-06-20T00:00:00.000Z";
 
@@ -68,5 +68,82 @@ describe("mapBulkNews", () => {
     );
     expect(ev[0].region).toBe("全國");
     expect(ev[0].lat).toBeNull();
+  });
+});
+
+describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
+  const mk = (title: string, hint: string, description = "") => ({
+    title,
+    hint,
+    description,
+    link: "https://x/t",
+    source: "s",
+    sourceUrl: "u",
+    pubDate: "x",
+  });
+
+  it("食安 hint 用食安關鍵字（不再被警政漏斗擋掉）", () => {
+    expect(isRelevantNewsItem(mk("知名餐廳使用餿水油遭勒令下架", "食安"))).toBe(true);
+    expect(isRelevantNewsItem(mk("農委會推廣有機農業補助說明會", "食安"))).toBe(false);
+  });
+
+  it("衛生 hint 用衛生關鍵字", () => {
+    expect(isRelevantNewsItem(mk("腸病毒疫情升溫 幼兒園爆群聚", "衛生"))).toBe(true);
+    expect(isRelevantNewsItem(mk("醫院擴建工程動土典禮", "衛生"))).toBe(false);
+  });
+
+  it("環境 hint 用環境關鍵字", () => {
+    expect(isRelevantNewsItem(mk("電鍍廠偷排廢水遭裁罰百萬", "環境"))).toBe(true);
+    expect(isRelevantNewsItem(mk("公園綠美化志工招募", "環境"))).toBe(false);
+  });
+
+  it("資安 hint 用資安關鍵字", () => {
+    expect(isRelevantNewsItem(mk("駭客入侵上市公司 個資外洩百萬筆", "資安"))).toBe(true);
+    expect(isRelevantNewsItem(mk("新款筆電開箱評測", "資安"))).toBe(false);
+  });
+
+  it("未列 TOPIC_RE 的 hint 照舊走警政漏斗（回歸保護）", () => {
+    expect(isRelevantNewsItem(mk("高雄街頭砍人送醫", "治安"))).toBe(true);
+    expect(isRelevantNewsItem(mk("新北市躋身全球幸福城市前50名", "治安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("台南工廠火警濃煙竄天 消防搶救", "災防"))).toBe(true);
+  });
+});
+
+describe("mapBulkNews 新主題分類", () => {
+  it("食安/環境/資安 item 入庫且歸到自己的分類", () => {
+    const items = [
+      {
+        title: "台中查獲黑心食品工廠",
+        link: "https://x/f1",
+        description: "",
+        source: "GN 食安黑心",
+        sourceUrl: "u",
+        hint: "食安",
+        pubDate: "x",
+      },
+      {
+        title: "高雄工廠偷排廢水遭稽查裁罰",
+        link: "https://x/e1",
+        description: "",
+        source: "環境部官網",
+        sourceUrl: "u",
+        hint: "環境",
+        pubDate: "x",
+      },
+      {
+        title: "勒索病毒攻擊醫院系統 個資外洩",
+        link: "https://x/c1",
+        description: "",
+        source: "TechNews",
+        sourceUrl: "u",
+        hint: "資安",
+        pubDate: "x",
+      },
+    ];
+    const ev = mapBulkNews(items, { fetchedAt: FETCHED_AT });
+    expect(ev).toHaveLength(3);
+    expect(ev.find((e) => e.title.includes("黑心"))!.category).toBe("食安");
+    expect(ev.find((e) => e.title.includes("廢水"))!.category).toBe("環境");
+    expect(ev.find((e) => e.title.includes("勒索病毒"))!.category).toBe("資安");
   });
 });

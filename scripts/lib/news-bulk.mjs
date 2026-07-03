@@ -39,7 +39,7 @@ function detectCounty(text) {
   return { region: "全國", lat: null, lng: null };
 }
 
-const HINT_TO_CAT = { 治安: "治安", 交通: "交通", 反詐: "反詐", 災防: "災防", 資安: "治安" };
+const HINT_TO_CAT = { 治安: "治安", 交通: "交通", 反詐: "反詐", 災防: "災防", 資安: "資安", 食安: "食安", 衛生: "衛生", 環境: "環境" };
 // 先依標題關鍵字判類，無命中再回退來源主題(hint)，預設治安（來源本就警政取向）。
 const CAT_RULES = [
   [/詐騙|詐欺|車手|假投資|人頭帳戶|釣魚|解除分期|盜刷|博弈|洗錢|假交友|假檢警/, "反詐"],
@@ -68,6 +68,21 @@ export function isPoliceRelevant(title, description) {
   return POLICE_RE.test(String(title || "") + " " + String(description || ""));
 }
 
+// 主題來源專用相關性關鍵字（hint 命中此表 → 以主題正則取代警政漏斗；未列者照舊走 POLICE_RE）。
+// 來源漏斗診斷（docs/reports/2026-07-03）：食安/環保/衛生/科技來源過不了警政關鍵字，貢獻歸零。
+const TOPIC_RE = {
+  食安: /黑心|食安|餿水油|病死豬|瘦肉精|農藥殘留|逾期|竄改|標示不實|下架|回收|查獲|違規|走私|摻偽|偽藥|禁藥|食物中毒/,
+  衛生: /疫情|群聚|確診|疫苗|傳染|染疫|食物中毒|中毒|院內感染|防疫|隔離/,
+  環境: /污染|廢水|偷排|裁罰|稽查|廢棄物|棄置|排放|空污|盜採|濫墾|噪音|毒物|外洩/,
+  資安: /資安|駭客|個資|外洩|漏洞|勒索|釣魚|盜刷|木馬|殭屍網路|網攻|入侵/,
+};
+
+export function isRelevantNewsItem(item) {
+  const topicRe = TOPIC_RE[item?.hint];
+  if (topicRe) return topicRe.test(String(item?.title || "") + " " + String(item?.description || ""));
+  return isPoliceRelevant(item?.title, item?.description);
+}
+
 function toIso(pubDate) {
   if (!pubDate) return new Date().toISOString();
   const d = new Date(pubDate);
@@ -87,7 +102,7 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
   const seen = new Set();
   const events = [];
   for (const it of items || []) {
-    if (!isPoliceRelevant(it.title, it.description)) continue; // 濾掉非警政內容
+    if (!isRelevantNewsItem(it)) continue; // 濾掉非警政內容
     const k = titleKey(it.title);
     if (!k || seen.has(k) || excludeKeys.has(k)) continue;
     seen.add(k);

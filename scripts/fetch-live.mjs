@@ -23,7 +23,7 @@ import {
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
 import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
-import { mapBulkNews, titleKey as bulkTitleKey, isPoliceRelevant } from "./lib/news-bulk.mjs";
+import { mapBulkNews, titleKey as bulkTitleKey, isRelevantNewsItem } from "./lib/news-bulk.mjs";
 import { buildNewsSourceContribution, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
 import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel, intlNormalizeFailed } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
@@ -267,7 +267,7 @@ async function run() {
       }
       const rawUnique = uniq.length;
       // 先過警政過濾 → enriched 與 bulk 共用此池（LLM 名額不被非警政排擠、不浪費 token）。
-      const policeUniq = uniq.filter((it) => isPoliceRelevant(it.title, it.description));
+      const policeUniq = uniq.filter((it) => isRelevantNewsItem(it));
       policeUniq.sort((a, b) => (Date.parse(b.pubDate) || 0) - (Date.parse(a.pubDate) || 0));
       // LLM 精修最近 N 筆（語意分類＋座標→上地球儀），其餘全量輕量收錄。
       const ENRICH_N = Number(process.env.NEWS_ENRICH_N) || 500;
