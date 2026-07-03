@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { clampTwRelevance, clampSentiment, cleanActors, cleanRelations, buildDeepAnalysisPrompt } from "../scripts/lib/nvidia.mjs";
+import {
+  clampTwRelevance,
+  clampSentiment,
+  cleanActors,
+  cleanRelations,
+  buildDeepAnalysisPrompt,
+  TW_CATEGORIES,
+} from "../scripts/lib/nvidia.mjs";
 
 describe("LLM optional field clamps", () => {
   it("clampTwRelevance: clamp 0-100, round, non-number/null -> undefined", () => {
@@ -66,5 +73,12 @@ describe("LLM optional field clamps", () => {
     expect(msgs[1].content).toContain("南海對峙升溫");
     expect(msgs[1].content).toContain("兩國艦艇對峙");
     expect(msgs[1].content).toContain("影響評估");
+  });
+});
+
+describe("TW_CATEGORIES 新主題分類", () => {
+  it("含四個新分類（LLM 精修不再把新主題 clamp 回社會）", () => {
+    for (const c of ["食安", "衛生", "環境", "資安"]) expect(TW_CATEGORIES).toContain(c);
+    for (const c of ["治安", "社會", "交通", "災防", "反詐"]) expect(TW_CATEGORIES).toContain(c);
   });
 });

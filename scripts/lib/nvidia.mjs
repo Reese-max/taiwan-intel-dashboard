@@ -512,7 +512,7 @@ export async function normalizeInternational(
 }
 
 // 台灣社會/犯罪新聞分類（domestic）
-const TW_CATEGORIES = ["治安", "社會", "交通", "災防", "反詐"];
+export const TW_CATEGORIES = ["治安", "社會", "交通", "災防", "反詐", "食安", "衛生", "環境", "資安"];
 const clampTwCat = (c) => (TW_CATEGORIES.includes(c) ? c : "社會");
 
 // 單批正規化（≤ batchSize 則）。idx 對應到傳入的 batchItems。
