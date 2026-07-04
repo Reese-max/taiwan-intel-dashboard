@@ -52,13 +52,41 @@ function categoryFromItem(title, hint) {
   return HINT_TO_CAT[hint] || "治安";
 }
 
-const HIGH = /命案|兇殺|凶殺|殺人|砍人|砍殺|砍傷|持刀|刺死|刺傷|分屍|棄屍|槍擊|開槍|中彈|性侵|擄人|勒贖|劫|致死|身亡|死亡|喪命|溺斃|縱火|爆炸|氣爆|滅門/;
+const HIGH = /命案|兇殺|凶殺|殺人|殺害|砍人|砍殺|砍傷|持刀|刺死|刺傷|分屍|棄屍|槍擊|開槍|中彈|性侵|擄人|勒贖|劫|致死|身亡|死亡|喪命|溺斃|縱火|爆炸|氣爆|滅門/;
 const MED = /詐騙|詐欺|毒品|緝毒|販毒|竊|搶|強盜|酒駕|毒駕|肇逃|肇事|傷害|鬥毆|車禍|起訴|收押|羈押|逮捕|查獲|落網|火警|火災|墜|溺|走私|偷渡|賄|貪/;
 const HIGH_EN = /\b(murder|homicide|killed|dead|death|fatal|shooting|stabbing|explosion|kidnap\w*|rape|sexual assault|arson)\b/i;
 const MED_EN = /\b(fraud|scam|drug|narcotic|arrest\w*|theft|robbery|burglar\w*|smuggl\w*|drunk driving|DUI|crash|fire|indict\w*|prosecut\w*|detain\w*|assault)\b/i;
 
-function riskFromTitle(title) {
+// 主題提示詞專用風險詞（高/中）；若存在 hint 時優先套用 topic 規則，否則沿用警政規則。
+export const TOPIC_RISK = {
+  食安: {
+    high: /餿水油|病死豬|食物中毒|致癌|致死|中毒/,
+    med: /黑心|瘦肉精|農藥殘留|摻偽|偽藥|禁藥|下架|回收|查獲|走私|標示不實|逾期/,
+  },
+  衛生: {
+    high: /群聚感染|爆發|重症|死亡|院內感染/,
+    med: /確診|群聚|隔離|傳染|染疫/,
+  },
+  環境: {
+    high: /毒物|外洩|重金屬|致癌|戴奧辛/,
+    med: /偷排|廢水|污染|裁罰|廢棄物|棄置|盜採|濫墾/,
+  },
+  資安: {
+    high: /勒索|網攻|入侵|癱瘓|殭屍網路/,
+    med: /駭客|個資|外洩|漏洞|釣魚|盜刷|木馬/,
+  },
+};
+
+export function riskFromTitle(title, hint) {
   const s = String(title || "");
+  const topicRisk = TOPIC_RISK[hint];
+  if (topicRisk) {
+    if (topicRisk.high.test(s)) return "high";
+    if (HIGH.test(s) || HIGH_EN.test(s)) return "high";
+    if (topicRisk.med.test(s)) return "medium";
+    if (MED.test(s) || MED_EN.test(s)) return "medium";
+    return "low";
+  }
   if (HIGH.test(s) || HIGH_EN.test(s)) return "high";
   if (MED.test(s) || MED_EN.test(s)) return "medium";
   return "low";
@@ -124,7 +152,7 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
       timestamp: toIso(it.pubDate),
       category: categoryFromItem(it.title, it.hint),
       scope: "domestic",
-      riskLevel: riskFromTitle(it.title),
+      riskLevel: riskFromTitle(it.title, it.hint),
       summary: (it.description || "").slice(0, 200),
       locationPrecision: loc.lat != null && loc.lng != null ? "city" : "unknown",
       locationNote: loc.lat != null && loc.lng != null ? "依新聞地區推論，非精準事發地址" : undefined,

@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { mapBulkNews, titleKey, cleanTitle, isRelevantNewsItem } from "../scripts/lib/news-bulk.mjs";
+import {
+  mapBulkNews,
+  titleKey,
+  cleanTitle,
+  isRelevantNewsItem,
+  riskFromTitle,
+} from "../scripts/lib/news-bulk.mjs";
 
 const FETCHED_AT = "2026-06-20T00:00:00.000Z";
 
@@ -167,5 +173,24 @@ describe("EN 來源支援（Focus Taiwan / Taipei Times）", () => {
     );
     expect(ev.find((e) => e.title.includes("killed"))!.riskLevel).toBe("high");
     expect(ev.find((e) => e.title.includes("fraud"))!.riskLevel).toBe("medium");
+  });
+});
+
+describe("riskFromTitle 主題感知", () => {
+  it("依 hint 套用主題高風險關鍵字優先，維持警政備援", () => {
+    expect(riskFromTitle("餿水油流入市面 廠商遭起訴", "食安")).toBe("high");
+    expect(riskFromTitle("黑心廠商瘦肉精超標遭下架", "食安")).toBe("medium");
+    expect(riskFromTitle("食安稽查員遭殺害", "食安")).toBe("high");
+    expect(riskFromTitle("醫院爆院內感染 2 死", "衛生")).toBe("high");
+    expect(riskFromTitle("北部群聚確診再增", "衛生")).toBe("medium");
+    expect(riskFromTitle("工廠毒物外洩 居民急疏散", "環境")).toBe("high");
+    expect(riskFromTitle("電鍍廠偷排廢水遭裁罰", "環境")).toBe("medium");
+    expect(riskFromTitle("駭客勒索病毒癱瘓醫院系統", "資安")).toBe("high");
+    expect(riskFromTitle("電商個資外洩 10 萬筆", "資安")).toBe("medium");
+  });
+
+  it("無 hint 時維持既有警政風險邏輯", () => {
+    expect(riskFromTitle("北部群聚確診再增")).toBe("low");
+    expect(riskFromTitle("公安局深夜緝毒失聯槍擊")).toBe("high");
   });
 });
