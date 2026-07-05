@@ -65,9 +65,11 @@ function sparkline(values: number[]): string {
   return `<svg class="kpi-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 
-function card(mod: string, label: string, num: string, spark: number[], suffix?: string): string {
+function card(mod: string, label: string, num: string, spark: number[], suffix?: string, action?: string): string {
   const suffixHtml = suffix ? `<span class="kpi-suffix">${esc(suffix)}</span>` : "";
-  return `<article class="kpi-card ${mod}">
+  const cls = `kpi-card ${mod}${action ? " is-clickable" : ""}`;
+  const attrs = action ? ` data-kpi-action="${esc(action)}" role="button" tabindex="0" aria-label="${esc(label)}，點擊篩選"` : "";
+  return `<article class="${cls}"${attrs}>
     <div class="kpi-head">
       <span class="kpi-label">${esc(label)}</span>
       ${sparkline(spark)}
@@ -111,7 +113,12 @@ export function computeProvStat(manifest: ProvManifest | null, scope: Scope): Pr
   return { total, active, officialPct };
 }
 
-export function renderKpiStrip(container: HTMLElement, events: IntelEvent[], scope: Scope): void {
+export function renderKpiStrip(
+  container: HTMLElement,
+  events: IntelEvent[],
+  scope: Scope,
+  onRiskClick?: () => void,
+): void {
   const eventsSpark = dailyCounts(events);
   const riskSpark = dailyCounts(events, isElevated);
   // 近 24 小時滾動視窗取代「日曆當日」：不會清晨偏低、跨午夜歸零、無嚇人負值。
@@ -133,10 +140,30 @@ export function renderKpiStrip(container: HTMLElement, events: IntelEvent[], sco
     eventsSpark,
     delta >= 0 ? `+${delta} 較前日` : `${delta} 較前日`,
   );
-  const riskCard = card("is-risk", "危急 / 高風險", String(riskCount), riskSpark, `${riskPct}% 占比`);
+  const riskCard = card(
+    "is-risk",
+    "危急 / 高風險",
+    String(riskCount),
+    riskSpark,
+    `${riskPct}% 占比`,
+    onRiskClick ? "filter-elevated" : undefined,
+  );
 
   const paint = (manifest: ProvManifest | null): void => {
     container.innerHTML = todayCard + riskCard + sourceCards(computeProvStat(manifest, scope), eventsSpark);
+    // 「危急/高風險」卡可點：一鍵把清單過濾到高風險以上（paint 重繪後需重綁）。
+    if (onRiskClick) {
+      const el = container.querySelector<HTMLElement>('[data-kpi-action="filter-elevated"]');
+      if (el) {
+        el.onclick = onRiskClick;
+        el.onkeydown = (ev) => {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            onRiskClick();
+          }
+        };
+      }
+    }
   };
 
   paint(provCache ?? null);

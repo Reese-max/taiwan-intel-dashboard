@@ -1281,6 +1281,18 @@ h4 {
   padding: var(--space);
 }
 
+/* 可點的 KPI 卡（危急/高風險 → 一鍵過濾） */
+.kpi-card.is-clickable {
+  cursor: pointer;
+}
+.kpi-card.is-clickable:hover {
+  filter: brightness(1.08);
+}
+.kpi-card.is-clickable:focus-visible {
+  outline: 2px solid var(--border-accent);
+  outline-offset: 2px;
+}
+
 /* 主資料載入失敗的可重試錯誤卡 */
 .load-error {
   display: flex;

@@ -235,7 +235,7 @@ async function refresh(): Promise<void> {
   }
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
-  renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope);
+  renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, () => setState({ minRisk: "high" }));
 
   let display: IntelEvent[];
   const viewKey = focusCluster
