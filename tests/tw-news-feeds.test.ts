@@ -11,6 +11,7 @@ describe("TW_NEWS_FEEDS", () => {
       "TechNews 科技新報 RSS",
       "iThome Security RSS",
       "iThome News RSS",
+      "TWCERT/CC 資安新聞",
       "報導者 RSS",
       "INSIDE RSS",
       "GN UDN 綜合治安",
@@ -50,6 +51,7 @@ describe("主題來源 hint（2026-07-04 漏斗診斷處置）", () => {
   });
   it("資安與 EN 來源 hint 不變", () => {
     expect(hintOf("TechNews 科技新報 RSS")).toBe("資安");
+    expect(hintOf("TWCERT/CC 資安新聞")).toBe("資安");
     expect(hintOf("Focus Taiwan (EN)")).toBe("治安");
     expect(hintOf("Taipei Times (EN)")).toBe("治安");
   });

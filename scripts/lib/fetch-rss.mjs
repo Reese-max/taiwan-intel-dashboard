@@ -186,6 +186,7 @@ export const TW_NEWS_FEEDS = [
   { label: "TechNews 科技新報 RSS", url: "https://technews.tw/feed/", hint: "資安" },
   { label: "iThome Security RSS", url: "https://www.ithome.com.tw/rss/security", hint: "資安" },
   { label: "iThome News RSS", url: "https://www.ithome.com.tw/rss/news", hint: "資安" },
+  { label: "TWCERT/CC 資安新聞", url: "https://www.twcert.org.tw/tw/rss-104-1.xml", hint: "資安" },
   { label: "報導者 RSS", url: "https://www.twreporter.org/a/rss2.xml", hint: "治安" },
   { label: "INSIDE RSS", url: "https://www.inside.com.tw/feed/rss", hint: "資安" },
   // ── 主流／專題媒體 site-scoped Google News（直連 RSS 多為 403/404/410，故用聚合補覆蓋）──
