@@ -31,7 +31,8 @@ import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
 import { validateEventContract } from "./lib/event-contract.mjs";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const ROOT = join(__dirname, "..");
 const DATA_DIR = join(ROOT, "public", "data");
 
@@ -48,6 +49,29 @@ function loadDotEnv() {
 
 const byTimeDesc = (a, b) => new Date(b.timestamp) - new Date(a.timestamp);
 const todayTW = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+
+export function buildTwNewsEvents({ twnews = [], oldNews = [], twnewsStatus, dropStaleNews = false, retentionDays = 5, now = Date.now() } = {}) {
+  const retentionFrom = now - retentionDays * 864e5;
+  const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
+  if (twnewsStatus?.ok && twnews.length) {
+    const seen = new Set();
+    const newsEvents = [];
+    for (const e of [...twnews, ...oldNews]) {
+      const k = newsDedupKey(e);
+      if (k && seen.has(k)) continue;
+      const t = Date.parse(e.timestamp);
+      if (Number.isFinite(t) && t < retentionFrom) continue; // 超過保留窗丟棄
+      if (k) seen.add(k);
+      newsEvents.push(e);
+    }
+    return newsEvents;
+  }
+  if (dropStaleNews) return [];
+  return oldNews.filter((e) => {
+    const t = Date.parse(e.timestamp);
+    return !(Number.isFinite(t) && t < retentionFrom); // 超過保留窗丟棄
+  });
+}
 
 const DIST_DATA_DIR = join(ROOT, "dist", "data");
 
@@ -343,27 +367,20 @@ async function run() {
   // 跨輪累積 + 保留窗：成功時 union 本輪與舊 tw-news（recordRef→標題去重，本輪優先以保留 LLM 精修版），
   // 再剪掉超過保留窗者 → 量隨時間複利成長到保留窗深度，每輪仍只 when:Nd 抓增量、LLM 成本不變。
   const RETENTION_DAYS = Number(process.env.NEWS_RETENTION_DAYS) || 5;
-  const retentionFrom = Date.now() - RETENTION_DAYS * 864e5;
   const oldNews = oldDomestic.filter((e) => e.source?.datasetId === "tw-news");
-  const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
-  let newsEvents;
+  const newsEvents = buildTwNewsEvents({
+    twnews,
+    oldNews,
+    twnewsStatus: status.twnews,
+    dropStaleNews: dropStale(status.twnews),
+    retentionDays: RETENTION_DAYS,
+  });
   if (status.twnews?.ok && twnews.length) {
-    const seen = new Set();
-    newsEvents = [];
-    for (const e of [...twnews, ...oldNews]) {
-      const k = newsDedupKey(e);
-      if (k && seen.has(k)) continue;
-      const t = Date.parse(e.timestamp);
-      if (Number.isFinite(t) && t < retentionFrom) continue; // 超過保留窗丟棄
-      if (k) seen.add(k);
-      newsEvents.push(e);
-    }
     console.log(
       `台灣新聞累積：本輪 ${twnews.length}＋舊 ${oldNews.length} → 去重保留 ${newsEvents.length} 筆（保留窗 ${RETENTION_DAYS} 天）`,
     );
-  } else {
-    newsEvents = dropStale(status.twnews) ? [] : oldNews;
-    if (!status.twnews?.ok && newsEvents.length) console.warn(`台灣新聞${why(status.twnews)}，沿用舊快照 ${newsEvents.length} 筆`);
+  } else if (!status.twnews?.ok && newsEvents.length) {
+    console.warn(`台灣新聞${why(status.twnews)}，沿用舊快照 ${newsEvents.length} 筆`);
   }
 
   let policeEvents = [];
@@ -701,7 +718,9 @@ async function run() {
   console.log(JSON.stringify(status, null, 2));
 }
 
-run().catch((e) => {
-  console.error("PIPELINE FATAL:", e);
-  process.exit(1);
-});
+if (process.argv[1] === __filename) {
+  run().catch((e) => {
+    console.error("PIPELINE FATAL:", e);
+    process.exit(1);
+  });
+}

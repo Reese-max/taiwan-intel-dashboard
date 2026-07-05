@@ -293,7 +293,35 @@ function parseFeed(xml) {
   return items;
 }
 
-async function fetchOne(feed, perFeed, timeoutMs) {
+const RSS_RETRY_DELAY_MS = 750;
+const RSS_FETCH_ATTEMPTS = 2;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function httpError(status) {
+  const err = new Error(`HTTP ${status}`);
+  err.status = status;
+  return err;
+}
+
+export function isRetriableFetchError(errorOrStatus) {
+  const rawStatus = typeof errorOrStatus === "number" ? errorOrStatus : errorOrStatus?.status;
+  const status = Number(rawStatus);
+  if (Number.isFinite(status)) return status >= 500 && status <= 599;
+
+  const message = String(errorOrStatus?.message || "");
+  const httpMatch = message.match(/^HTTP\s+(\d{3})/i);
+  if (httpMatch) {
+    const httpStatus = Number(httpMatch[1]);
+    return httpStatus >= 500 && httpStatus <= 599;
+  }
+
+  if (errorOrStatus?.name === "AbortError" || errorOrStatus?.name === "TimeoutError") return true;
+  if (errorOrStatus instanceof TypeError) return true;
+  return /fetch failed|network|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|ECONNREFUSED|socket|aborted/i.test(message);
+}
+
+async function fetchOneAttempt(feed, perFeed, timeoutMs) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -301,29 +329,41 @@ async function fetchOne(feed, perFeed, timeoutMs) {
       signal: ctrl.signal,
       headers: { "User-Agent": "Mozilla/5.0 (taiwan-intel-dashboard pipeline)" },
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw httpError(res.status);
     const xml = await res.text();
     const items = parseFeed(xml)
       .filter((i) => i.title && i.link)
       .slice(0, perFeed)
       .map((i) => ({ ...i, source: feed.label, sourceUrl: feed.url, hint: feed.hint }));
     return { ok: true, label: feed.label, items };
-  } catch (e) {
-    return { ok: false, label: feed.label, error: e.message, items: [] };
   } finally {
     clearTimeout(timer);
   }
 }
 
+async function fetchOne(feed, perFeed, timeoutMs, retryDelayMs = RSS_RETRY_DELAY_MS) {
+  let lastError;
+  for (let attempt = 0; attempt < RSS_FETCH_ATTEMPTS; attempt++) {
+    try {
+      return await fetchOneAttempt(feed, perFeed, timeoutMs);
+    } catch (e) {
+      lastError = e;
+      if (attempt === 0 && isRetriableFetchError(e)) await sleep(retryDelayMs);
+      else break;
+    }
+  }
+  return { ok: false, label: feed.label, error: lastError?.message || String(lastError), items: [] };
+}
+
 // 回傳 { items: [...], feedStatus: [{label, ok, count, error}] }
-export async function fetchRssItems({ perFeed = 5, timeoutMs = 12000, feeds = FEEDS, concurrency = 5 } = {}) {
+export async function fetchRssItems({ perFeed = 5, timeoutMs = 12000, feeds = FEEDS, concurrency = 5, retryDelayMs = RSS_RETRY_DELAY_MS } = {}) {
   // 限制並行抓取數：避免一次對 Google News 開數十條連線被限流（實測 >~6 並發易出現 0）。
   const results = new Array(feeds.length);
   let next = 0;
   const worker = async () => {
     while (next < feeds.length) {
       const idx = next++;
-      results[idx] = await fetchOne(feeds[idx], perFeed, timeoutMs);
+      results[idx] = await fetchOne(feeds[idx], perFeed, timeoutMs, retryDelayMs);
     }
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, feeds.length) }, worker));
