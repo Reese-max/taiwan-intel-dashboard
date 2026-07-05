@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { normalizeInternational, intlNormalizeFailed } from "../scripts/lib/nvidia.mjs";
+import {
+  normalizeDomesticNews,
+  domesticNormalizeFailed,
+  eventIdFor,
+  intlNormalizeFailed,
+  normalizeInternational,
+} from "../scripts/lib/nvidia.mjs";
 
 const item = (i: number) => ({
   title: `完全不同的測試標題第${i}號事件內容`,
@@ -10,6 +16,11 @@ const item = (i: number) => ({
   source: "測試源",
   pubDate: "2026-07-03T00:00:00Z",
 });
+const okDomesticCompletion = (content: string) =>
+  new Response(JSON.stringify({ model: "intl-test-model", choices: [{ message: { content } }] }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 
 describe("normalizeInternational 全批失敗可見性（A3）", () => {
   const saved: Record<string, string | undefined> = {};
@@ -39,8 +50,6 @@ describe("normalizeInternational 全批失敗可見性（A3）", () => {
   });
 
   it("全部命中快取（無新項）：不標失敗", async () => {
-    // @ts-expect-error — JS ESM module without types
-    const { eventIdFor } = await import("../scripts/lib/nvidia.mjs");
     const items = [item(1), item(2)];
     const prior = new Map(
       items.map((it) => {
@@ -51,5 +60,99 @@ describe("normalizeInternational 全批失敗可見性（A3）", () => {
     const out = await normalizeInternational(items, { max: 10, priorById: prior });
     expect(out.length).toBe(2);
     expect(intlNormalizeFailed()).toBe(false);
+  });
+});
+
+describe("normalizeDomesticNews 全批失敗可見性（A3）", () => {
+  const saved: Record<string, string | undefined> = {};
+  beforeEach(() => {
+    for (const k of [
+      "LLM_API_KEY",
+      "NVIDIA_API_KEY",
+      "LLM_MAX_RETRIES",
+      "LLM_BASE_URL",
+    ]) saved[k] = process.env[k];
+    delete process.env.LLM_API_KEY;
+    delete process.env.NVIDIA_API_KEY;
+    delete process.env.LLM_BASE_URL;
+    process.env.LLM_MAX_RETRIES = "0"; // 無 key 必 throw，關重試讓測試快速
+    vi.restoreAllMocks();
+  });
+  afterEach(() => {
+    for (const [k, v] of Object.entries(saved)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("多批全失敗：回傳 []、domesticNormalizeFailed()=true、有 warn+error 留痕", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const items = Array.from({ length: 5 }, (_, i) => item(i));
+    const out = await normalizeDomesticNews(items, { max: 10, batchSize: 2, concurrency: 2 });
+    expect(out).toEqual([]);
+    expect(domesticNormalizeFailed()).toBe(true);
+    expect(warn.mock.calls.some((c) => String(c[0]).includes("放棄該批"))).toBe(true);
+    expect(error.mock.calls.some((c) => String(c[0]).includes("全批失敗"))).toBe(true);
+  });
+
+  it("成功路徑：domesticNormalizeFailed()=false", async () => {
+    process.env.LLM_API_KEY = "test-key";
+    process.env.LLM_BASE_URL = "https://llm.test/v1";
+    const fetchMock = vi.fn(async () =>
+      okDomesticCompletion(
+        JSON.stringify([
+          {
+            idx: 0,
+            title_zh: "警政事件 A",
+            summary_zh: "警政摘要 A",
+            category: "治安",
+            riskLevel: "low",
+            region: "台北市",
+            lat: 25.03,
+            lng: 121.56,
+            entities: ["A"],
+            topic: "警政事件",
+            sentiment: "negative",
+          },
+        ]),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const out = await normalizeDomesticNews([item(1)], { max: 10, batchSize: 2, concurrency: 2 });
+    expect(out.length).toBe(1);
+    expect(domesticNormalizeFailed()).toBe(false);
+    expect(warn).not.toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
+  });
+
+  it("全快取命中（fresh=0）：不標失敗", async () => {
+    const items = [item(10), item(11)];
+    const prior = new Map(
+      items.map((it) => {
+        const id = eventIdFor("domestic", it.link);
+        return [
+          id,
+          {
+            id,
+            title: it.title,
+            riskLevel: "low",
+            scope: "domestic",
+            aiTopic: "舊事件主題",
+            source: { name: "測試源", recordRef: it.link, fetchedAt: it.pubDate },
+          },
+        ];
+      }),
+    );
+    const out = await normalizeDomesticNews(items, { max: 250, priorById: prior });
+    expect(out.length).toBe(2);
+    expect(domesticNormalizeFailed()).toBe(false);
+    expect(out.map((e: { id: string }) => e.id).sort()).toEqual(
+      items.map((it) => eventIdFor("domestic", it.link)).sort(),
+    );
   });
 });

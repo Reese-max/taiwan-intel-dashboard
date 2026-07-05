@@ -25,7 +25,7 @@ import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/i
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
 import { mapBulkNews, titleKey as bulkTitleKey, isRelevantNewsItem } from "./lib/news-bulk.mjs";
 import { buildNewsSourceContribution, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
-import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel, intlNormalizeFailed } from "./lib/nvidia.mjs";
+import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel, intlNormalizeFailed, domesticNormalizeFailed } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
@@ -297,6 +297,7 @@ async function run() {
       });
       status.twnews = {
         ok: true,
+        normalizeFailed: domesticNormalizeFailed(),
         count: twnews.length,
         enriched: enriched.length,
         bulk: bulk.length,

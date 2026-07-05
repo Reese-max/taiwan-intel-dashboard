@@ -23,6 +23,8 @@ export const respondedModel = () => lastRespondedModel || llmModel();
 // 單批失敗屬可容忍的偶發（graceful 放棄）；全批失敗＝管線級故障，呼叫端應標示告警。
 let lastIntlNormalizeFailed = false;
 export const intlNormalizeFailed = () => lastIntlNormalizeFailed;
+let lastDomesticNormalizeFailed = false;
+export const domesticNormalizeFailed = () => lastDomesticNormalizeFailed;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -605,6 +607,7 @@ function newsTitleKey(title) {
 }
 
 export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, concurrency = 4, priorById = null } = {}) {
+  lastDomesticNormalizeFailed = false;
   if (!items.length) return [];
   // 入口先依標題去重（Google News 多查詢＋直連媒體會大量重複同一則）→ 省 LLM、避免重複輸出。
   const seenTitle = new Set();
@@ -620,8 +623,18 @@ export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, 
   const batches = [];
   for (let i = 0; i < fresh.length; i += batchSize) batches.push(fresh.slice(i, i + batchSize));
   // 推理模型偶發截斷/解析失敗 → 單批重試一次，仍失敗才放棄該批（不拖垮整體）。
-  const runBatch = (b) => normalizeNewsBatch(b).catch(() => normalizeNewsBatch(b).catch(() => []));
+  const runBatch = (b, i) =>
+    normalizeNewsBatch(b).catch(() =>
+      normalizeNewsBatch(b).catch((e) => {
+        console.warn(`國內新聞正規化批次 ${i + 1}/${batches.length} 重試仍失敗，放棄該批：${String(e?.message || e).slice(0, 200)}`);
+        return [];
+      }),
+    );
   const results = await mapLimit(batches, concurrency, runBatch);
+  if (fresh.length > 0 && results.flat().filter(Boolean).length === 0) {
+    lastDomesticNormalizeFailed = true;
+    console.error(`國內新聞正規化全批失敗：fresh ${fresh.length} 筆 → 0 筆產出（LLM 端點或解析全面異常）`);
+  }
   const seen = new Set();
   const merged = [];
   for (const ev of [...reused, ...results.flat()]) {
