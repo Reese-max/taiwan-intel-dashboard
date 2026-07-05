@@ -2,24 +2,10 @@
 import { McpClient } from "./mcp-client.mjs";
 import { countyCoordFromAddr } from "./coords.mjs";
 import { parseTwinkleRowsText } from "./twinkle-query.mjs";
+import { formatNtd, riskByPrice } from "./police-mappers.mjs";
 
 const QUERY =
   "announcement_type='決標公告' AND award_price != '' AND date <= '{TODAY}' ORDER BY date DESC";
-
-// 決標金額 → 衍生風險（關注度）指標
-function riskByPrice(price) {
-  const n = Number(price);
-  if (!Number.isFinite(n)) return "low";
-  if (n >= 1_000_000_000) return "critical"; // ≥10 億
-  if (n >= 100_000_000) return "high"; // ≥1 億
-  if (n >= 10_000_000) return "medium"; // ≥1000 萬
-  return "low";
-}
-
-function ntd(price) {
-  const n = Number(price);
-  return Number.isFinite(n) ? `NT$${n.toLocaleString("en-US")}` : `NT$${price}`;
-}
 
 export async function fetchPcc({ url, token, today, limit = 15 }) {
   const client = new McpClient(url, token);
@@ -60,7 +46,7 @@ export async function fetchPcc({ url, token, today, limit = 15 }) {
       category: "採購",
       scope: "domestic",
       riskLevel: riskByPrice(price),
-      summary: `${r[iAgency] || "機關"}以${way}決標予${company},決標金額 ${ntd(price)}。`,
+      summary: `${r[iAgency] || "機關"}以${way}決標予${company},決標金額 ${formatNtd(price)}。`,
       source: {
         name: "政府電子採購網 決標公告",
         type: "gov-open-data",

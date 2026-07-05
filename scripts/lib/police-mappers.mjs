@@ -31,6 +31,15 @@ export function formatNtd(amount) {
   return Number.isFinite(n) ? `NT$${n.toLocaleString("en-US")}` : `NT$${amount}`;
 }
 
+export function riskByPrice(price) {
+  const n = Number(price);
+  if (!Number.isFinite(n)) return "low";
+  if (n >= 1_000_000_000) return "critical";
+  if (n >= 100_000_000) return "high";
+  if (n >= 10_000_000) return "medium";
+  return "low";
+}
+
 export function speedRisk(dailyCount, yearlyCount) {
   const daily = Number(dailyCount);
   const yearly = Number(yearlyCount);

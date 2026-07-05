@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 // @ts-expect-error — JS ESM 模組無型別宣告
 import {
-  riskByPrice,
   policeNewsRisk,
   drugCrimeRisk,
   assemblyRisk,
   enforcementRisk,
   coordOrCounty,
 } from "../scripts/lib/fetch-police.mjs";
+import { riskByPrice } from "../scripts/lib/police-mappers.mjs";
 
 describe("riskByPrice", () => {
   it("低於 1000萬 → low", () => {

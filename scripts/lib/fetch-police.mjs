@@ -26,6 +26,7 @@ import {
   gregorianYmd8ToIso,
   localDateTimeToIso,
   rocChineseDateTimeToIso,
+  riskByPrice,
 } from "./police-mappers.mjs";
 
 const TAICHUNG_TRAFFIC_DATASET = "176086";
@@ -186,20 +187,6 @@ export function crimeWeeklySpawnEnv(baseEnv = process.env) {
     PYTHONIOENCODING: "utf-8",
     PYTHONUTF8: "1",
   };
-}
-
-function ntd(price) {
-  const n = Number(price);
-  return Number.isFinite(n) ? `NT$${n.toLocaleString("en-US")}` : `NT$${price}`;
-}
-
-export function riskByPrice(price) {
-  const n = Number(price);
-  if (!Number.isFinite(n)) return "low";
-  if (n >= 1_000_000_000) return "critical";
-  if (n >= 100_000_000) return "high";
-  if (n >= 10_000_000) return "medium";
-  return "low";
 }
 
 export function policeNewsRisk(title, content) {
@@ -1916,7 +1903,7 @@ async function fetchPoliceTenders({ url, token, today, limit = 8 }) {
       category: "採購",
       scope: "domestic",
       riskLevel: riskByPrice(price),
-      summary: `${rowVal(row, columns, "agency") || "警政機關"}以${rowVal(row, columns, "award_way") || "—"}決標予${rowVal(row, columns, "companies") || "—"}，金額 ${ntd(price)}。`,
+      summary: `${rowVal(row, columns, "agency") || "警政機關"}以${rowVal(row, columns, "award_way") || "—"}決標予${rowVal(row, columns, "companies") || "—"}，金額 ${formatNtd(price)}。`,
       source: provenance({
         name: "政府電子採購網 警政決標公告",
         datasetId: "pcc-tender",

@@ -62,6 +62,8 @@ describe("police-mappers", () => {
 
   it("formats money and tier-2 risk helpers", () => {
     expect(formatNtd(881431867)).toBe("NT$881,431,867");
+    expect(formatNtd("1234567")).toBe("NT$1,234,567");
+    expect(formatNtd("not-a-number")).toBe("NT$not-a-number");
     expect(speedRisk(99, 3768)).toBe("high");
     expect(fraudDashRisk(946786867)).toBe("high");
     expect(weeklyCrimeRisk("毒品", 203)).toBe("high");
