@@ -16,6 +16,7 @@
     "audit:international-feeds": "node scripts/audit-international-feeds.mjs --min-ok-feeds=10 --min-raw-items=50",
     "audit:intl-risk": "node scripts/audit-intl-risk-distribution.mjs",
     "audit:domestic-risk": "node scripts/audit-domestic-risk-distribution.mjs",
+    "audit:source-freshness": "node scripts/audit-source-freshness.mjs",
     "audit:data-size": "node scripts/audit-data-size.mjs",
     "audit:source-provenance": "node scripts/audit-source-provenance.mjs",
     "audit:news-source-contribution": "node scripts/audit-news-source-contribution.mjs",
