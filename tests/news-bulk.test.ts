@@ -281,4 +281,29 @@ describe("riskFromTitle 主題感知", () => {
     expect(riskFromTitle("公安局深夜緝毒失聯槍擊")).toBe("high");
     expect(riskFromTitle("反詐宣導說明會", "反詐")).toBe("low");
   });
+
+  it("死亡與武裝暴力同義詞至少升 high，補回 bulk 致死漏報", () => {
+    expect(riskFromTitle("高雄60多歲男遭刺殺不治倒臥住家", "治安")).toBe("high");
+    expect(riskFromTitle("高雄男疑債務糾紛家門口中2刀不治", "治安")).toBe("high");
+    expect(riskFromTitle("彰化男子失去生命徵象送醫不治", "災防")).toBe("high");
+    expect(riskFromTitle("登玉山失足墜50米邊坡傷重不治", "災防")).toBe("high");
+    expect(riskFromTitle("桃園街頭槍手開3槍", "治安")).toBe("high");
+    expect(riskFromTitle("苗栗車禍1人死亡", "災防")).toBe("high");
+    expect(riskFromTitle("中壢4死案", "治安")).toBe("high");
+  });
+
+  it("二位數以上或十百千萬級死亡升 critical，個位數死亡不升 critical", () => {
+    expect(riskFromTitle("委國雙強震近3,000死", "災防")).toBe("critical");
+    expect(riskFromTitle("巴基斯坦客運墜深谷 已知40死", "災防")).toBe("critical");
+    expect(riskFromTitle("俄羅斯襲基輔至少17死90多傷", "治安")).toBe("critical");
+    expect(riskFromTitle("苗栗車禍1人死亡", "災防")).toBe("high");
+    expect(riskFromTitle("中壢4死案", "治安")).toBe("high");
+  });
+
+  it("死亡字面雜訊與無傷亡反向詞不誤升", () => {
+    expect(riskFromTitle("生死關頭消防員即時救援", "災防")).toBe("low");
+    expect(riskFromTitle("打詐死角 立委籲補強", "治安")).toBe("low");
+    expect(riskFromTitle("無人傷亡的住宅火警", "災防")).toBe("medium");
+    expect(riskFromTitle("交通安全宣導記者會", "災防")).toBe("low");
+  });
 });
