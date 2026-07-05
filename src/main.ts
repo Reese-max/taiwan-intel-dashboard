@@ -189,11 +189,11 @@ function renderFocusBar(events: IntelEvent[], net: NetworkIndex): void {
   let count = events.length;
   if (focusCluster) {
     const c = net.cluster(focusCluster);
-    label = `情報群：${c?.representativeTitle || focusCluster}`;
+    label = `情報群：${esc(c?.representativeTitle || focusCluster)}`;
     count = c?.size ?? events.length;
   } else if (focusId) {
     const center = events.find((e) => e.id === focusId);
-    label = `關聯網：${center ? center.title : focusId}`;
+    label = `關聯網：${esc(center ? center.title : focusId)}`;
     count = net.count(focusId);
   }
   bar.hidden = false;
