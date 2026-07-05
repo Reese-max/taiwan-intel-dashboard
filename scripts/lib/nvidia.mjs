@@ -107,6 +107,67 @@ export function cleanRelations(v) {
   }
   return out.length ? out : undefined;
 }
+
+// LLM 富化欄位接地比對用正規化：全形→半形（NFKC）、小寫、去空白/標點。
+// 注意：這裡刻意不做簡繁轉換，避免引入字典/模型或錯誤改寫；簡繁差異可能保守誤丟。
+export function normalizeForMatch(s) {
+  return String(s || "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]/gu, "");
+}
+
+export function groundEntities(list, haystack) {
+  const normalizedHaystack = normalizeForMatch(haystack);
+  const value = [];
+  let kept = 0;
+  let dropped = 0;
+  for (const item of Array.isArray(list) ? list : []) {
+    const needle = normalizeForMatch(item);
+    if (needle && normalizedHaystack.includes(needle)) {
+      value.push(item);
+      kept++;
+    } else {
+      dropped++;
+    }
+  }
+  return { value: value.length ? value : undefined, kept, dropped };
+}
+
+export function groundRelations(list, haystack) {
+  const normalizedHaystack = normalizeForMatch(haystack);
+  const value = [];
+  let kept = 0;
+  let dropped = 0;
+  for (const item of Array.isArray(list) ? list : []) {
+    const from = normalizeForMatch(item?.from);
+    const to = normalizeForMatch(item?.to);
+    if (from && to && normalizedHaystack.includes(from) && normalizedHaystack.includes(to)) {
+      value.push(item);
+      kept++;
+    } else {
+      dropped++;
+    }
+  }
+  return { value: value.length ? value : undefined, kept, dropped };
+}
+
+export function groundEventEnrichment({ aiEntities, threatActors, relations } = {}, haystack = "") {
+  const groundedEntities = groundEntities(aiEntities, haystack);
+  const groundedActors = groundEntities(threatActors, haystack);
+  const groundedRelations = groundRelations(relations, haystack);
+  const kept = groundedEntities.kept + groundedActors.kept + groundedRelations.kept;
+  const dropped = groundedEntities.dropped + groundedActors.dropped + groundedRelations.dropped;
+  const total = kept + dropped;
+  return {
+    aiEntities: groundedEntities.value,
+    threatActors: groundedActors.value,
+    relations: groundedRelations.value,
+    groundedRatio: total ? kept / total : 1,
+    kept,
+    dropped,
+  };
+}
 function cleanTopic(v) {
   const s = String(v || "").trim();
   return s.length >= 4 && s.length <= 30 ? s : undefined;
@@ -174,6 +235,14 @@ ${listing}
   for (const o of Array.isArray(arr) ? arr : []) {
     const it = items[o.idx];
     if (!it) continue;
+    const enrichment = groundEventEnrichment(
+      {
+        aiEntities: cleanEntities(o.entities),
+        threatActors: cleanActors(o.threatActors),
+        relations: cleanRelations(o.relations),
+      },
+      `${it.title || ""} ${it.summary || it.description || ""}`
+    );
     events.push({
       id: `intl-${slug(it.link, o.idx)}`,
       title: o.title_zh || it.title,
@@ -187,12 +256,13 @@ ${listing}
       scope: "international",
       riskLevel: clampRisk(o.riskLevel),
       summary: o.summary_zh || it.description?.slice(0, 200) || "",
-      aiEntities: cleanEntities(o.entities),
+      aiEntities: enrichment.aiEntities,
       aiTopic: cleanTopic(o.topic),
       twRelevance: clampTwRelevance(o.twRelevance),
       sentiment: clampSentiment(o.sentiment),
-      threatActors: cleanActors(o.threatActors),
-      relations: cleanRelations(o.relations),
+      threatActors: enrichment.threatActors,
+      relations: enrichment.relations,
+      groundedRatio: enrichment.groundedRatio,
       source: {
         ...deriveNewsProvenance(it, { fetchedAt, model }),
         datasetId: undefined,
@@ -404,6 +474,14 @@ ${listing}
   for (const o of Array.isArray(arr) ? arr : []) {
     const it = items[o.idx];
     if (!it) continue;
+    const enrichment = groundEventEnrichment(
+      {
+        aiEntities: cleanEntities(o.entities),
+        threatActors: cleanActors(o.threatActors),
+        relations: cleanRelations(o.relations),
+      },
+      `${it.title || ""} ${it.summary || it.description || ""}`
+    );
     events.push(applyDomesticCountyLocation({
       id: `twnews-${slug(it.link, o.idx)}`,
       title: o.title_zh || it.title,
@@ -413,10 +491,12 @@ ${listing}
       scope: "domestic",
       riskLevel: clampRisk(o.riskLevel),
       summary: o.summary_zh || it.description?.slice(0, 200) || "",
-      aiEntities: cleanEntities(o.entities),
+      aiEntities: enrichment.aiEntities,
       aiTopic: cleanTopic(o.topic),
       sentiment: clampSentiment(o.sentiment),
-      threatActors: cleanActors(o.threatActors),
+      threatActors: enrichment.threatActors,
+      relations: enrichment.relations,
+      groundedRatio: enrichment.groundedRatio,
       source: deriveNewsProvenance(it, { fetchedAt, model }),
     }));
   }
