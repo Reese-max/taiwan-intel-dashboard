@@ -391,6 +391,7 @@ async function run() {
       previousLedger,
       minimumNewPerHour: POLICE_NEW_PER_HOUR_MINIMUM,
       maxNewPerRun: POLICE_NEW_PER_HOUR_MINIMUM,
+      retentionDays: Number(process.env.POLICE_HISTORY_RETENTION_DAYS) || 14,
     });
     status.police.newMinimumPerHour = POLICE_NEW_PER_HOUR_MINIMUM;
     status.police.hourLocal = policeHourly.run.hourLocal;

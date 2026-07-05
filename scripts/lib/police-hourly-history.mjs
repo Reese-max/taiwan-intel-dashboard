@@ -106,6 +106,7 @@ export function applyPoliceHourlyRun({
   previousLedger = { seen: [] },
   minimumNewPerHour = 200,
   maxNewPerRun = Number.POSITIVE_INFINITY,
+  retentionDays = Number.POSITIVE_INFINITY,
 }) {
   const hourLocal = taiwanLocalHour(generatedAt);
   const previousRuns = Array.isArray(previousHistory?.runs) ? previousHistory.runs : [];
@@ -153,13 +154,20 @@ export function applyPoliceHourlyRun({
   const mergedRun = mergeRun(existing, incomingRun, minimumNewPerHour);
   const otherRuns = previousRuns.filter((run) => run.hourLocal !== hourLocal);
   const runs = [...otherRuns, mergedRun].sort((a, b) => String(b.hourLocal).localeCompare(String(a.hourLocal)));
+  const cutoffLocal =
+    Number.isFinite(retentionDays) && Number.isFinite(Date.parse(generatedAt))
+      ? taiwanLocalHour(new Date(Date.parse(generatedAt) - retentionDays * 86400000).toISOString())
+      : "";
+  const retainedRuns = Number.isFinite(retentionDays)
+    ? runs.filter((run) => String(run.hourLocal) >= cutoffLocal)
+    : runs;
 
   return {
     run: mergedRun,
     history: {
       generatedAt,
       minimumNewPerHour,
-      runs,
+      runs: retainedRuns,
     },
     ledger: {
       generatedAt,

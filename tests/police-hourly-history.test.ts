@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyPoliceHourlyRun,
   eventFingerprint,
+  taiwanLocalHour,
 } from "../scripts/lib/police-hourly-history.mjs";
 
 function event(id: string, category = "治安") {
@@ -124,5 +125,113 @@ describe("police hourly new-record history", () => {
     expect(second.run.newRecords.map((r) => r.id)).toEqual(["a", "b"]);
     expect(second.run.deferredNewCandidateCount).toBe(1);
     expect(second.ledger.seen).toHaveLength(2);
+  });
+
+  it("保留窗裁掉超齡 runs", () => {
+    const generatedAt = "2026-06-17T00:05:00.000Z";
+    const old20d = new Date(Date.parse(generatedAt) - 20 * 86400000).toISOString();
+    const old10d = new Date(Date.parse(generatedAt) - 10 * 86400000).toISOString();
+    const old1d = new Date(Date.parse(generatedAt) - 1 * 86400000).toISOString();
+    const previousHistory = {
+      runs: [
+        { hourLocal: taiwanLocalHour(old20d), newRecords: [{ fingerprint: "130105:old-20d" }] },
+        { hourLocal: taiwanLocalHour(old10d), newRecords: [{ fingerprint: "130105:old-10d" }] },
+        { hourLocal: taiwanLocalHour(old1d), newRecords: [{ fingerprint: "130105:old-1d" }] },
+      ],
+    };
+    const result = applyPoliceHourlyRun({
+      generatedAt,
+      events: [event("x")],
+      previousHistory,
+      previousLedger: { seen: [] },
+      retentionDays: 14,
+    });
+
+    const keptHourLocals = result.history.runs.map((run) => run.hourLocal);
+    const cutoffLocal = taiwanLocalHour(new Date(Date.parse(generatedAt) - 14 * 86400000).toISOString());
+    const expectedWithinWindow = [taiwanLocalHour(old10d), taiwanLocalHour(old1d), taiwanLocalHour(generatedAt)];
+    expect(keptHourLocals).toEqual(expect.arrayContaining(expectedWithinWindow));
+    expect(keptHourLocals).not.toContain(taiwanLocalHour(old20d));
+    expect(result.history.runs.map((run) => run.hourLocal).find((hourLocal) => hourLocal < cutoffLocal)).toBeUndefined();
+    expect(result.history.runs).toHaveLength(3);
+  });
+
+  it("裁掉超齡 runs 後保留 ledger.seen 去重契約", () => {
+    const generatedAt = "2026-06-17T00:05:00.000Z";
+    const old20d = new Date(Date.parse(generatedAt) - 20 * 86400000).toISOString();
+    const oldRunFingerprint = eventFingerprint(event("dup-old"));
+    const previousHistory = {
+      runs: [{ hourLocal: taiwanLocalHour(old20d), newRecords: [{ fingerprint: oldRunFingerprint }] }],
+    };
+    const result = applyPoliceHourlyRun({
+      generatedAt,
+      events: [event("dup-old")],
+      previousHistory,
+      previousLedger: { seen: [] },
+      retentionDays: 14,
+      minimumNewPerHour: 1,
+    });
+
+    expect(result.history.runs.some((run) => run.hourLocal === taiwanLocalHour(old20d))).toBe(false);
+    expect(result.ledger.seen).toContain(oldRunFingerprint);
+    expect(result.run.duplicateFromPriorCount).toBe(1);
+    expect(result.run.newRecords).toHaveLength(0);
+
+    const next = applyPoliceHourlyRun({
+      generatedAt: "2026-06-17T01:05:00.000Z",
+      events: [event("dup-old")],
+      previousHistory: result.history,
+      previousLedger: result.ledger,
+      retentionDays: 14,
+      minimumNewPerHour: 1,
+    });
+
+    expect(next.run.duplicateFromPriorCount).toBe(1);
+    expect(next.run.newRecords).toHaveLength(0);
+  });
+
+  it("當前 hour 的 mergedRun 必定保留（即使其他 runs 被裁掉）", () => {
+    const generatedAt = "2026-06-17T00:05:00.000Z";
+    const old20d = new Date(Date.parse(generatedAt) - 20 * 86400000).toISOString();
+    const result = applyPoliceHourlyRun({
+      generatedAt,
+      events: [event("new-current")],
+      previousHistory: {
+        runs: [{ hourLocal: taiwanLocalHour(old20d), newRecords: [{ fingerprint: eventFingerprint(event("old-current")) }] }],
+      },
+      previousLedger: { seen: [] },
+      retentionDays: 14,
+      minimumNewPerHour: 1,
+    });
+
+    expect(result.history.runs).toHaveLength(1);
+    expect(result.run).toBe(result.history.runs[0]);
+    expect(result.run.hourLocal).toBe(taiwanLocalHour(generatedAt));
+  });
+
+  it("預設不裁（未傳 retentionDays 及 Infinity）行為不變", () => {
+    const generatedAt = "2026-06-17T00:05:00.000Z";
+    const old20d = new Date(Date.parse(generatedAt) - 20 * 86400000).toISOString();
+    const oldRun = { hourLocal: taiwanLocalHour(old20d), newRecords: [{ fingerprint: eventFingerprint(event("old")) }] };
+    const first = applyPoliceHourlyRun({
+      generatedAt,
+      events: [event("new")],
+      previousHistory: { runs: [oldRun] },
+      previousLedger: { seen: [] },
+      minimumNewPerHour: 1,
+    });
+
+    expect(first.history.runs).toHaveLength(2);
+
+    const second = applyPoliceHourlyRun({
+      generatedAt,
+      events: [event("new2")],
+      previousHistory: { runs: [oldRun] },
+      previousLedger: { seen: [] },
+      minimumNewPerHour: 1,
+      retentionDays: Number.POSITIVE_INFINITY,
+    });
+
+    expect(second.history.runs).toHaveLength(2);
   });
 });
