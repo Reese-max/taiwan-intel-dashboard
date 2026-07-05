@@ -128,6 +128,9 @@ const TAIWAN_MARKER_RE =
   /台灣|臺灣|中華民國|我國|本國|國內|國人|台商|臺商|僑(?:胞|民|界)|外交部|陸委會|僑委會|駐[^\s]{1,5}(?:代表處|辦事處|使館)|國防部|移民署|刑事局|警政署|內政部|國安局|調查局|檢調|食藥署|海巡署|海關|法務部|行政院|立法院|立院|立委|地檢署|台北|臺北|新北|桃園|台中|臺中|台南|臺南|高雄|基隆|新竹|苗栗|彰化|南投|雲林|嘉義|屏東|宜蘭|花蓮|台東|臺東|澎湖|金門|馬祖|連江|林口|二林|中正|兩岸|台男|臺男|台女|臺女|台版|臺版|台廠|臺廠|全台|全臺|台海|臺海|來台|來臺|在台|在臺|赴台|赴臺|返台|返臺|入台|入臺|台日|臺日|台美|臺美|台德|臺德|駐美|駐日|駐外|移工|外籍|新住民|美籍|英籍|澳籍|印尼籍|印度籍|越南籍|緬甸籍|泰籍|港人|印尼語|越南語|泰語|華語|青雲|是方電訊|美超微|黃國昌|四叉貓|郭正亮|奧丁丁|東京著衣/;
 const TAIWAN_NEGATED_CONTEXT_RE = /與(?:台灣|臺灣)[^，。；、]{0,12}無(?:直接)?關聯|無(?:任何)?(?:台灣|臺灣)關聯|不只(?:台灣|臺灣)/g;
 const CYBER_FOREIGN_EXEMPT_RE = /資安|個資|資料.{0,6}外洩|漏洞|駭客|網攻|網路犯罪|勒索|CVE/i;
+// 純外國事件只在「天災/戰爭/大量傷亡」語境才過濾——外國一般犯罪/貿易/司法常與台灣有關（進口、跨境嫌犯、國人涉案），保留以免誤刪。
+const FOREIGN_EVENT_CONTEXT_RE =
+  /強震|地震|餘震|野火|森林大火|山火|林火|熱浪|颶風|龍捲風|洪水|水災|土石流|火山|海嘯|乾旱|暴雪|寒流|內戰|戰爭|開戰|停火|空襲|飛彈|導彈|無人機|砲擊|恐攻|恐怖攻擊|爆炸案|炸彈客|自殺炸彈|政變|叛軍|交火|流血衝突|墜谷|墜崖|墜機|空難|沉船|船難|(?:[0-9０-９]{2,}|千|萬|多人|大量|數十|數百)\s*[餘多]?\s*人?\s*(?:死|亡|傷|罹難|喪生|喪命)/;
 
 function sourceText(source) {
   if (!source) return "";
@@ -155,11 +158,17 @@ export function isNonEventNoise(item) {
   return false;
 }
 
+const FOREIGN_EXEMPT_CATS = new Set(["資安", "反詐", "食安"]);
 export function isForeignNonTaiwan(item) {
-  if (item?.hint === "資安" || item?.category === "資安") return false;
-  const text = `${String(item?.title || "")} ${String(item?.description || "")} ${String(item?.summary || "")}`;
+  // 反詐（緬甸/柬埔寨詐騙園區、跨境詐騙手法）、食安（外國食材進口）、資安（全球 CVE）對台灣皆高度相關，一律保留。
+  if (FOREIGN_EXEMPT_CATS.has(item?.hint) || FOREIGN_EXEMPT_CATS.has(item?.category)) return false;
+  const title = String(item?.title || "");
+  const text = `${title} ${String(item?.description || "")} ${String(item?.summary || "")}`;
   if (CYBER_FOREIGN_EXEMPT_RE.test(text)) return false;
-  return FOREIGN_PLACE_RE.test(text) && !TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""));
+  // 只在「標題同時命中外國地名與天災/戰爭/大量傷亡語境」才視為純外國事件（高確定性，避免誤刪提及外國的台灣新聞）。
+  if (!(FOREIGN_PLACE_RE.test(title) && FOREIGN_EVENT_CONTEXT_RE.test(title))) return false;
+  // 全文任一台灣關聯標記 → 保留（如「台灣捐款委內瑞拉震災」「國人在日本罹難」）。
+  return !TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""));
 }
 
 export function isPoliceRelevant(title, description) {

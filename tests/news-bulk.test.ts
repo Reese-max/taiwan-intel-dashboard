@@ -160,9 +160,10 @@ describe("isForeignNonTaiwan（bulk domestic 純外國負面閘門）", () => {
       expect(isForeignNonTaiwan(item), item.title).toBe(true);
       expect(isRelevantNewsItem(item), item.title).toBe(false);
     }
+    // negated-context：「與台灣無關」不算台灣關聯，純外國災難仍移除。
     expect(isForeignNonTaiwan({
-      ...mk("日本新潟卡牌店五千張寶可夢卡遭竊"),
-      summary: "日本新潟卡牌店遭竊，與台灣警政無直接關聯。",
+      ...mk("委內瑞拉強震釀2600死 逾萬人無家可歸"),
+      summary: "此震災與台灣無直接關聯。",
     })).toBe(true);
 
     expect(mapBulkNews(foreignOnly, { fetchedAt: FETCHED_AT })).toHaveLength(0);
@@ -189,6 +190,13 @@ describe("isForeignNonTaiwan（bulk domestic 純外國負面閘門）", () => {
       mk("內政部：依托咪酯走私來源部分來自越南或馬來西亞", "治安"),
       mk("越南移工二林溪抓螃蟹失聯 消防救援上岸已死亡", "災防"),
       mk("台德合作偵破液態K他命德國走私來台", "治安"),
+      // 收窄回歸：這些含外國地名但屬台灣事件/豁免類，廣版曾誤刪，須保留。
+      mk("去日本都看過通緝令！八田與一逃亡4年抓嘸 警擴大緝捕", "治安"), // 台語「抓嘸」台灣通緝案
+      mk("美國豆換巴西豆引食安風暴? 中聯油脂：產季輪換", "食安"), // 台廠食安（食安豁免）
+      mk("緬甸三佛塔成電詐園區新據點 陸退伍軍人淪豬仔", "反詐"), // 詐騙園區（反詐豁免、國人相關）
+      mk("新加坡修法加重打詐 涉詐最高可處24下鞭刑", "反詐"), // 打詐借鏡（反詐豁免）
+      // 收窄行為：外國一般犯罪（無天災/戰爭/大量傷亡）不再過濾，保留以免誤刪台灣邊案。
+      mk("東京上野餐廳老闆遭殺害棄屍 2共犯判刑30年", "治安"),
     ];
     for (const item of domesticContextMustKeep) {
       expect(isForeignNonTaiwan(item), item.title).toBe(false);
