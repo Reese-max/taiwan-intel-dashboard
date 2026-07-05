@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { fetchPcc } from "./lib/fetch-pcc.mjs";
 import { fetchCwa, fetchCwaWarnings } from "./lib/fetch-cwa.mjs";
+import { fetchMofaTravelWarnings } from "./lib/fetch-mofa.mjs";
 import { fetchJudicialBulk } from "./lib/fetch-judicial.mjs";
 import { fetchMissing } from "./lib/fetch-missing.mjs";
 import {
@@ -116,7 +117,7 @@ async function run() {
   // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
   // 未選的來源會沿用上一版快照（carry-over）。
   const sourcesArg = process.argv.find((a) => a.startsWith("--sources="))?.slice("--sources=".length);
-  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,judicial").split(",").map((s) => s.trim());
+  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial").split(",").map((s) => s.trim());
   const want = (s) => SOURCES.includes(s);
   // EXCLUSIVE：只保留本次選取的來源；未選來源不沿用舊快照（一次性窄抓用）。
   // 預設 off，故 n8n 分頻 carry-over 行為不變。
@@ -270,6 +271,19 @@ async function run() {
       console.error(`國際失敗：${e.message}`);
     }
   } else status.international = { skipped: true };
+
+  // --- 外交部國外旅遊警示：官方 RSS 燈號 → 結構化國際事件（不走 LLM）---
+  let mofa = [];
+  if (want("mofa")) {
+    try {
+      mofa = await fetchMofaTravelWarnings({});
+      status.mofa = { ok: true, count: mofa.length };
+      console.log(`外交部旅遊警示：${mofa.length} 筆`);
+    } catch (e) {
+      status.mofa = { ok: false, error: e.message };
+      console.error(`外交部旅遊警示失敗：${e.message}`);
+    }
+  } else status.mofa = { skipped: true };
 
   // --- 台灣警政新聞：全量收錄（解耦）---
   //  抓取層 perFeed 拉滿、全量去重 → LLM 精修最近一批（地理定位上地球儀）＋其餘輕量收錄（免 LLM）。
@@ -464,15 +478,17 @@ async function run() {
 
   // --- 國際快照（carry-over：失敗或未抓則沿用舊快照；EXCLUSIVE 且未選則清空）---
   const oldIntl = readOld("international.json");
-  const intlOk = status.international?.ok && intl.length;
+  const freshIntlEvents = [...(status.international?.ok ? intl : []), ...(status.mofa?.ok ? mofa : [])];
+  const intlOk = freshIntlEvents.length > 0;
+  const dropIntlStale = dropStale(status.international) && dropStale(status.mofa);
   // 累積式滾動視窗：成功時合併本輪 + 舊快照（依 id 去重、保留近 INTL_RETENTION_DAYS 天、
   // 分主題輪詢挑選至 INTL_ACCUM_CAP），取代「每輪只留當輪 ≤maxEvents」，讓國際數量穩定更多、主題分布更廣。
   const intlEvents = intlOk
-    ? accumulateInternational(intl, oldIntl, {
+    ? accumulateInternational(freshIntlEvents, oldIntl, {
         retentionDays: Number(process.env.INTL_RETENTION_DAYS) || 5,
         cap: Number(process.env.INTL_ACCUM_CAP) || 250,
       })
-    : dropStale(status.international)
+    : dropIntlStale
       ? []
       : oldIntl;
   if (intlOk) {
@@ -488,7 +504,7 @@ async function run() {
     } else {
       writeJson("international.json", valid);
     }
-  } else if (dropStale(status.international)) {
+  } else if (dropIntlStale) {
     writeJson("international.json", []);
     console.warn("國際本次未選（EXCLUSIVE），清空 international.json");
   } else if (intlEvents.length) {
@@ -675,6 +691,20 @@ async function run() {
         license: "各新聞媒體著作權所有；本平台僅彙整標題/摘要與原文連結，分類與座標為 LLM 衍生",
       });
   }
+  const mofaEvents = intlEvents.filter((e) => e.source?.datasetId === "mofa-travel-warning");
+  if (mofaEvents.length)
+    sources.push({
+      name: "外交部領事事務局 旅遊警示",
+      type: "gov-open-data",
+      datasetId: "mofa-travel-warning",
+      scope: "international",
+      category: "地緣政治",
+      count: mofaEvents.length,
+      fetchedAt: status.mofa?.ok ? nowIso : staleFetchedAt(mofaEvents),
+      stale: !status.mofa?.ok || undefined,
+      query: "外交部領事事務局 國外旅遊警示 RSS（結構化燈號映射，不經 LLM）",
+      license: "政府網站資料開放宣告 — 外交部領事事務局",
+    });
   if (intlOk) {
     for (const f of feedStatus.filter((x) => x.ok && x.count)) {
       const c = intlEvents.filter((e) => e.source.name === f.label).length;
@@ -691,7 +721,10 @@ async function run() {
   } else {
     // carry-over：由舊國際快照還原各來源（標 stale）
     const byName = {};
-    for (const e of intlEvents) byName[e.source.name] = (byName[e.source.name] || 0) + 1;
+    for (const e of intlEvents) {
+      if (e.source?.datasetId === "mofa-travel-warning") continue;
+      byName[e.source.name] = (byName[e.source.name] || 0) + 1;
+    }
     for (const [name, count] of Object.entries(byName))
       sources.push({
         name: `國際新聞：${name}`,
