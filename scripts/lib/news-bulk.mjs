@@ -56,6 +56,11 @@ const HIGH = /命案|兇殺|凶殺|殺人|殺害|砍人|砍殺|砍傷|持刀|刺
 const MED = /詐騙|詐欺|毒品|緝毒|販毒|竊|搶|強盜|酒駕|毒駕|肇逃|肇事|傷害|鬥毆|車禍|起訴|收押|羈押|逮捕|查獲|落網|火警|火災|墜|溺|走私|偷渡|賄|貪/;
 const HIGH_EN = /\b(murder|homicide|killed|dead|death|fatal|shooting|stabbing|explosion|kidnap\w*|rape|sexual assault|arson)\b/i;
 const MED_EN = /\b(fraud|scam|drug|narcotic|arrest\w*|theft|robbery|burglar\w*|smuggl\w*|drunk driving|DUI|crash|fire|indict\w*|prosecut\w*|detain\w*|assault)\b/i;
+const CRITICAL =
+  /隨機殺人|無差別(?:殺人|砍人)|(?:氣爆|爆炸).*(?:[0-9０-９一二三四五六七八九十百兩]+\s*(?:死|亡)|死|亡|重傷)|(?:大量|重大|多人)(?:傷亡|死傷|死亡)|多人(?:罹難|喪命|身亡)|滅門|挾持.*人質|大規模.*(?:傷亡|死傷|死亡|爆炸|攻擊|砍人|殺人)/;
+const NO_CRITICAL_CASUALTY = /(?:幸)?無(?:人)?傷亡|未(?:造成|傳出)?傷亡|無人(?:受傷|死亡|傷亡)/;
+const HIGH_FLOOR = /命案|兇殺|凶殺|殺人|殺害|槍擊|開槍|中彈|槍械|彈藥|持刀.*(?:致死|死亡|身亡|喪命)|毒品.*(?:重案|大案|工廠|集團|走私|販運|製造)|緝毒.*(?:重案|大案)|販毒|製毒|海洛因|安非他命|愷他命/;
+const ROUTINE = /說明會|宣導|記者會|頒獎/;
 
 // 主題提示詞專用風險詞（高/中）；若存在 hint 時優先套用 topic 規則，否則沿用警政規則。
 export const TOPIC_RISK = {
@@ -79,15 +84,20 @@ export const TOPIC_RISK = {
 
 export function riskFromTitle(title, hint) {
   const s = String(title || "");
+  if (CRITICAL.test(s) && !NO_CRITICAL_CASUALTY.test(s)) return "critical";
+  if (HIGH_FLOOR.test(s)) return "high";
+  const isRoutine = ROUTINE.test(s);
   const topicRisk = TOPIC_RISK[hint];
   if (topicRisk) {
     if (topicRisk.high.test(s)) return "high";
     if (HIGH.test(s) || HIGH_EN.test(s)) return "high";
+    if (isRoutine) return "low";
     if (topicRisk.med.test(s)) return "medium";
     if (MED.test(s) || MED_EN.test(s)) return "medium";
     return "low";
   }
   if (HIGH.test(s) || HIGH_EN.test(s)) return "high";
+  if (isRoutine) return "low";
   if (MED.test(s) || MED_EN.test(s)) return "medium";
   return "low";
 }

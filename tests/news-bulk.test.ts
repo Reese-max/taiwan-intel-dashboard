@@ -177,6 +177,12 @@ describe("EN 來源支援（Focus Taiwan / Taipei Times）", () => {
 });
 
 describe("riskFromTitle 主題感知", () => {
+  it("重大傷亡與大規模事件升為 critical，但一般重案不灌水", () => {
+    expect(riskFromTitle("台中隨機殺人釀3死", "治安")).toBe("critical");
+    expect(riskFromTitle("新北氣爆釀2死 多人送醫", "災防")).toBe("critical");
+    expect(riskFromTitle("高雄命案嫌犯落網", "治安")).toBe("high");
+  });
+
   it("依 hint 套用主題高風險關鍵字優先，維持警政備援", () => {
     expect(riskFromTitle("餿水油流入市面 廠商遭起訴", "食安")).toBe("high");
     expect(riskFromTitle("黑心廠商瘦肉精超標遭下架", "食安")).toBe("medium");
@@ -192,5 +198,6 @@ describe("riskFromTitle 主題感知", () => {
   it("無 hint 時維持既有警政風險邏輯", () => {
     expect(riskFromTitle("北部群聚確診再增")).toBe("low");
     expect(riskFromTitle("公安局深夜緝毒失聯槍擊")).toBe("high");
+    expect(riskFromTitle("反詐宣導說明會", "反詐")).toBe("low");
   });
 });
