@@ -209,14 +209,28 @@ function renderFocusBar(events: IntelEvent[], net: NetworkIndex): void {
 
 async function refresh(): Promise<void> {
   const s = getState();
+  const eventList = document.getElementById("eventlist")!;
   // 事件與情報網兩支 fetch 並行（原本串行，第二支要等第一支完成才開始）。
   if (!cache[s.scope] || !netCache[s.scope]) {
-    const [ev, net] = await Promise.all([
-      cache[s.scope] ?? loadEvents(s.scope),
-      netCache[s.scope] ?? loadNetwork(s.scope),
-    ]);
-    cache[s.scope] = ev;
-    netCache[s.scope] = net;
+    // 首載/切換 scope 時主資料尚未快取：顯示載入佔位（篩選變更走快取、不會閃爍）。
+    if (!cache[s.scope]) eventList.innerHTML = `<p class="empty">情報載入中…</p>`;
+    try {
+      const [ev, net] = await Promise.all([
+        cache[s.scope] ?? loadEvents(s.scope),
+        netCache[s.scope] ?? loadNetwork(s.scope),
+      ]);
+      cache[s.scope] = ev;
+      netCache[s.scope] = net;
+    } catch (err) {
+      // 主資料 fetch 失敗：無既有快取時顯示可重試錯誤卡，不留白、不中斷（不 throw）。
+      if (!cache[s.scope]) {
+        const msg = err instanceof Error ? err.message : String(err);
+        eventList.innerHTML = `<div class="empty load-error">情報載入失敗（${esc(msg)}）<button type="button" id="retry-load" class="retry-load">重試</button></div>`;
+        document.getElementById("retry-load")?.addEventListener("click", () => void refresh());
+        return;
+      }
+      // 有舊快取則沿用，靜默續繪
+    }
   }
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
@@ -245,7 +259,6 @@ async function refresh(): Promise<void> {
     display = applySearchSubnet(filterEvents(all, s), net, s.query);
   }
 
-  const eventList = document.getElementById("eventlist")!;
   renderEventList(eventList, display, {
     relatedCount: (id) => net.count(id),
     relationOf: (id) => relationById.get(id),

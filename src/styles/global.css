@@ -1281,6 +1281,26 @@ h4 {
   padding: var(--space);
 }
 
+/* 主資料載入失敗的可重試錯誤卡 */
+.load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space);
+}
+.retry-load {
+  padding: 0.4em 1em;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius);
+  background: var(--color-panel);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.retry-load:hover {
+  filter: brightness(1.2);
+}
+
 /* 關聯網視覺化（聚焦單一事件時顯示於清單上方） */
 .relation-graph {
   background: linear-gradient(
