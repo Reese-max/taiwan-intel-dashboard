@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderFilterBar } from "../src/components/FilterBar";
+import { getState, setState } from "../src/store";
 
 type FakeElement = {
   value: string;
@@ -36,6 +37,38 @@ const createContainer = (): { el: FakeContainer; refs: Record<string, FakeElemen
   return { el, refs };
 };
 
+const resetState = (): void => {
+  setState({
+    scope: "domestic",
+    category: undefined,
+    minRisk: undefined,
+    source: undefined,
+    sinceDays: 3,
+    query: undefined,
+  });
+};
+
+const ensureWindowTimers = (): (() => void) | undefined => {
+  const g = globalThis as typeof globalThis & { window?: { setTimeout: typeof setTimeout; clearTimeout: typeof clearTimeout } };
+  g.window = { setTimeout: globalThis.setTimeout.bind(globalThis), clearTimeout: globalThis.clearTimeout.bind(globalThis) };
+  return () => {
+    delete g.window;
+  };
+};
+
+let restoreWindow: (() => void) | null = null;
+
+beforeEach(() => {
+  resetState();
+});
+
+afterEach(() => {
+  restoreWindow?.();
+  restoreWindow = null;
+  resetState();
+  vi.useRealTimers();
+});
+
 describe("FilterBar 國內分類選項", () => {
   it("含新主題分類 食安/衛生/環境/資安", () => {
     const { el } = createContainer();
@@ -45,5 +78,43 @@ describe("FilterBar 國內分類選項", () => {
     for (const c of ["食安", "衛生", "環境", "資安", "治安", "反詐", "災防", "採購", "交通"]) {
       expect(options).toContain(c);
     }
+  });
+
+  it("選擇分類時會更新 store 狀態 category", () => {
+    const { el } = createContainer();
+    renderFilterBar(el as unknown as HTMLElement, "domestic");
+
+    const select = el.querySelector("#f-cat")!;
+    select.value = "交通";
+    select.onchange?.({ target: select } as unknown as Event);
+
+    expect(getState().category).toBe("交通");
+  });
+
+  it("選擇風險門檻時會更新 store 狀態 minRisk", () => {
+    const { el } = createContainer();
+    renderFilterBar(el as unknown as HTMLElement, "domestic");
+
+    const select = el.querySelector("#f-risk")!;
+    select.value = "high";
+    select.onchange?.({ target: select } as unknown as Event);
+
+    expect(getState().minRisk).toBe("high");
+  });
+
+  it("#f-query 具備 200ms debounce 的 oninput 更新 query", () => {
+    vi.useFakeTimers();
+    restoreWindow = ensureWindowTimers();
+    const { el } = createContainer();
+    renderFilterBar(el as unknown as HTMLElement, "domestic");
+
+    const input = el.querySelector("#f-query")!;
+    input.value = "  警政  ";
+    input.oninput?.({ target: input } as unknown as Event);
+
+    expect(getState().query).toBeUndefined();
+    vi.advanceTimersByTime(200);
+
+    expect(getState().query).toBe("警政");
   });
 });
