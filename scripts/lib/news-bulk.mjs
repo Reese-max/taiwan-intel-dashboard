@@ -57,6 +57,14 @@ const CRITICAL =
 const NO_CRITICAL_CASUALTY = /(?:幸)?無(?:人)?傷亡|未(?:造成|傳出)?傷亡|無人(?:受傷|死亡|傷亡)/;
 const HIGH_FLOOR = /命案|兇殺|凶殺|殺人|殺害|不治|罹難|奪命|斃命|喪生|喪命|遇害|遇難|悶死|枉死|猝死|暴斃|刺殺|中刀|槍手|持槍|中槍|中彈|[1-9１-９]\s*(?:人|名)?\s*(?:死(?!角)|亡|罹難|喪生|喪命|身亡)|槍擊|開槍|槍械|彈藥|持刀.*(?:致死|死亡|身亡|喪命)|毒品.*(?:重案|大案|工廠|集團|走私|販運|製造)|緝毒.*(?:重案|大案)|販毒|製毒|海洛因|安非他命|愷他命/;
 const ROUTINE = /說明會|宣導|記者會|頒獎/;
+const CYBER_ROUTINE =
+  /宣導|講座|說明會|研習|論壇|課程|競賽|駭客松|體驗營|防護(?:週|月|宣導)|資安月|徵才|開箱|評測|上市(?!櫃|上櫃|公司|企業)|個資保護(?:法)?|資安意識|防詐宣導/;
+const CYBER_HIGH =
+  /勒索(?:病毒|軟體|攻擊)?|遭勒索|網攻|網路攻擊|(?:遭|被)?駭(?:客)?(?:入侵|攻擊|竊)|入侵.*(?:系統|主機|伺服器)|癱瘓.*(?:系統|服務|網路)|殭屍網路|供應鏈攻擊/;
+const CYBER_DATA_BREACH =
+  /個資外洩|資料外洩|個(?:人)?資(?:料)?.{0,6}(?:外洩|遭竊)|外洩.{0,6}個資|資料庫外洩|帳號(?:密碼)?外洩/;
+const CYBER_DATA_BREACH_SCALE =
+  /大規模|[0-9０-９]{2,}\s*萬|[0-9０-９]+\s*億|百萬|千萬|上億|數十萬|數百萬/;
 
 // 主題提示詞專用風險詞（高/中）；若存在 hint 時優先套用 topic 規則，否則沿用警政規則。
 export const TOPIC_RISK = {
@@ -83,8 +91,14 @@ export function riskFromTitle(title, hint) {
   if (CRITICAL.test(s) && !NO_CRITICAL_CASUALTY.test(s)) return "critical";
   if (HIGH_FLOOR.test(s)) return "high";
   const isRoutine = ROUTINE.test(s);
+  const isCyberRoutine = isRoutine || CYBER_ROUTINE.test(s);
+  if (!isCyberRoutine) {
+    if (CYBER_HIGH.test(s)) return "high";
+    if (CYBER_DATA_BREACH.test(s)) return CYBER_DATA_BREACH_SCALE.test(s) ? "high" : "medium";
+  }
   const topicRisk = TOPIC_RISK[hint];
   if (topicRisk) {
+    if (hint === "資安" && isCyberRoutine) return "low";
     if (topicRisk.high.test(s)) return "high";
     if (HIGH.test(s) || HIGH_EN.test(s)) return "high";
     if (isRoutine) return "low";

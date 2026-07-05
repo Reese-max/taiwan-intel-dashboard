@@ -273,13 +273,28 @@ describe("riskFromTitle 主題感知", () => {
     expect(riskFromTitle("工廠毒物外洩 居民急疏散", "環境")).toBe("high");
     expect(riskFromTitle("電鍍廠偷排廢水遭裁罰", "環境")).toBe("medium");
     expect(riskFromTitle("駭客勒索病毒癱瘓醫院系統", "資安")).toBe("high");
-    expect(riskFromTitle("電商個資外洩 10 萬筆", "資安")).toBe("medium");
+    expect(riskFromTitle("電商個資外洩", "資安")).toBe("medium");
   });
 
   it("無 hint 時維持既有警政風險邏輯", () => {
     expect(riskFromTitle("北部群聚確診再增")).toBe("low");
     expect(riskFromTitle("公安局深夜緝毒失聯槍擊")).toBe("high");
     expect(riskFromTitle("反詐宣導說明會", "反詐")).toBe("low");
+  });
+
+  it("資安事件不靠 hint 也會全域升級，且大規模個資外洩升 high", () => {
+    expect(riskFromTitle("駭客公開勒索200萬美金 台灣上市櫃企業", "治安")).toBe("high");
+    expect(riskFromTitle("醫院遭駭癱瘓系統")).toBe("high");
+    expect(riskFromTitle("3370萬筆個資外洩")).toBe("high");
+    expect(riskFromTitle("9300萬筆個資遭竊", "治安")).toBe("high");
+    expect(riskFromTitle("某公司資料庫個資外洩")).toBe("medium");
+  });
+
+  it("資安非事件與宣導教育產品語境不因資安詞誤升", () => {
+    expect(riskFromTitle("個資保護法宣導講座", "資安")).toBe("low");
+    expect(riskFromTitle("校園資安意識研習", "資安")).toBe("low");
+    expect(riskFromTitle("大學生駭客松競賽", "資安")).toBe("low");
+    expect(riskFromTitle("新款防毒軟體上市開箱", "資安")).toBe("low");
   });
 
   it("死亡與武裝暴力同義詞至少升 high，補回 bulk 致死漏報", () => {
