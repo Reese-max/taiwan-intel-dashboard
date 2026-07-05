@@ -31,6 +31,7 @@ export interface IntelEvent {
   locationNote?: string;
   timestamp: string; // ISO8601
   category: string;
+  categoryBasis?: string; // 分類來源標記：llm / rule:<類> / hint:<hint> / default
   scope: Scope;
   riskLevel: RiskLevel;
   summary: string;

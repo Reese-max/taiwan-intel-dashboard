@@ -489,6 +489,7 @@ ${listing}
       region: o.region || "全國",
       timestamp: toIso(it.pubDate),
       category: clampTwCat(o.category),
+      categoryBasis: "llm",
       scope: "domestic",
       riskLevel: clampRisk(o.riskLevel),
       summary: o.summary_zh || it.description?.slice(0, 200) || "",
@@ -553,7 +554,7 @@ export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, 
   const seen = new Set();
   const merged = [];
   for (const raw of [...reused, ...results.flat()]) {
-    const ev = raw ? applyDomesticCountyLocation(raw) : raw;
+    const ev = raw ? applyDomesticCountyLocation({ ...raw, categoryBasis: raw.categoryBasis || "llm" }) : raw;
     if (!ev || seen.has(ev.id)) continue;
     seen.add(ev.id);
     merged.push(ev);

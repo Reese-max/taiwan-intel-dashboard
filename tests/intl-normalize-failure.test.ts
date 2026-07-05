@@ -130,6 +130,8 @@ describe("normalizeDomesticNews 全批失敗可見性（A3）", () => {
     expect(out[0].lng).toBeCloseTo(121.5637, 4);
     expect(out[0].locationPrecision).toBe("city");
     expect(out[0].locationNote).not.toContain("LLM");
+    expect(out[0].category).toBe("治安");
+    expect(out[0].categoryBasis).toBe("llm");
     const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
     expect(body.messages.map((m: { content: string }) => m.content).join("\n")).not.toContain("lat, lng");
     expect(domesticNormalizeFailed()).toBe(false);

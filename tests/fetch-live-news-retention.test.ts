@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { buildTwNewsEvents } from "../scripts/fetch-live.mjs";
+import { buildCategoryBasisDistribution, buildTwNewsEvents } from "../scripts/fetch-live.mjs";
 
 const news = (id: string, timestamp: string, source: Record<string, unknown> = {}) => ({
   id,
@@ -78,5 +78,25 @@ describe("twnews carry-over retention", () => {
     });
 
     expect(result.map((e: { id: string }) => e.id)).toEqual([]);
+  });
+});
+
+describe("categoryBasis provenance distribution", () => {
+  it("彙總帶 categoryBasis 的 twnews 事件，未標者不計入", () => {
+    expect(
+      buildCategoryBasisDistribution([
+        { id: "a", categoryBasis: "llm" },
+        { id: "b", categoryBasis: "default" },
+        { id: "c", categoryBasis: "default" },
+        { id: "d", categoryBasis: "rule:反詐" },
+        { id: "e", categoryBasis: "hint:資安" },
+        { id: "structured" },
+      ]),
+    ).toEqual({
+      default: 2,
+      "hint:資安": 1,
+      llm: 1,
+      "rule:反詐": 1,
+    });
   });
 });

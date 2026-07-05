@@ -3,6 +3,7 @@ import {
   mapBulkNews,
   titleKey,
   cleanTitle,
+  categoryFromItem,
   isNonEventNoise,
   isRelevantNewsItem,
   riskFromTitle,
@@ -26,6 +27,21 @@ describe("titleKey / cleanTitle", () => {
 });
 
 describe("mapBulkNews", () => {
+  it("標記 bulk categoryBasis：rule / hint / default，且 category 判定不變", () => {
+    expect(categoryFromItem("新北詐騙集團車手落網", "治安")).toEqual({
+      category: "反詐",
+      basis: "rule:反詐",
+    });
+    expect(categoryFromItem("醫院資訊系統遭駭客攻擊 個資外洩", "資安")).toEqual({
+      category: "資安",
+      basis: "hint:資安",
+    });
+    expect(categoryFromItem("高雄街頭砍人 男子背部受傷送醫", undefined)).toEqual({
+      category: "治安",
+      basis: "default",
+    });
+  });
+
   it("dedupes by title, classifies by hint, geocodes by county, scores risk", () => {
     const ev = mapBulkNews(ITEMS, { fetchedAt: FETCHED_AT });
     expect(ev).toHaveLength(3); // 去重後 3
@@ -33,6 +49,7 @@ describe("mapBulkNews", () => {
     expect(ks!.region).toBe("高雄市");
     expect(ks!.lat).toBeCloseTo(22.6273, 2);
     expect(ks!.category).toBe("治安");
+    expect(ks!.categoryBasis).toBe("hint:治安");
     expect(ks!.riskLevel).toBe("high"); // 砍人
     expect(ks!.scope).toBe("domestic");
     expect(ks!.source.datasetId).toBe("tw-news");
@@ -40,6 +57,7 @@ describe("mapBulkNews", () => {
     const fraud = ev.find((e) => e.title.includes("車手"));
     expect(fraud!.region).toBe("新北市");
     expect(fraud!.category).toBe("反詐");
+    expect(fraud!.categoryBasis).toBe("rule:反詐");
     expect(fraud!.riskLevel).toBe("medium"); // 詐騙
     expect(fraud!.source.name.startsWith("GN ")).toBe(false);
     expect(fraud!.source.aggregatorName).toBe("Google News");
@@ -48,6 +66,7 @@ describe("mapBulkNews", () => {
     const fire = ev.find((e) => e.title.includes("火警"));
     expect(fire!.region).toBe("臺南市");
     expect(fire!.category).toBe("災防");
+    expect(fire!.categoryBasis).toBe("rule:災防");
   });
 
   it("excludes titles already enriched", () => {

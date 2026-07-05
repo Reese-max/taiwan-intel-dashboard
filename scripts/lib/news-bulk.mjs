@@ -39,10 +39,13 @@ const CAT_RULES = [
   [/車禍|酒駕|毒駕|肇事|肇逃|超速|闖紅燈|追撞|翻車|撞死|撞傷|國道|機車|貨車|騎士/, "交通"],
   [/火警|火災|氣爆|爆炸|地震|颱風|豪雨|水災|淹水|山難|溺|搜救|消防|坍|土石|救護|受困/, "災防"],
 ];
-function categoryFromItem(title, hint) {
+export function categoryFromItem(title, hint) {
   const s = String(title || "");
-  for (const [re, c] of CAT_RULES) if (re.test(s)) return c;
-  return HINT_TO_CAT[hint] || "治安";
+  for (const [re, c] of CAT_RULES) {
+    if (re.test(s)) return { category: c, basis: `rule:${c}` };
+  }
+  if (HINT_TO_CAT[hint]) return { category: HINT_TO_CAT[hint], basis: `hint:${hint}` };
+  return { category: "治安", basis: "default" };
 }
 
 const HIGH = /命案|兇殺|凶殺|殺人|殺害|砍人|砍殺|砍傷|持刀|刺死|刺傷|分屍|棄屍|槍擊|開槍|中彈|性侵|擄人|勒贖|劫|致死|身亡|死亡|喪命|溺斃|縱火|爆炸|氣爆|滅門/;
@@ -181,6 +184,7 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
     seen.add(k);
     const loc = detectCounty(it.title);
     const source = deriveNewsProvenance({ ...it, link: it.link || k }, { fetchedAt });
+    const categoryResult = categoryFromItem(it.title, it.hint);
     events.push({
       id: `twnews-${hash(it.link || it.title)}`,
       title: cleanTitle(it.title),
@@ -188,7 +192,8 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
       lat: loc.lat,
       lng: loc.lng,
       timestamp: toIso(it.pubDate),
-      category: categoryFromItem(it.title, it.hint),
+      category: categoryResult.category,
+      categoryBasis: categoryResult.basis,
       scope: "domestic",
       riskLevel: riskFromTitle(it.title, it.hint),
       summary: (it.description || "").slice(0, 200),

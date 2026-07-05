@@ -118,6 +118,16 @@ export function buildTwNewsEvents({
   return oldNews.filter(keep); // 超過保留窗丟棄
 }
 
+export function buildCategoryBasisDistribution(events = []) {
+  const counts = {};
+  for (const event of events || []) {
+    const basis = event?.categoryBasis;
+    if (!basis) continue;
+    counts[basis] = (counts[basis] || 0) + 1;
+  }
+  return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b, "zh-Hant")));
+}
+
 const DIST_DATA_DIR = join(ROOT, "dist", "data");
 
 function writeJson(name, obj) {
@@ -389,6 +399,7 @@ async function run() {
         finalEvents: deliveredTwnews,
         feedStatus: twFeedStatus,
       });
+      const categoryBasis = buildCategoryBasisDistribution(deliveredTwnews);
       status.twnews = {
         ok: true,
         normalizeFailed: domesticNormalizeFailed(),
@@ -397,6 +408,7 @@ async function run() {
         bulk: bulk.length,
         policeRelevant: policeUniq.length,
         rawUnique,
+        categoryBasis,
         sourceContribution: sourceContribution.rows,
         sourceContributionTotals: sourceContribution.totals,
         lowContributionFeeds: sourceContribution.lowContributionFeeds,
