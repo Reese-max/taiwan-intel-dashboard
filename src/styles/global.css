@@ -801,26 +801,32 @@ h4 {
 }
 
 .risk-badge {
-  padding: 2px 10px;
+  padding: 1px 9px;
+  border: 1px solid transparent;
   border-radius: 999px;
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #07111f;
-  box-shadow: var(--shadow-sm), var(--inset-hairline);
+  color: var(--color-muted);
+  background: transparent;
+  box-shadow: none;
 }
-.risk-low {
-  background: var(--risk-low);
+.risk-badge.risk-low {
+  color: var(--color-muted);
 }
-.risk-medium {
-  background: var(--risk-medium);
+.risk-badge.risk-medium {
+  color: color-mix(in srgb, var(--risk-medium) 72%, var(--color-muted));
+  background: color-mix(in srgb, var(--risk-medium) 8%, transparent);
 }
-.risk-high {
-  background: var(--risk-high);
+.risk-badge.risk-high {
+  color: var(--risk-high);
+  background: color-mix(in srgb, var(--risk-high) 10%, transparent);
+  border-color: color-mix(in srgb, var(--risk-high) 62%, transparent);
 }
-.risk-critical {
+.risk-badge.risk-critical {
   background: var(--risk-critical);
   color: #fff;
+  box-shadow: var(--shadow-sm), var(--inset-hairline);
 }
 
 .timeline {
