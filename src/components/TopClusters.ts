@@ -8,6 +8,22 @@ function fmtDate(ts?: string): string {
   return d.toLocaleString("zh-TW", { hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
+function clusterScore(c: NetCluster): number {
+  const share = typeof c.dominantCategoryShare === "number" ? c.dominantCategoryShare : 1;
+  return c.size * share;
+}
+
+function clusterLatestMs(c: NetCluster): number {
+  const t = Date.parse(c.latestTs ?? "");
+  return Number.isFinite(t) ? t : 0;
+}
+
+function compareTopCluster(a: NetCluster, b: NetCluster): number {
+  const incoherentDelta = Number(Boolean(a.incoherent)) - Number(Boolean(b.incoherent));
+  if (incoherentDelta !== 0) return incoherentDelta;
+  return clusterScore(b) - clusterScore(a) || b.size - a.size || clusterLatestMs(b) - clusterLatestMs(a);
+}
+
 export function renderTopClusters(
   container: HTMLElement,
   clusters: NetCluster[],
@@ -16,7 +32,7 @@ export function renderTopClusters(
 ): void {
   const top = clusters
     .slice()
-    .sort((a, b) => b.size - a.size || Date.parse(b.latestTs ?? "") - Date.parse(a.latestTs ?? ""))
+    .sort(compareTopCluster)
     .slice(0, limit);
   container.innerHTML = `
     <section class="top-clusters-card">

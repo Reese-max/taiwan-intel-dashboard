@@ -21,6 +21,11 @@ export interface NetCluster {
   regions?: string[];
   latestTs?: string;
   sourceCount?: number;
+  dominantCategoryShare?: number;
+  categoryEntropy?: number;
+  distinctTopicRatio?: number;
+  temporalSpanDays?: number;
+  incoherent?: boolean;
 }
 
 export interface ScopeNetwork {

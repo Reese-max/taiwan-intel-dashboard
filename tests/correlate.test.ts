@@ -357,6 +357,64 @@ describe("correlateEvents — 結構保證", () => {
       sourceCount: 3,
     });
   });
+
+  it("單一 category 群標記為高純度且非雜燴", () => {
+    const events = [
+      ev({ id: "a", category: "治安", title: "板橋分局 詐騙水房查緝", timestamp: "2026-06-20T08:00:00+08:00", source: { name: "來源A", type: "news-rss", fetchedAt: "" } }),
+      ev({ id: "b", category: "治安", title: "板橋分局 詐騙水房後續", timestamp: "2026-06-20T10:00:00+08:00", source: { name: "來源B", type: "news-rss", fetchedAt: "" } }),
+      ev({ id: "c", category: "治安", title: "板橋分局 詐騙案移送", timestamp: "2026-06-20T12:00:00+08:00", source: { name: "來源C", type: "news-rss", fetchedAt: "" } }),
+    ];
+    const cluster = correlateEvents(events).clusters[0] as any;
+    expect(cluster.dominantCategoryShare).toBe(1);
+    expect(cluster.categoryEntropy).toBe(0);
+    expect(cluster.incoherent).toBe(false);
+  });
+
+  it("類別混雜群標記為低純度雜燴", () => {
+    const categories = ["治安", "交通", "天氣", "採購", "司法"];
+    const events = categories.map((category, i) =>
+      ev({
+        id: `mix-${i}`,
+        category,
+        title: `板橋分局 混合事件 ${i}`,
+        timestamp: `2026-06-20T0${i}:00:00+08:00`,
+        source: { name: `來源${i}`, type: "news-rss", fetchedAt: "" },
+      }),
+    );
+    const cluster = correlateEvents(events).clusters[0] as any;
+    expect(cluster.dominantCategoryShare).toBe(0.2);
+    expect(cluster.categoryEntropy).toBeCloseTo(Math.log2(5), 6);
+    expect(cluster.incoherent).toBe(true);
+  });
+
+
+  it("高熵且跨多 aiTopic 的大雜燴即使 category 剛過半仍標記", () => {
+    const categories = ["治安", "治安", "治安", "治安", "治安", "治安", "交通", "天氣", "採購", "司法"];
+    const events = categories.map((category, i) =>
+      ev({
+        id: `entropy-${i}`,
+        category,
+        aiTopic: `topic-${i}`,
+        title: `板橋分局 高熵混合事件 ${i}`,
+        timestamp: `2026-06-20T${String(i).padStart(2, "0")}:00:00+08:00`,
+        source: { name: `來源${i}`, type: "news-rss", fetchedAt: "" },
+      }),
+    );
+    const cluster = correlateEvents(events).clusters[0] as any;
+    expect(cluster.dominantCategoryShare).toBe(0.6);
+    expect(cluster.categoryEntropy).toBeGreaterThan(1.5);
+    expect(cluster.distinctTopicRatio).toBe(1);
+    expect(cluster.incoherent).toBe(true);
+  });
+
+  it("temporalSpanDays 反映群內最早到最晚 timestamp 跨度", () => {
+    const events = [
+      ev({ id: "a", title: "板橋分局 時序事件 A", timestamp: "2026-06-20T00:00:00+08:00", source: { name: "來源A", type: "news-rss", fetchedAt: "" } }),
+      ev({ id: "b", title: "板橋分局 時序事件 B", timestamp: "2026-06-22T12:00:00+08:00", source: { name: "來源B", type: "news-rss", fetchedAt: "" } }),
+    ];
+    const cluster = correlateEvents(events).clusters[0] as any;
+    expect(cluster.temporalSpanDays).toBe(2.5);
+  });
 });
 
 describe("relatedIds", () => {

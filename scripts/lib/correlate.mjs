@@ -20,6 +20,18 @@ const W_INCIDENT = 1.0;
 const W_ENTITY = 0.6;
 const W_TOPIC = 0.3;
 const CLUSTER_INCIDENT_MIN_WEIGHT = 1.5;
+const CLUSTER_INCOHERENT_DOMINANT_SHARE = (() => {
+  const n = Number(process.env.CLUSTER_INCOHERENT_DOMINANT_SHARE);
+  return Number.isFinite(n) && n > 0 && n <= 1 ? n : 0.5;
+})();
+const CLUSTER_INCOHERENT_CATEGORY_ENTROPY = (() => {
+  const n = Number(process.env.CLUSTER_INCOHERENT_CATEGORY_ENTROPY);
+  return Number.isFinite(n) && n >= 0 ? n : 1.5;
+})();
+const CLUSTER_INCOHERENT_TOPIC_RATIO = (() => {
+  const n = Number(process.env.CLUSTER_INCOHERENT_TOPIC_RATIO);
+  return Number.isFinite(n) && n >= 0 && n <= 1 ? n : 0.4;
+})();
 
 // 案類關鍵詞 → 標準標籤（跨來源用同一套語彙，與 news-bulk 一致取向）。
 const LEXICON = [
@@ -321,6 +333,26 @@ export function correlateEvents(events, opts = {}) {
       .sort((a, b) => (degree.get(b.id) || 0) - (degree.get(a.id) || 0) || tsValue(b) - tsValue(a))[0];
     const latest = items.slice().sort((a, b) => tsValue(b) - tsValue(a))[0];
     const sources = new Set(items.map((e) => e?.source?.name).filter(Boolean));
+    const categoryCounts = new Map();
+    const topics = new Set();
+    const timestamps = [];
+    for (const e of items) {
+      if (e?.category) categoryCounts.set(e.category, (categoryCounts.get(e.category) || 0) + 1);
+      if (e?.aiTopic) topics.add(e.aiTopic);
+      const t = tsValue(e);
+      if (t > 0) timestamps.push(t);
+    }
+    const maxCategoryCount = categoryCounts.size ? Math.max(...categoryCounts.values()) : 0;
+    const dominantCategoryShare = items.length ? maxCategoryCount / items.length : 0;
+    let categoryEntropy = 0;
+    for (const count of categoryCounts.values()) {
+      const p = count / items.length;
+      categoryEntropy -= p * Math.log2(p);
+    }
+    const distinctTopicRatio = items.length ? topics.size / items.length : 0;
+    const temporalSpanDays = timestamps.length >= 2 ? (Math.max(...timestamps) - Math.min(...timestamps)) / DAY : 0;
+    const highEntropyMultiTopic =
+      categoryEntropy >= CLUSTER_INCOHERENT_CATEGORY_ENTROPY && distinctTopicRatio >= CLUSTER_INCOHERENT_TOPIC_RATIO;
     return {
       id,
       members,
@@ -330,6 +362,11 @@ export function correlateEvents(events, opts = {}) {
       regions: topValues(items, (e) => e.region, 2),
       latestTs: latest?.timestamp || "",
       sourceCount: sources.size,
+      dominantCategoryShare,
+      categoryEntropy,
+      distinctTopicRatio,
+      temporalSpanDays,
+      incoherent: dominantCategoryShare < CLUSTER_INCOHERENT_DOMINANT_SHARE || highEntropyMultiTopic,
     };
   };
 

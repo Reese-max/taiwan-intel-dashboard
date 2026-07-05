@@ -684,10 +684,13 @@ export async function summarize({ domestic = [], international = [], clusters = 
 }
 
 // 情報群摘要：top N cluster（依成員數）各產一句「這群在講什麼」。存 summary.json，前端用 cluster id join。
-async function summarizeClusters(clusters, domestic, topN = Number(process.env.CLUSTER_SUMMARY_N) || 8) {
+export async function summarizeClusters(clusters, domestic, topN = Number(process.env.CLUSTER_SUMMARY_N) || 8) {
   if (!clusters?.length || !domestic?.length) return {};
   const byId = new Map(domestic.map((e) => [e.id, e]));
-  const top = [...clusters].sort((a, b) => (b.size ?? 0) - (a.size ?? 0)).slice(0, topN);
+  const top = [...clusters]
+    .filter((c) => !c?.incoherent)
+    .sort((a, b) => (b.size ?? 0) - (a.size ?? 0))
+    .slice(0, topN);
   const results = await Promise.all(
     top.map(async (c) => {
       const members = sortForBrief(
