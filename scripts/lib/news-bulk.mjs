@@ -100,8 +100,10 @@ const POLICE_RE = /詐|車手|毒品|緝毒|販毒|製毒|安非他命|海洛因
 
 const NON_EVENT_LANDING_RE = /查詢系統|管理資訊系統|資訊系統|資訊網站|全球資訊網|清冊|資料查詢/;
 const SPECIFIC_NON_EVENT_TITLE_RE = /環保稽查處分管制系統/;
-const EVENT_ACTION_RE = /駭客|(?:個資|資料)?外洩|攻擊|破獲|查獲|逮捕|落網|起訴|下架|回收|裁罰|偷排|食物中毒|群聚|確診|火警|車禍|命案|殺人|砍人|詐騙|毒品/;
-const ENTERTAINMENT_RE = /劇透|劇情|懶人包|追劇|大結局|第\s*[0-9０-９]+(?:\s*[-–—~至到]\s*[0-9０-９]+)?\s*集|第\s*[一二三四五六七八九十百兩]+\s*集|分集劇情|線上看|預告片/;
+const EVENT_ACTION_RE = /駭客|(?:個資|資料)?外洩|攻擊|破獲|查獲|逮捕|落網|起訴|下架|回收|裁罰|偷排|食物中毒|群聚|確診|火警|車禍|命案|殺人|砍人|詐騙|盜用|盜刷|釣魚|冒用|毒品/;
+const ENTERTAINMENT_RE = /劇透|劇情|懶人包|追劇|大結局|第\s*[0-9０-９]+(?:\s*[-–—~至到]\s*[0-9０-９]+)?\s*集|第\s*[一二三四五六七八九十百兩]+\s*集|分集劇情/;
+// 弱娛樂訊號：受 EVENT_ACTION_RE 保護（盜版片名常是詐騙/盜帳號誘餌，不可無條件剔）
+const WEAK_ENTERTAINMENT_RE = /線上看|預告片/;
 const AIR_QUALITY_REFERENCE_RE = /(?:空氣品質指數|空氣品質).{0,12}(?:AQI|空氣污染)|\bAQI\b.{0,12}空氣污染/i;
 
 function sourceText(source) {
@@ -123,6 +125,7 @@ export function isNonEventNoise(item) {
   if (ENTERTAINMENT_RE.test(title)) return true;
   if (SPECIFIC_NON_EVENT_TITLE_RE.test(title)) return true;
   if (EVENT_ACTION_RE.test(title)) return false;
+  if (WEAK_ENTERTAINMENT_RE.test(title)) return true;
   if (NON_EVENT_LANDING_RE.test(title)) return true;
   if (/\bIQAir\b/i.test(text)) return true;
   if (AIR_QUALITY_REFERENCE_RE.test(title)) return true;

@@ -137,6 +137,7 @@ describe("isNonEventNoise / bulk domestic 負面閘門", () => {
       mk("國家溫室氣體排放清冊報告"),
       mk("環保稽查處分管制系統"),
       mk("非份之罪劇透1-10集｜賴慰玲捲石棺命案", "治安"),
+      mk("玩命關頭11線上看 完整版預告片", "治安"),
     ];
 
     for (const item of noise) {
@@ -163,6 +164,7 @@ describe("isNonEventNoise / bulk domestic 負面閘門", () => {
       mk("警方破獲個資外洩詐騙系統 逮捕嫌犯", "治安"),
       mk("醫院資訊系統遭駭客攻擊 個資外洩", "資安"),
       mk("食藥署稽查違規食品 下架回收", "食安"),
+      mk("賽道狂人、冰雪奇緣2線上看？LINE帳號恐遭登入盜用", "反詐"),
     ];
 
     for (const item of events) {
