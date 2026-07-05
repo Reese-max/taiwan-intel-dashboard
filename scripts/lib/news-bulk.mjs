@@ -3,15 +3,8 @@
 // 與 LLM 精修層(nvidia.normalizeDomesticNews)互補：LLM 精修最近一批，其餘走這裡，達成「全量下載」。
 import { COUNTY_CENTER } from "./coords.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
-
-// 標題正規化鍵（與 nvidia 相同）：去媒體尾綴 + 去非中英數 → 跨來源/跨查詢去重。
-export function titleKey(title) {
-  return String(title || "")
-    .replace(/\s*[-|｜–—]\s*[^-|｜–—]{1,20}$/, "")
-    .replace(/[^一-鿿A-Za-z0-9]/g, "")
-    .toLowerCase()
-    .slice(0, 40);
-}
+import { titleKey } from "./title-key.mjs";
+export { titleKey } from "./title-key.mjs";
 
 export function cleanTitle(title) {
   return String(title || "").replace(/\s*[-|｜–—]\s*[^-|｜–—]{1,20}$/, "").trim() || String(title || "").trim();

@@ -8,6 +8,7 @@
 import { countyCoordFromAddr } from "./coords.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
 import { selectDiverseByCategory } from "./intl-accumulate.mjs";
+import { titleKey } from "./title-key.mjs";
 
 import { chat, extractJson, llmModel, respondedModel } from "./llm-client.mjs";
 export { llmModel, respondedModel } from "./llm-client.mjs";
@@ -359,7 +360,7 @@ export async function normalizeInternational(
   const seenTitle = new Set();
   const deduped = [];
   for (const it of items) {
-    const k = newsTitleKey(it.title);
+    const k = titleKey(it.title);
     if (!k || seenTitle.has(k)) continue;
     seenTitle.add(k);
     deduped.push(it);
@@ -519,14 +520,6 @@ async function mapLimit(items, limit, fn) {
   return results;
 }
 
-// 標題正規化鍵：去掉「 - 媒體名／｜媒體名」尾綴與所有非中英數字元，用於跨來源/跨查詢去重。
-function newsTitleKey(title) {
-  return String(title || "")
-    .replace(/\s*[-|｜–—]\s*[^-|｜–—]{1,20}$/, "")
-    .replace(/[^一-鿿A-Za-z0-9]/g, "")
-    .toLowerCase()
-    .slice(0, 40);
-}
 
 export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, concurrency = 4, priorById = null } = {}) {
   lastDomesticNormalizeFailed = false;
@@ -535,7 +528,7 @@ export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, 
   const seenTitle = new Set();
   const deduped = [];
   for (const it of items) {
-    const k = newsTitleKey(it.title);
+    const k = titleKey(it.title);
     if (!k || seenTitle.has(k)) continue;
     seenTitle.add(k);
     deduped.push(it);
