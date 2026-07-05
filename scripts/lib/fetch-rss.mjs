@@ -186,7 +186,7 @@ export const TW_NEWS_FEEDS = [
   { label: "TechNews 科技新報 RSS", url: "https://technews.tw/feed/", hint: "資安" },
   { label: "iThome Security RSS", url: "https://www.ithome.com.tw/rss/security", hint: "資安" },
   { label: "iThome News RSS", url: "https://www.ithome.com.tw/rss/news", hint: "資安" },
-  { label: "TWCERT/CC 資安新聞", url: "https://www.twcert.org.tw/tw/rss-104-1.xml", hint: "資安" },
+  { label: "TWCERT/CC 資安新聞", url: "https://www.twcert.org.tw/tw/rss-104-1.xml", hint: "資安", advisory: true },
   { label: "報導者 RSS", url: "https://www.twreporter.org/a/rss2.xml", hint: "治安" },
   { label: "INSIDE RSS", url: "https://www.inside.com.tw/feed/rss", hint: "資安" },
   // ── 主流／專題媒體 site-scoped Google News（直連 RSS 多為 403/404/410，故用聚合補覆蓋）──
@@ -271,6 +271,9 @@ export function deriveNewsProvenance(item, { fetchedAt, model } = {}) {
     aggregatorUrl: viaGoogle ? item.sourceUrl : undefined,
     ingestMethod: viaGoogle ? "google-news-rss" : "direct-rss",
     sourceConfidence: viaGoogle ? "aggregated" : "verified",
+    feedLabel: item.source,
+    advisory: item.advisory === true || undefined,
+    retentionPolicy: item.advisory === true ? "advisory" : undefined,
     query: queryLabel
       ? `${queryLabel}｜RSS ${item.sourceUrl || ""}${normalization}`
       : `RSS ${item.sourceUrl || ""}${normalization}`,
@@ -335,8 +338,8 @@ async function fetchOneAttempt(feed, perFeed, timeoutMs) {
     const items = parseFeed(xml)
       .filter((i) => i.title && i.link)
       .slice(0, perFeed)
-      .map((i) => ({ ...i, source: feed.label, sourceUrl: feed.url, hint: feed.hint }));
-    return { ok: true, label: feed.label, items };
+      .map((i) => ({ ...i, source: feed.label, sourceUrl: feed.url, hint: feed.hint, advisory: feed.advisory || undefined }));
+    return { ok: true, label: feed.label, advisory: feed.advisory || undefined, items };
   } finally {
     clearTimeout(timer);
   }
@@ -353,7 +356,7 @@ async function fetchOne(feed, perFeed, timeoutMs, retryDelayMs = RSS_RETRY_DELAY
       else break;
     }
   }
-  return { ok: false, label: feed.label, error: lastError?.message || String(lastError), items: [] };
+  return { ok: false, label: feed.label, advisory: feed.advisory || undefined, error: lastError?.message || String(lastError), items: [] };
 }
 
 // 回傳 { items: [...], feedStatus: [{label, ok, count, error}] }
@@ -369,6 +372,6 @@ export async function fetchRssItems({ perFeed = 5, timeoutMs = 12000, feeds = FE
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, feeds.length) }, worker));
   const items = results.flatMap((r) => r.items);
-  const feedStatus = results.map((r) => ({ label: r.label, ok: r.ok, count: r.items.length, error: r.error }));
+  const feedStatus = results.map((r) => ({ label: r.label, ok: r.ok, count: r.items.length, advisory: r.advisory, error: r.error }));
   return { items, feedStatus };
 }

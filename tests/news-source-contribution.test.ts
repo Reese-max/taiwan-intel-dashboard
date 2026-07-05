@@ -82,6 +82,52 @@ describe("buildNewsSourceContribution", () => {
     expect(contribution.totals).toMatchObject({ raw: 6, rawUnique: 5, policeRelevant: 2, finalEvents: 2 });
   });
 
+  it("counts finalEvents after retention and exposes droppedByRetention", () => {
+    const contribution = buildNewsSourceContribution({
+      rawItems: [
+        { title: "舊資安警示 A", link: "https://example.test/old-a", source: "TWCERT/CC 資安新聞" },
+        { title: "舊資安警示 B", link: "https://example.test/old-b", source: "TWCERT/CC 資安新聞" },
+        { title: "新資安警示 C", link: "https://example.test/new-c", source: "iThome Security RSS" },
+        { title: "新資安警示 D", link: "https://example.test/new-d", source: "iThome Security RSS" },
+      ],
+      uniqueItems: [
+        { title: "舊資安警示 A", link: "https://example.test/old-a", source: "TWCERT/CC 資安新聞" },
+        { title: "舊資安警示 B", link: "https://example.test/old-b", source: "TWCERT/CC 資安新聞" },
+        { title: "新資安警示 C", link: "https://example.test/new-c", source: "iThome Security RSS" },
+        { title: "新資安警示 D", link: "https://example.test/new-d", source: "iThome Security RSS" },
+      ],
+      policeItems: [
+        { title: "舊資安警示 A", link: "https://example.test/old-a", source: "TWCERT/CC 資安新聞" },
+        { title: "舊資安警示 B", link: "https://example.test/old-b", source: "TWCERT/CC 資安新聞" },
+        { title: "新資安警示 C", link: "https://example.test/new-c", source: "iThome Security RSS" },
+        { title: "新資安警示 D", link: "https://example.test/new-d", source: "iThome Security RSS" },
+      ],
+      preRetentionEvents: [
+        { source: { recordRef: "https://example.test/old-a" } },
+        { source: { recordRef: "https://example.test/old-b" } },
+        { source: { recordRef: "https://example.test/new-c" } },
+        { source: { recordRef: "https://example.test/new-d" } },
+      ],
+      finalEvents: [
+        { source: { recordRef: "https://example.test/new-c" } },
+        { source: { recordRef: "https://example.test/new-d" } },
+      ],
+    });
+
+    const twcert = contribution.rows.find((row) => row.label === "TWCERT/CC 資安新聞");
+    expect(twcert).toMatchObject({
+      policeRelevant: 2,
+      finalEvents: 0,
+      droppedByRetention: 2,
+      lowContribution: true,
+      lowContributionReason: "dropped_by_retention",
+    });
+
+    const ithome = contribution.rows.find((row) => row.label === "iThome Security RSS");
+    expect(ithome).toMatchObject({ policeRelevant: 2, finalEvents: 2, droppedByRetention: 0 });
+    expect(contribution.totals).toMatchObject({ finalEvents: 2, droppedByRetention: 2 });
+  });
+
   it("can recover Google News feed labels from event provenance query when raw link is unavailable", () => {
     expect(
       eventFeedLabel({

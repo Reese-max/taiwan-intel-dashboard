@@ -25,7 +25,7 @@ import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
 import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
 import { mapBulkNews, titleKey as bulkTitleKey, isRelevantNewsItem } from "./lib/news-bulk.mjs";
-import { buildNewsSourceContribution, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
+import { buildNewsSourceContribution, eventFeedLabel, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
 import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel, intlNormalizeFailed, domesticNormalizeFailed } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
@@ -50,28 +50,72 @@ function loadDotEnv() {
 
 const byTimeDesc = (a, b) => new Date(b.timestamp) - new Date(a.timestamp);
 const todayTW = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+const DAY_MS = 864e5;
 
-export function buildTwNewsEvents({ twnews = [], oldNews = [], twnewsStatus, dropStaleNews = false, retentionDays = 5, now = Date.now() } = {}) {
-  const retentionFrom = now - retentionDays * 864e5;
+const TW_NEWS_ADVISORY_LABELS = new Set(TW_NEWS_FEEDS.filter((feed) => feed.advisory).map((feed) => feed.label));
+
+function finiteRetentionDays(value, fallback) {
+  const days = Number(value);
+  return Number.isFinite(days) && days > 0 ? days : fallback;
+}
+
+export function isAdvisoryTwNewsEvent(event, { advisoryLabels = TW_NEWS_ADVISORY_LABELS } = {}) {
+  const source = event?.source || {};
+  if (source.advisory === true || source.retentionPolicy === "advisory") return true;
+  const label = source.feedLabel || eventFeedLabel(event);
+  return advisoryLabels?.has?.(label) || false;
+}
+
+export function retentionDaysForTwNewsEvent(
+  event,
+  { retentionDays = 5, advisoryRetentionDays, resolveRetentionDays } = {},
+) {
+  if (typeof resolveRetentionDays === "function") {
+    const resolved = resolveRetentionDays(event);
+    return finiteRetentionDays(resolved, retentionDays);
+  }
+  if (advisoryRetentionDays != null && isAdvisoryTwNewsEvent(event)) {
+    return finiteRetentionDays(advisoryRetentionDays, retentionDays);
+  }
+  return finiteRetentionDays(retentionDays, 5);
+}
+
+export function shouldRetainTwNewsEvent(
+  event,
+  { retentionDays = 5, advisoryRetentionDays, resolveRetentionDays, now = Date.now() } = {},
+) {
+  const days = retentionDaysForTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays });
+  const retentionFrom = now - days * DAY_MS;
+  const t = Date.parse(event?.timestamp);
+  return !(Number.isFinite(t) && t < retentionFrom);
+}
+
+export function buildTwNewsEvents({
+  twnews = [],
+  oldNews = [],
+  twnewsStatus,
+  dropStaleNews = false,
+  retentionDays = 5,
+  advisoryRetentionDays,
+  resolveRetentionDays,
+  now = Date.now(),
+} = {}) {
   const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
+  const keep = (event) => shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now });
   if (twnewsStatus?.ok && twnews.length) {
     const seen = new Set();
     const newsEvents = [];
     for (const e of [...twnews, ...oldNews]) {
       const k = newsDedupKey(e);
       if (k && seen.has(k)) continue;
-      const t = Date.parse(e.timestamp);
-      if (Number.isFinite(t) && t < retentionFrom) continue; // 超過保留窗丟棄
+      if (!keep(e)) continue; // 超過保留窗丟棄
       if (k) seen.add(k);
       newsEvents.push(e);
     }
     return newsEvents;
   }
   if (dropStaleNews) return [];
-  return oldNews.filter((e) => {
-    const t = Date.parse(e.timestamp);
-    return !(Number.isFinite(t) && t < retentionFrom); // 超過保留窗丟棄
-  });
+  return oldNews.filter(keep); // 超過保留窗丟棄
 }
 
 const DIST_DATA_DIR = join(ROOT, "dist", "data");
@@ -112,7 +156,8 @@ function readJson(name, fallback) {
 async function run() {
   loadDotEnv();
   const today = todayTW();
-  const nowIso = new Date().toISOString();
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
   const status = {};
   // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
   // 未選的來源會沿用上一版快照（carry-over）。
@@ -123,6 +168,8 @@ async function run() {
   // 預設 off，故 n8n 分頻 carry-over 行為不變。
   const EXCLUSIVE = process.argv.includes("--exclusive") || process.env.EXCLUSIVE === "1";
   const dropStale = (st) => EXCLUSIVE && st?.skipped;
+  const RETENTION_DAYS = Number(process.env.NEWS_RETENTION_DAYS) || 5;
+  const ADVISORY_RETENTION_DAYS = Number(process.env.NEWS_ADVISORY_RETENTION_DAYS) || 30;
   console.log(`本次來源：${SOURCES.join(", ")}${EXCLUSIVE ? "（EXCLUSIVE：未選來源不沿用舊快照）" : ""}`);
 
   // --- 國內：地震 + 天氣警特報 + 採購（互不影響）---
@@ -327,11 +374,19 @@ async function run() {
       const enrichedLinks = new Set(enriched.map((e) => e.source?.recordRef).filter(Boolean));
       const bulk = mapBulkNews(policeUniq.filter((it) => !enrichedLinks.has(it.link)), { fetchedAt: nowIso });
       twnews = [...enriched, ...bulk];
+      const deliveredTwnews = twnews.filter((event) =>
+        shouldRetainTwNewsEvent(event, {
+          retentionDays: RETENTION_DAYS,
+          advisoryRetentionDays: ADVISORY_RETENTION_DAYS,
+          now: nowMs,
+        }),
+      );
       const sourceContribution = buildNewsSourceContribution({
         rawItems: rss.items,
         uniqueItems: uniq,
         policeItems: policeUniq,
-        finalEvents: twnews,
+        preRetentionEvents: twnews,
+        finalEvents: deliveredTwnews,
         feedStatus: twFeedStatus,
       });
       status.twnews = {
@@ -380,7 +435,6 @@ async function run() {
   if (!status.pcc?.ok && tenderEvents.length) console.warn(`採購${why(status.pcc)}，沿用舊快照 ${tenderEvents.length} 筆`);
   // 跨輪累積 + 保留窗：成功時 union 本輪與舊 tw-news（recordRef→標題去重，本輪優先以保留 LLM 精修版），
   // 再剪掉超過保留窗者 → 量隨時間複利成長到保留窗深度，每輪仍只 when:Nd 抓增量、LLM 成本不變。
-  const RETENTION_DAYS = Number(process.env.NEWS_RETENTION_DAYS) || 5;
   const oldNews = oldDomestic.filter((e) => e.source?.datasetId === "tw-news");
   const newsEvents = buildTwNewsEvents({
     twnews,
@@ -388,10 +442,12 @@ async function run() {
     twnewsStatus: status.twnews,
     dropStaleNews: dropStale(status.twnews),
     retentionDays: RETENTION_DAYS,
+    advisoryRetentionDays: ADVISORY_RETENTION_DAYS,
+    now: nowMs,
   });
   if (status.twnews?.ok && twnews.length) {
     console.log(
-      `台灣新聞累積：本輪 ${twnews.length}＋舊 ${oldNews.length} → 去重保留 ${newsEvents.length} 筆（保留窗 ${RETENTION_DAYS} 天）`,
+      `台灣新聞累積：本輪 ${twnews.length}＋舊 ${oldNews.length} → 去重保留 ${newsEvents.length} 筆（一般保留窗 ${RETENTION_DAYS} 天；公告保留窗 ${ADVISORY_RETENTION_DAYS} 天）`,
     );
   } else if (!status.twnews?.ok && newsEvents.length) {
     console.warn(`台灣新聞${why(status.twnews)}，沿用舊快照 ${newsEvents.length} 筆`);
