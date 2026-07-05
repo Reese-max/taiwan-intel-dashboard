@@ -122,6 +122,12 @@ const ENTERTAINMENT_RE = /劇透|劇情|懶人包|追劇|大結局|第\s*[0-9０
 // 弱娛樂訊號：受 EVENT_ACTION_RE 保護（盜版片名常是詐騙/盜帳號誘餌，不可無條件剔）
 const WEAK_ENTERTAINMENT_RE = /線上看|預告片/;
 const AIR_QUALITY_REFERENCE_RE = /(?:空氣品質指數|空氣品質).{0,12}(?:AQI|空氣污染)|\bAQI\b.{0,12}空氣污染/i;
+const FOREIGN_PLACE_RE =
+  /委內瑞拉|巴基斯坦|俄羅斯|烏克蘭|基輔|莫斯科|緬甸(?!女|籍)|奈及利亞|法國|德國|英國|美國|加拿大|南韓|韓國(?!瑜)|首爾|日本|東京|大阪|印度(?!籍|男|女|妻|法商|移工)|以色列|加薩|巴勒斯坦|敘利亞|大馬士革|黎巴嫩|泰國(?!籍|進口|龍眼|神秘|航空|空服|箱屍)|曼谷|菲律賓|馬尼拉|印尼|雅加達|(?<!橫)越南(?!籍|移工|女|妻|同鄉)|河內|馬來西亞|新加坡|墨西哥|巴西|阿根廷|義大利|西班牙|葡萄牙|荷蘭|比利時|瑞士|瑞典|挪威|波蘭|希臘|土耳其|埃及|沙烏地|阿聯|伊朗|伊拉克|阿富汗|蘇丹|肯亞|南非|澳洲|紐西蘭|烏干達|剛果|衣索比亞|阿爾及利亞|摩洛哥|波斯尼亞|赤道幾內亞|摩爾多瓦/;
+const TAIWAN_MARKER_RE =
+  /台灣|臺灣|中華民國|我國|本國|國內|國人|台商|臺商|僑(?:胞|民|界)|外交部|陸委會|僑委會|駐[^\s]{1,5}(?:代表處|辦事處|使館)|國防部|移民署|刑事局|警政署|內政部|國安局|調查局|檢調|食藥署|海巡署|海關|法務部|行政院|立法院|立院|立委|地檢署|台北|臺北|新北|桃園|台中|臺中|台南|臺南|高雄|基隆|新竹|苗栗|彰化|南投|雲林|嘉義|屏東|宜蘭|花蓮|台東|臺東|澎湖|金門|馬祖|連江|林口|二林|中正|兩岸|台男|臺男|台女|臺女|台版|臺版|台廠|臺廠|全台|全臺|台海|臺海|來台|來臺|在台|在臺|赴台|赴臺|返台|返臺|入台|入臺|台日|臺日|台美|臺美|台德|臺德|駐美|駐日|駐外|移工|外籍|新住民|美籍|英籍|澳籍|印尼籍|印度籍|越南籍|緬甸籍|泰籍|港人|印尼語|越南語|泰語|華語|青雲|是方電訊|美超微|黃國昌|四叉貓|郭正亮|奧丁丁|東京著衣/;
+const TAIWAN_NEGATED_CONTEXT_RE = /與(?:台灣|臺灣)[^，。；、]{0,12}無(?:直接)?關聯|無(?:任何)?(?:台灣|臺灣)關聯|不只(?:台灣|臺灣)/g;
+const CYBER_FOREIGN_EXEMPT_RE = /資安|個資|資料.{0,6}外洩|漏洞|駭客|網攻|網路犯罪|勒索|CVE/i;
 
 function sourceText(source) {
   if (!source) return "";
@@ -149,6 +155,13 @@ export function isNonEventNoise(item) {
   return false;
 }
 
+export function isForeignNonTaiwan(item) {
+  if (item?.hint === "資安" || item?.category === "資安") return false;
+  const text = `${String(item?.title || "")} ${String(item?.description || "")} ${String(item?.summary || "")}`;
+  if (CYBER_FOREIGN_EXEMPT_RE.test(text)) return false;
+  return FOREIGN_PLACE_RE.test(text) && !TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""));
+}
+
 export function isPoliceRelevant(title, description) {
   const text = String(title || "") + " " + String(description || "");
   // 英文警政關鍵字（EN 來源靠此通過；POLICE_RE 為中文導向，對英文內容全 miss）。
@@ -168,6 +181,7 @@ const TOPIC_RE = {
 
 export function isRelevantNewsItem(item) {
   if (isNonEventNoise(item)) return false;
+  if (isForeignNonTaiwan(item)) return false;
   const topicRe = TOPIC_RE[item?.hint];
   if (topicRe) return topicRe.test(String(item?.title || "") + " " + String(item?.description || ""));
   return isPoliceRelevant(item?.title, item?.description);

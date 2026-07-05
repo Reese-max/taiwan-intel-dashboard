@@ -4,6 +4,7 @@ import {
   titleKey,
   cleanTitle,
   categoryFromItem,
+  isForeignNonTaiwan,
   isNonEventNoise,
   isRelevantNewsItem,
   riskFromTitle,
@@ -132,6 +133,85 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(mk("高雄街頭砍人送醫", "治安"))).toBe(true);
     expect(isRelevantNewsItem(mk("新北市躋身全球幸福城市前50名", "治安"))).toBe(false);
     expect(isRelevantNewsItem(mk("台南工廠火警濃煙竄天 消防搶救", "災防"))).toBe(true);
+  });
+});
+
+describe("isForeignNonTaiwan（bulk domestic 純外國負面閘門）", () => {
+  const mk = (title: string, hint = "災防", description = "") => ({
+    title,
+    hint,
+    description,
+    link: `https://x/${encodeURIComponent(title)}`,
+    source: "Google News",
+    sourceUrl: "u",
+    pubDate: "x",
+  });
+
+  it("必移明確外國且無台灣關聯事件，不成為 bulk domestic 事件", () => {
+    const foreignOnly = [
+      mk("委內瑞拉強震2600死"),
+      mk("巴基斯坦客運墜深谷 已知40死"),
+      mk("俄羅斯襲基輔至少17死"),
+      mk("奈及利亞爆發流血衝突釀48死"),
+      mk("法國熱浪已導致千人喪命"),
+    ];
+
+    for (const item of foreignOnly) {
+      expect(isForeignNonTaiwan(item), item.title).toBe(true);
+      expect(isRelevantNewsItem(item), item.title).toBe(false);
+    }
+    expect(isForeignNonTaiwan({
+      ...mk("日本新潟卡牌店五千張寶可夢卡遭竊"),
+      summary: "日本新潟卡牌店遭竊，與台灣警政無直接關聯。",
+    })).toBe(true);
+
+    expect(mapBulkNews(foreignOnly, { fetchedAt: FETCHED_AT })).toHaveLength(0);
+  });
+
+  it("必留含台灣關聯、資安豁免與無外國地名的正常台灣事件", () => {
+    const mustKeep = [
+      mk("台灣捐款委內瑞拉震災"),
+      mk("台商在越南工廠火災"),
+      mk("國人在日本遇車禍身亡"),
+      mk("外交部關切加薩情勢"),
+      mk("南韓酷澎個資外洩", "資安"),
+      mk("高雄街頭砍人送醫", "治安"),
+      mk("新北詐騙集團車手落網", "反詐"),
+      mk("颱風來襲 氣象署發警報", "災防"),
+    ];
+
+    for (const item of mustKeep) {
+      expect(isForeignNonTaiwan(item), item.title).toBe(false);
+    }
+
+    const domesticContextMustKeep = [
+      mk("林口大賣場隨機砍人 印度籍男遭砍傷", "治安"),
+      mk("內政部：依托咪酯走私來源部分來自越南或馬來西亞", "治安"),
+      mk("越南移工二林溪抓螃蟹失聯 消防救援上岸已死亡", "災防"),
+      mk("台德合作偵破液態K他命德國走私來台", "治安"),
+    ];
+    for (const item of domesticContextMustKeep) {
+      expect(isForeignNonTaiwan(item), item.title).toBe(false);
+    }
+    expect(isForeignNonTaiwan({ title: "南韓酷澎個資外洩", category: "資安" })).toBe(false);
+
+    expect(isRelevantNewsItem(mustKeep[0])).toBe(false);
+    expect(isRelevantNewsItem(mustKeep[1])).toBe(true);
+    expect(isRelevantNewsItem(mustKeep[2])).toBe(true);
+    expect(isRelevantNewsItem(mustKeep[3])).toBe(false);
+    expect(isRelevantNewsItem(mustKeep[4])).toBe(true);
+    expect(isRelevantNewsItem(mustKeep[5])).toBe(true);
+    expect(isRelevantNewsItem(mustKeep[6])).toBe(true);
+    expect(isRelevantNewsItem(mustKeep[7])).toBe(false);
+
+    const bulkEvents = mapBulkNews(mustKeep, { fetchedAt: FETCHED_AT });
+    expect(bulkEvents.map((event) => event.title)).toEqual([
+      "台商在越南工廠火災",
+      "國人在日本遇車禍身亡",
+      "南韓酷澎個資外洩",
+      "高雄街頭砍人送醫",
+      "新北詐騙集團車手落網",
+    ]);
   });
 });
 
