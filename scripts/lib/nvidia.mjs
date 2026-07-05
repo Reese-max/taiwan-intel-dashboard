@@ -14,6 +14,7 @@ export { llmModel, respondedModel } from "./llm-client.mjs";
 
 const CATEGORIES = ["地緣政治", "災害", "資安", "金融", "其他"];
 const RISKS = ["low", "medium", "high", "critical"];
+const RISK_ORDER = { low: 0, medium: 1, high: 2, critical: 3 };
 
 // 最近一次 normalizeInternational 是否「全批失敗」（有新項卻零產出）。
 // 單批失敗屬可容忍的偶發（graceful 放棄）；全批失敗＝管線級故障，呼叫端應標示告警。
@@ -489,10 +490,21 @@ export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, 
 
 // 情勢摘要：每日國內/國際 + 近24h即時 + 分類別 + 趨勢（單一函式集中產生，全部 graceful）。
 const DAY_MS = 86400000;
+const briefTimestampMs = (timestamp) => {
+  const t = Date.parse(timestamp);
+  return Number.isFinite(t) ? t : Number.NEGATIVE_INFINITY;
+};
+export function sortForBrief(events) {
+  return [...(events || [])].sort((a, b) => {
+    const riskDelta = (RISK_ORDER[b?.riskLevel] ?? -1) - (RISK_ORDER[a?.riskLevel] ?? -1);
+    if (riskDelta !== 0) return riskDelta;
+    return briefTimestampMs(b?.timestamp) - briefTimestampMs(a?.timestamp);
+  });
+}
 // 通用 brief：給事件清單與指令，回繁中摘要；失敗回 "" 不中斷。
 async function briefEvents(label, events, instruction, maxTokens = 2048) {
   if (!events?.length) return "";
-  const lines = events
+  const lines = sortForBrief(events)
     .slice(0, 20)
     .map((e) => `- [${e.riskLevel}] ${e.category}｜${e.title}：${e.summary}`)
     .join("\n");
@@ -605,10 +617,11 @@ async function summarizeClusters(clusters, domestic, topN = Number(process.env.C
   const top = [...clusters].sort((a, b) => (b.size ?? 0) - (a.size ?? 0)).slice(0, topN);
   const results = await Promise.all(
     top.map(async (c) => {
-      const members = (c.members || [])
-        .map((id) => byId.get(id))
-        .filter(Boolean)
-        .slice(0, 16);
+      const members = sortForBrief(
+        (c.members || [])
+          .map((id) => byId.get(id))
+          .filter(Boolean)
+      ).slice(0, 16);
       if (members.length < 2) return [c.id, ""];
       const lines = members.map((e) => `- ${e.category}｜${e.title}`).join("\n");
       try {
