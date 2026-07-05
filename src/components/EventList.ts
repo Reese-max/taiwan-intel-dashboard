@@ -1,9 +1,11 @@
 import type { IntelEvent } from "../types/event";
+import type { CorroborationResult } from "../utils/corroboration";
 import { eventCard, type RelationChip } from "./EventCard";
 
 export interface EventListOptions {
   relatedCount?: (id: string) => number;
   relationOf?: (id: string) => RelationChip | undefined;
+  corroboration?: (id: string) => CorroborationResult;
   emptyMessage?: string;
 }
 
@@ -36,7 +38,7 @@ export function renderEventList(container: HTMLElement, events: IntelEvent[], op
   }
 
   const cardHtml = (e: IntelEvent) =>
-    eventCard(e, opts.relatedCount?.(e.id) ?? 0, opts.relationOf?.(e.id));
+    eventCard(e, opts.relatedCount?.(e.id) ?? 0, opts.relationOf?.(e.id), opts.corroboration?.(e.id));
   const total = events.length;
   let shown = Math.min(PAGE_SIZE, total);
 

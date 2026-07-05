@@ -556,6 +556,24 @@ h4 {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.corroboration-chip {
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--color-panel-2));
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.single-source-note {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  padding: 1px 7px;
+  white-space: nowrap;
+}
 .event-card h3 {
   margin: 10px 0 5px;
   font-size: var(--text-md);

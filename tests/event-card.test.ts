@@ -71,4 +71,58 @@ describe("eventCard", () => {
     expect(html).toContain("縣市推論");
     expect(html).not.toContain(">GN 詐騙逮捕<");
   });
+
+  it("confirmed cross-source corroboration renders a positive source chip", () => {
+    const html = eventCard(
+      {
+        id: "confirmed",
+        title: "同案多源報導",
+        region: "臺北市",
+        timestamp: "2026-06-27T00:00:00.000Z",
+        category: "治安",
+        scope: "domestic",
+        riskLevel: "high",
+        summary: "摘要",
+        source: {
+          name: "來源A",
+          type: "news-rss",
+          fetchedAt: "2026-06-27T00:00:00.000Z",
+        },
+      },
+      0,
+      undefined,
+      { sources: 3, confirmed: true },
+    );
+
+    expect(html).toContain("corroboration-chip");
+    expect(html).toContain("✓ 3 源佐證");
+    expect(html).not.toContain("單一來源·待查證");
+  });
+
+  it("high-risk single-source event renders a subtle verification note", () => {
+    const html = eventCard(
+      {
+        id: "single",
+        title: "高風險孤證",
+        region: "臺北市",
+        timestamp: "2026-06-27T00:00:00.000Z",
+        category: "治安",
+        scope: "domestic",
+        riskLevel: "critical",
+        summary: "摘要",
+        source: {
+          name: "來源A",
+          type: "news-rss",
+          fetchedAt: "2026-06-27T00:00:00.000Z",
+        },
+      },
+      0,
+      undefined,
+      { sources: 1, confirmed: false },
+    );
+
+    expect(html).toContain("single-source-note");
+    expect(html).toContain("單一來源·待查證");
+    expect(html).not.toContain("corroboration-chip");
+  });
 });

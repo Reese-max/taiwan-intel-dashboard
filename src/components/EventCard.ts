@@ -1,4 +1,5 @@
 import type { IntelEvent } from "../types/event";
+import type { CorroborationResult } from "../utils/corroboration";
 import { riskBadge } from "./RiskBadge";
 import { esc, stripHtml } from "../utils/escape";
 
@@ -74,7 +75,12 @@ function eventContext(e: IntelEvent): string {
   return `<div class="event-context" aria-label="完整脈絡"><strong>完整脈絡</strong>${parts.join("")}</div>`;
 }
 
-export function eventCard(e: IntelEvent, relatedCount = 0, relation?: RelationChip): string {
+export function eventCard(
+  e: IntelEvent,
+  relatedCount = 0,
+  relation?: RelationChip,
+  corroboration?: CorroborationResult,
+): string {
   const time = fmtDate(e.timestamp);
   const fetched = fmtDate(e.source.fetchedAt);
   // url 與 recordRef 相同時 build-static 會省略 url（剝肥），故 fallback 至 recordRef。
@@ -95,10 +101,16 @@ export function eventCard(e: IntelEvent, relatedCount = 0, relation?: RelationCh
   const relationChip = relation
     ? `<span class="rel-chip" title="${esc(relation.why)}">${esc(relation.label)}：${esc(relation.why)}</span>`
     : "";
+  const isElevatedRisk = e.riskLevel === "critical" || e.riskLevel === "high";
+  const corroborationChip = corroboration?.confirmed
+    ? `<span class="corroboration-chip" title="${esc(`不同來源數：${corroboration.sources}`)}">${esc(`✓ ${corroboration.sources} 源佐證`)}</span>`
+    : corroboration?.sources === 1 && isElevatedRisk
+      ? `<span class="single-source-note" title="${esc("目前僅見單一來源，需人工查證")}">${esc("單一來源·待查證")}</span>`
+      : "";
   return `
     <article class="event-card" data-id="${esc(e.id)}">
       <header>${riskBadge(e.riskLevel)} <span class="cat">${esc(e.category)}</span>
-        <span class="region">${esc(e.region)}</span>${relationChip}${rel}</header>
+        <span class="region">${esc(e.region)}</span>${relationChip}${corroborationChip}${rel}</header>
       <h3>${esc(e.title)}</h3>
       <p class="summary">${esc(stripHtml(e.summary))}</p>
       ${eventContext(e)}

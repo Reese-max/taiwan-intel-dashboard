@@ -92,3 +92,36 @@ test("KPI 卡片：點擊危急／高風險卡可過濾清單", async ({ page })
   await expect(page.locator("#f-risk")).toHaveValue("high");
   await expect(page.locator("#eventlist")).toBeVisible();
 });
+
+// cross-source corroboration：用 DOM 探索尋找至少一張 same-incident 回接的事件卡。
+test("跨源佐證徽章：事件清單可呈現 N 源佐證 chip", async ({ page }) => {
+  test.setTimeout(120_000);
+
+  const findChip = async (): Promise<boolean> => {
+    await expect(page.locator("#eventlist > *").first()).toBeVisible({ timeout: 30_000 });
+    for (let i = 0; i < 100; i += 1) {
+      if ((await page.locator("#eventlist .corroboration-chip").count()) > 0) return true;
+      const loadMore = page.locator("#eventlist .load-more-btn");
+      if ((await loadMore.count()) === 0) break;
+      await loadMore.click();
+    }
+    return false;
+  };
+
+  await page.goto("/#scope=domestic&since=5");
+  let found = await findChip();
+
+  if (!found) {
+    await page.locator("#f-range").selectOption("");
+    found = await findChip();
+  }
+
+  if (!found) {
+    await page.locator('button[data-scope="international"]').click();
+    await page.locator("#f-range").selectOption("");
+    found = await findChip();
+  }
+
+  test.skip(!found, "目前載入資料中沒有可探索到的 .corroboration-chip（same-incident 跨源佐證徽章）");
+  await expect(page.locator("#eventlist .corroboration-chip").first()).toContainText(/\d+ 源佐證/);
+});

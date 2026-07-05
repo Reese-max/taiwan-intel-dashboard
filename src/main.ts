@@ -21,6 +21,7 @@ import type { IntelEvent, RiskLevel, Scope } from "./types/event";
 import { emptyListHint } from "./utils/emptyHint";
 import { applySearchSubnet } from "./search";
 import { loadTriageAcked, saveTriageAcked } from "./utils/triage";
+import { corroborationOf } from "./utils/corroboration";
 
 const DEFAULT_SINCE_DAYS = 3;
 const REFRESH_MS = 300000;
@@ -226,6 +227,7 @@ async function refresh(): Promise<void> {
   }
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
+  const byId = new Map(all.map((e) => [e.id, e] as const));
   renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, () => setState({ minRisk: "high" }));
   const triageEvents = filterEvents(all, { scope: s.scope, sinceDays: s.sinceDays });
   const renderInbox = (): void => {
@@ -277,11 +279,11 @@ async function refresh(): Promise<void> {
   renderEventList(eventList, display, {
     relatedCount: (id) => net.count(id),
     relationOf: (id) => relationById.get(id),
+    corroboration: (id) => corroborationOf(id, byId, net),
     ...(emptyMessage ? { emptyMessage } : {}),
   });
   // 聚焦時於清單上方畫關聯網圖：單一事件＝放射狀；情報群＝以核心成員展開（一般清單不畫）。
   if (focusId && all.some((e) => e.id === focusId)) {
-    const byId = new Map(all.map((e) => [e.id, e] as const));
     const center = byId.get(focusId)!;
     const neighbors = net
       .related(focusId)
@@ -294,7 +296,6 @@ async function refresh(): Promise<void> {
     relationGraph.draw({ center, neighbors, net, byId });
   } else if (focusCluster && net.cluster(focusCluster)) {
     const c = net.cluster(focusCluster)!;
-    const byId = new Map(all.map((e) => [e.id, e] as const));
     const memberIds = c.members.filter((id) => byId.has(id));
     const memberSet = new Set(memberIds);
     let hub = memberIds[0];
