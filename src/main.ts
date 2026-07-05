@@ -15,10 +15,12 @@ import { renderSourcePanel } from "./components/SourcePanel";
 import { clusterSummariesForScope, loadSummary, renderAiBrief, type AiSummary } from "./components/AiBrief";
 import { renderPoliceHealthPanel } from "./components/PoliceHealthPanel";
 import { renderTopClusters } from "./components/TopClusters";
+import { renderTriageInbox } from "./components/TriageInbox";
 import { MapView } from "./components/MapView";
 import type { IntelEvent, RiskLevel, Scope } from "./types/event";
 import { emptyListHint } from "./utils/emptyHint";
 import { applySearchSubnet } from "./search";
+import { loadTriageAcked, saveTriageAcked } from "./utils/triage";
 
 const DEFAULT_SINCE_DAYS = 3;
 const REFRESH_MS = 300000;
@@ -52,6 +54,7 @@ app.innerHTML = `
     </section>
     <section class="col-list">
       <h2>${t.events} <span id="count" class="count-pill"></span></h2>
+      <div id="triageinbox" class="triage-inbox"></div>
       <div id="focusbar" class="focusbar" hidden></div>
       <div id="relationgraph" class="relation-graph" hidden></div>
       <div id="eventlist"></div>
@@ -88,6 +91,7 @@ if (mqFilter)
   };
 const cache: Partial<Record<Scope, IntelEvent[]>> = {};
 const netCache: Partial<Record<Scope, NetworkIndex>> = {};
+const triageAcked = loadTriageAcked();
 // 地圖 first-paint：先用精簡 map.json 即時繪出標點，不必等完整事件（給清單用）載入；
 // refresh() 隨後以完整集重繪校正。slim 載入失敗則無早繪、行為不變。
 void loadMapEvents(getState().scope).then((pts) => {
@@ -223,6 +227,27 @@ async function refresh(): Promise<void> {
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
   renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, () => setState({ minRisk: "high" }));
+  const triageEvents = filterEvents(all, { scope: s.scope, sinceDays: s.sinceDays });
+  const renderInbox = (): void => {
+    renderTriageInbox(document.getElementById("triageinbox")!, triageEvents, {
+      acked: triageAcked,
+      sinceDays: s.sinceDays,
+      onFocus: focusEvent,
+      onAck: (id) => {
+        triageAcked.add(id);
+        saveTriageAcked(triageAcked);
+        renderInbox();
+      },
+      onAckAll: () => {
+        triageEvents.forEach((e) => {
+          if (e.riskLevel === "critical" || e.riskLevel === "high") triageAcked.add(e.id);
+        });
+        saveTriageAcked(triageAcked);
+        renderInbox();
+      },
+    });
+  };
+  renderInbox();
 
   let display: IntelEvent[];
   const viewKey = focusCluster

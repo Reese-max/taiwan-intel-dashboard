@@ -622,6 +622,134 @@ h4 {
   color: var(--color-muted);
 }
 
+/* 危急待處置收件匣：獨立於一般篩選的高風險安全網 */
+.triage-inbox {
+  margin-bottom: var(--space-3);
+}
+.triage-card {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--risk-critical) 10%, transparent),
+    var(--color-panel) 70%
+  );
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), var(--glow-accent);
+  overflow: hidden;
+}
+.triage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+.triage-head strong {
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.triage-ack-all {
+  background: var(--accent-soft);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  padding: 5px 10px;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+  white-space: nowrap;
+}
+.triage-ack-all:hover:not(:disabled) {
+  background: var(--color-accent);
+  color: var(--on-accent);
+}
+.triage-ack-all:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.triage-list {
+  display: grid;
+  gap: 0;
+}
+.triage-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  width: 100%;
+  padding: 9px 12px 9px 14px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.triage-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--risk-high);
+  opacity: 0;
+}
+.triage-row.is-unread::before {
+  opacity: 1;
+}
+.triage-row.is-unread {
+  background: color-mix(in srgb, var(--risk-high) 10%, transparent);
+}
+.triage-row:hover {
+  background: var(--surface-3);
+  transform: translateX(2px);
+}
+.triage-risk {
+  line-height: 1.2;
+}
+.triage-main {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.triage-title {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.triage-meta {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.triage-capped {
+  margin: 0;
+  padding: 8px 12px 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+}
+.triage-card .empty {
+  margin: 0;
+  padding: 12px;
+  font-size: var(--text-sm);
+}
+
 /* 情報列表增量渲染：載入更多頁尾 */
 .list-more {
   display: flex;
