@@ -639,6 +639,56 @@ h4 {
 .src-none {
   color: var(--color-muted);
 }
+.collapse-toggle {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--color-accent);
+  border: 1px solid var(--border-accent);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.collapse-toggle:hover,
+.collapse-toggle[aria-expanded="true"] {
+  background: var(--color-accent);
+  color: var(--color-surface);
+}
+.collapse-members {
+  margin: -10px 0 14px 16px;
+  padding: 10px 12px;
+  list-style: none;
+  border-left: 2px solid var(--border-accent);
+  background: rgba(15, 23, 42, 0.22);
+  border-radius: 0 0 10px 10px;
+}
+.collapse-source-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+.collapse-source-row + .collapse-source-row {
+  border-top: 1px solid var(--color-border);
+}
+.collapse-source-name {
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+.collapse-source-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.collapse-source-link:hover {
+  text-decoration: underline;
+}
+.collapse-source-none {
+  color: var(--color-muted);
+}
 
 /* 危急待處置收件匣：獨立於一般篩選的高風險安全網 */
 .triage-inbox {

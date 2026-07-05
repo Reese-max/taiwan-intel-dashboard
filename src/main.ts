@@ -22,6 +22,7 @@ import { emptyListHint } from "./utils/emptyHint";
 import { applySearchSubnet } from "./search";
 import { loadTriageAcked, saveTriageAcked } from "./utils/triage";
 import { corroborationOf } from "./utils/corroboration";
+import { collapseSameIncident } from "./utils/collapse";
 
 const DEFAULT_SINCE_DAYS = 3;
 const REFRESH_MS = 300000;
@@ -252,6 +253,8 @@ async function refresh(): Promise<void> {
   renderInbox();
 
   let display: IntelEvent[];
+  let listGroups: ReturnType<typeof collapseSameIncident> | null = null;
+  let collapsedGroupCount = 0;
   const viewKey = focusCluster
     ? `cluster:${focusCluster}`
     : focusId
@@ -272,11 +275,13 @@ async function refresh(): Promise<void> {
     focusId = null;
     focusCluster = null;
     display = applySearchSubnet(filterEvents(all, s), net, s.query);
+    listGroups = collapseSameIncident(display, net);
+    collapsedGroupCount = listGroups.filter((g) => g.members.length > 1 && g.sourceCount >= 2).length;
   }
 
   const emptyMessage = display.length === 0 ? emptyListHint(all, s, Date.now()) : null;
 
-  renderEventList(eventList, display, {
+  renderEventList(eventList, listGroups ?? display, {
     relatedCount: (id) => net.count(id),
     relationOf: (id) => relationById.get(id),
     corroboration: (id) => corroborationOf(id, byId, net),
@@ -338,7 +343,7 @@ async function refresh(): Promise<void> {
   void mapView.render(display, s.scope);
   renderTimeline(document.getElementById("timeline")!, display);
   renderAiBrief(document.getElementById("aibrief")!, summary, s.scope);
-  document.getElementById("count")!.textContent = `${display.length}`;
+  document.getElementById("count")!.textContent = listGroups ? `${display.length} 則 · 收合 ${collapsedGroupCount} 組` : `${display.length}`;
 }
 
 function focusEvent(id: string): void {

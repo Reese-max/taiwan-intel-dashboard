@@ -8,7 +8,7 @@ export interface RelationChip {
   why: string;
 }
 
-function fmtDate(value: string): string {
+export function fmtDate(value: string): string {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleString("zh-TW", { hour12: false });
@@ -27,7 +27,7 @@ function sourceTypeLabel(type: IntelEvent["source"]["type"]): string {
   }
 }
 
-function sourceDisplayName(e: IntelEvent): string {
+export function sourceDisplayName(e: IntelEvent): string {
   if (e.source.publisherName) return e.source.publisherName;
   if (e.source.aggregatorName) return `${e.source.aggregatorName} 聚合`;
   return e.source.name;
@@ -80,6 +80,7 @@ export function eventCard(
   relatedCount = 0,
   relation?: RelationChip,
   corroboration?: CorroborationResult,
+  extraHeaderHtml = "",
 ): string {
   const time = fmtDate(e.timestamp);
   const fetched = fmtDate(e.source.fetchedAt);
@@ -110,7 +111,7 @@ export function eventCard(
   return `
     <article class="event-card" data-id="${esc(e.id)}">
       <header>${riskBadge(e.riskLevel)} <span class="cat">${esc(e.category)}</span>
-        <span class="region">${esc(e.region)}</span>${relationChip}${corroborationChip}${rel}</header>
+        <span class="region">${esc(e.region)}</span>${relationChip}${corroborationChip}${extraHeaderHtml}${rel}</header>
       <h3>${esc(e.title)}</h3>
       <p class="summary">${esc(stripHtml(e.summary))}</p>
       ${eventContext(e)}

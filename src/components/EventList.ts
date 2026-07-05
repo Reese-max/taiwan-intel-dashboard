@@ -1,6 +1,8 @@
 import type { IntelEvent } from "../types/event";
+import type { CollapsedGroup } from "../utils/collapse";
 import type { CorroborationResult } from "../utils/corroboration";
-import { eventCard, type RelationChip } from "./EventCard";
+import { esc } from "../utils/escape";
+import { eventCard, fmtDate, sourceDisplayName, type RelationChip } from "./EventCard";
 
 export interface EventListOptions {
   relatedCount?: (id: string) => number;
@@ -14,6 +16,34 @@ const PAGE_SIZE = 50;
 
 // 每個容器對應上一輪的清理函式（重新渲染前先拆掉舊 observer，避免洩漏/重複觸發）。
 const teardowns = new WeakMap<HTMLElement, () => void>();
+const expandedGroups = new WeakMap<HTMLElement, Set<string>>();
+
+type EventListItem = IntelEvent | CollapsedGroup;
+
+function isCollapsedGroup(item: EventListItem): item is CollapsedGroup {
+  return "representative" in item && "members" in item;
+}
+
+function sourceLink(e: IntelEvent): string {
+  const linkUrl = e.source.url ?? e.source.recordRef;
+  if (linkUrl && /^https?:\/\//.test(linkUrl)) {
+    return `<a class="collapse-source-link" href="${esc(linkUrl)}" target="_blank" rel="noopener">原文</a>`;
+  }
+  return `<span class="collapse-source-link collapse-source-none">無原文連結</span>`;
+}
+
+function collapsedMembersHtml(group: CollapsedGroup): string {
+  return group.members
+    .filter((e) => e.id !== group.representative.id)
+    .map(
+      (e) => `<li class="collapse-source-row" data-id="${esc(e.id)}">
+        <span class="collapse-source-name">${esc(sourceDisplayName(e))}</span>
+        <time>${esc(fmtDate(e.timestamp))}</time>
+        ${sourceLink(e)}
+      </li>`,
+    )
+    .join("");
+}
 
 export function resetEventListScroll(container: HTMLElement): void {
   const scrollParent = container.parentElement;
@@ -26,25 +56,74 @@ export function resetEventListScroll(container: HTMLElement): void {
   if (region.getBoundingClientRect().top < 0) region.scrollIntoView({ block: "start" });
 }
 
-export function renderEventList(container: HTMLElement, events: IntelEvent[], opts: EventListOptions = {}): void {
+export function renderEventList(container: HTMLElement, items: EventListItem[], opts: EventListOptions = {}): void {
   // 拆掉上一輪的 observer（filter/search 改變會重新進來）。
   teardowns.get(container)?.();
   teardowns.delete(container);
 
-  if (!events.length) {
+  if (!items.length) {
     const emptyMessage = opts.emptyMessage ?? "無符合條件的情報";
     container.innerHTML = `<p class="empty">${emptyMessage}</p>`;
     return;
   }
 
-  const cardHtml = (e: IntelEvent) =>
-    eventCard(e, opts.relatedCount?.(e.id) ?? 0, opts.relationOf?.(e.id), opts.corroboration?.(e.id));
-  const total = events.length;
+  const expanded = expandedGroups.get(container) ?? new Set<string>();
+  expandedGroups.set(container, expanded);
+  const renderCard = (e: IntelEvent, extraHeaderHtml = "") =>
+    eventCard(
+      e,
+      opts.relatedCount?.(e.id) ?? 0,
+      opts.relationOf?.(e.id),
+      opts.corroboration?.(e.id),
+      extraHeaderHtml,
+    );
+  const cardHtml = (item: EventListItem) => {
+    const group: CollapsedGroup = isCollapsedGroup(item)
+      ? item
+      : { representative: item, members: [item], sourceCount: 1 };
+    const e = group.representative;
+    const canExpand = group.members.length > 1 && group.sourceCount >= 2;
+    const groupId = e.id;
+    const isExpanded = expanded.has(groupId);
+    const toggle = canExpand
+      ? `<button type="button" class="collapse-toggle" data-collapse="${esc(groupId)}" aria-expanded="${isExpanded}" title="展開同事件的其餘來源">🗂 收合 ${group.sourceCount} 源</button>`
+      : "";
+    const card = renderCard(e, toggle);
+    if (!canExpand) {
+      if (isCollapsedGroup(item) && group.members.length > 1) return group.members.map((member) => renderCard(member)).join("");
+      return card;
+    }
+    return `<div class="collapsed-group" data-collapse-group="${esc(groupId)}">
+      ${card}
+      <ul class="collapse-members" ${isExpanded ? "" : "hidden"} aria-label="同事件其餘來源">
+        ${collapsedMembersHtml(group)}
+      </ul>
+    </div>`;
+  };
+  const total = items.length;
   let shown = Math.min(PAGE_SIZE, total);
+  let observer: IntersectionObserver | undefined;
+
+  const onToggle = (ev: Event): void => {
+    const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>(".collapse-toggle");
+    if (!btn?.dataset.collapse || !container.contains(btn)) return;
+    const id = btn.dataset.collapse;
+    const nextExpanded = !expanded.has(id);
+    if (nextExpanded) expanded.add(id);
+    else expanded.delete(id);
+    btn.setAttribute("aria-expanded", String(nextExpanded));
+    const groupEl = btn.closest<HTMLElement>(".collapsed-group");
+    const members = groupEl?.querySelector<HTMLElement>(".collapse-members");
+    if (members) members.hidden = !nextExpanded;
+  };
 
   // 初次只渲染第一批，DOM 從 N 張降到最多 PAGE_SIZE 張。
-  container.innerHTML = events.slice(0, shown).map(cardHtml).join("");
-  if (shown >= total) return; // 一批就放完，免頁尾與 observer。
+  container.innerHTML = items.slice(0, shown).map(cardHtml).join("");
+  container.addEventListener("click", onToggle);
+  if (shown >= total) {
+    teardowns.set(container, () => container.removeEventListener("click", onToggle));
+    return; // 一批就放完，免頁尾與 observer。
+  }
 
   // 頁尾：狀態文字 + 載入更多按鈕，同時當 IntersectionObserver 哨兵。
   const footer = document.createElement("div");
@@ -62,9 +141,8 @@ export function renderEventList(container: HTMLElement, events: IntelEvent[], op
     status.textContent = `已顯示 ${shown} / ${total} 筆`;
   };
 
-  let observer: IntersectionObserver | undefined;
   const loadMore = (): void => {
-    const next = events.slice(shown, shown + PAGE_SIZE).map(cardHtml).join("");
+    const next = items.slice(shown, shown + PAGE_SIZE).map(cardHtml).join("");
     footer.insertAdjacentHTML("beforebegin", next);
     shown = Math.min(shown + PAGE_SIZE, total);
     if (shown >= total) {
@@ -89,5 +167,8 @@ export function renderEventList(container: HTMLElement, events: IntelEvent[], op
     observer.observe(footer);
   }
 
-  teardowns.set(container, () => observer?.disconnect());
+  teardowns.set(container, () => {
+    observer?.disconnect();
+    container.removeEventListener("click", onToggle);
+  });
 }
