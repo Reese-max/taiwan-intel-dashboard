@@ -12,6 +12,7 @@ import {
   statSync,
 } from "node:fs";
 import { emptyDirContents } from "./lib/fs-safe.mjs";
+import { minifyOrCopyJson } from "./lib/minify-json.mjs";
 
 const OUT = "dist";
 if (existsSync(OUT)) emptyDirContents(OUT);
@@ -107,7 +108,7 @@ for (const f of readdirSync("public/data")) {
     const net = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimNetwork(net)));
   } else {
-    copyFileSync(`public/data/${f}`, `${OUT}/data/${f}`);
+    minifyOrCopyJson(`public/data/${f}`, `${OUT}/data/${f}`);
   }
 }
 
