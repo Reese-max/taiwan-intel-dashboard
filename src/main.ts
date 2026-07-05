@@ -607,7 +607,25 @@ window.addEventListener("popstate", () => {
 
 applyHash();
 renderUsageTip();
-void renderPoliceHealthPanel(document.getElementById("policehealth")!);
+// 側欄警政健康面板只用尾端趨勢、且多在首屏摺線下：捲入視窗才抓 police-hourly-history.json（數 MB），
+// 讓它離開首屏關鍵載入窗，不與 domestic 主資料搶頻寬（IntersectionObserver 不支援時退回立即渲染）。
+{
+  const policeHealthEl = document.getElementById("policehealth")!;
+  if (typeof IntersectionObserver === "undefined") {
+    void renderPoliceHealthPanel(policeHealthEl);
+  } else {
+    const io = new IntersectionObserver(
+      (entries, obs) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          obs.disconnect();
+          void renderPoliceHealthPanel(policeHealthEl);
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(policeHealthEl);
+  }
+}
 void renderSourcePanel(document.getElementById("sourcepanel")!);
 // 資料新鮮度徽章（topbar）：吃已載入的 summary（含 generatedAt + model），免額外 fetch。
 function renderDataFreshness(s: AiSummary | null): void {
