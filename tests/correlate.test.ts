@@ -294,6 +294,34 @@ describe("correlateEvents — same-entity（共享具名實體跨地連結）", 
     expect(edge).toBeTruthy();
     expect(edge.type).toBe("same-entity");
   });
+
+  it("保留泛名 same-entity 邊，但預設不靠它形成情報群", () => {
+    const events = [
+      ev({
+        id: "glue-a",
+        region: "基隆市",
+        category: "社會",
+        title: "基隆私幼處分爭議延燒",
+        aiEntities: ["幼兒園"],
+        source: { name: "來源A", type: "news-rss", fetchedAt: "" },
+      }),
+      ev({
+        id: "glue-b",
+        region: "高雄市",
+        category: "治安",
+        title: "高雄女童案二審宣判",
+        aiEntities: ["幼兒園"],
+        timestamp: "2026-06-21T10:00:00+08:00",
+        source: { name: "來源B", type: "news-rss", fetchedAt: "" },
+      }),
+    ];
+    const net = correlateEvents(events);
+    const edge = net.edges.find((e: any) => (e.a === "glue-a" && e.b === "glue-b") || (e.a === "glue-b" && e.b === "glue-a"));
+    expect(edge).toBeTruthy();
+    expect(edge.type).toBe("same-entity");
+    expect(net.clusters).toEqual([]);
+    expect(net.stats.skippedSameEntityUnionEdges).toBe(1);
+  });
 });
 
 describe("correlateEvents — same-topic（同源同題弱連結）", () => {

@@ -32,6 +32,12 @@ const CLUSTER_INCOHERENT_TOPIC_RATIO = (() => {
   const n = Number(process.env.CLUSTER_INCOHERENT_TOPIC_RATIO);
   return Number.isFinite(n) && n >= 0 && n <= 1 ? n : 0.4;
 })();
+const DEFAULT_SAME_ENTITY_UNION_BLOCKLIST = ["依托咪酯", "幼兒園"];
+const SAME_ENTITY_UNION_BLOCKLIST = (() => {
+  const raw = process.env.SAME_ENTITY_UNION_BLOCKLIST;
+  const values = raw === undefined ? DEFAULT_SAME_ENTITY_UNION_BLOCKLIST : raw.split(",");
+  return new Set(values.map((s) => s.trim()).filter(Boolean));
+})();
 
 // 案類關鍵詞 → 標準標籤（跨來源用同一套語彙，與 news-bulk 一致取向）。
 const LEXICON = [
@@ -187,6 +193,16 @@ function overlapRatio(shared, aSet, bSet) {
 
 function edgeKey(a, b) {
   return a < b ? `${a}|${b}` : `${b}|${a}`;
+}
+
+function sameEntityEdgeEntity(edge) {
+  if (edge?.type !== "same-entity") return "";
+  return edge.why?.match(/共享實體「(.+?)」/)?.[1] || "";
+}
+
+function shouldUnionSameEntity(edge) {
+  const ent = sameEntityEdgeEntity(edge);
+  return ent ? !SAME_ENTITY_UNION_BLOCKLIST.has(ent) : true;
 }
 
 // 把多個候選邊合併（同一對取最高權重，理由併陳）。
@@ -384,9 +400,15 @@ export function correlateEvents(events, opts = {}) {
     const rb = find(b);
     if (ra !== rb) parent.set(ra, rb);
   };
+  let skippedSameEntityUnionEdges = 0;
   for (const e of edgeList) {
-    if (e.type === "same-entity" || (e.type === "same-incident" && e.weight >= CLUSTER_INCIDENT_MIN_WEIGHT)) {
+    if (
+      (e.type === "same-entity" && shouldUnionSameEntity(e)) ||
+      (e.type === "same-incident" && e.weight >= CLUSTER_INCIDENT_MIN_WEIGHT)
+    ) {
       union(e.a, e.b);
+    } else if (e.type === "same-entity") {
+      skippedSameEntityUnionEdges++;
     }
   }
   const groups = new Map();
@@ -424,6 +446,7 @@ export function correlateEvents(events, opts = {}) {
       clusters: clusters.length,
       largestCluster: clusters[0]?.size || 0,
       skippedGenericEntities: skippedGeneric,
+      skippedSameEntityUnionEdges,
       aiTopicEdges,
     },
   };
