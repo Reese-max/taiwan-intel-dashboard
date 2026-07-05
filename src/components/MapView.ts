@@ -1,6 +1,6 @@
 import "leaflet/dist/leaflet.css";
 import type * as L from "leaflet";
-import type { IntelEvent, RiskLevel } from "../types/event";
+import type { IntelEvent, RiskLevel, Scope } from "../types/event";
 import { esc } from "../utils/escape";
 
 const RISK_COLOR: Record<RiskLevel, string> = {
@@ -18,6 +18,7 @@ const RISK_LABEL: Record<RiskLevel, string> = {
 const RISK_RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, critical: 3 };
 // 聚合網格邊長（像素）：同網格內多個事件聚成一顆計數泡泡，避免市區大量標點重疊。
 const CELL = 46;
+const TAIWAN_BBOX = { minLat: 21.9, maxLat: 26.3, minLng: 118.1, maxLng: 122.1 };
 
 export type MapDisplayable = IntelEvent & { lat: number; lng: number };
 
@@ -127,6 +128,15 @@ export function isMapDisplayable(e: IntelEvent): e is MapDisplayable {
   return e.lat != null && e.lng != null && !(e.lat === 0 && e.lng === 0) && e.locationPrecision !== "global";
 }
 
+function isInsideTaiwanBBox(e: MapDisplayable): boolean {
+  return (
+    e.lat >= TAIWAN_BBOX.minLat &&
+    e.lat <= TAIWAN_BBOX.maxLat &&
+    e.lng >= TAIWAN_BBOX.minLng &&
+    e.lng <= TAIWAN_BBOX.maxLng
+  );
+}
+
 export class MapView {
   private lib!: typeof L;
   private map!: L.Map;
@@ -164,7 +174,7 @@ export class MapView {
     el.appendChild(radar);
   }
 
-  async render(events: IntelEvent[]): Promise<void> {
+  async render(events: IntelEvent[], scope: Scope = events[0]?.scope ?? "domestic"): Promise<void> {
     if (events === this._cachedEvents) {
       this.located = this._cachedLocated;
     } else {
@@ -173,13 +183,21 @@ export class MapView {
       this.located = this._cachedLocated;
     }
     await this.ready;
-    if (this.located.length) {
+    const taiwanBounds = this.lib.latLngBounds([
+      [TAIWAN_BBOX.minLat, TAIWAN_BBOX.minLng],
+      [TAIWAN_BBOX.maxLat, TAIWAN_BBOX.maxLng],
+    ]);
+    this.map.setMaxBounds(scope === "domestic" ? taiwanBounds.pad(0.5) : undefined);
+    const fitLocated = scope === "domestic" ? this.located.filter(isInsideTaiwanBBox) : this.located;
+    if (fitLocated.length) {
       const bounds = this.lib.latLngBounds(
-        this.located.map((e) => [e.lat!, e.lng!] as [number, number]),
+        fitLocated.map((e) => [e.lat!, e.lng!] as [number, number]),
       );
       // 先（無動畫）對齊視口、再 redraw：⑦ 的視口裁切只渲染可見範圍，若先 redraw 再 fitBounds，
       // 切換 scope（如國內→國際時地圖仍停在台灣）會把新範圍外的標點剪掉而看不到。
       this.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 8, animate: false });
+    } else if (scope === "domestic") {
+      this.map.setView([23.7, 121], 7, { animate: false });
     }
     this.redraw();
   }

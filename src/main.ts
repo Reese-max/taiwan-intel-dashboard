@@ -96,7 +96,7 @@ const triageAcked = loadTriageAcked();
 // 地圖 first-paint：先用精簡 map.json 即時繪出標點，不必等完整事件（給清單用）載入；
 // refresh() 隨後以完整集重繪校正。slim 載入失敗則無早繪、行為不變。
 void loadMapEvents(getState().scope).then((pts) => {
-  if (pts && !cache[getState().scope]) void mapView.render(filterEvents(pts, getState()));
+  if (pts && !cache[getState().scope]) void mapView.render(filterEvents(pts, getState()), getState().scope);
 });
 let summary: AiSummary | null = null;
 // 情報網聚焦：可選單一事件，或選一個 cluster 展開整群。
@@ -335,7 +335,7 @@ async function refresh(): Promise<void> {
   }
   renderFocusBar(display, net);
   renderTopClusters(document.getElementById("topclusters")!, net.clusters(), clusterSummariesForScope(summary, s.scope));
-  void mapView.render(display);
+  void mapView.render(display, s.scope);
   renderTimeline(document.getElementById("timeline")!, display);
   renderAiBrief(document.getElementById("aibrief")!, summary, s.scope);
   document.getElementById("count")!.textContent = `${display.length}`;
