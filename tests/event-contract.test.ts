@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { validateEventContract } from "../scripts/lib/event-contract.mjs";
+import { validateEventContract, clampImplausibleTimestamps } from "../scripts/lib/event-contract.mjs";
 
 const makeEvent = () => ({
   id: "evt-001",
@@ -130,5 +130,39 @@ describe("validateEventContract", () => {
       { id: "evt-001", reason: "缺 region" },
       { id: "evt-003", reason: "缺 source.name" },
     ]);
+  });
+});
+
+describe("clampImplausibleTimestamps", () => {
+  const NOW = Date.parse("2026-07-05T00:00:00Z");
+  const mk = (ts: string, fetchedAt = "2026-07-05T00:00:00Z") => ({
+    ...makeEvent(),
+    timestamp: ts,
+    source: { name: "測試來源", fetchedAt },
+  });
+
+  it("遠未來時間戳（民國155→2066 類）夾到 fetchedAt 並標記", () => {
+    const bad = mk("2066-02-22T00:00:00Z");
+    const { events, clamped } = clampImplausibleTimestamps([bad], { now: NOW });
+    expect(clamped).toBe(1);
+    expect(events[0].timestamp).toBe("2026-07-05T00:00:00Z");
+    expect(events[0].timestampClamped).toBe(true);
+  });
+
+  it("近未來（排程集會，門檻內）與歷史過去、無效時間戳皆不動", () => {
+    const near = mk("2026-08-01T00:00:00Z"); // 約1個月後
+    const past = mk("2019-05-01T00:00:00Z"); // 歷史 gov 開放資料
+    const nan = mk("not-a-date");
+    const { events, clamped } = clampImplausibleTimestamps([near, past, nan], { now: NOW });
+    expect(clamped).toBe(0);
+    expect(events[0]).toBe(near);
+    expect(events[1]).toBe(past);
+    expect(events[2]).toBe(nan);
+  });
+
+  it("遠未來但無 fetchedAt 時夾到 now", () => {
+    const bad = { ...makeEvent(), timestamp: "2066-01-01T00:00:00Z", source: { name: "x" } };
+    const { events } = clampImplausibleTimestamps([bad], { now: NOW });
+    expect(events[0].timestamp).toBe(new Date(NOW).toISOString());
   });
 });

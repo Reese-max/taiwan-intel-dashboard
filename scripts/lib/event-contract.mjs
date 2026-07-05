@@ -24,6 +24,27 @@ const eventReason = (event) => {
   return "";
 };
 
+// 遠未來時間戳（> now + horizonDays）幾乎必為來源解析錯誤（如民國→西元誤植：民國155→2066），
+// 會在時序排序冒充「最新」排到最頂並破壞保留窗。保守夾住到 source.fetchedAt（保留事件、修正不可能日期）。
+// 只夾「遠未來」；不動過去時間戳（歷史 gov 開放資料為合法舊紀錄）。合法排程未來（集會遊行）多在數天~數月內、遠低於門檻。
+export function clampImplausibleTimestamps(events, { now = Date.now(), horizonDays = 400 } = {}) {
+  const input = Array.isArray(events) ? events : [];
+  const limit = now + horizonDays * 864e5;
+  let clamped = 0;
+  const out = input.map((event) => {
+    if (!event || typeof event !== "object" || Array.isArray(event)) return event;
+    const t = Date.parse(event.timestamp);
+    if (!Number.isFinite(t) || t <= limit) return event;
+    clamped++;
+    const fetchedAt = event.source?.fetchedAt;
+    const fallback = isNonEmptyString(fetchedAt) && Number.isFinite(Date.parse(fetchedAt))
+      ? fetchedAt
+      : new Date(now).toISOString();
+    return { ...event, timestamp: fallback, timestampClamped: true };
+  });
+  return { events: out, clamped };
+}
+
 export function validateEventContract(events) {
   const input = Array.isArray(events) ? events : [];
   const valid = [];

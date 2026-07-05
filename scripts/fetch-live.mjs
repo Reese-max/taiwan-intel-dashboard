@@ -30,7 +30,7 @@ import { normalizeInternational, normalizeDomesticNews, summarize, respondedMode
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
-import { validateEventContract } from "./lib/event-contract.mjs";
+import { validateEventContract, clampImplausibleTimestamps } from "./lib/event-contract.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -510,7 +510,9 @@ async function run() {
     if (policeEvents.length) console.warn(`警政${why(status.police)}，沿用舊快照 ${policeEvents.length} 筆`);
   }
 
-  const domesticEvents = [...quakeEvents, ...warningEvents, ...tenderEvents, ...policeEvents, ...newsEvents].sort(byTimeDesc);
+  const domesticClamp = clampImplausibleTimestamps([...quakeEvents, ...warningEvents, ...tenderEvents, ...policeEvents, ...newsEvents]);
+  if (domesticClamp.clamped) console.warn(`[時間戳] 夾住 ${domesticClamp.clamped} 筆遠未來時間戳（疑來源解析錯誤，如民國→西元誤植）`);
+  const domesticEvents = domesticClamp.events.sort(byTimeDesc);
   if (domesticEvents.length) {
     const { valid, invalid } = validateEventContract(domesticEvents);
     if (invalid.length) {
