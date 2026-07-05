@@ -4,6 +4,7 @@ import { eventCard, type RelationChip } from "./EventCard";
 export interface EventListOptions {
   relatedCount?: (id: string) => number;
   relationOf?: (id: string) => RelationChip | undefined;
+  emptyMessage?: string;
 }
 
 // 增量渲染批量：初次只進 DOM 這麼多張，其餘捲到底再分批補上。
@@ -29,7 +30,8 @@ export function renderEventList(container: HTMLElement, events: IntelEvent[], op
   teardowns.delete(container);
 
   if (!events.length) {
-    container.innerHTML = `<p class="empty">無符合條件的情報</p>`;
+    const emptyMessage = opts.emptyMessage ?? "無符合條件的情報";
+    container.innerHTML = `<p class="empty">${emptyMessage}</p>`;
     return;
   }
 

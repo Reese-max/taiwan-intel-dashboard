@@ -17,6 +17,7 @@ import { renderPoliceHealthPanel } from "./components/PoliceHealthPanel";
 import { renderTopClusters } from "./components/TopClusters";
 import { MapView } from "./components/MapView";
 import type { IntelEvent, RiskLevel, Scope } from "./types/event";
+import { emptyListHint } from "./utils/emptyHint";
 
 const DEFAULT_SINCE_DAYS = 3;
 const REFRESH_MS = 300000;
@@ -259,9 +260,12 @@ async function refresh(): Promise<void> {
     display = applySearchSubnet(filterEvents(all, s), net, s.query);
   }
 
+  const emptyMessage = display.length === 0 ? emptyListHint(all, s, Date.now()) : null;
+
   renderEventList(eventList, display, {
     relatedCount: (id) => net.count(id),
     relationOf: (id) => relationById.get(id),
+    ...(emptyMessage ? { emptyMessage } : {}),
   });
   // 聚焦時於清單上方畫關聯網圖：單一事件＝放射狀；情報群＝以核心成員展開（一般清單不畫）。
   const relGraph = document.getElementById("relationgraph")!;
