@@ -44,6 +44,21 @@ export function assertInternationalFeedCoverage(status, { minFeeds = 0, minRawIt
   }
 }
 
+// LLM 正規化全批失敗＝管線級故障但服務仍回舊快取（stale-but-valid），既有 gate 只看 ok/rawCount
+// 讀不到它。此處以觀測模式（console.warn，不擋部署）把該旗標讀出來，讓故障在 CI log 被看見。
+export function warnOnNormalizeFailure(pipeline) {
+  const failed = [];
+  for (const scope of ["international", "twnews"]) {
+    if (pipeline?.[scope]?.normalizeFailed === true) {
+      failed.push(scope);
+      console.warn(
+        `[LLM] ${scope} 正規化全批失敗：本輪只剩快取、資料未更新（provenance.pipeline.${scope}.normalizeFailed=true）`,
+      );
+    }
+  }
+  return failed;
+}
+
 export function readPipeline(path = "public/data/provenance.json") {
   const file = JSON.parse(readFileSync(path, "utf8"));
   return file.pipeline || {};
@@ -66,5 +81,6 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
     minFeeds: minInternationalFeeds,
     minRawItems: minInternationalRaw,
   });
+  warnOnNormalizeFailure(pipeline);
   console.log(`Required pipeline sources ok: ${required.join(", ")}`);
 }

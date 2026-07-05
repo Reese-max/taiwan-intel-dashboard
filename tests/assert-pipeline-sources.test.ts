@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   assertInternationalFeedCoverage,
   assertRequiredPipelineSources,
+  warnOnNormalizeFailure,
 } from "../scripts/assert-pipeline-sources.mjs";
 
 describe("assertRequiredPipelineSources", () => {
@@ -99,5 +100,32 @@ describe("assertInternationalFeedCoverage", () => {
         { minFeeds: 10, minRawItems: 50 },
       ),
     ).toThrow("International raw item count too low: 12/50");
+  });
+});
+
+describe("warnOnNormalizeFailure", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("warns and reports the scope when domestic LLM normalize fails wholesale", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const failed = warnOnNormalizeFailure({ twnews: { ok: true, normalizeFailed: true } });
+    expect(failed).toEqual(["twnews"]);
+    expect(warn.mock.calls.some((c) => String(c[0]).includes("twnews 正規化全批失敗"))).toBe(true);
+  });
+
+  it("reports both scopes when international and domestic both fail", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const failed = warnOnNormalizeFailure({
+      international: { ok: true, normalizeFailed: true },
+      twnews: { ok: true, normalizeFailed: true },
+    });
+    expect(failed).toEqual(["international", "twnews"]);
+  });
+
+  it("stays silent when no normalize failure flag is set", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const failed = warnOnNormalizeFailure({ twnews: { ok: true }, international: { ok: true } });
+    expect(failed).toEqual([]);
+    expect(warn).not.toHaveBeenCalled();
   });
 });
