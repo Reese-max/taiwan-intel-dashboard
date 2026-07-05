@@ -3,6 +3,7 @@ import {
   mapBulkNews,
   titleKey,
   cleanTitle,
+  isNonEventNoise,
   isRelevantNewsItem,
   riskFromTitle,
 } from "../scripts/lib/news-bulk.mjs";
@@ -112,6 +113,65 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(mk("高雄街頭砍人送醫", "治安"))).toBe(true);
     expect(isRelevantNewsItem(mk("新北市躋身全球幸福城市前50名", "治安"))).toBe(false);
     expect(isRelevantNewsItem(mk("台南工廠火警濃煙竄天 消防搶救", "災防"))).toBe(true);
+  });
+});
+
+describe("isNonEventNoise / bulk domestic 負面閘門", () => {
+  const mk = (title: string, hint = "環境", description = "", source = "Google News") => ({
+    title,
+    hint,
+    description,
+    link: `https://x/${encodeURIComponent(title)}`,
+    source,
+    sourceUrl: "u",
+    pubDate: "x",
+  });
+
+  it("必剔高確定性 landing page / 參考頁 / 娛樂劇情雜訊", () => {
+    const noise = [
+      mk("Vares 空氣品質指數（AQI）和波斯尼亞 空氣污染 | IQAir"),
+      mk("Annobon 空氣品質指數（AQI）和赤道幾內亞 空氣污染 | IQAir"),
+      mk("固定空氣污染源管理資訊系統-環境部"),
+      mk("列管污染源資料查詢系統"),
+      mk("持久性有機污染物(POPs)資訊網站"),
+      mk("國家溫室氣體排放清冊報告"),
+      mk("環保稽查處分管制系統"),
+      mk("非份之罪劇透1-10集｜賴慰玲捲石棺命案", "治安"),
+    ];
+
+    for (const item of noise) {
+      expect(isNonEventNoise(item), item.title).toBe(true);
+    }
+
+    const ev = mapBulkNews(noise, { fetchedAt: FETCHED_AT });
+    expect(ev).toHaveLength(0);
+  });
+
+  it("必留真實 bulk 事件，避免誤殺犯罪/交通/災防/環境/食安/衛生事件", () => {
+    const events = [
+      mk("雨後巨量海廢淹沒林園貝殼灣 志工淨灘清出268公斤", "環境"),
+      mk("苗栗台13線死亡車禍 重機男過彎自撞墜橋亡", "交通"),
+      mk("台中豐原透天厝火警 72歲翁全身72%燒燙傷", "災防"),
+      mk("雲林全面下架問題大豆油 54家業者稽查 423件產品急回收", "食安"),
+      mk("屏東旅館驚見冰鎮女屍 高大成相驗：死因與毒品有關", "治安"),
+      mk("高雄工廠偷排廢水遭稽查裁罰", "環境"),
+      mk("知名餐廳使用餿水油遭勒令下架", "食安"),
+      mk("腸病毒疫情升溫 幼兒園爆群聚", "衛生"),
+      mk("台南工廠火警濃煙竄天 消防搶救", "災防"),
+      mk("新北詐騙集團車手落網", "反詐"),
+      mk("高雄街頭砍人 男子背部受傷送醫", "治安"),
+      mk("警方破獲個資外洩詐騙系統 逮捕嫌犯", "治安"),
+      mk("醫院資訊系統遭駭客攻擊 個資外洩", "資安"),
+      mk("食藥署稽查違規食品 下架回收", "食安"),
+    ];
+
+    for (const item of events) {
+      expect(isNonEventNoise(item), item.title).toBe(false);
+    }
+
+    const relevantEvents = events.filter(isRelevantNewsItem);
+    const ev = mapBulkNews(relevantEvents, { fetchedAt: FETCHED_AT });
+    expect(ev).toHaveLength(relevantEvents.length);
   });
 });
 

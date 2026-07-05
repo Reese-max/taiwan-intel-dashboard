@@ -98,6 +98,37 @@ export function riskFromTitle(title, hint) {
 // 警政相關性關鍵字（標題＋摘要任一命中才收）。濾掉政府/綜合 feed 的非犯罪內容（政策、活動、排名、衛教…）。
 const POLICE_RE = /詐|車手|毒品|緝毒|販毒|製毒|安非他命|海洛因|大麻|愷他命|竊|偷|扒|搶|強盜|劫|侵占|命案|兇殺|凶殺|殺人|砍|刺|鬥毆|毆|傷害|施暴|槍|彈藥|爆裂|爆炸|氣爆|性侵|性騷|猥褻|偷拍|性影像|妨害|家暴|虐|跟蹤|跟騷|騷擾|恐嚇|脅迫|擄|勒贖|綁架|賭|博弈|簽賭|娼|應召|嫖|幫派|黑道|圍事|角頭|走私|偷渡|人口販運|人蛇|洗錢|貪污|收賄|圖利|掏空|背信|內線|偽造|偽鈔|變造|假冒|冒用|盜刷|盜用|個資|駭客|勒索病毒|起訴|偵辦|偵查|搜索|約談|羈押|收押|交保|通緝|落網|到案|逮捕|查獲|破獲|查緝|查扣|移送|判刑|判決|定讞|求刑|犯|嫌|警方|員警|警察|刑事|刑警|檢方|檢警|地檢|調查局|海巡|移民署|消防|救護|搜救|溺|墜|罹難|傷亡|死傷|身亡|致死|喪命|奪命|縱火|火警|火災|肇事|肇逃|酒駕|毒駕|車禍|事故|失蹤|協尋|走失|失聯|襲警|拒檢|拒捕|臨檪|臨檢|攔查|路檢|掃蕩|掃黑|肅竊|取締|落水|中毒|外洩|不法|違法|非法|犯罪|刑案|治安|報案|110|165/;
 
+const NON_EVENT_LANDING_RE = /查詢系統|管理資訊系統|資訊系統|資訊網站|全球資訊網|清冊|資料查詢/;
+const SPECIFIC_NON_EVENT_TITLE_RE = /環保稽查處分管制系統/;
+const EVENT_ACTION_RE = /駭客|(?:個資|資料)?外洩|攻擊|破獲|查獲|逮捕|落網|起訴|下架|回收|裁罰|偷排|食物中毒|群聚|確診|火警|車禍|命案|殺人|砍人|詐騙|毒品/;
+const ENTERTAINMENT_RE = /劇透|劇情|懶人包|追劇|大結局|第\s*[0-9０-９]+(?:\s*[-–—~至到]\s*[0-9０-９]+)?\s*集|第\s*[一二三四五六七八九十百兩]+\s*集|分集劇情|線上看|預告片/;
+const AIR_QUALITY_REFERENCE_RE = /(?:空氣品質指數|空氣品質).{0,12}(?:AQI|空氣污染)|\bAQI\b.{0,12}空氣污染/i;
+
+function sourceText(source) {
+  if (!source) return "";
+  if (typeof source === "string") return source;
+  return [
+    source.name,
+    source.aggregatorName,
+    source.publisher,
+    source.source,
+    source.query,
+  ].filter(Boolean).join(" ");
+}
+
+export function isNonEventNoise(item) {
+  const title = String(item?.title || "");
+  const source = sourceText(item?.source);
+  const text = `${title} ${source}`;
+  if (ENTERTAINMENT_RE.test(title)) return true;
+  if (SPECIFIC_NON_EVENT_TITLE_RE.test(title)) return true;
+  if (EVENT_ACTION_RE.test(title)) return false;
+  if (NON_EVENT_LANDING_RE.test(title)) return true;
+  if (/\bIQAir\b/i.test(text)) return true;
+  if (AIR_QUALITY_REFERENCE_RE.test(title)) return true;
+  return false;
+}
+
 export function isPoliceRelevant(title, description) {
   const text = String(title || "") + " " + String(description || "");
   // 英文警政關鍵字（EN 來源靠此通過；POLICE_RE 為中文導向，對英文內容全 miss）。
@@ -116,6 +147,7 @@ const TOPIC_RE = {
 };
 
 export function isRelevantNewsItem(item) {
+  if (isNonEventNoise(item)) return false;
   const topicRe = TOPIC_RE[item?.hint];
   if (topicRe) return topicRe.test(String(item?.title || "") + " " + String(item?.description || ""));
   return isPoliceRelevant(item?.title, item?.description);
