@@ -193,7 +193,7 @@ function ntd(price) {
   return Number.isFinite(n) ? `NT$${n.toLocaleString("en-US")}` : `NT$${price}`;
 }
 
-function riskByPrice(price) {
+export function riskByPrice(price) {
   const n = Number(price);
   if (!Number.isFinite(n)) return "low";
   if (n >= 1_000_000_000) return "critical";
@@ -202,14 +202,14 @@ function riskByPrice(price) {
   return "low";
 }
 
-function policeNewsRisk(title, content) {
+export function policeNewsRisk(title, content) {
   const text = `${title || ""} ${content || ""}`;
   if (/槍擊|爆裂物|炸彈|殺人|重大刑案|毒駕|販毒|製毒|羈押/.test(text)) return "high";
   if (/詐欺|毒品|查緝|查獲|竊盜|搶奪|強盜|婦幼|酒駕|攔阻/.test(text)) return "medium";
   return "low";
 }
 
-function drugCrimeRisk(weight, suspects) {
+export function drugCrimeRisk(weight, suspects) {
   const grams = Number(weight);
   const people = Number(suspects);
   if ((Number.isFinite(grams) && grams >= 1000) || (Number.isFinite(people) && people >= 5)) return "high";
@@ -217,13 +217,13 @@ function drugCrimeRisk(weight, suspects) {
   return "low";
 }
 
-function assemblyRisk(category, route) {
+export function assemblyRisk(category, route) {
   const text = `${category || ""} ${route || ""}`;
   if (/遊行|車隊|道路|封閉|管制/.test(text)) return "medium";
   return "low";
 }
 
-function enforcementRisk(text, speedLimit) {
+export function enforcementRisk(text, speedLimit) {
   const n = Number(String(speedLimit || "").replace(/\D/g, ""));
   const s = String(text || "");
   if (/闖紅燈|酒駕|逆向|危險|人行道|紅燈/.test(s)) return "medium";
@@ -243,7 +243,7 @@ function numericCell(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function coordOrCounty(county, { lat, lng, text } = {}) {
+export function coordOrCounty(county, { lat, lng, text } = {}) {
   const latitude = Number(lat);
   const longitude = Number(lng);
   if (
