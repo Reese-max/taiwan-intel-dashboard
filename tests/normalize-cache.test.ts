@@ -43,11 +43,25 @@ describe("normalize cross-run cache", () => {
     const priorById = new Map(
       items.map((it) => {
         const id = eventIdFor("domestic", it.link);
-        return [id, { id, title: it.title, riskLevel: "medium", scope: "domestic", aiTopic: "舊事件主題", source: { name: "自由時報" } }];
+        return [
+          id,
+          {
+            id,
+            title: it.title,
+            region: "境外",
+            lat: -33.8688,
+            lng: 151.2093,
+            riskLevel: "medium",
+            scope: "domestic",
+            aiTopic: "舊事件主題",
+            source: { name: "自由時報" },
+          },
+        ];
       }),
     );
     const out = await normalizeDomesticNews(items, { max: 250, priorById });
     expect(out.length).toBe(2);
     expect(out.every((e: { aiTopic?: string }) => e.aiTopic === "舊事件主題")).toBe(true);
+    expect(out.every((e: { region?: string; lat?: number | null; lng?: number | null }) => e.region === "全國" && e.lat === null && e.lng === null)).toBe(true);
   });
 });

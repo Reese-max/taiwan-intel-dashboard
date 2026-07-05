@@ -111,8 +111,8 @@ describe("normalizeDomesticNews 全批失敗可見性（A3）", () => {
             category: "治安",
             riskLevel: "low",
             region: "台北市",
-            lat: 25.03,
-            lng: 121.56,
+            lat: -33.8688,
+            lng: 151.2093,
             entities: ["A"],
             topic: "警政事件",
             sentiment: "negative",
@@ -125,6 +125,13 @@ describe("normalizeDomesticNews 全批失敗可見性（A3）", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const out = await normalizeDomesticNews([item(1)], { max: 10, batchSize: 2, concurrency: 2 });
     expect(out.length).toBe(1);
+    expect(out[0].region).toBe("臺北市");
+    expect(out[0].lat).toBeCloseTo(25.0375, 4);
+    expect(out[0].lng).toBeCloseTo(121.5637, 4);
+    expect(out[0].locationPrecision).toBe("city");
+    expect(out[0].locationNote).not.toContain("LLM");
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.messages.map((m: { content: string }) => m.content).join("\n")).not.toContain("lat, lng");
     expect(domesticNormalizeFailed()).toBe(false);
     expect(warn).not.toHaveBeenCalled();
     expect(error).not.toHaveBeenCalled();

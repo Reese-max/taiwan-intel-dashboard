@@ -3,8 +3,9 @@
 //  - summarize：國內/國際事件 → 每日情勢摘要段落
 // Provider 中性：優先讀 LLM_*，未設則 fallback 回 NVIDIA_*（向後相容）。
 // 例如 MiniMax：LLM_BASE_URL=https://api.minimax.io/v1、LLM_MODEL=MiniMax-M2。
-// 座標為 LLM 推估（非原始資料），呼叫端需在 provenance 誠實標註。
+// 國際座標為 LLM 推估；國內新聞座標改用縣市中心查表（皆非原始精準座標）。
 
+import { countyCoordFromAddr } from "./coords.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
 import { selectDiverseByCategory } from "./intl-accumulate.mjs";
 
@@ -346,6 +347,22 @@ export async function normalizeInternational(
 export const TW_CATEGORIES = ["治安", "社會", "交通", "災防", "反詐", "食安", "衛生", "環境", "資安"];
 const clampTwCat = (c) => (TW_CATEGORIES.includes(c) ? c : "社會");
 
+function domesticCountyLocation(region) {
+  return countyCoordFromAddr(region) || { region: "全國", lat: null, lng: null };
+}
+
+function applyDomesticCountyLocation(ev) {
+  const loc = domesticCountyLocation(ev?.region);
+  return {
+    ...ev,
+    region: loc.region,
+    lat: loc.lat,
+    lng: loc.lng,
+    locationPrecision: loc.lat != null && loc.lng != null ? "city" : "unknown",
+    locationNote: loc.lat != null && loc.lng != null ? "依新聞地區推論，非精準事發地址" : undefined,
+  };
+}
+
 // 單批正規化（≤ batchSize 則）。idx 對應到傳入的 batchItems。
 async function normalizeNewsBatch(items) {
   const listing = items
@@ -364,7 +381,6 @@ ${listing}
 - category: 必為其一 ${JSON.stringify(TW_CATEGORIES)}
 - riskLevel: 必為其一 ${JSON.stringify(RISKS)}（依事件嚴重度）
 - region: 事件發生的台灣縣市（中文，如「臺北市」「高雄市」；無法判斷填「全國」）
-- lat, lng: 該縣市的概略經緯度（你的最佳估計，浮點數；全國填台灣中心 23.8,120.9）
 - entities: 此事件可跨則比對的具名實體陣列（精簡專名：人名/化名、機關分局、地檢署、路名/地標、集團/園區名等；最多 5 個；無則 []）
 - topic: 此事件的「具體事件/故事線」短描述（10-18 字，能跨來源辨識同一起事件，如「柬埔寨人口販運詐騙集團案」；非分類，是這一則的具體題目）
 - sentiment: 事件情緒傾向（必為其一 ["negative","neutral","positive","mixed"]）
@@ -387,14 +403,10 @@ ${listing}
   for (const o of Array.isArray(arr) ? arr : []) {
     const it = items[o.idx];
     if (!it) continue;
-    events.push({
+    events.push(applyDomesticCountyLocation({
       id: `twnews-${slug(it.link, o.idx)}`,
       title: o.title_zh || it.title,
       region: o.region || "全國",
-      lat: typeof o.lat === "number" ? o.lat : undefined,
-      lng: typeof o.lng === "number" ? o.lng : undefined,
-      locationPrecision: inferredLocationPrecision("domestic", o.region, o.lat, o.lng),
-      locationNote: "LLM 依新聞內容推估位置，非原始精準座標",
       timestamp: toIso(it.pubDate),
       category: clampTwCat(o.category),
       scope: "domestic",
@@ -405,7 +417,7 @@ ${listing}
       sentiment: clampSentiment(o.sentiment),
       threatActors: cleanActors(o.threatActors),
       source: deriveNewsProvenance(it, { fetchedAt, model }),
-    });
+    }));
   }
   return events;
 }
@@ -466,7 +478,8 @@ export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, 
   }
   const seen = new Set();
   const merged = [];
-  for (const ev of [...reused, ...results.flat()]) {
+  for (const raw of [...reused, ...results.flat()]) {
+    const ev = raw ? applyDomesticCountyLocation(raw) : raw;
     if (!ev || seen.has(ev.id)) continue;
     seen.add(ev.id);
     merged.push(ev);
