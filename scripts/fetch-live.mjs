@@ -29,6 +29,7 @@ import { normalizeInternational, normalizeDomesticNews, summarize, respondedMode
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
+import { validateEventContract } from "./lib/event-contract.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -412,7 +413,18 @@ async function run() {
 
   const domesticEvents = [...quakeEvents, ...warningEvents, ...tenderEvents, ...policeEvents, ...newsEvents].sort(byTimeDesc);
   if (domesticEvents.length) {
-    writeJson("domestic.json", domesticEvents);
+    const { valid, invalid } = validateEventContract(domesticEvents);
+    if (invalid.length) {
+      console.error(
+        `[合約] domestic.json：${invalid.length}/${domesticEvents.length} 筆不符 IntelEvent 契約，已剔除（範例 ${invalid[0].id}: ${invalid[0].reason}）`,
+      );
+    }
+    if (!valid.length) {
+      console.error("[合約] domestic.json 全部事件不符契約，疑似 mapper 欄位漂移；保留舊 domestic.json，本輪標記失敗。");
+      process.exitCode = 1;
+    } else {
+      writeJson("domestic.json", valid);
+    }
   } else {
     console.warn("國內無任何事件，保留舊 domestic.json");
   }
@@ -447,7 +459,18 @@ async function run() {
       ? []
       : oldIntl;
   if (intlOk) {
-    writeJson("international.json", intlEvents);
+    const { valid, invalid } = validateEventContract(intlEvents);
+    if (invalid.length) {
+      console.error(
+        `[合約] international.json：${invalid.length}/${intlEvents.length} 筆不符 IntelEvent 契約，已剔除（範例 ${invalid[0].id}: ${invalid[0].reason}）`,
+      );
+    }
+    if (!valid.length) {
+      console.error("[合約] international.json 全部事件不符契約，疑似 mapper 欄位漂移；保留舊 international.json，本輪標記失敗。");
+      process.exitCode = 1;
+    } else {
+      writeJson("international.json", valid);
+    }
   } else if (dropStale(status.international)) {
     writeJson("international.json", []);
     console.warn("國際本次未選（EXCLUSIVE），清空 international.json");
