@@ -133,10 +133,117 @@ function warningFixture() {
   };
 }
 
-function makeMockFetch(options: { cwaOk?: boolean; cwaWarningsOk?: boolean } = {}) {
+function mofaRssFixture() {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>外交部領事事務局 旅遊警示</title>
+    <item>
+      <title><![CDATA[第四級：紅色儘速離境 - 加薩走廊 -]]></title>
+      <link>https://www.boca.gov.tw/sp-trwa-content-1-red.html</link>
+      <description><![CDATA[紅色警示測試摘要]]></description>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title><![CDATA[第三級：橙色避免前往 - 以色列 - Israel]]></title>
+      <link>https://www.boca.gov.tw/sp-trwa-content-1-orange.html</link>
+      <description><![CDATA[橙色警示測試摘要]]></description>
+      <pubDate>Sun, 05 Jul 2026 01:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title><![CDATA[第二級：黃色注意 - 智利 - Chile]]></title>
+      <link>https://www.boca.gov.tw/sp-trwa-content-1-yellow.html</link>
+      <description><![CDATA[黃色警示測試摘要]]></description>
+      <pubDate>Sun, 05 Jul 2026 02:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>`;
+}
+
+function futureIso(hours = 6) {
+  return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+}
+
+function ncdrCapFixture({ expires = futureIso(), identifier = "ncdr-flood-test" } = {}) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>${identifier}</identifier>
+  <sender>wra@example.gov.tw</sender>
+  <sent>2026-07-06T23:23:47+08:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <scope>Public</scope>
+  <info>
+    <language>zh-TW</language>
+    <category>Met</category>
+    <event>淹水</event>
+    <urgency>Immediate</urgency>
+    <severity>Severe</severity>
+    <certainty>Observed</certainty>
+    <senderName>經濟部水利署</senderName>
+    <headline>南投縣水里鄉淹水示警</headline>
+    <description>南投縣水里鄉低窪地區已有淹水情形，請民眾注意安全。</description>
+    <instruction>請避開低窪地區。</instruction>
+    <web>https://alerts.ncdr.nat.gov.tw/example/flood</web>
+    <effective>2026-07-06T23:23:47+08:00</effective>
+    <expires>${expires}</expires>
+    <area>
+      <areaDesc>南投縣水里鄉</areaDesc>
+      <geocode>
+        <valueName>profile:CAP-TWP:county</valueName>
+        <value>10008</value>
+      </geocode>
+    </area>
+  </info>
+</alert>`;
+}
+
+const ncdrCapHref = "https://alerts.ncdr.nat.gov.tw/Capstorage/test/flood.cap";
+
+function ncdrAtomFixture() {
+  return {
+    entry: [
+      {
+        id: "flood",
+        title: "淹水",
+        updated: "2026-07-06T23:23:47+08:00",
+        author: { name: "測試機關" },
+        link: { "@rel": "alternate", "@href": ncdrCapHref },
+        summary: { "@type": "html", "#text": "淹水-摘要" },
+        category: { "@term": "淹水" },
+        status: "Actual",
+        msgType: "Alert",
+      },
+      {
+        id: "water-outage",
+        title: "停水",
+        updated: "2026-07-06T23:20:00+08:00",
+        link: { "@rel": "alternate", "@href": "https://alerts.ncdr.nat.gov.tw/Capstorage/test/water.cap" },
+        category: { "@term": "停水" },
+        status: "Actual",
+        msgType: "Alert",
+      },
+      {
+        id: "fire-cancel",
+        title: "火災",
+        updated: "2026-07-06T23:10:00+08:00",
+        link: { "@rel": "alternate", "@href": "https://alerts.ncdr.nat.gov.tw/Capstorage/test/cancel.cap" },
+        category: { "@term": "火災" },
+        status: "Actual",
+        msgType: "Cancel",
+      },
+    ],
+  };
+}
+
+function makeMockFetch(
+  options: { cwaOk?: boolean; cwaWarningsOk?: boolean; mofaOk?: boolean; ncdrOk?: boolean } = {},
+) {
   const unexpected: UnexpectedFetch[] = [];
   const cwaOk = options.cwaOk ?? true;
   const cwaWarningsOk = options.cwaWarningsOk ?? true;
+  const mofaOk = options.mofaOk ?? true;
+  const ncdrOk = options.ncdrOk ?? true;
   const mockFetch = vi.fn(async (input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     if (url.includes("/datastore/E-A0015-001")) {
@@ -146,6 +253,17 @@ function makeMockFetch(options: { cwaOk?: boolean; cwaWarningsOk?: boolean } = {
     if (url.includes("/datastore/W-C0033-001")) {
       if (!cwaWarningsOk) return new Response("CWA warning failure", { status: 500 });
       return Response.json(warningFixture());
+    }
+    if (url === "https://www.boca.gov.tw/sp-trwa-rss-1.xml") {
+      if (!mofaOk) return new Response("MOFA RSS failure", { status: 500 });
+      return new Response(mofaRssFixture(), { headers: { "content-type": "application/rss+xml" } });
+    }
+    if (url === "https://alerts.ncdr.nat.gov.tw/JSONAtomFeed.ashx") {
+      if (!ncdrOk) return new Response("NCDR atom failure", { status: 500 });
+      return Response.json(ncdrAtomFixture());
+    }
+    if (url === ncdrCapHref) {
+      return new Response(ncdrCapFixture(), { headers: { "content-type": "application/xml" } });
     }
     unexpected.push({ url, status: 500 });
     return new Response("unexpected fetch blocked by test", { status: 500 });
@@ -272,6 +390,87 @@ describe("fetch-live pipeline integration (CWA)", () => {
       expect(provenance.pipeline.cwaWarnings.ok).toBe(false);
       const domestic = readJsonIfExists(join(dataDir, "domestic.json"));
       expect(domestic === null || (Array.isArray(domestic) && domestic.length === 0)).toBe(true);
+      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
+    },
+    60_000,
+  );
+});
+
+describe("fetch-live pipeline integration (MOFA + NCDR)", () => {
+  it(
+    "writes MOFA travel warnings and NCDR CAP alerts without touching the real network",
+    async () => {
+      const dataDir = setupEnv();
+      process.env.SOURCES = "cwa,mofa,ncdr";
+      const { unexpected } = makeMockFetch();
+      const run = await importRun();
+
+      await expect(run()).resolves.toBeUndefined();
+
+      const provenance = readJson(join(dataDir, "provenance.json"));
+      expect(provenance.pipeline.mofa).toMatchObject({ ok: true, count: 3 });
+      expect(provenance.pipeline.ncdr).toMatchObject({
+        ok: true,
+        raw: 3,
+        whitelisted: 2,
+        kept: 1,
+        skippedCancel: 1,
+        failedDetail: 0,
+      });
+      expect(provenance.pipeline.ncdr.excludedCategory).toMatchObject({ 停水: 1 });
+
+      const domestic = readJson(join(dataDir, "domestic.json"));
+      const domesticContract = validateEventContract(domestic);
+      expect(domesticContract.invalid).toEqual([]);
+      expect(domesticContract.valid).toHaveLength(domestic.length);
+      const ncdrEvent = domestic.find((event: any) => event.id === "ncdr-ncdr-flood-test");
+      expect(ncdrEvent).toMatchObject({
+        id: expect.stringMatching(/^ncdr-/),
+        title: "南投縣水里鄉淹水示警",
+        category: "災防",
+        scope: "domestic",
+        riskLevel: "high",
+        region: "南投縣",
+        source: {
+          datasetId: "ncdr-cap-alert",
+          recordRef: "ncdr-flood-test",
+        },
+      });
+
+      const international = readJson(join(dataDir, "international.json"));
+      const internationalContract = validateEventContract(international);
+      expect(internationalContract.invalid).toEqual([]);
+      expect(internationalContract.valid).toHaveLength(international.length);
+      const mofaEvents = international.filter((event: any) => event.source?.datasetId === "mofa-travel-warning");
+      expect(mofaEvents).toHaveLength(3);
+      expect(mofaEvents.every((event: any) => event.scope === "international")).toBe(true);
+      expect(mofaEvents.find((event: any) => event.region === "加薩走廊")?.riskLevel).toBe("critical");
+      expect(mofaEvents.find((event: any) => event.region === "以色列")?.riskLevel).toBe("high");
+      expect(mofaEvents.find((event: any) => event.region === "智利")?.riskLevel).toBe("medium");
+      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
+    },
+    60_000,
+  );
+
+  it(
+    "fails soft when NCDR atom fetch returns 500 while CWA still succeeds",
+    async () => {
+      const dataDir = setupEnv();
+      process.env.SOURCES = "cwa,ncdr";
+      const { unexpected } = makeMockFetch({ ncdrOk: false });
+      const run = await importRun();
+
+      await expect(run()).resolves.toBeUndefined();
+
+      const provenance = readJson(join(dataDir, "provenance.json"));
+      expect(provenance.pipeline.ncdr.ok).toBe(false);
+      expect(provenance.pipeline.ncdr.error).toContain("HTTP 500");
+      expect(provenance.pipeline.cwa.ok).toBe(true);
+      expect(provenance.pipeline.cwaWarnings.ok).toBe(true);
+      const domestic = readJson(join(dataDir, "domestic.json"));
+      expect(domestic.some((event: any) => event.source?.datasetId === "E-A0015-001")).toBe(true);
+      expect(domestic.some((event: any) => event.source?.datasetId === "ncdr-cap-alert")).toBe(false);
+      expect(validateEventContract(domestic).invalid).toEqual([]);
       expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
     },
     60_000,
