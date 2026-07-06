@@ -23,6 +23,7 @@ import { applySearchSubnet } from "./search";
 import { loadTriageAcked, saveTriageAcked } from "./utils/triage";
 import { corroborationOf } from "./utils/corroboration";
 import { collapseSameIncident } from "./utils/collapse";
+import { stalenessNotice } from "./utils/staleness";
 
 const DEFAULT_SINCE_DAYS = 3;
 const REFRESH_MS = 300000;
@@ -479,10 +480,25 @@ function renderDataFreshness(s: AiSummary | null): void {
   el.title = `資料管線最後生成時間：${d.toLocaleString("zh-TW", { hour12: false })}`;
 }
 
+function renderStalenessBanner(generatedAt: string | undefined): void {
+  const existing = document.querySelector<HTMLDivElement>(".stale-banner");
+  const notice = stalenessNotice(generatedAt, Date.now());
+  if (!notice) {
+    existing?.remove();
+    return;
+  }
+  const banner = existing ?? document.createElement("div");
+  banner.className = "stale-banner";
+  banner.setAttribute("role", "status");
+  banner.innerHTML = `⚠️ ${esc(notice)}`;
+  if (!existing) document.querySelector(".topbar")?.after(banner);
+}
+
 void loadSummary().then((s) => {
   summary = s;
   renderAiBrief(document.getElementById("aibrief")!, summary, getState().scope);
   renderDataFreshness(s);
+  renderStalenessBanner(s?.generatedAt);
   // 摘要含 clusterSummaries → 重渲染一次讓 TopClusters/聚焦群標題帶上群摘要。
   void refresh();
 });
@@ -491,6 +507,7 @@ setInterval(() => {
   void fetch("./data/summary.json")
     .then((res) => (res.ok ? (res.json() as Promise<AiSummary>) : null))
     .then((data) => {
+      renderStalenessBanner(data?.generatedAt);
       if (!data?.generatedAt || data.generatedAt === lastGeneratedAt) return;
       lastGeneratedAt = data.generatedAt;
       const scope = getState().scope;

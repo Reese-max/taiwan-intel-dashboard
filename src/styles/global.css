@@ -102,9 +102,23 @@ h4 {
   background: #34d399;
   box-shadow: 0 0 6px rgba(52, 211, 153, 0.5);
 }
+.stale-banner {
+  margin: 12px 24px 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(245, 184, 32, 0.55);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(254, 243, 199, 0.94), rgba(253, 230, 138, 0.88));
+  color: #3f2f05;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
 @media (max-width: 640px) {
   .data-freshness {
     display: none;
+  }
+  .stale-banner {
+    margin: 10px 10px 0;
   }
 }
 .tabs button {
