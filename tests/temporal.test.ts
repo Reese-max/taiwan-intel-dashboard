@@ -56,3 +56,15 @@ describe("applyTemporal", () => {
     expect(result[1]).toMatchObject({ id: "old", temporal: "historical" });
   });
 });
+
+describe("temporalStateFor — 司法判決 category（judicial 源復活銜接）", () => {
+  const NOW = Date.parse("2026-07-07T00:00:00Z");
+  it("category 司法判決 一律標 judicial（標題無判決字眼也要標）", () => {
+    expect(
+      temporalStateFor(
+        { title: "公共危險 酒後駕車（臺北市）", category: "司法判決", timestamp: "2026-07-01T00:00:00Z" },
+        { now: NOW },
+      ),
+    ).toBe("judicial");
+  });
+});
