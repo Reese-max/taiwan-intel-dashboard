@@ -28,7 +28,16 @@ import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/i
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
 import { mapBulkNews, titleKey as bulkTitleKey, isRelevantNewsItem } from "./lib/news-bulk.mjs";
 import { buildNewsSourceContribution, eventFeedLabel, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
-import { normalizeInternational, normalizeDomesticNews, summarize, respondedModel, intlNormalizeFailed, domesticNormalizeFailed } from "./lib/nvidia.mjs";
+import {
+  normalizeInternational,
+  normalizeDomesticNews,
+  summarize,
+  respondedModel,
+  intlNormalizeFailed,
+  domesticNormalizeFailed,
+  lastIntlNormalizeSkippedBatches,
+  lastDomesticNormalizeSkippedBatches,
+} from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
@@ -316,6 +325,7 @@ async function run() {
         ok: true,
         // 全批失敗（有新項卻零 LLM 產出）＝管線級故障：本輪只剩快取重用，需告警追查。
         normalizeFailed: intlNormalizeFailed(),
+        ...(lastIntlNormalizeSkippedBatches > 0 ? { normalizeSkippedBatches: lastIntlNormalizeSkippedBatches } : {}),
         count: intl.length,
         rawCount: rss.items.length,
         okFeeds,
@@ -425,6 +435,7 @@ async function run() {
       status.twnews = {
         ok: true,
         normalizeFailed: domesticNormalizeFailed(),
+        ...(lastDomesticNormalizeSkippedBatches > 0 ? { normalizeSkippedBatches: lastDomesticNormalizeSkippedBatches } : {}),
         count: twnews.length,
         enriched: enriched.length,
         bulk: bulk.length,

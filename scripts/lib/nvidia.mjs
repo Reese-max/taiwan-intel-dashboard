@@ -21,8 +21,10 @@ const RISK_ORDER = { low: 0, medium: 1, high: 2, critical: 3 };
 // 單批失敗屬可容忍的偶發（graceful 放棄）；全批失敗＝管線級故障，呼叫端應標示告警。
 let lastIntlNormalizeFailed = false;
 export const intlNormalizeFailed = () => lastIntlNormalizeFailed;
+export let lastIntlNormalizeSkippedBatches = 0;
 let lastDomesticNormalizeFailed = false;
 export const domesticNormalizeFailed = () => lastDomesticNormalizeFailed;
+export let lastDomesticNormalizeSkippedBatches = 0;
 
 const clampRisk = (r) => (RISKS.includes(r) ? r : "medium");
 const clampCat = (c) => (CATEGORIES.includes(c) ? c : "其他");
@@ -353,8 +355,11 @@ export async function normalizeInternational(
     batchSize = Math.max(8, Number(process.env.INTL_NORMALIZE_BATCH) || 30),
     concurrency = Math.max(1, Number(process.env.INTL_NORMALIZE_CONCURRENCY) || 4),
     priorById = null,
+    budgetMs = Math.max(60e3, Number(process.env.INTL_NORMALIZE_BUDGET_MS) || 15 * 60e3),
   } = {}
 ) {
+  lastIntlNormalizeFailed = false;
+  lastIntlNormalizeSkippedBatches = 0;
   if (!items.length) return [];
   // 入口標題去重（多查詢／多源大量重複同一則 → 省 LLM、避免重複輸出）。
   const seenTitle = new Set();
@@ -372,28 +377,38 @@ export async function normalizeInternational(
   const { reused, fresh } = partitionByCache(deduped, "international", priorById, { maxAgeMs });
 
   let llmEvents = [];
-  lastIntlNormalizeFailed = false;
+  let skipped = 0;
   if (fresh.length) {
     if (fresh.length <= batchSize) {
       llmEvents = await normalizeInternationalBatch(fresh, { max });
     } else {
       const batches = [];
       for (let i = 0; i < fresh.length; i += batchSize) batches.push(fresh.slice(i, i + batchSize));
+      const deadline = Date.now() + budgetMs;
       // 每批挑 top（總候選量約 max 的 2 倍，最後再全域排序取 max）。
       const perBatch = Math.max(4, Math.ceil((max * 2) / batches.length));
       // 推理模型偶發截斷／解析失敗 → 單批重試一次，仍失敗才放棄該批（不拖垮整體）。
       // 放棄時必留痕（批次序號＋錯誤頭）——靜默吞錯曾造成「正規化 0 筆、log 零錯誤」的啞死。
-      const runBatch = (b, i) =>
-        normalizeInternationalBatch(b, { max: perBatch }).catch(() =>
+      const runBatch = (b, i) => {
+        if (Date.now() > deadline) {
+          skipped++;
+          return [];
+        }
+        return normalizeInternationalBatch(b, { max: perBatch }).catch(() =>
           normalizeInternationalBatch(b, { max: perBatch }).catch((e) => {
             console.warn(`國際正規化批次 ${i + 1}/${batches.length} 重試仍失敗，放棄該批：${String(e?.message || e).slice(0, 200)}`);
             return [];
-          })
+          }),
         );
+      };
       llmEvents = (await mapLimit(batches, concurrency, runBatch)).flat();
+      lastIntlNormalizeSkippedBatches = skipped;
+      if (skipped > 0) {
+        console.warn(`[預算] 國際正規化 ${skipped}/${batches.length} 批因時間預算跳過（結果部分完成，下輪由快取續跑）`);
+      }
     }
     // 全批失敗（有新項卻零產出）＝管線級故障，非單批偶發；標旗供呼叫端/稽核判讀。
-    if (!llmEvents.length) {
+    if (!llmEvents.length && skipped === 0) {
       lastIntlNormalizeFailed = true;
       console.error(`國際正規化全批失敗：fresh ${fresh.length} 筆 → 0 筆產出（LLM 端點或解析全面異常）`);
     }
@@ -522,8 +537,18 @@ async function mapLimit(items, limit, fn) {
 }
 
 
-export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, concurrency = 4, priorById = null } = {}) {
+export async function normalizeDomesticNews(
+  items,
+  {
+    max = 250,
+    batchSize = 12,
+    concurrency = 4,
+    priorById = null,
+    budgetMs = Math.max(60e3, Number(process.env.DOMESTIC_NORMALIZE_BUDGET_MS) || 15 * 60e3),
+  } = {},
+) {
   lastDomesticNormalizeFailed = false;
+  lastDomesticNormalizeSkippedBatches = 0;
   if (!items.length) return [];
   // 入口先依標題去重（Google News 多查詢＋直連媒體會大量重複同一則）→ 省 LLM、避免重複輸出。
   const seenTitle = new Set();
@@ -538,16 +563,27 @@ export async function normalizeDomesticNews(items, { max = 250, batchSize = 12, 
   const { reused, fresh } = partitionByCache(deduped, "domestic", priorById);
   const batches = [];
   for (let i = 0; i < fresh.length; i += batchSize) batches.push(fresh.slice(i, i + batchSize));
+  const deadline = Date.now() + budgetMs;
+  let skipped = 0;
   // 推理模型偶發截斷/解析失敗 → 單批重試一次，仍失敗才放棄該批（不拖垮整體）。
-  const runBatch = (b, i) =>
-    normalizeNewsBatch(b).catch(() =>
+  const runBatch = (b, i) => {
+    if (Date.now() > deadline) {
+      skipped++;
+      return [];
+    }
+    return normalizeNewsBatch(b).catch(() =>
       normalizeNewsBatch(b).catch((e) => {
         console.warn(`國內新聞正規化批次 ${i + 1}/${batches.length} 重試仍失敗，放棄該批：${String(e?.message || e).slice(0, 200)}`);
         return [];
       }),
     );
+  };
   const results = await mapLimit(batches, concurrency, runBatch);
-  if (fresh.length > 0 && results.flat().filter(Boolean).length === 0) {
+  lastDomesticNormalizeSkippedBatches = skipped;
+  if (skipped > 0) {
+    console.warn(`[預算] 國內新聞正規化 ${skipped}/${batches.length} 批因時間預算跳過（結果部分完成，下輪由快取續跑）`);
+  }
+  if (fresh.length > 0 && results.flat().filter(Boolean).length === 0 && skipped === 0) {
     lastDomesticNormalizeFailed = true;
     console.error(`國內新聞正規化全批失敗：fresh ${fresh.length} 筆 → 0 筆產出（LLM 端點或解析全面異常）`);
   }
