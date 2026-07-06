@@ -2318,5 +2318,9 @@ export async function fetchPolice({
     }
   });
 
+  if (!Object.values(substatus).some((s) => s.ok)) {
+    throw new Error("all police sources failed");
+  }
+
   return { events, substatus };
 }

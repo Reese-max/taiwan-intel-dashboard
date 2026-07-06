@@ -107,10 +107,18 @@ async function fetchJson(url, timeoutMs) {
 
 export async function fetchMissing({ timeoutMs = 20000 } = {}) {
   const fetchedAt = new Date().toISOString();
-  const [male, female] = await Promise.all([
-    fetchJson(MALE_URL, timeoutMs).catch(() => []),
-    fetchJson(FEMALE_URL, timeoutMs).catch(() => []),
+  const results = await Promise.allSettled([
+    fetchJson(MALE_URL, timeoutMs),
+    fetchJson(FEMALE_URL, timeoutMs),
   ]);
-  const records = [...(Array.isArray(male) ? male : []), ...(Array.isArray(female) ? female : [])];
+  const failures = results.filter((r) => r.status === "rejected");
+  if (failures.length === results.length) {
+    throw new Error(
+      `missing endpoints failed: ${failures
+        .map((r) => r.reason?.message || String(r.reason))
+        .join("; ")}`,
+    );
+  }
+  const records = results.flatMap((r) => (r.status === "fulfilled" && Array.isArray(r.value) ? r.value : []));
   return mapMissingEvents({ records, fetchedAt });
 }
