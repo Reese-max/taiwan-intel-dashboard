@@ -381,6 +381,9 @@ export async function run() {
       const rss = await fetchRssItems({ perFeed: 100, feeds: TW_NEWS_FEEDS, concurrency: 6 });
       twFeedStatus = rss.feedStatus;
       const gnHealth = googleNewsHealth(twFeedStatus);
+      if (!twFeedStatus.some((f) => f.ok)) {
+        throw new Error("all twnews RSS feeds failed");
+      }
       if (gnHealth.systemic) {
         console.warn(`[GN健康] 系統性異常：${gnHealth.gnOk}/${gnHealth.gnFeeds} GN feed 正常（okRate ${gnHealth.okRate}）`);
       }

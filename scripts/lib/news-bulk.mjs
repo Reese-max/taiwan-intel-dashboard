@@ -161,17 +161,16 @@ export function isNonEventNoise(item) {
   return false;
 }
 
-const FOREIGN_EXEMPT_CATS = new Set(["資安", "反詐", "食安"]);
 export function isForeignNonTaiwan(item) {
-  // 反詐（緬甸/柬埔寨詐騙園區、跨境詐騙手法）、食安（外國食材進口）、資安（全球 CVE）對台灣皆高度相關，一律保留。
-  if (FOREIGN_EXEMPT_CATS.has(item?.hint) || FOREIGN_EXEMPT_CATS.has(item?.category)) return false;
   const title = String(item?.title || "");
   const text = `${title} ${String(item?.description || "")} ${String(item?.summary || "")}`;
   if (CYBER_FOREIGN_EXEMPT_RE.test(text)) return false;
   // 只在「標題同時命中外國地名與天災/戰爭/大量傷亡語境」才視為純外國事件（高確定性，避免誤刪提及外國的台灣新聞）。
   if (!(FOREIGN_PLACE_RE.test(title) && FOREIGN_EVENT_CONTEXT_RE.test(title))) return false;
   // 全文任一台灣關聯標記 → 保留（如「台灣捐款委內瑞拉震災」「國人在日本罹難」）。
-  return !TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""));
+  if (TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""))) return false;
+  // 反詐/食安/資安來源通常保留跨境脈絡；但若標題已明確是純外國天災/戰爭/大量傷亡，仍應由相關性閘剔除。
+  return true;
 }
 
 export function isPoliceRelevant(title, description) {
