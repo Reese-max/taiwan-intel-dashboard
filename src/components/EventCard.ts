@@ -75,6 +75,12 @@ function eventContext(e: IntelEvent): string {
   return `<div class="event-context" aria-label="完整脈絡"><strong>完整脈絡</strong>${parts.join("")}</div>`;
 }
 
+function temporalBadge(temporal: IntelEvent["temporal"]): string {
+  if (temporal === "historical") return `<span class="temporal-badge temporal-historical">${esc("歷史資料")}</span>`;
+  if (temporal === "judicial") return `<span class="temporal-badge temporal-judicial">${esc("司法結果")}</span>`;
+  return "";
+}
+
 export function eventCard(
   e: IntelEvent,
   relatedCount = 0,
@@ -108,9 +114,10 @@ export function eventCard(
     : corroboration?.sources === 1 && isElevatedRisk
       ? `<span class="single-source-note" title="${esc("目前僅見單一來源，需人工查證")}">${esc("單一來源·待查證")}</span>`
       : "";
+  const temporal = temporalBadge(e.temporal);
   return `
     <article class="event-card" data-id="${esc(e.id)}">
-      <header>${riskBadge(e.riskLevel)} <span class="cat">${esc(e.category)}</span>
+      <header>${riskBadge(e.riskLevel)} <span class="cat">${esc(e.category)}</span>${temporal}
         <span class="region">${esc(e.region)}</span>${relationChip}${corroborationChip}${extraHeaderHtml}${rel}</header>
       <h3>${esc(e.title)}</h3>
       <p class="summary">${esc(stripHtml(e.summary))}</p>

@@ -32,6 +32,7 @@ import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
 import { validateEventContract, clampImplausibleTimestamps } from "./lib/event-contract.mjs";
+import { applyTemporal } from "./lib/temporal.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -181,6 +182,7 @@ async function run() {
   const dropStale = (st) => EXCLUSIVE && st?.skipped;
   const RETENTION_DAYS = Number(process.env.NEWS_RETENTION_DAYS) || 5;
   const ADVISORY_RETENTION_DAYS = Number(process.env.NEWS_ADVISORY_RETENTION_DAYS) || 30;
+  const TEMPORAL_HISTORICAL_DAYS = finiteRetentionDays(process.env.TEMPORAL_HISTORICAL_DAYS, 180);
   console.log(`本次來源：${SOURCES.join(", ")}${EXCLUSIVE ? "（EXCLUSIVE：未選來源不沿用舊快照）" : ""}`);
 
   // --- 國內：地震 + 天氣警特報 + 採購（互不影響）---
@@ -533,7 +535,16 @@ async function run() {
 
   const domesticClamp = clampImplausibleTimestamps([...quakeEvents, ...warningEvents, ...ncdrEvents, ...tenderEvents, ...policeEvents, ...newsEvents]);
   if (domesticClamp.clamped) console.warn(`[時間戳] 夾住 ${domesticClamp.clamped} 筆遠未來時間戳（疑來源解析錯誤，如民國→西元誤植）`);
-  const domesticEvents = domesticClamp.events.sort(byTimeDesc);
+  const domesticEvents = applyTemporal(domesticClamp.events.sort(byTimeDesc), { now: nowMs, historicalDays: TEMPORAL_HISTORICAL_DAYS });
+  const temporalCounts = domesticEvents.reduce(
+    (acc, event) => {
+      if (event.temporal === "historical") acc.historical++;
+      else if (event.temporal === "judicial") acc.judicial++;
+      return acc;
+    },
+    { historical: 0, judicial: 0 },
+  );
+  console.log(`[時效] historical ${temporalCounts.historical} 筆 / judicial ${temporalCounts.judicial} 筆`);
   if (domesticEvents.length) {
     const { valid, invalid } = validateEventContract(domesticEvents);
     if (invalid.length) {

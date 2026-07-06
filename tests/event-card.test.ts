@@ -125,4 +125,26 @@ describe("eventCard", () => {
     expect(html).toContain("單一來源·待查證");
     expect(html).not.toContain("corroboration-chip");
   });
+
+  it("renders temporal badges for historical and judicial events only", () => {
+    const base: IntelEvent = {
+      id: "temporal",
+      title: "測試事件",
+      region: "臺北市",
+      timestamp: "2026-06-27T00:00:00.000Z",
+      category: "治安",
+      scope: "domestic",
+      riskLevel: "medium",
+      summary: "摘要",
+      source: {
+        name: "來源A",
+        type: "news-rss",
+        fetchedAt: "2026-06-27T00:00:00.000Z",
+      },
+    };
+
+    expect(eventCard({ ...base, temporal: "historical" })).toContain("歷史資料");
+    expect(eventCard({ ...base, temporal: "judicial" })).toContain("司法結果");
+    expect(eventCard(base)).not.toContain("temporal-badge");
+  });
 });

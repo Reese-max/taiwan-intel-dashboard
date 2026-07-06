@@ -32,6 +32,7 @@ export interface IntelEvent {
   timestamp: string; // ISO8601
   category: string;
   categoryBasis?: string; // 分類來源標記：llm / rule:<類> / hint:<hint> / default
+  temporal?: "historical" | "judicial"; // 事件時效語義：歷史參考資料或司法結果報導
   scope: Scope;
   riskLevel: RiskLevel;
   summary: string;
