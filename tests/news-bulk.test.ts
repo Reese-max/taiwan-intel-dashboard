@@ -130,6 +130,16 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(mk("南投仁愛鄉土石流紅色警戒 對外道路坍方", "資安"))).toBe(false);
   });
 
+  it("食安 hint 涵蓋動物疫病爆發（農業部 feed 分診：H5N1 確診遭誤殺）", () => {
+    expect(isRelevantNewsItem(mk("屏東高樹蛋中雞確診H5N1高原病性禽流感，請業者落實各項生物安全工作", "食安"))).toBe(true);
+    expect(isRelevantNewsItem(mk("彰化雞場爆禽流感疫情 撲殺上萬隻蛋雞", "食安"))).toBe(true);
+    // 行政公告/知識文章仍須擋下（高精度：認事件詞，不認病名）。
+    expect(isRelevantNewsItem(mk("修正「豬瘟檢驗方法」，並自即日生效", "食安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("「Ｏ型口蹄疫東南亞株」之簡介與防治宣導單張", "食安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("紐西蘭產食用馬鈴薯輸入檢疫條件", "食安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("2026台北國際食品展「台灣館」盛大登場", "食安"))).toBe(false);
+  });
+
   it("災防 hint 用災害預警與事故傷亡關鍵字", () => {
     expect(isRelevantNewsItem(mk("南投仁愛鄉土石流紅色警戒 對外道路坍方", "災防"))).toBe(true);
     expect(isRelevantNewsItem(mk("台8線邊坡滑動預警 預防性封閉", "災防"))).toBe(true);
