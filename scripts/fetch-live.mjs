@@ -23,6 +23,7 @@ import {
   POLICE_TAIPEI_IDS,
 } from "./lib/fetch-police.mjs";
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
+import { googleNewsHealth } from "./lib/gn-health.mjs";
 import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
 import { mapBulkNews, titleKey as bulkTitleKey, isRelevantNewsItem } from "./lib/news-bulk.mjs";
@@ -367,6 +368,10 @@ async function run() {
     try {
       const rss = await fetchRssItems({ perFeed: 100, feeds: TW_NEWS_FEEDS, concurrency: 6 });
       twFeedStatus = rss.feedStatus;
+      const gnHealth = googleNewsHealth(twFeedStatus);
+      if (gnHealth.systemic) {
+        console.warn(`[GN健康] 系統性異常：${gnHealth.gnOk}/${gnHealth.gnFeeds} GN feed 正常（okRate ${gnHealth.okRate}）`);
+      }
       const okFeeds = twFeedStatus.filter((f) => f.ok && f.count).length;
       console.log(`台灣新聞 RSS：${rss.items.length} 則原文（${okFeeds}/${TW_NEWS_FEEDS.length} 來源有回）`);
       // 全量去重（標題）+ 警政相關性過濾（兩層共用同一標準）+ 依時間新到舊排序
@@ -426,6 +431,7 @@ async function run() {
         policeRelevant: policeUniq.length,
         rawUnique,
         categoryBasis,
+        gnHealth,
         sourceContribution: sourceContribution.rows,
         sourceContributionTotals: sourceContribution.totals,
         lowContributionFeeds: sourceContribution.lowContributionFeeds,

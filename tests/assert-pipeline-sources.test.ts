@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   assertInternationalFeedCoverage,
   assertRequiredPipelineSources,
+  warnOnGnSystemicFailure,
   warnOnNormalizeFailure,
 } from "../scripts/assert-pipeline-sources.mjs";
 
@@ -126,6 +127,39 @@ describe("warnOnNormalizeFailure", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const failed = warnOnNormalizeFailure({ twnews: { ok: true }, international: { ok: true } });
     expect(failed).toEqual([]);
+    expect(warn).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("warnOnGnSystemicFailure", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("warns when twnews gnHealth reports systemic failure", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warned = warnOnGnSystemicFailure({
+      twnews: { gnHealth: { gnFeeds: 10, gnOk: 4, okRate: 0.4, systemic: true } },
+    });
+
+    expect(warned).toBe(true);
+    expect(warn.mock.calls.some((c) => String(c[0]).includes("Google News 系統性異常"))).toBe(true);
+  });
+
+  it("stays silent when gnHealth is healthy", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warned = warnOnGnSystemicFailure({
+      twnews: { gnHealth: { gnFeeds: 10, gnOk: 10, okRate: 1, systemic: false } },
+    });
+
+    expect(warned).toBe(false);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("stays silent when gnHealth is missing", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warned = warnOnGnSystemicFailure({ twnews: { ok: true } });
+
+    expect(warned).toBe(false);
     expect(warn).not.toHaveBeenCalled();
   });
 });

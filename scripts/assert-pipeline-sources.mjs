@@ -59,6 +59,15 @@ export function warnOnNormalizeFailure(pipeline) {
   return failed;
 }
 
+export function warnOnGnSystemicFailure(pipeline) {
+  const gnHealth = pipeline?.twnews?.gnHealth;
+  if (gnHealth?.systemic !== true) return false;
+  console.warn(
+    `[GN健康] Google News 系統性異常：${gnHealth.gnOk}/${gnHealth.gnFeeds} GN feed 正常（okRate ${gnHealth.okRate}；provenance.pipeline.twnews.gnHealth.systemic=true）`,
+  );
+  return true;
+}
+
 export function readPipeline(path = "public/data/provenance.json") {
   const file = JSON.parse(readFileSync(path, "utf8"));
   return file.pipeline || {};
@@ -82,5 +91,6 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
     minRawItems: minInternationalRaw,
   });
   warnOnNormalizeFailure(pipeline);
+  warnOnGnSystemicFailure(pipeline);
   console.log(`Required pipeline sources ok: ${required.join(", ")}`);
 }

@@ -21,6 +21,25 @@ describe("fetch-rss retry", () => {
     expect(isRetriableFetchError(new Error("HTTP 403"))).toBe(false);
   });
 
+  it("GN URL 的 feedStatus 標記 gn true，非 GN feed 不輸出 gn", async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(xml, { status: 200 })));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRssItems({
+      feeds: [
+        { label: "GN 測試", url: "https://news.google.com/rss/search?q=test" },
+        feed,
+      ],
+      perFeed: 5,
+      timeoutMs: 100,
+      retryDelayMs: 0,
+    });
+
+    expect(result.feedStatus[0]).toMatchObject({ label: "GN 測試", ok: true, count: 1, gn: true });
+    expect(result.feedStatus[1]).toMatchObject({ label: feed.label, ok: true, count: 1 });
+    expect(result.feedStatus[1].gn).toBeUndefined();
+  });
+
   it("HTTP 5xx 第一次失敗時退避重試一次並回傳第二次成功結果", async () => {
     const fetchMock = vi
       .fn()
@@ -89,7 +108,7 @@ describe("fetch-rss fallback", () => {
     const result = await fetchRssItems({ feeds: [{ ...feed, fallbackUrl }], perFeed: 5, timeoutMs: 100, retryDelayMs: 0 });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(result.feedStatus[0]).toMatchObject({ ok: true, fallback: true, primaryError: "HTTP 403" });
+    expect(result.feedStatus[0]).toMatchObject({ ok: true, fallback: true, primaryError: "HTTP 403", gn: true });
     expect(result.items[0].sourceUrl).toBe(fallbackUrl);
   });
 

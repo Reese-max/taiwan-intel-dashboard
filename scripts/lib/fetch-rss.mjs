@@ -390,14 +390,19 @@ export async function fetchRssItems({ perFeed = 5, timeoutMs = 12000, feeds = FE
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, feeds.length) }, worker));
   const items = results.flatMap((r) => r.items);
-  const feedStatus = results.map((r) => ({
-    label: r.label,
-    ok: r.ok,
-    count: r.items.length,
-    advisory: r.advisory,
-    error: r.error,
-    fallback: r.fallback,
-    primaryError: r.primaryError,
-  }));
+  const feedStatus = results.map((r, idx) => {
+    const feed = feeds[idx];
+    const gn = isGoogleNewsUrl(feed?.url) || (r.fallback === true && isGoogleNewsUrl(feed?.fallbackUrl));
+    return {
+      label: r.label,
+      ok: r.ok,
+      count: r.items.length,
+      advisory: r.advisory,
+      error: r.error,
+      fallback: r.fallback,
+      primaryError: r.primaryError,
+      gn: gn || undefined,
+    };
+  });
   return { items, feedStatus };
 }
