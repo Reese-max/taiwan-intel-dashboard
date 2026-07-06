@@ -26,6 +26,7 @@ import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
 import { googleNewsHealth } from "./lib/gn-health.mjs";
 import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
+import { carryOver } from "./lib/carry-over.mjs";
 import { mapBulkNews, titleKey as bulkTitleKey, isRelevantNewsItem } from "./lib/news-bulk.mjs";
 import { buildNewsSourceContribution, eventFeedLabel, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
 import {
@@ -116,10 +117,18 @@ export function buildTwNewsEvents({
 } = {}) {
   const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
   const keep = (event) => shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now });
-  if (twnewsStatus?.ok && twnews.length) {
+  const hasFreshTwnews = twnewsStatus?.ok && twnews.length;
+  const carriedNews = carryOver({
+    status: hasFreshTwnews ? twnewsStatus : undefined,
+    fresh: twnews,
+    dropStale: () => dropStaleNews,
+    oldEvents: oldNews,
+    match: keep,
+  });
+  if (hasFreshTwnews) {
     const seen = new Set();
     const newsEvents = [];
-    for (const e of [...twnews, ...oldNews]) {
+    for (const e of [...carriedNews, ...oldNews]) {
       const k = newsDedupKey(e);
       if (k && seen.has(k)) continue;
       if (!keep(e)) continue; // 超過保留窗丟棄
@@ -128,8 +137,7 @@ export function buildTwNewsEvents({
     }
     return newsEvents;
   }
-  if (dropStaleNews) return [];
-  return oldNews.filter(keep); // 超過保留窗丟棄
+  return carriedNews; // 超過保留窗丟棄
 }
 
 export function buildCategoryBasisDistribution(events = []) {
@@ -464,26 +472,16 @@ export async function run() {
   // --- 國內快照（last-good carry-over：單源失敗則沿用舊快照中該源事件，保留舊 fetchedAt）---
   const oldDomestic = readOld("domestic.json");
   // 地震與天氣警特報同屬「災防」類，carry-over 必須依 datasetId 精準切分，避免互相吃到對方。
-  const quakeEvents = status.cwa?.ok
-    ? quakes
-    : dropStale(status.cwa)
-      ? []
-      : oldDomestic.filter((e) => e.source?.datasetId === "E-A0015-001");
-  const warningEvents = status.cwaWarnings?.ok
-    ? warnings
-    : dropStale(status.cwaWarnings)
-      ? []
-      : oldDomestic.filter((e) => e.source?.datasetId === "W-C0033-001");
-  const ncdrEvents = status.ncdr?.ok
-    ? ncdr
-    : dropStale(status.ncdr)
-      ? []
-      : oldDomestic.filter((e) => e.source?.datasetId === NCDR_DATASET_ID);
-  const tenderEvents = status.pcc?.ok
-    ? tenders
-    : dropStale(status.pcc)
-      ? []
-      : oldDomestic.filter((e) => e.category === "採購" && !isPoliceDomesticEvent(e));
+  const quakeEvents = carryOver({ status: status.cwa, fresh: quakes, dropStale, oldEvents: oldDomestic, match: "E-A0015-001" });
+  const warningEvents = carryOver({ status: status.cwaWarnings, fresh: warnings, dropStale, oldEvents: oldDomestic, match: "W-C0033-001" });
+  const ncdrEvents = carryOver({ status: status.ncdr, fresh: ncdr, dropStale, oldEvents: oldDomestic, match: NCDR_DATASET_ID });
+  const tenderEvents = carryOver({
+    status: status.pcc,
+    fresh: tenders,
+    dropStale,
+    oldEvents: oldDomestic,
+    match: (e) => e.category === "採購" && !isPoliceDomesticEvent(e),
+  });
   const why = (st) => (st?.skipped ? "本次未選" : "失敗");
   if (!status.cwa?.ok && quakeEvents.length) console.warn(`地震${why(status.cwa)}，沿用舊快照 ${quakeEvents.length} 筆`);
   if (!status.cwaWarnings?.ok && warningEvents.length)
@@ -514,10 +512,16 @@ export async function run() {
   let policeHourly = null;
   if (status.police?.ok) {
     const generalPccIds = new Set(tenderEvents.map((e) => e.id));
-    policeEvents = policeResult.events.filter((e) => {
-      if (!e.id.startsWith("pcc-police-")) return true;
-      const altId = e.id.replace("pcc-police-", "pcc-");
-      return !generalPccIds.has(altId);
+    policeEvents = carryOver({
+      status: status.police,
+      fresh: policeResult.events.filter((e) => {
+        if (!e.id.startsWith("pcc-police-")) return true;
+        const altId = e.id.replace("pcc-police-", "pcc-");
+        return !generalPccIds.has(altId);
+      }),
+      dropStale: () => false,
+      oldEvents: oldDomestic,
+      match: isPoliceDomesticEvent,
     });
     status.police.minimumPerHour = POLICE_HOURLY_MINIMUM;
     status.police.meetsHourlyMinimum = policeEvents.length >= POLICE_HOURLY_MINIMUM;
@@ -551,7 +555,13 @@ export async function run() {
       );
     }
   } else {
-    policeEvents = oldDomestic.filter(isPoliceDomesticEvent);
+    policeEvents = carryOver({
+      status: status.police,
+      fresh: policeResult.events,
+      dropStale: () => false,
+      oldEvents: oldDomestic,
+      match: isPoliceDomesticEvent,
+    });
     if (policeEvents.length) console.warn(`警政${why(status.police)}，沿用舊快照 ${policeEvents.length} 筆`);
   }
 
