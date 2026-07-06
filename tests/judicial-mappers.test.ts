@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mapJudicialEvents } from "../scripts/lib/fetch-judicial.mjs";
+import { mapJudicialEvents, fetchJudicialBulk } from "../scripts/lib/fetch-judicial.mjs";
 
 const FETCHED_AT = "2026-06-19T00:00:00.000Z";
 
@@ -56,5 +56,29 @@ describe("mapJudicialEvents", () => {
 
   it("returns empty for no cases", () => {
     expect(mapJudicialEvents({ cases: [], fetchedAt: FETCHED_AT })).toEqual([]);
+  });
+});
+
+describe("fetchJudicialBulk 全滅語義（靜默全敗家族修正）", () => {
+  it("全部查詢失敗 → throw（不可靜默回 ok）", async () => {
+    const failClient = { init: async () => {}, callTool: async () => { throw new Error("MCP boom"); } };
+    await expect(
+      fetchJudicialBulk({ url: "u", token: "t", queryCount: 3, clientFactory: () => failClient }),
+    ).rejects.toThrow(/全部 3 查詢失敗/);
+  });
+
+  it("部分成功 → 容忍單查詢失敗、正常回傳", async () => {
+    let n = 0;
+    const partialClient = {
+      init: async () => {},
+      callTool: async () => {
+        n++;
+        if (n === 1) return JSON.stringify({ hits: [] });
+        throw new Error("MCP boom");
+      },
+    };
+    await expect(
+      fetchJudicialBulk({ url: "u", token: "t", queryCount: 3, clientFactory: () => partialClient }),
+    ).resolves.toEqual([]);
   });
 });

@@ -319,6 +319,10 @@ export async function run() {
       });
       feedStatus = rss.feedStatus;
       const okFeeds = feedStatus.filter((f) => f.ok && f.count).length;
+      // 全 feed 失敗＝來源級故障，不可標 ok:true count:0（twnews/missing/police 同族修正）。
+      if (intlFeeds.length > 0 && okFeeds === 0) {
+        throw new Error(`國際 RSS 全數失敗（0/${intlFeeds.length} 來源有回）`);
+      }
       console.log(
         `RSS：${rss.items.length} 則原文（${okFeeds}/${intlFeeds.length} 來源有回；${feedStatus
           .map((f) => `${f.label}:${f.ok ? f.count : "X"}`)

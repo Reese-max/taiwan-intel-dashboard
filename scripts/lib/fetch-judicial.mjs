@@ -95,21 +95,35 @@ function pickQueries(queries, count, runSeed) {
   return out;
 }
 
-export async function fetchJudicialBulk({ url, token, perQuery = 30, queryCount = 12, runSeed = 0 }) {
+export async function fetchJudicialBulk({
+  url,
+  token,
+  perQuery = 30,
+  queryCount = 12,
+  runSeed = 0,
+  clientFactory = (u, t) => new McpClient(u, t), // 測試注入用
+}) {
   if (!url || !token) return [];
   const fetchedAt = new Date().toISOString();
-  const client = new McpClient(url, token);
+  const client = clientFactory(url, token);
   await client.init();
   const queries = pickQueries(JUDICIAL_QUERIES, queryCount, runSeed);
   const all = [];
+  let failedQueries = 0;
+  let lastError;
   for (const q of queries) {
     try {
       const raw = await client.callTool("search_judicial", { query: q, limit: perQuery });
       const parsed = parseTwinkleRowsText(raw, "search_judicial");
       for (const h of parsed.hits || []) all.push(h);
-    } catch {
-      // 單一查詢失敗不影響其餘
+    } catch (e) {
+      // 單一查詢失敗不影響其餘；但全數失敗＝來源級故障，不可靜默回 ok（twnews/missing/police 同族修正）。
+      failedQueries++;
+      lastError = e;
     }
+  }
+  if (queries.length > 0 && failedQueries === queries.length) {
+    throw new Error(`judicial 全部 ${queries.length} 查詢失敗：${lastError?.message || lastError}`);
   }
   return mapJudicialEvents({ cases: all, fetchedAt });
 }

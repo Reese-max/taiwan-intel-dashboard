@@ -873,3 +873,27 @@ describe("fetch-live pipeline integration (police + missing)", () => {
     60_000,
   );
 });
+
+describe("fetch-live pipeline — international 全滅語義（靜默全敗家族修正）", () => {
+  it(
+    "國際 RSS 全數失敗 → pipeline.international.ok=false、run 不 throw",
+    async () => {
+      const dataDir = setupEnv();
+      process.env.SOURCES = "rss";
+      const prevTier = process.env.INTERNATIONAL_FEED_TIER;
+      process.env.INTERNATIONAL_FEED_TIER = "core";
+      try {
+        makeMockFetch({ cwaOk: false, cwaWarningsOk: false });
+        const run = await importRun();
+        await expect(run()).resolves.toBeUndefined();
+        const provenance = readJson(join(dataDir, "provenance.json"));
+        expect(provenance.pipeline.international.ok).toBe(false);
+        expect(String(provenance.pipeline.international.error || "")).toContain("全數失敗");
+      } finally {
+        if (prevTier === undefined) delete process.env.INTERNATIONAL_FEED_TIER;
+        else process.env.INTERNATIONAL_FEED_TIER = prevTier;
+      }
+    },
+    90_000,
+  );
+});
