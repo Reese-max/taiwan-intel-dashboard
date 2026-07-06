@@ -43,6 +43,28 @@ describe("mapBulkNews", () => {
     });
   });
 
+  it("協尋規則：失蹤/走失/尋人細分出協尋，且不搶災防/反詐既有規則", () => {
+    expect(categoryFromItem("8旬失智翁走失2天 警調閱監視器尋獲", "治安")).toEqual({
+      category: "協尋",
+      basis: "rule:協尋",
+    });
+    expect(categoryFromItem("15歲少女離家失聯 家屬急尋人", "治安")).toEqual({
+      category: "協尋",
+      basis: "rule:協尋",
+    });
+    // 災防語境優先：溺水/搜救類失蹤維持災防。
+    expect(categoryFromItem("東港漁民落海失蹤 海巡搜救中", "治安").category).toBe("災防");
+    // 反詐優先：詐團話術含失聯不得改判協尋。
+    expect(categoryFromItem("假投資群組收錢後失聯 受害者報案", "治安").category).toBe("反詐");
+    // 一般治安不受影響。
+    expect(categoryFromItem("持刀搶超商 嫌犯落網", "治安").category).toBe("治安");
+    // 負向排除：失聯移工查緝、命案報導、通緝逃亡、詐團失聯話術皆非尋人。
+    expect(categoryFromItem("桃警攔違停意外逮6失聯移工 車內通緝犯落網", "治安").category).toBe("治安");
+    expect(categoryFromItem("泰山姊弟命案 失聯父遺體今相驗", "治安").category).toBe("治安");
+    expect(categoryFromItem("醫美負責人境外失聯 不甩檢方遭通緝", "治安").category).toBe("治安");
+    expect(categoryFromItem("匯數萬元買裝備 對方一句查帳中秒失聯被騙", "反詐").category).toBe("反詐");
+  });
+
   it("dedupes by title, classifies by hint, geocodes by county, scores risk", () => {
     const ev = mapBulkNews(ITEMS, { fetchedAt: FETCHED_AT });
     expect(ev).toHaveLength(3); // 去重後 3
