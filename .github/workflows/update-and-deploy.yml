@@ -30,7 +30,9 @@ concurrency:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 2026-07-06 起國際 LLM 正規化劣化（129 批次含重試 ~25 分鐘），全 run 需 35-45 分；
+    # 30 分鐘 timeout 導致 7/6 起所有排程/手動 run 於「抓取即時資料」被取消、資料停更一整天。
+    timeout-minutes: 55
     steps:
       - name: Checkout 原始碼
         uses: actions/checkout@v4
