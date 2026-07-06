@@ -48,7 +48,8 @@ import { applyTemporal } from "./lib/temporal.mjs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT = join(__dirname, "..");
-const DATA_DIR = join(ROOT, "public", "data");
+// 測試隔離用；生產不設定 FETCH_LIVE_DATA_DIR 時維持既有 public/data。
+const DATA_DIR = process.env.FETCH_LIVE_DATA_DIR || join(ROOT, "public", "data");
 
 // 若未透過 --env-file 載入，手動讀 .env（n8n Execute Command 等情境）
 function loadDotEnv() {
@@ -176,7 +177,7 @@ function readJson(name, fallback) {
   }
 }
 
-async function run() {
+export async function run() {
   loadDotEnv();
   const today = todayTW();
   const nowMs = Date.now();
