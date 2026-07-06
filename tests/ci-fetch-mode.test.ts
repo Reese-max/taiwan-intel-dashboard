@@ -12,14 +12,14 @@ describe("resolveFetchMode", () => {
   it("maps hourly cron to CWA + police + missing + Taiwan news + international RSS", () => {
     const mode = resolveFetchMode({ schedule: "5 * * * *" });
     expect(mode.label).toBe("hourly");
-    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss");
+    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,mofa,ncdr");
     expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("maps daily refresh cron to full exclusive refresh including CWA and international RSS", () => {
     const mode = resolveFetchMode({ schedule: "30 18 * * *" });
     expect(mode.label).toBe("refresh");
-    expect(mode.args).toBe("--sources=cwa,pcc,police,missing,twnews,rss,judicial --exclusive");
+    expect(mode.args).toBe("--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr --exclusive");
     expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50");
   });
 
@@ -118,7 +118,7 @@ describe("resolveFetchMode", () => {
   it("defaults to hourly mode when mode is empty and schedule is hourly", () => {
     const mode = resolveFetchMode({ mode: "", schedule: "5 * * * *" });
     expect(mode.label).toBe("hourly");
-    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss");
+    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,mofa,ncdr");
   });
 
   it("defaults to hourly mode when only schedule is missing", () => {
