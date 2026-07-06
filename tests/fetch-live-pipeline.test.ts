@@ -7,6 +7,8 @@ import { tmpdir } from "node:os";
 import { validateEventContract } from "../scripts/lib/event-contract.mjs";
 
 type UnexpectedFetch = { url: string; status: number };
+type TwinkleRowsPayload = { columns: string[]; rows: unknown[][] };
+
 
 const ENV_KEYS = [
   "FETCH_LIVE_DATA_DIR",
@@ -342,9 +344,75 @@ function policeNewsRows() {
   };
 }
 
-function twinkleToolResponse(body: any, rowsByDataset: Record<string, { columns: string[]; rows: unknown[][] }>) {
-  const datasetId = body?.params?.arguments?.dataset_id;
-  const payload = rowsByDataset[datasetId] || { columns: [], rows: [] };
+function pccTenderRows(): TwinkleRowsPayload {
+  const day = taiwanToday();
+  return {
+    columns: [
+      "title",
+      "agency",
+      "job_number",
+      "companies",
+      "date",
+      "award_price",
+      "award_way",
+      "agency_addr",
+      "detail_url",
+    ],
+    rows: [
+      [
+        "臺北市智慧交通設備採購案",
+        "臺北市政府警察局",
+        "PCC-TEST-001",
+        "測試科技股份有限公司",
+        day,
+        "25000000",
+        "最低標",
+        "臺北市信義區市府路1號",
+        "https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pk=PCC-TEST-001",
+      ],
+      [
+        "高雄市防災通報系統維護案",
+        "高雄市政府消防局",
+        "PCC-TEST-002",
+        "南方系統整合有限公司",
+        day,
+        "1200000",
+        "準用最有利標",
+        "高雄市苓雅區四維三路2號",
+        "https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pk=PCC-TEST-002",
+      ],
+    ],
+  };
+}
+
+function judicialHits() {
+  return [
+    {
+      jid: "TYDM,115,桃交簡,382,20260331,1",
+      jtitle: "公共危險",
+      jdate: "20260331",
+      court_code: "TYDM",
+      issue: "酒後騎乘機車致不能安全駕駛之公共危險罪責",
+      outcome_type: "有罪",
+      sentence: "有期徒刑2月，併科罰金新臺幣8萬元",
+      key_reasoning: "吐氣酒精濃度達每公升0.70毫克，自撞路樹",
+      jpdf: "https://data.judicial.gov.tw/x.pdf",
+      similarity: 0.72,
+    },
+    {
+      jid: "KSDM,114,訴,55,20251101,1",
+      jtitle: "殺人",
+      jdate: "20251101",
+      court_code: "KSDM",
+      outcome_type: "有罪",
+      sentence: "無期徒刑",
+      jpdf: "https://data.judicial.gov.tw/y.pdf",
+      similarity: 0.81,
+    },
+  ];
+}
+
+function twinkleTextResponse(body: any, payload: unknown) {
   return Response.json({
     jsonrpc: "2.0",
     id: body?.id,
@@ -352,6 +420,22 @@ function twinkleToolResponse(body: any, rowsByDataset: Record<string, { columns:
       content: [{ type: "text", text: JSON.stringify(payload) }],
     },
   });
+}
+
+function twinkleToolResponse(
+  body: any,
+  options: { rowsByDataset: Record<string, TwinkleRowsPayload>; judicialHits?: unknown[] },
+) {
+  const toolName = body?.params?.name;
+  if (toolName === "search_judicial") {
+    return twinkleTextResponse(body, { hits: options.judicialHits || [] });
+  }
+  if (toolName === "query_rows") {
+    const datasetId = body?.params?.arguments?.dataset_id;
+    const payload = options.rowsByDataset[datasetId] || { columns: [], rows: [] };
+    return twinkleTextResponse(body, payload);
+  }
+  return new Response(`unexpected twinkle tool ${toolName}`, { status: 500 });
 }
 
 function disableCrimeWeeklyFetch() {
@@ -378,7 +462,9 @@ function makeMockFetch(
     ncdrOk?: boolean;
     twnewsOk?: boolean;
     missingOk?: boolean;
-    policeRows?: Record<string, { columns: string[]; rows: unknown[][] }>;
+    policeRows?: Record<string, TwinkleRowsPayload>;
+    pccRows?: TwinkleRowsPayload;
+    judicialHits?: unknown[];
     twinkleAll500?: boolean;
   } = {},
 ) {
@@ -389,7 +475,10 @@ function makeMockFetch(
   const ncdrOk = options.ncdrOk ?? true;
   const twnewsOk = options.twnewsOk ?? true;
   const missingOk = options.missingOk ?? true;
-  const policeRows = options.policeRows || {};
+  const twinkleRows = {
+    ...(options.policeRows || {}),
+    ...(options.pccRows ? { "pcc-tender": options.pccRows } : {}),
+  };
   const mockFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     if (url === process.env.TWINKLE_MCP_URL) {
@@ -398,7 +487,7 @@ function makeMockFetch(
       if (body.method === "notifications/initialized") return new Response("", { status: 202 });
       if (body.method === "tools/call") {
         if (options.twinkleAll500) return new Response("Twinkle failure", { status: 500 });
-        return twinkleToolResponse(body, policeRows);
+        return twinkleToolResponse(body, { rowsByDataset: twinkleRows, judicialHits: options.judicialHits });
       }
       return new Response("unexpected twinkle method", { status: 500 });
     }
@@ -521,6 +610,31 @@ function makeCarryOverPolice() {
       url: "https://data.gov.tw/dataset/7505",
       fetchedAt: new Date(now.getTime() - 55 * 60 * 1000).toISOString(),
       query: "query_rows 7505 WHERE postDate LIKE '20%' ORDER BY postDate DESC",
+    },
+  };
+}
+
+function makeCarryOverPcc() {
+  const now = new Date();
+  return {
+    id: "pcc-carry-over",
+    title: "桃園市資安設備維護採購案",
+    region: "桃園市",
+    lat: 24.9937,
+    lng: 121.3009,
+    timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
+    category: "採購",
+    scope: "domestic",
+    riskLevel: "medium",
+    summary: "預埋的上一輪 pcc 採購事件，用於驗證 pcc-tender last-good carry-over。",
+    source: {
+      name: "政府電子採購網 決標公告",
+      type: "gov-open-data",
+      datasetId: "pcc-tender",
+      recordRef: "PCC-CARRY-OVER",
+      url: "https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pk=PCC-CARRY-OVER",
+      fetchedAt: new Date(now.getTime() - 115 * 60 * 1000).toISOString(),
+      query: "query_rows pcc-tender carry-over fixture",
     },
   };
 }
@@ -871,6 +985,83 @@ describe("fetch-live pipeline integration (police + missing)", () => {
       expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
     },
     60_000,
+  );
+});
+
+describe("fetch-live pipeline integration (pcc + judicial MCP)", () => {
+  it(
+    "writes pcc tender events from Twinkle query_rows into domestic output",
+    async () => {
+      const dataDir = setupEnv();
+      process.env.SOURCES = "cwa,pcc";
+      const { unexpected } = makeMockFetch({ pccRows: pccTenderRows() });
+      const run = await importRun();
+
+      await expect(run()).resolves.toBeUndefined();
+
+      const provenance = readJson(join(dataDir, "provenance.json"));
+      expect(provenance.pipeline.pcc).toMatchObject({ ok: true, count: 2 });
+      const domestic = readJson(join(dataDir, "domestic.json"));
+      const contract = validateEventContract(domestic);
+      expect(contract.invalid).toEqual([]);
+      expect(contract.valid).toHaveLength(domestic.length);
+      const pccEvents = domestic.filter(
+        (event: any) => event.source?.datasetId === "pcc-tender" && event.category === "採購" && !event.id.startsWith("pcc-police-"),
+      );
+      expect(pccEvents).toHaveLength(2);
+      expect(pccEvents.map((event: any) => event.source.recordRef).sort()).toEqual(["PCC-TEST-001", "PCC-TEST-002"]);
+      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
+    },
+    60_000,
+  );
+
+  it(
+    "merges judicial search_judicial hits after police succeeds",
+    async () => {
+      const dataDir = setupEnv();
+      process.env.SOURCES = "police,judicial";
+      disableCrimeWeeklyFetch();
+      const { unexpected } = makeMockFetch({ policeRows: policeNewsRows(), judicialHits: judicialHits() });
+      const run = await importRun();
+
+      await expect(run()).resolves.toBeUndefined();
+
+      const provenance = readJson(join(dataDir, "provenance.json"));
+      expect(provenance.pipeline.police.ok).toBe(true);
+      expect(provenance.pipeline.judicial).toMatchObject({ ok: true, count: 2 });
+      const domestic = readJson(join(dataDir, "domestic.json"));
+      const contract = validateEventContract(domestic);
+      expect(contract.invalid).toEqual([]);
+      expect(contract.valid).toHaveLength(domestic.length);
+      const judicialEvents = domestic.filter((event: any) => event.source?.datasetId === "judicial");
+      expect(judicialEvents).toHaveLength(2);
+      expect(judicialEvents.some((event: any) => event.id.includes("TYDM") && event.category === "司法判決")).toBe(true);
+      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
+    },
+    60_000,
+  );
+
+  it(
+    "carries over previous pcc tender events when Twinkle query_rows returns 500",
+    async () => {
+      const dataDir = setupEnv();
+      process.env.SOURCES = "pcc";
+      const carryOver = makeCarryOverPcc();
+      writeFileSync(join(dataDir, "domestic.json"), JSON.stringify([carryOver], null, 2), "utf8");
+      const { unexpected } = makeMockFetch({ twinkleAll500: true });
+      const run = await importRun();
+
+      await expect(run()).resolves.toBeUndefined();
+
+      const provenance = readJson(join(dataDir, "provenance.json"));
+      expect(provenance.pipeline.pcc.ok).toBe(false);
+      const domestic = readJson(join(dataDir, "domestic.json"));
+      expect(domestic.some((event: any) => event.id === carryOver.id)).toBe(true);
+      expect(domestic.find((event: any) => event.id === carryOver.id)?.source.datasetId).toBe("pcc-tender");
+      expect(validateEventContract(domestic).invalid).toEqual([]);
+      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
+    },
+    90_000,
   );
 });
 

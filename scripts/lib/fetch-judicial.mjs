@@ -45,8 +45,8 @@ function riskByCase(c) {
   const title = c.jtitle || "";
   const sentence = c.sentence || "";
   if (/殺人|致死|無期徒刑|性自主|槍砲|強盜|擄人/.test(title) || /無期徒刑|死刑/.test(sentence)) return "critical";
-  if (c.outcome_type === "有罪" || /有期徒刑/.test(sentence)) return "warning";
-  return "info";
+  if (c.outcome_type === "有罪" || /有期徒刑/.test(sentence)) return "high";
+  return "low";
 }
 
 // search_judicial 回應集合 → IntelEvent[]（依 jid 去重）。

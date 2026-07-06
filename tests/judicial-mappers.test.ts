@@ -51,7 +51,7 @@ describe("mapJudicialEvents", () => {
   it("escalates risk for severe crimes", () => {
     const events = mapJudicialEvents({ cases: CASES, fetchedAt: FETCHED_AT });
     expect(events.find((e) => e.id.includes("KSDM"))!.riskLevel).toBe("critical"); // 殺人/無期徒刑
-    expect(events.find((e) => e.id.includes("TYDM"))!.riskLevel).toBe("warning"); // 有罪/有期徒刑
+    expect(events.find((e) => e.id.includes("TYDM"))!.riskLevel).toBe("high"); // 有罪/有期徒刑
   });
 
   it("returns empty for no cases", () => {
