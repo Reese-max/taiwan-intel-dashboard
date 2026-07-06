@@ -127,12 +127,20 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
   it("資安 hint 用資安關鍵字", () => {
     expect(isRelevantNewsItem(mk("駭客入侵上市公司 個資外洩百萬筆", "資安"))).toBe(true);
     expect(isRelevantNewsItem(mk("新款筆電開箱評測", "資安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("南投仁愛鄉土石流紅色警戒 對外道路坍方", "資安"))).toBe(false);
+  });
+
+  it("災防 hint 用災害預警與事故傷亡關鍵字", () => {
+    expect(isRelevantNewsItem(mk("南投仁愛鄉土石流紅色警戒 對外道路坍方", "災防"))).toBe(true);
+    expect(isRelevantNewsItem(mk("台8線邊坡滑動預警 預防性封閉", "災防"))).toBe(true);
+    expect(isRelevantNewsItem(mk("民宅火警2人送醫", "災防"))).toBe(true);
+    expect(isRelevantNewsItem(mk("全民防災週系列宣導起跑", "災防"))).toBe(false);
   });
 
   it("未列 TOPIC_RE 的 hint 照舊走警政漏斗（回歸保護）", () => {
     expect(isRelevantNewsItem(mk("高雄街頭砍人送醫", "治安"))).toBe(true);
     expect(isRelevantNewsItem(mk("新北市躋身全球幸福城市前50名", "治安"))).toBe(false);
-    expect(isRelevantNewsItem(mk("台南工廠火警濃煙竄天 消防搶救", "災防"))).toBe(true);
+    expect(isRelevantNewsItem(mk("球團回應打假球傳聞 聯盟啟動調查", "治安"))).toBe(true);
   });
 });
 
@@ -210,7 +218,7 @@ describe("isForeignNonTaiwan（bulk domestic 純外國負面閘門）", () => {
     expect(isRelevantNewsItem(mustKeep[4])).toBe(true);
     expect(isRelevantNewsItem(mustKeep[5])).toBe(true);
     expect(isRelevantNewsItem(mustKeep[6])).toBe(true);
-    expect(isRelevantNewsItem(mustKeep[7])).toBe(false);
+    expect(isRelevantNewsItem(mustKeep[7])).toBe(true);
 
     const bulkEvents = mapBulkNews(mustKeep, { fetchedAt: FETCHED_AT });
     expect(bulkEvents.map((event) => event.title)).toEqual([
@@ -219,6 +227,7 @@ describe("isForeignNonTaiwan（bulk domestic 純外國負面閘門）", () => {
       "南韓酷澎個資外洩",
       "高雄街頭砍人送醫",
       "新北詐騙集團車手落網",
+      "颱風來襲 氣象署發警報",
     ]);
   });
 });
