@@ -11,6 +11,7 @@ import { dirname, join } from "node:path";
 import { fetchPcc } from "./lib/fetch-pcc.mjs";
 import { fetchCwa, fetchCwaWarnings } from "./lib/fetch-cwa.mjs";
 import { fetchMofaTravelWarnings } from "./lib/fetch-mofa.mjs";
+import { fetchNcdrAlerts, NCDR_DATASET_ID } from "./lib/fetch-ncdr.mjs";
 import { fetchJudicialBulk } from "./lib/fetch-judicial.mjs";
 import { fetchMissing } from "./lib/fetch-missing.mjs";
 import {
@@ -172,7 +173,7 @@ async function run() {
   // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
   // 未選的來源會沿用上一版快照（carry-over）。
   const sourcesArg = process.argv.find((a) => a.startsWith("--sources="))?.slice("--sources=".length);
-  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial").split(",").map((s) => s.trim());
+  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr").split(",").map((s) => s.trim());
   const want = (s) => SOURCES.includes(s);
   // EXCLUSIVE：只保留本次選取的來源；未選來源不沿用舊快照（一次性窄抓用）。
   // 預設 off，故 n8n 分頻 carry-over 行為不變。
@@ -342,6 +343,20 @@ async function run() {
     }
   } else status.mofa = { skipped: true };
 
+  // --- NCDR 災防示警：Atom 聚合 + CAP 明細 → 國內事件（fail-soft，不中斷主管線）---
+  let ncdr = [];
+  if (want("ncdr")) {
+    try {
+      const result = await fetchNcdrAlerts({});
+      ncdr = result.events || [];
+      status.ncdr = { ok: true, ...result.status };
+      console.log(`NCDR 災防示警：${ncdr.length} 筆（白名單 ${status.ncdr.whitelisted}/${status.ncdr.raw}；明細失敗 ${status.ncdr.failedDetail}）`);
+    } catch (e) {
+      status.ncdr = { ok: false, error: e.message };
+      console.error(`NCDR 災防示警失敗：${e.message}`);
+    }
+  } else status.ncdr = { skipped: true };
+
   // --- 台灣警政新聞：全量收錄（解耦）---
   //  抓取層 perFeed 拉滿、全量去重 → LLM 精修最近一批（地理定位上地球儀）＋其餘輕量收錄（免 LLM）。
   let twnews = [];
@@ -435,6 +450,11 @@ async function run() {
     : dropStale(status.cwaWarnings)
       ? []
       : oldDomestic.filter((e) => e.source?.datasetId === "W-C0033-001");
+  const ncdrEvents = status.ncdr?.ok
+    ? ncdr
+    : dropStale(status.ncdr)
+      ? []
+      : oldDomestic.filter((e) => e.source?.datasetId === NCDR_DATASET_ID);
   const tenderEvents = status.pcc?.ok
     ? tenders
     : dropStale(status.pcc)
@@ -444,6 +464,7 @@ async function run() {
   if (!status.cwa?.ok && quakeEvents.length) console.warn(`地震${why(status.cwa)}，沿用舊快照 ${quakeEvents.length} 筆`);
   if (!status.cwaWarnings?.ok && warningEvents.length)
     console.warn(`天氣警特報${why(status.cwaWarnings)}，沿用舊快照 ${warningEvents.length} 筆`);
+  if (!status.ncdr?.ok && ncdrEvents.length) console.warn(`NCDR 災防示警${why(status.ncdr)}，沿用舊快照 ${ncdrEvents.length} 筆`);
   if (!status.pcc?.ok && tenderEvents.length) console.warn(`採購${why(status.pcc)}，沿用舊快照 ${tenderEvents.length} 筆`);
   // 跨輪累積 + 保留窗：成功時 union 本輪與舊 tw-news（recordRef→標題去重，本輪優先以保留 LLM 精修版），
   // 再剪掉超過保留窗者 → 量隨時間複利成長到保留窗深度，每輪仍只 when:Nd 抓增量、LLM 成本不變。
@@ -510,7 +531,7 @@ async function run() {
     if (policeEvents.length) console.warn(`警政${why(status.police)}，沿用舊快照 ${policeEvents.length} 筆`);
   }
 
-  const domesticClamp = clampImplausibleTimestamps([...quakeEvents, ...warningEvents, ...tenderEvents, ...policeEvents, ...newsEvents]);
+  const domesticClamp = clampImplausibleTimestamps([...quakeEvents, ...warningEvents, ...ncdrEvents, ...tenderEvents, ...policeEvents, ...newsEvents]);
   if (domesticClamp.clamped) console.warn(`[時間戳] 夾住 ${domesticClamp.clamped} 筆遠未來時間戳（疑來源解析錯誤，如民國→西元誤植）`);
   const domesticEvents = domesticClamp.events.sort(byTimeDesc);
   if (domesticEvents.length) {
