@@ -60,3 +60,67 @@ describe("fetch-rss retry", () => {
     expect(result.items).toEqual([]);
   });
 });
+
+describe("fetch-rss fallback", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("主 URL 成功時不打 fallback，feedStatus 不含 fallback", async () => {
+    const fallbackUrl = "https://news.google.com/rss/search?q=site%3Arti.org.tw";
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response(xml, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRssItems({ feeds: [{ ...feed, fallbackUrl }], perFeed: 5, timeoutMs: 100, retryDelayMs: 0 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result.feedStatus[0]).toMatchObject({ label: feed.label, ok: true, count: 1 });
+    expect(result.feedStatus[0].fallback).toBeUndefined();
+  });
+
+  it("主 URL 403 不重試後改打 fallback，並保留 GN sourceUrl 與 primaryError", async () => {
+    const fallbackUrl = "https://news.google.com/rss/search?q=site%3Arti.org.tw";
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("forbidden", { status: 403 }))
+      .mockResolvedValueOnce(new Response(xml, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRssItems({ feeds: [{ ...feed, fallbackUrl }], perFeed: 5, timeoutMs: 100, retryDelayMs: 0 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.feedStatus[0]).toMatchObject({ ok: true, fallback: true, primaryError: "HTTP 403" });
+    expect(result.items[0].sourceUrl).toBe(fallbackUrl);
+  });
+
+  it("主 URL 403 且 fallback 502 重試一次仍失敗時回報兩段錯誤", async () => {
+    const fallbackUrl = "https://news.google.com/rss/search?q=site%3Arti.org.tw";
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("forbidden", { status: 403 }))
+      .mockResolvedValueOnce(new Response("bad gateway", { status: 502 }))
+      .mockResolvedValueOnce(new Response("bad gateway", { status: 502 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRssItems({ feeds: [{ ...feed, fallbackUrl }], perFeed: 5, timeoutMs: 100, retryDelayMs: 0 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(result.feedStatus[0].ok).toBe(false);
+    expect(result.feedStatus[0].error).toContain("HTTP 403");
+    expect(result.feedStatus[0].error).toContain("HTTP 502");
+  });
+
+  it("主 URL 403 且無 fallbackUrl 時維持現行行為", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("forbidden", { status: 403 }))
+      .mockResolvedValueOnce(new Response(xml, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRssItems({ feeds: [feed], perFeed: 5, timeoutMs: 100, retryDelayMs: 0 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result.feedStatus[0]).toMatchObject({ label: feed.label, ok: false, count: 0, error: "HTTP 403" });
+    expect(result.items).toEqual([]);
+  });
+});

@@ -182,7 +182,7 @@ export const TW_NEWS_FEEDS = [
 
   // ══ 第八輪最大覆蓋（2026-06-27 _audit-candidates 實測 ≥3；接受更多 Google News 聚合來源）══
   // ── 可直連 RSS（避免全靠聚合，來源可溯）──
-  { label: "中央廣播電臺 RSS", url: "https://www.rti.org.tw/rss", hint: "治安" },
+  { label: "中央廣播電臺 RSS", url: "https://www.rti.org.tw/rss", fallbackUrl: gq("site:rti.org.tw"), hint: "治安" }, // 2026-07-05 起 CI（GitHub Actions IP）被 CloudFront WAF 擋 403、本機正常，故備援走 GN 聚合。
   { label: "TechNews 科技新報 RSS", url: "https://technews.tw/feed/", hint: "資安" },
   { label: "iThome Security RSS", url: "https://www.ithome.com.tw/rss/security", hint: "資安" },
   { label: "iThome News RSS", url: "https://www.ithome.com.tw/rss/news", hint: "資安" },
@@ -346,17 +346,35 @@ async function fetchOneAttempt(feed, perFeed, timeoutMs) {
 }
 
 async function fetchOne(feed, perFeed, timeoutMs, retryDelayMs = RSS_RETRY_DELAY_MS) {
-  let lastError;
-  for (let attempt = 0; attempt < RSS_FETCH_ATTEMPTS; attempt++) {
-    try {
-      return await fetchOneAttempt(feed, perFeed, timeoutMs);
-    } catch (e) {
-      lastError = e;
-      if (attempt === 0 && isRetriableFetchError(e)) await sleep(retryDelayMs);
-      else break;
+  const fetchWithRetries = async (targetFeed) => {
+    let lastError;
+    for (let attempt = 0; attempt < RSS_FETCH_ATTEMPTS; attempt++) {
+      try {
+        return await fetchOneAttempt(targetFeed, perFeed, timeoutMs);
+      } catch (e) {
+        lastError = e;
+        if (attempt === 0 && isRetriableFetchError(e)) await sleep(retryDelayMs);
+        else break;
+      }
     }
+    return { ok: false, label: targetFeed.label, advisory: targetFeed.advisory || undefined, error: lastError?.message || String(lastError), items: [] };
+  };
+
+  const primaryResult = await fetchWithRetries(feed);
+  if (primaryResult.ok || !feed.fallbackUrl) return primaryResult;
+
+  const fallbackResult = await fetchWithRetries({ ...feed, url: feed.fallbackUrl });
+  if (fallbackResult.ok) {
+    return { ...fallbackResult, fallback: true, primaryError: primaryResult.error };
   }
-  return { ok: false, label: feed.label, advisory: feed.advisory || undefined, error: lastError?.message || String(lastError), items: [] };
+
+  return {
+    ok: false,
+    label: feed.label,
+    advisory: feed.advisory || undefined,
+    error: `${primaryResult.error}；備援亦失敗：${fallbackResult.error}`,
+    items: [],
+  };
 }
 
 // 回傳 { items: [...], feedStatus: [{label, ok, count, error}] }
@@ -372,6 +390,14 @@ export async function fetchRssItems({ perFeed = 5, timeoutMs = 12000, feeds = FE
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, feeds.length) }, worker));
   const items = results.flatMap((r) => r.items);
-  const feedStatus = results.map((r) => ({ label: r.label, ok: r.ok, count: r.items.length, advisory: r.advisory, error: r.error }));
+  const feedStatus = results.map((r) => ({
+    label: r.label,
+    ok: r.ok,
+    count: r.items.length,
+    advisory: r.advisory,
+    error: r.error,
+    fallback: r.fallback,
+    primaryError: r.primaryError,
+  }));
   return { items, feedStatus };
 }
