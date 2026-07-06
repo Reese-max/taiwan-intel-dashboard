@@ -40,6 +40,7 @@ import {
 } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
+import { applyDailyRollup, taiwanLocalDay } from "./lib/daily-rollup.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
 import { validateEventContract, clampImplausibleTimestamps } from "./lib/event-contract.mjs";
 import { applyTemporal } from "./lib/temporal.mjs";
@@ -631,6 +632,20 @@ async function run() {
   } else {
     console.warn("國際無任何事件，保留舊 international.json");
   }
+
+  const prevRollup = readJson("daily-rollup.json", { days: {} });
+  const dailyRollup = applyDailyRollup(prevRollup, [...domesticEvents, ...intlEvents]);
+  writeJson("daily-rollup.json", dailyRollup);
+  const rollupToday = taiwanLocalDay(nowIso);
+  const rollupTodayDomestic = rollupToday
+    ? domesticEvents.filter((event) => taiwanLocalDay(event.timestamp) === rollupToday).length
+    : 0;
+  const rollupTodayInternational = rollupToday
+    ? intlEvents.filter((event) => taiwanLocalDay(event.timestamp) === rollupToday).length
+    : 0;
+  console.log(
+    `[rollup] 每日基線 ${Object.keys(dailyRollup.days || {}).length} 天（今日 domestic ${rollupTodayDomestic} / international ${rollupTodayInternational}）`,
+  );
 
   // --- 情報網：把新聞事件串成關聯圖（純加法，不影響既有輸出）---
   let domesticClusters = []; // 供 AI 群摘要用（cluster id 與 build-network 一致，因同 correlateEvents/同 domestic.json）
