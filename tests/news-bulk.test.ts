@@ -245,6 +245,9 @@ describe("isForeignNonTaiwan（bulk domestic 純外國負面閘門）", () => {
       // T8-17 回歸保護：新增地名/語境不可誤殺台灣關聯或台灣本地事件。
       mk("祕魯強震 外交部：目前無國人傷亡", "治安"),
       mk("新竹626豪雨成災 議員質疑整修工程", "災防"),
+      // T9-08 豁免收窄後回歸保護：共軍/中國軍事動態是本產品核心情報，提及外國（日本關切）不可被當純外國事件剔除。
+      mk("中國突試射潛射戰略飛彈 日本表達嚴重關切", "反詐"),
+      mk("解放軍軍演逼近海峽中線 美日關切", "治安"),
     ];
     for (const item of domesticContextMustKeep) {
       expect(isForeignNonTaiwan(item), item.title).toBe(false);
