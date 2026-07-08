@@ -40,8 +40,8 @@ app.innerHTML = `
       <p class="subtitle">${t.subtitle}</p>
     </div>
     <nav class="tabs" role="tablist">
-      <button data-scope="domestic" class="active" role="tab">${t.tabDomestic}</button>
-      <button data-scope="international" role="tab">${t.tabInternational}</button>
+      <button type="button" data-scope="domestic" class="active" role="tab" aria-selected="true">${t.tabDomestic}</button>
+      <button type="button" data-scope="international" role="tab" aria-selected="false">${t.tabInternational}</button>
     </nav>
     <button id="compact-layout-toggle" class="layout-toggle" type="button" aria-pressed="false" aria-label="切換簡潔版面">
       收合側欄
@@ -256,7 +256,9 @@ function isRisk(v: string | null): v is RiskLevel {
 
 function setActiveScopeTab(scope: Scope): void {
   document.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.scope === scope);
+    const active = btn.dataset.scope === scope;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-selected", String(active));
   });
 }
 
