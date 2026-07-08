@@ -119,6 +119,8 @@ function lowContributionBlock(manifest: Manifest): string {
   const twnews = manifest.pipeline?.twnews;
   const feeds = twnews?.lowContributionFeeds || [];
   if (!feeds.length) return "";
+  const visibleFeeds = feeds.slice(0, 10);
+  const hiddenFeeds = feeds.slice(10);
   const totals = twnews?.sourceContributionTotals || {};
   const totalLine =
     typeof totals.raw === "number"
@@ -133,7 +135,15 @@ function lowContributionBlock(manifest: Manifest): string {
   return `<section class="source-alert source-alert-warn" aria-label="新聞來源低貢獻警示">
     <h5>新聞來源低貢獻警示</h5>
     <p>${esc(totalLine)}${detail ? `（${esc(detail)}）` : ""}；以下來源有原始量，但幾乎未進入最終事件，可能被標題去重或警政相關性過濾。</p>
-    <div class="source-chip-list">${feeds.map((feed) => `<span>${esc(feed)}</span>`).join("")}</div>
+    <div class="source-chip-list">${visibleFeeds.map((feed) => `<span>${esc(feed)}</span>`).join("")}</div>
+    ${
+      hiddenFeeds.length
+        ? `<details class="source-alert-more">
+            <summary>展開其餘 ${hiddenFeeds.length} 個低貢獻來源</summary>
+            <div class="source-chip-list">${hiddenFeeds.map((feed) => `<span>${esc(feed)}</span>`).join("")}</div>
+          </details>`
+        : ""
+    }
   </section>`;
 }
 
@@ -148,9 +158,9 @@ export async function renderSourcePanel(container: HTMLElement): Promise<void> {
   const total = m.sources.reduce((sum, s) => sum + s.count, 0);
   const official = m.sources.filter((s) => s.type === "gov-open-data" || s.type === "cwa").length;
   const sorted = [...m.sources].sort((a, b) => freshness(a, m.generatedAt).order - freshness(b, m.generatedAt).order || b.count - a.count);
-  const visibleSources = sorted.slice(0, 8);
-  const extraSources = sorted.slice(8, 40);
-  const hiddenCount = Math.max(0, sorted.length - 40);
+  const visibleSources = sorted.slice(0, 5);
+  const extraSources = sorted.slice(5, 25);
+  const hiddenCount = Math.max(0, sorted.length - 25);
   const items = visibleSources
     .map((s) => sourceItem(s, m.generatedAt))
     .join("");

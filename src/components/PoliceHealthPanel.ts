@@ -54,11 +54,23 @@ interface HourlyHistory {
 function sourceStatus(source: ProvSource, police?: PipelineStatus["police"]): { label: string; cls: string; detail: string } {
   const sub = source.key ? police?.[source.key] : undefined;
   if (typeof sub === "object" && sub && sub.ok === false) {
-    return { label: "失敗", cls: "bad", detail: sub.error || "來源抓取失敗" };
+    return { label: "失敗", cls: "bad", detail: compactFailure(sub.error || "來源抓取失敗") };
   }
   if (source.stale) return { label: "沿用", cls: "warn", detail: "本次未更新，沿用上一版快照" };
   if (source.count <= 0) return { label: "空值", cls: "warn", detail: "本次回傳 0 筆" };
   return { label: "正常", cls: "ok", detail: `本次回傳 ${source.count} 筆` };
+}
+
+function compactFailure(value: string): string {
+  const normalized = value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (/\b401\b/.test(normalized)) return "HTTP 401，需要重新授權";
+  if (/\b403\b/.test(normalized)) return "HTTP 403，被來源拒絕";
+  if (/\b404\b/.test(normalized)) return "HTTP 404，來源路徑失效";
+  if (/\b5\d\d\b/.test(normalized)) return "HTTP 5xx，來源暫時異常";
+  return normalized.slice(0, 72);
 }
 
 function sourceSubstatus(source: ProvSource, police?: PipelineStatus["police"]): PoliceSubstatus | undefined {
@@ -147,6 +159,13 @@ function renderTrendSwitcher(runs: HourlyRun[]): string {
     <div class="trend-panel hidden" data-trend-panel="7d">${renderDailyTrend(runs)}</div>`;
 }
 
+function statusOrder(source: ProvSource, police?: PipelineStatus["police"]): number {
+  const status = sourceStatus(source, police);
+  if (status.cls === "bad") return 0;
+  if (status.cls === "warn") return 1;
+  return 2;
+}
+
 async function retryFailedSources(container: HTMLElement, failedSources: ProvSource[]): Promise<void> {
   const status = container.querySelector<HTMLElement>("[data-retry-status]");
   const keys = [...new Set(failedSources.map((s) => s.key).filter((key): key is string => Boolean(key)))];
@@ -188,7 +207,12 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
   const okSources = policeSources.filter((s) => sourceStatus(s, police).cls === "ok").length;
   const failedSources = policeSources.filter((s) => sourceStatus(s, police).cls === "bad");
   const generated = new Date(provenance.generatedAt).toLocaleString("zh-TW", { hour12: false });
-  const rowItems = policeSources
+  const prioritizedSources = [...policeSources].sort((a, b) => {
+    const order = statusOrder(a, police) - statusOrder(b, police);
+    if (order) return order;
+    return b.count - a.count;
+  });
+  const rowItems = prioritizedSources
     .map((source) => {
       const status = sourceStatus(source, police);
       const sub = sourceSubstatus(source, police);
@@ -215,8 +239,8 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
         </details>
       </li>`;
     });
-  const visibleRows = rowItems.slice(0, 8).join("");
-  const hiddenRows = rowItems.slice(8).join("");
+  const visibleRows = rowItems.slice(0, 5).join("");
+  const hiddenRows = rowItems.slice(5).join("");
 
   container.innerHTML = `
     <section class="police-health-card">
@@ -239,15 +263,17 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
       ${
         hiddenRows
           ? `<details class="health-more">
-              <summary>展開其餘 ${rowItems.length - 8} 個來源明細</summary>
+              <summary>展開其餘 ${rowItems.length - 5} 個來源明細</summary>
               <ul class="health-source-list health-source-list-extra">${hiddenRows}</ul>
             </details>`
           : ""
       }
     </section>
     <section class="police-health-card">
-      <h4>每小時入帳趨勢</h4>
-      ${renderTrendSwitcher(history.runs)}
+      <details class="health-trend-details">
+        <summary>查看每小時入帳趨勢</summary>
+        ${renderTrendSwitcher(history.runs)}
+      </details>
     </section>`;
 
   container.querySelectorAll<HTMLButtonElement>("[data-trend-range]").forEach((button) => {
