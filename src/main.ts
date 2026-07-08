@@ -158,6 +158,11 @@ function initMobileView(): void {
   });
 }
 
+function revealFocusedListOnMobile(): void {
+  if (!window.matchMedia("(max-width: 640px)").matches) return;
+  setMobileView("list", { scroll: true });
+}
+
 function setCompactLayout(enabled: boolean): void {
   document.body.classList.toggle("layout-compact", enabled);
   if (compactToggle) {
@@ -544,14 +549,20 @@ function focusEvent(id: string): void {
   focusId = id;
   focusCluster = null;
   writeHash("push");
-  void refresh().then(() => relationGraph.reveal());
+  void refresh().then(() => {
+    revealFocusedListOnMobile();
+    relationGraph.reveal();
+  });
 }
 
 function focusClusterById(id: string): void {
   focusCluster = id;
   focusId = null;
   writeHash("push");
-  void refresh().then(() => relationGraph.reveal());
+  void refresh().then(() => {
+    revealFocusedListOnMobile();
+    relationGraph.reveal();
+  });
 }
 
 function renderUsageTip(): void {

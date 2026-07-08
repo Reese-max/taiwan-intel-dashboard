@@ -114,7 +114,7 @@ export function clusterPopupHtml(events: IntelEvent[]): string {
       if (risk) return risk;
       return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
     })
-    .slice(0, 4);
+    .slice(0, 3);
   const hidden = Math.max(0, events.length - shown.length);
   const primary = shown[0];
   const riskSummary = (["critical", "high", "medium", "low"] as RiskLevel[])
@@ -128,15 +128,15 @@ export function clusterPopupHtml(events: IntelEvent[]): string {
         (e) => `<li>
         <span class="map-cluster-risk risk-${esc(e.riskLevel)}">${esc(RISK_LABEL[e.riskLevel])}</span>
         <span class="map-cluster-title">${esc(e.title)}</span>
-        <span class="map-cluster-meta">${esc(e.region)}｜${esc(e.category)}｜${esc(getActionDecision(e).recommendation)}</span>
-          <a class="map-cluster-action map-focus-btn" data-map-focus="${esc(e.id)}" href="${esc(eventFocusHash(e))}">查看</a>
+        <span class="map-cluster-meta">${esc(e.region)}｜${esc(e.category)}</span>
+        <a class="map-cluster-action map-focus-btn" data-map-focus="${esc(e.id)}" href="${esc(eventFocusHash(e))}">查看</a>
         </li>`,
       )
       .join("");
   const primaryAction = primary
     ? `<a class="map-cluster-action map-focus-btn" data-map-focus="${esc(primary.id)}" href="${esc(eventFocusHash(primary))}">查看最高風險</a>`
     : "";
-  const more = hidden ? `<div class="map-cluster-more">另有 ${hidden} 則未列出，請先放大拆分再判讀。</div>` : "";
+  const more = hidden ? `<div class="map-cluster-more">另有 ${hidden} 則，放大後再拆讀。</div>` : "";
   return `<div class="map-cluster-popup">
     <b>此區有 ${events.length} 則情報</b>
     <div class="map-cluster-summary" aria-label="此區風險構成">${riskSummary}</div>
@@ -144,7 +144,6 @@ export function clusterPopupHtml(events: IntelEvent[]): string {
       <button class="map-cluster-action map-cluster-zoom" type="button">放大拆分</button>
       ${primaryAction}
     </div>
-    <div class="map-cluster-hint">先放大拆分可避免同區事件互相遮住；下列只顯示風險較高與較新的事件。</div>
     <ul>${items}</ul>
     ${more}
   </div>`;

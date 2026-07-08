@@ -75,8 +75,6 @@ describe("MapView helpers", () => {
     expect(html).toContain("測試新聞");
     expect(html).toContain("第二則測試新聞");
     expect(html).toContain("臺北市｜治安");
-    expect(html).toContain("先查證原文再行動");
-    expect(html).toContain("先放大拆分可避免同區事件互相遮住");
     expect(html).toContain('href="#scope=domestic&amp;focus=twnews-map-test"');
     expect(html).toContain("查看");
   });
