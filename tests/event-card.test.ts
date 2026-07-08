@@ -31,6 +31,8 @@ describe("eventCard", () => {
     expect(html).toContain("查證依據");
     expect(html).toContain("原始資料");
     expect(html).toContain("<b>建議</b>");
+    expect(html).toContain("金流／帳戶");
+    expect(html).toContain("避免匯款並核對來源");
     expect(html).toContain("資料時間");
     expect(html).toContain("擷取時間");
     expect(html).toContain("開放資料");
@@ -128,6 +130,75 @@ describe("eventCard", () => {
     expect(html).toContain("single-source-note");
     expect(html).toContain("單一來源·待查證");
     expect(html).not.toContain("corroboration-chip");
+  });
+
+  it("高風險聚合新聞會要求先查證原文，而不是直接行動", () => {
+    const html = eventCard({
+      id: "agg-risk",
+      title: "疑似詐騙集團大量投放釣魚簡訊",
+      region: "臺北市",
+      timestamp: "2026-06-27T00:00:00.000Z",
+      category: "反詐",
+      scope: "domestic",
+      riskLevel: "high",
+      summary: "多名民眾回報金融帳戶釣魚簡訊。",
+      source: {
+        name: "Google News 聚合",
+        type: "news-rss",
+        fetchedAt: "2026-06-27T00:00:00.000Z",
+        sourceConfidence: "aggregated",
+      },
+    });
+
+    expect(html).toContain("先查證原文再行動");
+    expect(html).toContain("聚合來源待核");
+    expect(html).toContain("金流／帳戶");
+  });
+
+  it("低對台關聯的國際高風險事件只做背景觀察", () => {
+    const html = eventCard({
+      id: "intl-low",
+      title: "海外科技公司股價大跌",
+      region: "美國",
+      timestamp: "2026-06-27T00:00:00.000Z",
+      category: "金融",
+      scope: "international",
+      riskLevel: "high",
+      twRelevance: 10,
+      summary: "海外市場波動，對台供應鏈關聯低。",
+      source: {
+        name: "國際新聞",
+        type: "news-rss",
+        fetchedAt: "2026-06-27T00:00:00.000Z",
+      },
+    });
+
+    expect(html).toContain("國際｜低對台關聯 10｜金流／帳戶");
+    expect(html).toContain("背景觀察，不升級");
+  });
+
+  it("高對台關聯的國際重大事件列入重點追蹤", () => {
+    const html = eventCard({
+      id: "intl-critical",
+      title: "區域衝突升溫影響半導體供應鏈",
+      region: "東亞",
+      timestamp: "2026-06-27T00:00:00.000Z",
+      category: "地緣政治",
+      scope: "international",
+      riskLevel: "critical",
+      twRelevance: 85,
+      summary: "區域軍事衝突可能影響航運與供應鏈。",
+      implications: "可能影響台灣出口、能源與晶片供應鏈。",
+      source: {
+        name: "國際新聞",
+        type: "news-rss",
+        fetchedAt: "2026-06-27T00:00:00.000Z",
+      },
+    });
+
+    expect(html).toContain("國際｜高對台關聯 85｜外交／供應鏈");
+    expect(html).toContain("列入重點追蹤");
+    expect(html).toContain("已有影響評估");
   });
 
   it("renders temporal badges for historical and judicial events only", () => {
