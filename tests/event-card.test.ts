@@ -27,6 +27,10 @@ describe("eventCard", () => {
     const html = eventCard(event, 3);
 
     expect(html).toContain("完整脈絡");
+    expect(html).toContain("行動判斷");
+    expect(html).toContain("查證依據");
+    expect(html).toContain("原始資料");
+    expect(html).toContain("<b>建議</b>");
     expect(html).toContain("資料時間");
     expect(html).toContain("擷取時間");
     expect(html).toContain("開放資料");

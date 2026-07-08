@@ -199,12 +199,13 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
           <summary>
             <span class="health-dot ${status.cls}">${status.label}</span>
             <b>${esc(source.name)}</b>
-            <span class="muted">${esc(source.datasetId || "no-id")}｜${source.count} 筆｜${esc(source.category || "未分類")}</span>
             <small>${esc(status.detail)}</small>
           </summary>
           <dl class="source-debug">
             <div><dt>來源 key</dt><dd>${esc(source.key || "no-key")}</dd></div>
             <div><dt>Dataset</dt><dd>${esc(source.datasetId || "no-id")}</dd></div>
+            <div><dt>分類</dt><dd>${esc(source.category || "未分類")}</dd></div>
+            <div><dt>本次筆數</dt><dd>${source.count} 筆</dd></div>
             <div><dt>最近成功時間</dt><dd>${esc(formatDateTime(lastSuccess))}</dd></div>
             <div><dt>本次抓取時間</dt><dd>${esc(formatDateTime(source.fetchedAt))}</dd></div>
             <div><dt>查詢</dt><dd>${esc(source.query || `twinkle-hub police/${source.key || source.datasetId || "unknown"}`)}</dd></div>
@@ -226,6 +227,7 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
         <div><b>${police?.newPoliceRelatedCount ?? 0}</b><span>本小時全新</span></div>
         <div><b>${police?.deferredNewCandidateCount ?? 0}</b><span>候選池</span></div>
       </div>
+      <p class="health-decision"><b>處理建議</b>${failedSources.length ? `先重試 ${failedSources.length} 個失敗來源` : "來源狀態正常，細節可按需展開"}</p>
       <p class="health-meta">更新：${esc(generated)}｜目標：${police?.newMinimumPerHour ?? 200} 筆／小時</p>
       <div class="retry-row">
         <button type="button" class="retry-btn" data-retry-failed ${failedSources.length ? "" : "disabled"}>

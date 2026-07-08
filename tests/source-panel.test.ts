@@ -43,6 +43,9 @@ describe("renderSourcePanel", () => {
       expect(container.innerHTML).toContain("2 個來源");
       expect(container.innerHTML).toContain("110 筆");
       expect(container.innerHTML).toContain("官方來源 1");
+      expect(container.innerHTML).toContain("處理");
+      expect(container.innerHTML).toContain("可作為主要證據");
+      expect(container.innerHTML).toContain("查證與授權");
       expect(container.innerHTML).toContain("同步正常");
       expect(container.innerHTML).toContain("需檢查");
       expect(container.innerHTML).toContain("政府資料開放授權條款-第1版");

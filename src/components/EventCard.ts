@@ -58,24 +58,79 @@ function locationPrecisionLabel(value: IntelEvent["locationPrecision"]): string 
   }
 }
 
+function impactScope(e: IntelEvent): string {
+  if (e.scope === "international") {
+    return typeof e.twRelevance === "number" ? `國際／對台相關 ${e.twRelevance}` : "國際情勢";
+  }
+  switch (e.locationPrecision) {
+    case "exact":
+    case "address":
+    case "district":
+      return "附近／區域";
+    case "city":
+      return "縣市層級";
+    case "country":
+      return "全國層級";
+    default:
+      return e.region || "區域待判斷";
+  }
+}
+
+function suggestedAction(e: IntelEvent, corroboration?: CorroborationResult): string {
+  if (e.temporal === "historical") return "作為歷史參考";
+  if (e.temporal === "judicial") return "參考司法結果";
+  if (e.riskLevel === "critical") return "優先處理／避開";
+  if (e.riskLevel === "high") return corroboration?.confirmed ? "提高警覺" : "先查證再行動";
+  if (e.riskLevel === "medium") return "持續觀察";
+  return "低優先掃描";
+}
+
+function eventStatus(e: IntelEvent, corroboration?: CorroborationResult): string {
+  if (e.temporal === "historical") return "歷史資料";
+  if (e.temporal === "judicial") return "司法結果";
+  if (corroboration?.confirmed) return `${corroboration.sources} 源佐證`;
+  if (corroboration?.sources === 1 && (e.riskLevel === "critical" || e.riskLevel === "high")) return "單一來源待查證";
+  if (e.riskLevel === "critical" || e.riskLevel === "high") return "高優先觀察";
+  return "一般追蹤";
+}
+
+function decisionPanel(e: IntelEvent, corroboration?: CorroborationResult): string {
+  const items = [
+    `<span><b>影響</b>${esc(impactScope(e))}</span>`,
+    `<span><b>建議</b>${esc(suggestedAction(e, corroboration))}</span>`,
+    `<span><b>狀態</b>${esc(eventStatus(e, corroboration))}</span>`,
+  ];
+  return `<div class="event-decision" aria-label="行動判斷">${items.join("")}</div>`;
+}
+
 function eventContext(e: IntelEvent): string {
-  const parts = [
+  const verifyParts = [
     `<span><b>資料時間</b>${esc(fmtDate(e.timestamp))}</span>`,
     `<span><b>擷取時間</b>${esc(fmtDate(e.source.fetchedAt))}</span>`,
     `<span><b>來源型態</b>${esc(sourceTypeLabel(e.source.type))}</span>`,
   ];
-  if (e.source.datasetId) parts.push(`<span><b>資料集</b>${esc(e.source.datasetId)}</span>`);
-  if (e.source.recordRef)
-    parts.push(`<span class="ctx-wide"><b>原始編號</b>${esc(e.source.recordRef)}</span>`);
   if (e.source.aggregatorName)
-    parts.push(`<span class="ctx-aggregator"><b>經由</b>${esc(e.source.aggregatorName)}</span>`);
+    verifyParts.push(`<span class="ctx-aggregator"><b>經由</b>${esc(e.source.aggregatorName)}</span>`);
   if (e.locationPrecision)
-    parts.push(`<span class="ctx-location"><b>定位</b>${esc(locationPrecisionLabel(e.locationPrecision))}</span>`);
-  if (e.source.query) parts.push(`<span class="ctx-query" title="${esc(e.source.query)}"><b>查詢</b>可重現查詢</span>`);
-  return `<details class="event-context" aria-label="完整脈絡">
-    <summary><strong>完整脈絡</strong><span>${parts.length} 項查證欄位</span></summary>
-    <div class="event-context-body">${parts.join("")}</div>
-  </details>`;
+    verifyParts.push(`<span class="ctx-location"><b>定位</b>${esc(locationPrecisionLabel(e.locationPrecision))}</span>`);
+
+  const rawParts = [];
+  if (e.source.datasetId) rawParts.push(`<span><b>資料集</b>${esc(e.source.datasetId)}</span>`);
+  if (e.source.recordRef) rawParts.push(`<span class="ctx-wide"><b>原始編號</b>${esc(e.source.recordRef)}</span>`);
+  if (e.source.query) rawParts.push(`<span class="ctx-query" title="${esc(e.source.query)}"><b>查詢</b>可重現查詢</span>`);
+
+  return `<details class="event-context event-verify" aria-label="完整脈絡：查證依據">
+    <summary><strong>查證依據</strong><span>${verifyParts.length} 項</span></summary>
+    <div class="event-context-body">${verifyParts.join("")}</div>
+  </details>
+  ${
+    rawParts.length
+      ? `<details class="event-context event-raw" aria-label="完整脈絡：原始資料">
+          <summary><strong>原始資料</strong><span>${rawParts.length} 項</span></summary>
+          <div class="event-context-body">${rawParts.join("")}</div>
+        </details>`
+      : ""
+  }`;
 }
 
 function temporalBadge(temporal: IntelEvent["temporal"]): string {
@@ -124,6 +179,7 @@ export function eventCard(
         <span class="region">${esc(e.region)}</span>${relationChip}${corroborationChip}${extraHeaderHtml}${rel}</header>
       <h3>${esc(e.title)}</h3>
       <p class="summary">${esc(stripHtml(e.summary))}</p>
+      ${decisionPanel(e, corroboration)}
       ${eventContext(e)}
       <footer>
         <time>${esc(time)}</time>

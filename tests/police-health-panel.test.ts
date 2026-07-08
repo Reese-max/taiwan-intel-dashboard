@@ -73,6 +73,8 @@ describe("renderPoliceHealthPanel", () => {
       expect(container.innerHTML).toContain("class=\"fill ok\"");
       expect(container.innerHTML).not.toContain("class=\"fill warn\"");
       expect(container.innerHTML).toContain("目標：200 筆／小時");
+      expect(container.innerHTML).toContain("處理建議");
+      expect(container.innerHTML).toContain("來源狀態正常");
     } finally {
       vi.unstubAllGlobals();
     }
@@ -106,4 +108,3 @@ describe("renderPoliceHealthPanel", () => {
     }
   });
 });
-

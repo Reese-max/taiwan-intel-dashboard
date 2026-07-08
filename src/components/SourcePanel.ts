@@ -70,6 +70,15 @@ function datasetLink(datasetId: string): string {
   return `https://data.gov.tw/dataset/${safeId}`;
 }
 
+function sourceDecision(source: ProvSource, generatedAt: string): string {
+  const fresh = freshness(source, generatedAt);
+  if (fresh.className === "bad") return "需檢查同步";
+  if (source.count <= 0) return "觀察是否空轉";
+  if (source.type === "gov-open-data" || source.type === "cwa") return "可作為主要證據";
+  if (source.type === "news-rss") return "輔助判斷，需看原文";
+  return "補充來源";
+}
+
 function sourceItem(source: ProvSource, generatedAt: string): string {
   const fresh = freshness(source, generatedAt);
   const dataset = source.datasetId
@@ -92,13 +101,17 @@ function sourceItem(source: ProvSource, generatedAt: string): string {
       <span class="source-fresh ${fresh.className}">${fresh.label}</span>
     </div>
     <div class="source-meta">${meta}</div>
-    <div class="source-lineage">
-      ${dataset}
-      <span>最近同步 ${esc(fmtDate(source.lastSuccessAt ?? source.fetchedAt))}</span>
-      ${source.latestDataDate ? `<span>最新資料日 ${esc(source.latestDataDate)}</span>` : ""}
-    </div>
-    ${source.query ? `<code title="可重現查詢">${esc(source.query)}</code>` : ""}
-    ${source.license ? `<p class="license">${esc(source.license)}</p>` : ""}
+    <p class="source-decision"><b>處理</b>${esc(sourceDecision(source, generatedAt))}</p>
+    <details class="source-detail">
+      <summary>查證與授權</summary>
+      <div class="source-lineage">
+        ${dataset}
+        <span>最近同步 ${esc(fmtDate(source.lastSuccessAt ?? source.fetchedAt))}</span>
+        ${source.latestDataDate ? `<span>最新資料日 ${esc(source.latestDataDate)}</span>` : ""}
+      </div>
+      ${source.query ? `<code title="可重現查詢">${esc(source.query)}</code>` : ""}
+      ${source.license ? `<p class="license">${esc(source.license)}</p>` : ""}
+    </details>
   </li>`;
 }
 
