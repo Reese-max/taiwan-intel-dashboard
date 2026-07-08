@@ -135,11 +135,13 @@ export async function renderSourcePanel(container: HTMLElement): Promise<void> {
   const total = m.sources.reduce((sum, s) => sum + s.count, 0);
   const official = m.sources.filter((s) => s.type === "gov-open-data" || s.type === "cwa").length;
   const sorted = [...m.sources].sort((a, b) => freshness(a, m.generatedAt).order - freshness(b, m.generatedAt).order || b.count - a.count);
-  const items = sorted
-    .slice(0, 24)
+  const visibleSources = sorted.slice(0, 8);
+  const extraSources = sorted.slice(8, 40);
+  const hiddenCount = Math.max(0, sorted.length - 40);
+  const items = visibleSources
     .map((s) => sourceItem(s, m.generatedAt))
     .join("");
-  const hiddenCount = Math.max(0, sorted.length - 24);
+  const extraItems = extraSources.map((s) => sourceItem(s, m.generatedAt)).join("");
   container.innerHTML = `
     <section class="source-card">
       <h4>來源總覽</h4>
@@ -151,7 +153,15 @@ export async function renderSourcePanel(container: HTMLElement): Promise<void> {
       <p class="source-generated">擷取於 ${esc(generated)}</p>
       ${lowContributionBlock(m)}
       <ul class="source-list">${items}</ul>
-      ${hiddenCount ? `<p class="prov-note">另有 ${hiddenCount} 個低量來源已收合；可在 provenance.json 檢視完整清單。</p>` : ""}
+      ${
+        extraItems
+          ? `<details class="source-more">
+              <summary>展開其餘 ${extraSources.length}${hiddenCount ? `＋${hiddenCount}` : ""} 個來源</summary>
+              <ul class="source-list source-list-extra">${extraItems}</ul>
+            </details>`
+          : ""
+      }
+      ${hiddenCount ? `<p class="prov-note">另有 ${hiddenCount} 個低量來源未列出；可在 provenance.json 檢視完整清單。</p>` : ""}
     </section>
     ${m.note ? `<p class="prov-note">${esc(m.note)}</p>` : ""}`;
 }

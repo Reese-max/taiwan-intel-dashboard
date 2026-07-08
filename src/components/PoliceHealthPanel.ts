@@ -188,7 +188,7 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
   const okSources = policeSources.filter((s) => sourceStatus(s, police).cls === "ok").length;
   const failedSources = policeSources.filter((s) => sourceStatus(s, police).cls === "bad");
   const generated = new Date(provenance.generatedAt).toLocaleString("zh-TW", { hour12: false });
-  const rows = policeSources
+  const rowItems = policeSources
     .map((source) => {
       const status = sourceStatus(source, police);
       const sub = sourceSubstatus(source, police);
@@ -213,8 +213,9 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
           <pre class="source-error-stack">${stack ? esc(stack) : "無錯誤"}</pre>
         </details>
       </li>`;
-    })
-    .join("");
+    });
+  const visibleRows = rowItems.slice(0, 8).join("");
+  const hiddenRows = rowItems.slice(8).join("");
 
   container.innerHTML = `
     <section class="police-health-card">
@@ -232,7 +233,15 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
         </button>
         <span data-retry-status>${failedSources.length ? `待重試 ${failedSources.length} 個來源` : "目前沒有失敗來源"}</span>
       </div>
-      <ul class="health-source-list">${rows}</ul>
+      <ul class="health-source-list">${visibleRows}</ul>
+      ${
+        hiddenRows
+          ? `<details class="health-more">
+              <summary>展開其餘 ${rowItems.length - 8} 個來源明細</summary>
+              <ul class="health-source-list health-source-list-extra">${hiddenRows}</ul>
+            </details>`
+          : ""
+      }
     </section>
     <section class="police-health-card">
       <h4>每小時入帳趨勢</h4>

@@ -28,6 +28,9 @@ import { stalenessNotice } from "./utils/staleness";
 const DEFAULT_SINCE_DAYS = 3;
 const REFRESH_MS = 300000;
 const TIP_KEY = "taiwan-intel-link-tip-dismissed";
+const COMPACT_LAYOUT_KEY = "taiwan-intel-compact-layout";
+const SIDE_PANEL_STATE_KEY = "taiwan-intel-side-panel-state";
+const MOBILE_VIEW_KEY = "taiwan-intel-mobile-view";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -40,6 +43,9 @@ app.innerHTML = `
       <button data-scope="domestic" class="active" role="tab">${t.tabDomestic}</button>
       <button data-scope="international" role="tab">${t.tabInternational}</button>
     </nav>
+    <button id="compact-layout-toggle" class="layout-toggle" type="button" aria-pressed="false" aria-label="切換簡潔版面">
+      收合側欄
+    </button>
     <div id="data-freshness" class="data-freshness" aria-live="polite"></div>
   </header>
   <div id="usage-tip" class="usage-tip" hidden>
@@ -47,6 +53,12 @@ app.innerHTML = `
     <button type="button" id="close-tip">我知道了</button>
   </div>
   <div id="filterbar" class="filterbar"></div>
+  <div id="filter-summary" class="filter-summary" hidden></div>
+  <nav id="mobile-view-switcher" class="mobile-view-switcher" aria-label="行動版視圖切換">
+    <button type="button" data-mobile-view="map">地圖</button>
+    <button type="button" data-mobile-view="list">列表</button>
+    <button type="button" data-mobile-view="insights">重點</button>
+  </nav>
   <section id="kpistrip" class="kpi-strip" aria-label="關鍵指標"></section>
   <main class="layout">
     <section class="col-map">
@@ -63,10 +75,22 @@ app.innerHTML = `
       <div id="eventlist"></div>
     </section>
     <aside class="col-side">
-      <div id="topclusters"></div>
-      <div id="aibrief" class="ai-brief"></div>
-      <div id="policehealth"></div>
-      <div id="sourcepanel"></div>
+      <details class="side-section" data-side-section="topclusters" open>
+        <summary>今日最大情報群</summary>
+        <div id="topclusters"></div>
+      </details>
+      <details class="side-section" data-side-section="aibrief" open>
+        <summary>AI 情勢摘要</summary>
+        <div id="aibrief" class="ai-brief"></div>
+      </details>
+      <details class="side-section" data-side-section="policehealth">
+        <summary>警政健康檢查</summary>
+        <div id="policehealth"></div>
+      </details>
+      <details class="side-section" data-side-section="sourcepanel">
+        <summary>來源總覽</summary>
+        <div id="sourcepanel"></div>
+      </details>
     </aside>
   </main>
   <nav class="mobile-quickbar" aria-label="快捷操作">
@@ -77,15 +101,127 @@ app.innerHTML = `
     <button id="mq-filter" type="button">篩選</button>
   </nav>`;
 
-const mapView = new MapView(document.getElementById("map")!);
+const mapView = new MapView(document.getElementById("map")!, { onFocus: focusEvent });
 
 // 手機底部快捷列：搜尋同步寫入 store；篩選鈕捲到頂並聚焦篩選器。
 const mqQuery = document.getElementById("mq-query") as HTMLInputElement | null;
+const compactToggle = document.getElementById("compact-layout-toggle") as HTMLButtonElement | null;
+type MobileView = "map" | "list" | "insights";
+
+function isMobileView(value: string | null | undefined): value is MobileView {
+  return value === "map" || value === "list" || value === "insights";
+}
+
+function setMobileView(view: MobileView): void {
+  document.body.classList.toggle("mobile-view-map", view === "map");
+  document.body.classList.toggle("mobile-view-list", view === "list");
+  document.body.classList.toggle("mobile-view-insights", view === "insights");
+  document.querySelectorAll<HTMLButtonElement>("[data-mobile-view]").forEach((btn) => {
+    const active = btn.dataset.mobileView === view;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-pressed", String(active));
+  });
+  try {
+    localStorage.setItem(MOBILE_VIEW_KEY, view);
+  } catch {
+    // localStorage 不可用時略過保存
+  }
+  if (view === "map") void mapView.resize().catch(() => {});
+}
+
+function initMobileView(): void {
+  let view: MobileView = "list";
+  try {
+    const saved = localStorage.getItem(MOBILE_VIEW_KEY);
+    if (isMobileView(saved)) view = saved;
+  } catch {
+    view = "list";
+  }
+  setMobileView(view);
+  document.querySelectorAll<HTMLButtonElement>("[data-mobile-view]").forEach((btn) => {
+    btn.onclick = () => {
+      const next = btn.dataset.mobileView;
+      if (isMobileView(next)) setMobileView(next);
+    };
+  });
+}
+
+function setCompactLayout(enabled: boolean): void {
+  document.body.classList.toggle("layout-compact", enabled);
+  if (compactToggle) {
+    compactToggle.setAttribute("aria-pressed", String(enabled));
+    compactToggle.textContent = enabled ? "顯示側欄" : "收合側欄";
+    compactToggle.setAttribute("title", enabled ? "顯示右側欄與右側卡片" : "收合右側欄以縮減版面");
+    compactToggle.setAttribute("aria-label", enabled ? "顯示右側欄" : "收合右側欄");
+  }
+  try {
+    if (enabled) localStorage.setItem(COMPACT_LAYOUT_KEY, "1");
+    else localStorage.removeItem(COMPACT_LAYOUT_KEY);
+  } catch {
+    // localStorage 可能不可用時，僅保持目前畫面狀態，不中斷操作
+  }
+  void mapView.resize().catch(() => {});
+}
+
+let compactMode = false;
+try {
+  compactMode = localStorage.getItem(COMPACT_LAYOUT_KEY) === "1";
+} catch {
+  compactMode = false;
+}
+setCompactLayout(compactMode);
+
+if (compactToggle) {
+  compactToggle.onclick = () => {
+    setCompactLayout(!document.body.classList.contains("layout-compact"));
+  };
+}
+
+function loadSidePanelState(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(SIDE_PANEL_STATE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSidePanelState(): void {
+  const state: Record<string, boolean> = {};
+  document.querySelectorAll<HTMLDetailsElement>(".side-section[data-side-section]").forEach((detail) => {
+    if (detail.dataset.sideSection) state[detail.dataset.sideSection] = detail.open;
+  });
+  try {
+    localStorage.setItem(SIDE_PANEL_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // localStorage 不可用時略過保存，不影響互動
+  }
+}
+
+function initSidePanelState(): void {
+  const saved = loadSidePanelState();
+  document.querySelectorAll<HTMLDetailsElement>(".side-section[data-side-section]").forEach((detail) => {
+    const key = detail.dataset.sideSection;
+    if (key && Object.prototype.hasOwnProperty.call(saved, key)) detail.open = saved[key];
+    detail.addEventListener("toggle", saveSidePanelState);
+  });
+}
+
+initSidePanelState();
+initMobileView();
+
 if (mqQuery)
   mqQuery.oninput = debounce((ev: unknown) => {
     const input = (ev as Event).target as HTMLInputElement;
     setState({ query: input.value.trim() || undefined });
   }, 200);
+
+window.addEventListener(
+  "resize",
+  debounce(() => {
+    void mapView.resize();
+  }, 150),
+);
 const mqFilter = document.getElementById("mq-filter");
 if (mqFilter)
   mqFilter.onclick = () => {
@@ -107,6 +243,7 @@ let focusCluster: string | null = null;
 let applyingHash = false;
 let lastQuery = "";
 let lastViewKey = "";
+let lastMapKey = "";
 let lastGeneratedAt: string | null = null;
 
 function isScope(v: string | null): v is Scope {
@@ -171,6 +308,36 @@ function relationChip(ref: RelatedRef): { label: string; why: string } {
 
 function byTimeDesc(a: IntelEvent, b: IntelEvent): number {
   return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+}
+
+function riskFilterLabel(risk?: RiskLevel): string {
+  if (risk === "medium") return "中以上";
+  if (risk === "high") return "高以上";
+  if (risk === "critical") return "僅危急";
+  return "";
+}
+
+function renderFilterSummary(displayCount: number, totalCount: number, focusLabel = ""): void {
+  const el = document.getElementById("filter-summary")!;
+  const s = getState();
+  const chips: string[] = [];
+  chips.push(`<span class="filter-chip is-base">${s.scope === "domestic" ? "國內" : "國際"}</span>`);
+  if (s.category) chips.push(`<button type="button" class="filter-chip" data-clear-filter="category">分類：${esc(s.category)} ✕</button>`);
+  if (s.minRisk)
+    chips.push(`<button type="button" class="filter-chip" data-clear-filter="risk">風險：${esc(riskFilterLabel(s.minRisk))} ✕</button>`);
+  if (s.sinceDays)
+    chips.push(`<button type="button" class="filter-chip" data-clear-filter="since">時間：近 ${s.sinceDays} 天 ✕</button>`);
+  if (s.query) chips.push(`<button type="button" class="filter-chip" data-clear-filter="query">搜尋：${esc(s.query)} ✕</button>`);
+  if (focusLabel) chips.push(`<button type="button" class="filter-chip is-focus" data-clear-filter="focus">焦點：${esc(focusLabel)} ✕</button>`);
+
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="filter-summary-main">
+      <span class="filter-summary-label">目前視圖</span>
+      <div class="filter-chips">${chips.join("")}</div>
+      <span class="filter-summary-count">${displayCount} / ${totalCount} 則</span>
+    </div>
+    <button type="button" class="filter-clear-all" data-clear-filter="all">清除條件</button>`;
 }
 
 function renderFocusBar(events: IntelEvent[], net: NetworkIndex): void {
@@ -281,6 +448,13 @@ async function refresh(): Promise<void> {
   }
 
   const emptyMessage = display.length === 0 ? emptyListHint(all, s, Date.now()) : null;
+  let focusSummaryLabel = "";
+  if (focusCluster) {
+    const c = net.cluster(focusCluster);
+    focusSummaryLabel = c?.representativeTitle || focusCluster;
+  } else if (focusId) {
+    focusSummaryLabel = byId.get(focusId)?.title || focusId;
+  }
 
   renderEventList(eventList, listGroups ?? display, {
     relatedCount: (id) => net.count(id),
@@ -340,8 +514,13 @@ async function refresh(): Promise<void> {
     lastViewKey = viewKey;
   }
   renderFocusBar(display, net);
+  renderFilterSummary(display.length, all.length, focusSummaryLabel);
   renderTopClusters(document.getElementById("topclusters")!, net.clusters(), clusterSummariesForScope(summary, s.scope));
-  void mapView.render(display, s.scope);
+  const mapKey = `${viewKey}:${display.length}:${display[0]?.id ?? ""}:${display[display.length - 1]?.id ?? ""}`;
+  if (mapKey !== lastMapKey) {
+    lastMapKey = mapKey;
+    void mapView.render(display, s.scope, { fit: !focusId && !focusCluster });
+  }
   renderTimeline(document.getElementById("timeline")!, display);
   renderAiBrief(document.getElementById("aibrief")!, summary, s.scope);
   document.getElementById("count")!.textContent = listGroups ? `${display.length} 則 · 收合 ${collapsedGroupCount} 組` : `${display.length}`;
@@ -376,6 +555,38 @@ document.getElementById("eventlist")!.addEventListener("click", (ev) => {
   const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>(".rel-link");
   if (!btn?.dataset.rel) return;
   focusEvent(btn.dataset.rel);
+});
+
+document.getElementById("filter-summary")!.addEventListener("click", (ev) => {
+  const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-clear-filter]");
+  if (!btn?.dataset.clearFilter) return;
+  const scope = getState().scope;
+  switch (btn.dataset.clearFilter) {
+    case "category":
+      setState({ category: undefined });
+      break;
+    case "risk":
+      setState({ minRisk: undefined });
+      break;
+    case "since":
+      setState({ sinceDays: undefined });
+      break;
+    case "query":
+      setState({ query: undefined });
+      break;
+    case "focus":
+      focusId = null;
+      focusCluster = null;
+      writeHash("push");
+      void refresh();
+      break;
+    case "all":
+      focusId = null;
+      focusCluster = null;
+      setState({ category: undefined, minRisk: undefined, query: undefined, sinceDays: DEFAULT_SINCE_DAYS });
+      break;
+  }
+  renderFilterBar(document.getElementById("filterbar")!, scope);
 });
 
 // 關聯網互動控制器：點節點預覽／前往、hover/tap 高亮、圖例篩選型別。
