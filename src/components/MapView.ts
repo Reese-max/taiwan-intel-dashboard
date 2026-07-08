@@ -114,8 +114,15 @@ export function clusterPopupHtml(events: IntelEvent[]): string {
       if (risk) return risk;
       return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
     })
-    .slice(0, 6);
+    .slice(0, 4);
   const hidden = Math.max(0, events.length - shown.length);
+  const primary = shown[0];
+  const riskSummary = (["critical", "high", "medium", "low"] as RiskLevel[])
+    .map((risk) => {
+      const count = events.filter((e) => e.riskLevel === risk).length;
+      return count ? `<span class="map-cluster-stat risk-${esc(risk)}">${esc(RISK_LABEL[risk])} ${count}</span>` : "";
+    })
+    .join("");
   const items = shown
       .map(
         (e) => `<li>
@@ -126,10 +133,18 @@ export function clusterPopupHtml(events: IntelEvent[]): string {
         </li>`,
       )
       .join("");
-  const more = hidden ? `<div class="map-cluster-more">另有 ${hidden} 則未列出，放大地圖可拆分重疊標點。</div>` : "";
+  const primaryAction = primary
+    ? `<a class="map-cluster-action map-focus-btn" data-map-focus="${esc(primary.id)}" href="${esc(eventFocusHash(primary))}">查看最高風險</a>`
+    : "";
+  const more = hidden ? `<div class="map-cluster-more">另有 ${hidden} 則未列出，請先放大拆分再判讀。</div>` : "";
   return `<div class="map-cluster-popup">
     <b>此區有 ${events.length} 則情報</b>
-    <div class="map-cluster-hint">雙擊或放大地圖可拆分重疊標點；下列先顯示風險較高與較新的事件。</div>
+    <div class="map-cluster-summary" aria-label="此區風險構成">${riskSummary}</div>
+    <div class="map-cluster-actions">
+      <button class="map-cluster-action map-cluster-zoom" type="button">放大拆分</button>
+      ${primaryAction}
+    </div>
+    <div class="map-cluster-hint">先放大拆分可避免同區事件互相遮住；下列只顯示風險較高與較新的事件。</div>
     <ul>${items}</ul>
     ${more}
   </div>`;
@@ -258,24 +273,44 @@ export class MapView {
     return marker;
   }
 
-  private attachClusterPopupHandlers(marker: L.Marker): void {
+  private attachClusterPopupHandlers(marker: L.Marker, centroid: L.LatLng): void {
     const openPopup = (ev?: Event): void => {
       ev?.preventDefault();
       ev?.stopPropagation();
       this.popupOpen = true;
+      this.map.getContainer().scrollIntoView({ block: "center", inline: "nearest" });
+      this.map.panTo(marker.getLatLng(), { animate: false });
       marker.openPopup();
     };
     marker.on("mousedown", () => {
       this.popupOpen = true;
     });
     marker.on("click", () => openPopup());
+    marker.on("popupopen", () => {
+      const popupEl = marker.getPopup()?.getElement();
+      const zoomBtn = popupEl?.querySelector<HTMLButtonElement>(".map-cluster-zoom");
+      if (!zoomBtn) return;
+      zoomBtn.onclick = (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this.popupOpen = false;
+        marker.closePopup();
+        this.map.flyTo(centroid, Math.min(this.map.getZoom() + 2, 12));
+      };
+    });
     const el = marker.getElement();
     const cluster = el?.querySelector<HTMLElement>(".map-cluster");
+    const hit = el?.querySelector<HTMLElement>(".map-cluster-hit");
     cluster?.addEventListener("click", openPopup);
+    hit?.addEventListener("click", openPopup);
     cluster?.addEventListener("touchstart", () => {
       this.popupOpen = true;
     }, { passive: true });
+    hit?.addEventListener("touchstart", () => {
+      this.popupOpen = true;
+    }, { passive: true });
     cluster?.addEventListener("touchend", openPopup);
+    hit?.addEventListener("touchend", openPopup);
   }
 
   // 依目前 zoom 將鄰近事件聚成網格群：單一→風險點；多個→計數泡泡（點擊放大去聚合）。
@@ -308,18 +343,19 @@ export class MapView {
       const centroid = this.map.unproject([c.sx / n, c.sy / n], z);
       const top = c.events.reduce((a, b) => (RISK_RANK[b.riskLevel] > RISK_RANK[a.riskLevel] ? b : a)).riskLevel;
       const size = Math.min(48, 26 + Math.round(Math.log2(n) * 6));
+      const hitSize = Math.max(48, size + 10);
       const icon = this.lib.divIcon({
-        html: `<div class="map-cluster risk-${top}" style="width:${size}px;height:${size}px">${n}</div>`,
+        html: `<div class="map-cluster-hit" style="width:${hitSize}px;height:${hitSize}px"><div class="map-cluster risk-${top}" style="width:${size}px;height:${size}px">${n}</div></div>`,
         className: "",
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2],
+        iconSize: [hitSize, hitSize],
+        iconAnchor: [hitSize / 2, hitSize / 2],
       });
       const marker = this.lib.marker(centroid, { icon, keyboard: false }).bindPopup(clusterPopupHtml(c.events), { maxWidth: 360 });
       marker.on("dblclick", () => {
         this.map.flyTo(centroid, Math.min(z + 2, 12));
       });
       marker.addTo(this.layer);
-      this.attachClusterPopupHandlers(marker);
+      this.attachClusterPopupHandlers(marker, centroid);
     }
   }
 }

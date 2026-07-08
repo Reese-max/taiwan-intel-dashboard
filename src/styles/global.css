@@ -2431,6 +2431,13 @@ html {
   }
 }
 /* 地圖聚合泡泡：同網格多事件聚成一顆計數圓，依群內最高風險上色，點擊放大去聚合。 */
+.map-cluster-hit {
+  align-items: center;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  touch-action: manipulation;
+}
 .map-cluster {
   display: flex;
   align-items: center;
@@ -2510,10 +2517,57 @@ html {
 .map-cluster-popup {
   display: grid;
   gap: 8px;
+  max-height: min(320px, 68vh);
   min-width: 260px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 .map-cluster-popup b {
   color: var(--color-accent);
+}
+.map-cluster-summary,
+.map-cluster-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.map-cluster-stat {
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 7px;
+}
+.map-cluster-stat.risk-critical {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fecaca;
+}
+.map-cluster-stat.risk-high {
+  border-color: rgba(249, 115, 22, 0.45);
+  color: #fed7aa;
+}
+.map-cluster-stat.risk-medium {
+  border-color: rgba(234, 179, 8, 0.42);
+  color: #fde68a;
+}
+.map-cluster-stat.risk-low {
+  border-color: rgba(59, 130, 246, 0.42);
+  color: #bfdbfe;
+}
+.map-cluster-actions {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  padding-bottom: 7px;
+}
+.map-cluster-actions .map-cluster-action {
+  background: rgba(56, 205, 245, 0.1);
+  border: 1px solid rgba(56, 205, 245, 0.24);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent);
+  min-height: 30px;
+  padding: 6px 9px;
 }
 .map-cluster-hint,
 .map-cluster-more {
@@ -2560,14 +2614,21 @@ html {
 }
 .map-cluster-title {
   color: var(--color-text);
+  display: -webkit-box;
   font-weight: 700;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   line-height: 1.35;
+  overflow: hidden;
 }
 .map-cluster-meta {
   color: #94a3b8;
   font-size: 0.7rem;
   grid-column: 2;
   line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .map-cluster-action {
   grid-column: 2;

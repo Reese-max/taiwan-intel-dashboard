@@ -67,11 +67,16 @@ describe("MapView helpers", () => {
     ]);
 
     expect(html).toContain("此區有 2 則情報");
+    expect(html).toContain("此區風險構成");
+    expect(html).toContain("高 1");
+    expect(html).toContain("中 1");
+    expect(html).toContain("放大拆分");
+    expect(html).toContain("查看最高風險");
     expect(html).toContain("測試新聞");
     expect(html).toContain("第二則測試新聞");
     expect(html).toContain("臺北市｜治安");
     expect(html).toContain("先查證原文再行動");
-    expect(html).toContain("放大地圖可拆分重疊標點");
+    expect(html).toContain("先放大拆分可避免同區事件互相遮住");
     expect(html).toContain('href="#scope=domestic&amp;focus=twnews-map-test"');
     expect(html).toContain("查看");
   });
