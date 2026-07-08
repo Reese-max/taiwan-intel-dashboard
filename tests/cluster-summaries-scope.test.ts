@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { clusterSummariesForScope, type AiSummary } from "../src/components/AiBrief";
+import { actionDecisionBrief, clusterSummariesForScope, renderAiBrief, type AiSummary } from "../src/components/AiBrief";
+import type { IntelEvent } from "../src/types/event";
 
 // 回歸測試：clusterSummaries 只為國內群生成，cluster id（c0/c1/c2…）跨 scope 撞號。
 // 國際 scope 不可套用，否則國際群會誤掛同號的國內群摘要（實際案例：國際資安群 c1
@@ -12,6 +13,22 @@ const summary: AiSummary = {
     c1: "近期台灣治安事件與天災頻傳，含毒品走私、偷拍、共諜及水患等。",
   },
   generatedAt: "2026-06-27T05:37:00+08:00",
+};
+
+const event: IntelEvent = {
+  id: "evt-action",
+  title: "詐騙網站新增通報",
+  region: "臺北市",
+  timestamp: "2026-06-27T00:00:00.000Z",
+  category: "反詐",
+  scope: "domestic",
+  riskLevel: "high",
+  summary: "165 通報涉詐網站與銀行帳戶。",
+  source: {
+    name: "165",
+    type: "gov-open-data",
+    fetchedAt: "2026-06-27T00:00:00.000Z",
+  },
 };
 
 describe("clusterSummariesForScope", () => {
@@ -35,5 +52,23 @@ describe("clusterSummariesForScope", () => {
   it("summary 無 clusterSummaries 欄位時國內 scope 也回空", () => {
     const bare: AiSummary = { domestic: "x", international: "y", generatedAt: "2026-06-27T00:00:00+08:00" };
     expect(clusterSummariesForScope(bare, "domestic")).toEqual({});
+  });
+
+  it("AI 摘要可共用行動判斷規則產生決策摘要", () => {
+    const text = actionDecisionBrief([event]);
+
+    expect(text).toContain("行動判斷");
+    expect(text).toContain("金流／帳戶");
+    expect(text).toContain("避免匯款並核對來源");
+  });
+
+  it("renderAiBrief 會把行動判斷摘要插入 AI 摘要區", () => {
+    const container = { innerHTML: "" } as HTMLElement;
+
+    renderAiBrief(container, summary, "domestic", [event]);
+
+    expect(container.innerHTML).toContain("ai-action");
+    expect(container.innerHTML).toContain("行動判斷");
+    expect(container.innerHTML).toContain("避免匯款並核對來源");
   });
 });

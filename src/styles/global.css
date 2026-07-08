@@ -1239,6 +1239,16 @@ body.layout-compact .col-list {
   font-size: 0.72rem;
   margin: 0;
 }
+.ai-action {
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-panel-2));
+  border: 1px solid var(--border-accent);
+  border-radius: 10px;
+  color: var(--color-text);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0 0 0.55em;
+  padding: 8px 10px;
+}
 /* AI 摘要細項：近 24h / 趨勢 / 分類別 */
 .ai-sub {
   font-size: 0.8rem;
@@ -2468,6 +2478,13 @@ html {
 }
 .map-popup-muted {
   color: #94a3b8;
+}
+.map-popup-decision {
+  color: var(--color-text);
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-top: 3px;
 }
 .map-popup-action,
 .map-cluster-action {

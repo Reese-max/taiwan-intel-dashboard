@@ -1,5 +1,7 @@
 import { esc } from "../utils/escape";
-import type { Scope } from "../types/event";
+import type { IntelEvent, Scope } from "../types/event";
+import { RISK_ORDER } from "../types/event";
+import { getActionDecision } from "../utils/actionDecision";
 
 export interface AiSummary {
   domestic: string;
@@ -31,7 +33,19 @@ export async function loadSummary(): Promise<AiSummary | null> {
   }
 }
 
-export function renderAiBrief(container: HTMLElement, summary: AiSummary | null, scope: Scope): void {
+export function actionDecisionBrief(events: IntelEvent[]): string {
+  const notable = events
+    .filter((e) => RISK_ORDER[e.riskLevel] >= RISK_ORDER.medium)
+    .slice()
+    .sort((a, b) => RISK_ORDER[b.riskLevel] - RISK_ORDER[a.riskLevel] || Date.parse(b.timestamp) - Date.parse(a.timestamp));
+  if (!notable.length) return "";
+  const decisions = notable.slice(0, 6).map((e) => getActionDecision(e));
+  const domains = [...new Set(decisions.map((d) => d.domain))].slice(0, 3).join("、");
+  const recommendations = [...new Set(decisions.map((d) => d.recommendation))].slice(0, 2).join("；");
+  return `行動判斷：${notable.length} 則需留意，主要影響 ${domains}。優先：${recommendations}`;
+}
+
+export function renderAiBrief(container: HTMLElement, summary: AiSummary | null, scope: Scope, events: IntelEvent[] = []): void {
   if (!summary) {
     container.innerHTML = `<div class="ai-brief-head">🤖 AI 情勢摘要</div><p class="empty">摘要尚未生成</p>`;
     return;
@@ -39,15 +53,18 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
   const head = `<div class="ai-brief-head">🤖 AI 情勢摘要</div>`;
   const gen = new Date(summary.generatedAt).toLocaleString("zh-TW", { hour12: false });
   const meta = `<p class="ai-brief-meta">${summary.model ? `由 ${esc(summary.model)} 生成` : "AI 生成"} · ${esc(gen)}</p>`;
+  const action = actionDecisionBrief(events);
+  const actionHtml = action ? `<div class="ai-action">${esc(action)}</div>` : "";
 
   // 國際 scope：只顯示國際每日摘要（近24h/趨勢/分類為國內資料）。
   if (scope !== "domestic") {
-    container.innerHTML = `${head}<p class="ai-brief-body">${esc(summary.international)}</p>${meta}`;
+    container.innerHTML = `${head}<p class="ai-brief-body">${esc(summary.international)}</p>${actionHtml}${meta}`;
     return;
   }
 
   // 國內：每日 + 近 24h 即時 + 趨勢 + 分類別。
   const parts = [`<p class="ai-brief-body">${esc(summary.domestic)}</p>`];
+  if (actionHtml) parts.push(actionHtml);
   if (summary.recent24h)
     parts.push(`<div class="ai-sub"><span class="ai-sub-tag">⚡ 近 24 小時</span>${esc(summary.recent24h)}</div>`);
   if (summary.trend)

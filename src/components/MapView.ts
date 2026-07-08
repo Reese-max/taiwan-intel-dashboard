@@ -2,6 +2,7 @@ import "leaflet/dist/leaflet.css";
 import type * as L from "leaflet";
 import type { IntelEvent, RiskLevel, Scope } from "../types/event";
 import { esc } from "../utils/escape";
+import { getActionDecision } from "../utils/actionDecision";
 
 const RISK_COLOR: Record<RiskLevel, string> = {
   low: "#3b82f6",
@@ -93,6 +94,7 @@ export function eventFocusHash(e: IntelEvent): string {
 }
 
 export function mapPopupHtml(e: IntelEvent): string {
+  const decision = getActionDecision(e);
   const via = e.source.aggregatorName
     ? `<br><span class="map-popup-warn">經由：${esc(e.source.aggregatorName)}，請點開原文確認</span>`
     : "";
@@ -100,6 +102,7 @@ export function mapPopupHtml(e: IntelEvent): string {
     ? `<br><span class="map-popup-muted">定位：${esc(locationPrecisionLabel(e.locationPrecision))}</span>`
     : "";
   return `<b>${esc(e.title)}</b><br>${esc(e.region)}｜${esc(e.category)}<br>來源：${esc(sourceDisplayName(e))}
+    <br><span class="map-popup-decision">建議：${esc(decision.recommendation)}｜${esc(decision.status)}</span>
     ${via}${loc}<br><a class="map-popup-action map-focus-btn" data-map-focus="${esc(e.id)}" href="${esc(eventFocusHash(e))}">查看關聯網 →</a>`;
 }
 
@@ -118,7 +121,7 @@ export function clusterPopupHtml(events: IntelEvent[]): string {
         (e) => `<li>
         <span class="map-cluster-risk risk-${esc(e.riskLevel)}">${esc(RISK_LABEL[e.riskLevel])}</span>
         <span class="map-cluster-title">${esc(e.title)}</span>
-        <span class="map-cluster-meta">${esc(e.region)}｜${esc(e.category)}｜來源：${esc(sourceDisplayName(e))}</span>
+        <span class="map-cluster-meta">${esc(e.region)}｜${esc(e.category)}｜${esc(getActionDecision(e).recommendation)}</span>
           <a class="map-cluster-action map-focus-btn" data-map-focus="${esc(e.id)}" href="${esc(eventFocusHash(e))}">查看</a>
         </li>`,
       )

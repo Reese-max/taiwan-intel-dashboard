@@ -36,6 +36,7 @@ describe("MapView helpers", () => {
     const html = mapPopupHtml(EVENT);
 
     expect(html).toContain("來源：Google News 聚合");
+    expect(html).toContain("建議：先查證原文再行動｜聚合來源待核");
     expect(html).toContain("經由：Google News");
     expect(html).toContain("定位：縣市推論");
     expect(html).toContain('href="#scope=domestic&amp;focus=twnews-map-test"');
@@ -69,7 +70,7 @@ describe("MapView helpers", () => {
     expect(html).toContain("測試新聞");
     expect(html).toContain("第二則測試新聞");
     expect(html).toContain("臺北市｜治安");
-    expect(html).toContain("來源：測試媒體");
+    expect(html).toContain("先查證原文再行動");
     expect(html).toContain("放大地圖可拆分重疊標點");
     expect(html).toContain('href="#scope=domestic&amp;focus=twnews-map-test"');
     expect(html).toContain("查看");

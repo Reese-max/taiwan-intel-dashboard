@@ -522,7 +522,7 @@ async function refresh(): Promise<void> {
     void mapView.render(display, s.scope, { fit: !focusId && !focusCluster });
   }
   renderTimeline(document.getElementById("timeline")!, display);
-  renderAiBrief(document.getElementById("aibrief")!, summary, s.scope);
+  renderAiBrief(document.getElementById("aibrief")!, summary, s.scope, display);
   document.getElementById("count")!.textContent = listGroups ? `${display.length} 則 · 收合 ${collapsedGroupCount} 組` : `${display.length}`;
 }
 
