@@ -258,6 +258,26 @@ export class MapView {
     return marker;
   }
 
+  private attachClusterPopupHandlers(marker: L.Marker): void {
+    const openPopup = (ev?: Event): void => {
+      ev?.preventDefault();
+      ev?.stopPropagation();
+      this.popupOpen = true;
+      marker.openPopup();
+    };
+    marker.on("mousedown", () => {
+      this.popupOpen = true;
+    });
+    marker.on("click", () => openPopup());
+    const el = marker.getElement();
+    const cluster = el?.querySelector<HTMLElement>(".map-cluster");
+    cluster?.addEventListener("click", openPopup);
+    cluster?.addEventListener("touchstart", () => {
+      this.popupOpen = true;
+    }, { passive: true });
+    cluster?.addEventListener("touchend", openPopup);
+  }
+
   // 依目前 zoom 將鄰近事件聚成網格群：單一→風險點；多個→計數泡泡（點擊放大去聚合）。
   private redraw(): void {
     this.layer.clearLayers();
@@ -294,16 +314,12 @@ export class MapView {
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });
-      const marker = this.lib
-        .marker(centroid, { icon, keyboard: false })
-        .bindPopup(clusterPopupHtml(c.events), { maxWidth: 360 })
-        .on("click", () => {
-          this.popupOpen = true;
-        })
-        .on("dblclick", () => {
-          this.map.flyTo(centroid, Math.min(z + 2, 12));
-        });
+      const marker = this.lib.marker(centroid, { icon, keyboard: false }).bindPopup(clusterPopupHtml(c.events), { maxWidth: 360 });
+      marker.on("dblclick", () => {
+        this.map.flyTo(centroid, Math.min(z + 2, 12));
+      });
       marker.addTo(this.layer);
+      this.attachClusterPopupHandlers(marker);
     }
   }
 }
