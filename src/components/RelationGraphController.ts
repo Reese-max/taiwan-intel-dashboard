@@ -158,6 +158,11 @@ export function createRelationGraphController({
     requestAnimationFrame(() => {
       const rg = relGraphEl;
       if (!rg || rg.hidden) return;
+      const listScroller = rg.closest<HTMLElement>(".col-list");
+      if (listScroller) {
+        const top = Math.max(0, rg.offsetTop - listScroller.offsetTop - 8);
+        listScroller.scrollTo({ top, behavior: "auto" });
+      }
       const r = rg.getBoundingClientRect();
       if (r.top >= 0 && r.top < window.innerHeight * 0.7) return;
       // scrollIntoView 會自動處理正確的捲動容器（window.scrollTo 在本頁 html/body 全高時失效）；

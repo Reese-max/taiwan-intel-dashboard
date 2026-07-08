@@ -628,6 +628,17 @@ body.layout-compact .col-list {
 .leaflet-popup-content b {
   color: var(--color-accent);
 }
+@media (max-width: 640px) {
+  .leaflet-popup {
+    max-width: calc(100vw - 24px);
+  }
+  .leaflet-popup-content-wrapper {
+    max-width: calc(100vw - 24px);
+  }
+  .leaflet-popup-content {
+    max-width: calc(100vw - 64px);
+  }
+}
 .leaflet-popup-close-button {
   color: var(--color-muted) !important;
 }
@@ -2258,11 +2269,20 @@ body.layout-compact .col-list {
   body.mobile-view-insights .col-list {
     display: none;
   }
+  body.mobile-view-map #usage-tip,
+  body.mobile-view-map #kpistrip,
+  body.mobile-view-list #kpistrip {
+    display: none;
+  }
   body.mobile-view-insights .col-side {
     display: block;
   }
   .map {
     height: 300px;
+  }
+  body.mobile-view-map .map {
+    height: min(68vh, 560px);
+    min-height: 360px;
   }
   .col-list {
     max-height: none;
@@ -2521,6 +2541,13 @@ html {
   min-width: 260px;
   overflow-y: auto;
   padding-right: 2px;
+}
+@media (max-width: 640px) {
+  .map-cluster-popup {
+    max-height: min(300px, 56vh);
+    max-width: calc(100vw - 72px);
+    min-width: min(260px, calc(100vw - 72px));
+  }
 }
 .map-cluster-popup b {
   color: var(--color-accent);

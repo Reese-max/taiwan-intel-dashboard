@@ -112,7 +112,13 @@ function isMobileView(value: string | null | undefined): value is MobileView {
   return value === "map" || value === "list" || value === "insights";
 }
 
-function setMobileView(view: MobileView): void {
+function mobileViewTarget(view: MobileView): HTMLElement | null {
+  if (view === "map") return document.querySelector<HTMLElement>(".col-map");
+  if (view === "list") return document.querySelector<HTMLElement>(".col-list");
+  return document.querySelector<HTMLElement>(".col-side");
+}
+
+function setMobileView(view: MobileView, options: { scroll?: boolean } = {}): void {
   document.body.classList.toggle("mobile-view-map", view === "map");
   document.body.classList.toggle("mobile-view-list", view === "list");
   document.body.classList.toggle("mobile-view-insights", view === "insights");
@@ -127,6 +133,12 @@ function setMobileView(view: MobileView): void {
     // localStorage 不可用時略過保存
   }
   if (view === "map") void mapView.resize().catch(() => {});
+  if (options.scroll) {
+    window.requestAnimationFrame(() => {
+      mobileViewTarget(view)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (view === "map") void mapView.resize().catch(() => {});
+    });
+  }
 }
 
 function initMobileView(): void {
@@ -141,7 +153,7 @@ function initMobileView(): void {
   document.querySelectorAll<HTMLButtonElement>("[data-mobile-view]").forEach((btn) => {
     btn.onclick = () => {
       const next = btn.dataset.mobileView;
-      if (isMobileView(next)) setMobileView(next);
+      if (isMobileView(next)) setMobileView(next, { scroll: true });
     };
   });
 }
@@ -660,19 +672,31 @@ renderUsageTip();
 // 讓它離開首屏關鍵載入窗，不與 domestic 主資料搶頻寬（IntersectionObserver 不支援時退回立即渲染）。
 {
   const policeHealthEl = document.getElementById("policehealth")!;
-  if (typeof IntersectionObserver === "undefined") {
+  const policeHealthSection = policeHealthEl.closest<HTMLDetailsElement>('[data-side-section="policehealth"]');
+  let policeHealthRendered = false;
+  const renderPoliceHealthOnce = (): void => {
+    if (policeHealthRendered) return;
+    policeHealthRendered = true;
     void renderPoliceHealthPanel(policeHealthEl);
+  };
+  policeHealthSection?.addEventListener("toggle", () => {
+    if (policeHealthSection.open) renderPoliceHealthOnce();
+  });
+  if (policeHealthSection?.open) {
+    renderPoliceHealthOnce();
+  } else if (typeof IntersectionObserver === "undefined") {
+    renderPoliceHealthOnce();
   } else {
     const io = new IntersectionObserver(
       (entries, obs) => {
         if (entries.some((e) => e.isIntersecting)) {
           obs.disconnect();
-          void renderPoliceHealthPanel(policeHealthEl);
+          renderPoliceHealthOnce();
         }
       },
       { rootMargin: "200px" },
     );
-    io.observe(policeHealthEl);
+    io.observe(policeHealthSection ?? policeHealthEl);
   }
 }
 void renderSourcePanel(document.getElementById("sourcepanel")!);
