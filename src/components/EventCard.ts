@@ -72,7 +72,10 @@ function eventContext(e: IntelEvent): string {
   if (e.locationPrecision)
     parts.push(`<span class="ctx-location"><b>定位</b>${esc(locationPrecisionLabel(e.locationPrecision))}</span>`);
   if (e.source.query) parts.push(`<span class="ctx-query" title="${esc(e.source.query)}"><b>查詢</b>可重現查詢</span>`);
-  return `<div class="event-context" aria-label="完整脈絡"><strong>完整脈絡</strong>${parts.join("")}</div>`;
+  return `<details class="event-context" aria-label="完整脈絡">
+    <summary><strong>完整脈絡</strong><span>${parts.length} 項查證欄位</span></summary>
+    <div class="event-context-body">${parts.join("")}</div>
+  </details>`;
 }
 
 function temporalBadge(temporal: IntelEvent["temporal"]): string {
