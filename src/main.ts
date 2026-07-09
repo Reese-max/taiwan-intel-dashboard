@@ -158,9 +158,16 @@ function initMobileView(): void {
   });
 }
 
-function revealFocusedListOnMobile(): void {
+function showFocusedListOnMobile(): void {
   if (!window.matchMedia("(max-width: 640px)").matches) return;
-  setMobileView("list", { scroll: true });
+  setMobileView("list");
+}
+
+function revealListFallbackOnMobile(): void {
+  if (!window.matchMedia("(max-width: 640px)").matches) return;
+  window.requestAnimationFrame(() => {
+    mobileViewTarget("list")?.scrollIntoView({ behavior: "auto", block: "start" });
+  });
 }
 
 function setCompactLayout(enabled: boolean): void {
@@ -550,8 +557,10 @@ function focusEvent(id: string): void {
   focusCluster = null;
   writeHash("push");
   void refresh().then(() => {
-    revealFocusedListOnMobile();
-    relationGraph.reveal();
+    showFocusedListOnMobile();
+    const graph = document.getElementById("relationgraph");
+    if (graph && !graph.hidden) relationGraph.reveal();
+    else revealListFallbackOnMobile();
   });
 }
 
@@ -560,8 +569,10 @@ function focusClusterById(id: string): void {
   focusId = null;
   writeHash("push");
   void refresh().then(() => {
-    revealFocusedListOnMobile();
-    relationGraph.reveal();
+    showFocusedListOnMobile();
+    const graph = document.getElementById("relationgraph");
+    if (graph && !graph.hidden) relationGraph.reveal();
+    else revealListFallbackOnMobile();
   });
 }
 

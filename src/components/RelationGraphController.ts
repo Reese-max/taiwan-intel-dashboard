@@ -158,16 +158,38 @@ export function createRelationGraphController({
     requestAnimationFrame(() => {
       const rg = relGraphEl;
       if (!rg || rg.hidden) return;
-      const listScroller = rg.closest<HTMLElement>(".col-list");
-      if (listScroller) {
-        const top = Math.max(0, rg.offsetTop - listScroller.offsetTop - 8);
-        listScroller.scrollTo({ top, behavior: "auto" });
-      }
-      const r = rg.getBoundingClientRect();
-      if (r.top >= 0 && r.top < window.innerHeight * 0.7) return;
-      // scrollIntoView 會自動處理正確的捲動容器（window.scrollTo 在本頁 html/body 全高時失效）；
-      // CSS 的 scroll-margin-top 讓圖頂避開 sticky topbar。
-      rg.scrollIntoView({ behavior: "smooth", block: "start" });
+      const scrollNow = (): void => {
+        const listScroller = rg.closest<HTMLElement>(".col-list");
+        if (listScroller) {
+          const top = Math.max(0, rg.offsetTop - listScroller.offsetTop - 8);
+          listScroller.scrollTo({ top, behavior: "auto" });
+        }
+        // scrollIntoView 會自動處理正確的捲動容器（window.scrollTo 在本頁 html/body 全高時失效）；
+        // 這裡用 auto 而非 smooth，避免手機上先被事件卡 click 捲動、再被 smooth 競速拉回舊位置。
+        rg.scrollIntoView({ behavior: "auto", block: "start" });
+      };
+      const isVisibleEnough = (): boolean => {
+        const r = rg.getBoundingClientRect();
+        return r.top >= 0 && r.top < window.innerHeight * 0.7;
+      };
+      const alignToSafeTop = (): void => {
+        const r = rg.getBoundingClientRect();
+        const safeTop = window.matchMedia("(max-width: 640px)").matches ? 88 : 92;
+        if (r.top < safeTop || r.top > window.innerHeight * 0.7) {
+          const scroller = document.scrollingElement || document.documentElement;
+          scroller.scrollTo({ top: scroller.scrollTop + r.top - safeTop, behavior: "auto" });
+        }
+      };
+      if (!isVisibleEnough()) scrollNow();
+      alignToSafeTop();
+      const correct = (): void => {
+        if (rg.hidden) return;
+        if (!isVisibleEnough()) scrollNow();
+        alignToSafeTop();
+      };
+      window.setTimeout(correct, 180);
+      window.setTimeout(correct, 520);
+      window.setTimeout(correct, 900);
     });
   }
 
