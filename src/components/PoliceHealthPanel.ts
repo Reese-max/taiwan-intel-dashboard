@@ -51,6 +51,10 @@ interface HourlyHistory {
   runs: HourlyRun[];
 }
 
+const POLICE_VISIBLE_LIMIT = 4;
+const POLICE_EXTRA_LIMIT = 6;
+const STACK_PREVIEW_LIMIT = 360;
+
 function sourceStatus(source: ProvSource, police?: PipelineStatus["police"]): { label: string; cls: string; detail: string } {
   const sub = source.key ? police?.[source.key] : undefined;
   if (typeof sub === "object" && sub && sub.ok === false) {
@@ -89,6 +93,12 @@ function sourceLastSuccess(source: ProvSource, sub?: PoliceSubstatus): string {
   if (source.lastSuccessAt) return source.lastSuccessAt;
   if (sub?.ok !== false && source.count > 0 && !source.stale) return source.fetchedAt;
   return "";
+}
+
+function stackPreview(value: string): string {
+  const normalized = value.replace(/\s+\n/g, "\n").trim();
+  if (normalized.length <= STACK_PREVIEW_LIMIT) return normalized;
+  return `${normalized.slice(0, STACK_PREVIEW_LIMIT)}\n…已截斷，請改查 provenance.json 或主機 log。`;
 }
 
 function isPoliceSource(source: ProvSource): boolean {
@@ -234,13 +244,18 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
             <div><dt>本次抓取時間</dt><dd>${esc(formatDateTime(source.fetchedAt))}</dd></div>
             <div><dt>查詢</dt><dd>${esc(source.query || `twinkle-hub police/${source.key || source.datasetId || "unknown"}`)}</dd></div>
           </dl>
-          <p class="source-error-title">錯誤堆疊</p>
-          <pre class="source-error-stack">${stack ? esc(stack) : "無錯誤"}</pre>
+          ${
+            stack
+              ? `<p class="source-error-title">錯誤摘要</p>
+          <pre class="source-error-stack">${esc(stackPreview(stack))}</pre>`
+              : ""
+          }
         </details>
       </li>`;
     });
-  const visibleRows = rowItems.slice(0, 5).join("");
-  const hiddenRows = rowItems.slice(5).join("");
+  const visibleRows = rowItems.slice(0, POLICE_VISIBLE_LIMIT).join("");
+  const extraRows = rowItems.slice(POLICE_VISIBLE_LIMIT, POLICE_VISIBLE_LIMIT + POLICE_EXTRA_LIMIT).join("");
+  const hiddenCount = Math.max(0, rowItems.length - POLICE_VISIBLE_LIMIT - POLICE_EXTRA_LIMIT);
 
   container.innerHTML = `
     <section class="police-health-card">
@@ -261,13 +276,14 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
       </div>
       <ul class="health-source-list">${visibleRows}</ul>
       ${
-        hiddenRows
+        extraRows
           ? `<details class="health-more">
-              <summary>展開其餘 ${rowItems.length - 5} 個來源明細</summary>
-              <ul class="health-source-list health-source-list-extra">${hiddenRows}</ul>
+              <summary>查看 ${Math.min(POLICE_EXTRA_LIMIT, rowItems.length - POLICE_VISIBLE_LIMIT)} 個來源明細${hiddenCount ? `（另 ${hiddenCount} 個省略）` : ""}</summary>
+              <ul class="health-source-list health-source-list-extra">${extraRows}</ul>
             </details>`
           : ""
       }
+      ${hiddenCount ? `<p class="prov-note">另有 ${hiddenCount} 個正常來源已省略；異常與高量來源會優先顯示。</p>` : ""}
     </section>
     <section class="police-health-card">
       <details class="health-trend-details">

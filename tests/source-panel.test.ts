@@ -90,4 +90,49 @@ describe("renderSourcePanel", () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it("限制展開後的來源明細數量，避免側欄資訊過載", async () => {
+    const sources = Array.from({ length: 20 }, (_, index) => ({
+      name: `來源 ${String(index + 1).padStart(2, "0")}`,
+      type: "news-rss",
+      scope: "domestic",
+      category: "治安",
+      count: 100 - index,
+      fetchedAt: "2026-06-20T23:00:00+08:00",
+      lastSuccessAt: "2026-06-20T23:00:00+08:00",
+    }));
+    const manifest = {
+      generatedAt: "2026-06-21T00:00:00+08:00",
+      pipeline: {
+        twnews: {
+          lowContributionFeeds: Array.from({ length: 8 }, (_, index) => `低貢獻 ${index + 1}`),
+          sourceContributionTotals: {
+            raw: 200,
+            rawUnique: 150,
+            policeRelevant: 20,
+            finalEvents: 1,
+          },
+        },
+      },
+      sources,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify(manifest), { status: 200 })),
+    );
+    const container = { innerHTML: "" } as HTMLElement;
+
+    try {
+      await renderSourcePanel(container);
+
+      expect(container.innerHTML.match(/class="source-list-head"/g)?.length).toBe(12);
+      expect(container.innerHTML).toContain("查看 8 個代表來源（另 8 個省略）");
+      expect(container.innerHTML).toContain("另有 8 個低量來源已省略");
+      expect(container.innerHTML).toContain("查看其餘 2 個低貢獻來源");
+      expect(container.innerHTML).toContain("來源 12");
+      expect(container.innerHTML).not.toContain("來源 13");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

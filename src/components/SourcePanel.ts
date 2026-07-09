@@ -32,6 +32,9 @@ interface Manifest {
 }
 
 const DAY_MS = 86400000;
+const SOURCE_VISIBLE_LIMIT = 4;
+const SOURCE_EXTRA_LIMIT = 8;
+const LOW_CONTRIBUTION_VISIBLE_LIMIT = 6;
 
 function fmtDate(value?: string): string {
   if (!value) return "—";
@@ -119,8 +122,8 @@ function lowContributionBlock(manifest: Manifest): string {
   const twnews = manifest.pipeline?.twnews;
   const feeds = twnews?.lowContributionFeeds || [];
   if (!feeds.length) return "";
-  const visibleFeeds = feeds.slice(0, 10);
-  const hiddenFeeds = feeds.slice(10);
+  const visibleFeeds = feeds.slice(0, LOW_CONTRIBUTION_VISIBLE_LIMIT);
+  const hiddenFeeds = feeds.slice(LOW_CONTRIBUTION_VISIBLE_LIMIT);
   const totals = twnews?.sourceContributionTotals || {};
   const totalLine =
     typeof totals.raw === "number"
@@ -139,7 +142,7 @@ function lowContributionBlock(manifest: Manifest): string {
     ${
       hiddenFeeds.length
         ? `<details class="source-alert-more">
-            <summary>展開其餘 ${hiddenFeeds.length} 個低貢獻來源</summary>
+            <summary>查看其餘 ${hiddenFeeds.length} 個低貢獻來源</summary>
             <div class="source-chip-list">${hiddenFeeds.map((feed) => `<span>${esc(feed)}</span>`).join("")}</div>
           </details>`
         : ""
@@ -158,9 +161,9 @@ export async function renderSourcePanel(container: HTMLElement): Promise<void> {
   const total = m.sources.reduce((sum, s) => sum + s.count, 0);
   const official = m.sources.filter((s) => s.type === "gov-open-data" || s.type === "cwa").length;
   const sorted = [...m.sources].sort((a, b) => freshness(a, m.generatedAt).order - freshness(b, m.generatedAt).order || b.count - a.count);
-  const visibleSources = sorted.slice(0, 5);
-  const extraSources = sorted.slice(5, 25);
-  const hiddenCount = Math.max(0, sorted.length - 25);
+  const visibleSources = sorted.slice(0, SOURCE_VISIBLE_LIMIT);
+  const extraSources = sorted.slice(SOURCE_VISIBLE_LIMIT, SOURCE_VISIBLE_LIMIT + SOURCE_EXTRA_LIMIT);
+  const hiddenCount = Math.max(0, sorted.length - SOURCE_VISIBLE_LIMIT - SOURCE_EXTRA_LIMIT);
   const items = visibleSources
     .map((s) => sourceItem(s, m.generatedAt))
     .join("");
@@ -179,12 +182,12 @@ export async function renderSourcePanel(container: HTMLElement): Promise<void> {
       ${
         extraItems
           ? `<details class="source-more">
-              <summary>展開其餘 ${extraSources.length}${hiddenCount ? `＋${hiddenCount}` : ""} 個來源</summary>
+              <summary>查看 ${extraSources.length} 個代表來源${hiddenCount ? `（另 ${hiddenCount} 個省略）` : ""}</summary>
               <ul class="source-list source-list-extra">${extraItems}</ul>
             </details>`
           : ""
       }
-      ${hiddenCount ? `<p class="prov-note">另有 ${hiddenCount} 個低量來源未列出；可在 provenance.json 檢視完整清單。</p>` : ""}
+      ${hiddenCount ? `<p class="prov-note">另有 ${hiddenCount} 個低量來源已省略，保留面板可讀性；完整清單見 provenance.json。</p>` : ""}
     </section>
     ${m.note ? `<p class="prov-note">${esc(m.note)}</p>` : ""}`;
 }

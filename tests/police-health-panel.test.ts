@@ -95,6 +95,43 @@ describe("renderPoliceHealthPanel", () => {
     }
   });
 
+  it("限制警政來源展開明細並截斷錯誤堆疊", async () => {
+    const longStack = `Error: source failed\n${"x".repeat(520)}`;
+    const manifest = {
+      generatedAt: "2026-06-21T00:00:00+08:00",
+      pipeline: {
+        police: {
+          "police-01": { ok: false, error: "HTTP 500", stack: longStack },
+          newPoliceRelatedCount: 80,
+          deferredNewCandidateCount: 1,
+          newMinimumPerHour: 200,
+        },
+      },
+      sources: Array.from({ length: 12 }, (_, index) => ({
+        key: `police-${String(index + 1).padStart(2, "0")}`,
+        name: `警政來源 ${String(index + 1).padStart(2, "0")}`,
+        count: 100 - index,
+        fetchedAt: "2026-06-21T00:00:00+08:00",
+      })),
+    };
+    const history = makeHistory(80, 200);
+    const container = stubFetch(manifest, history);
+
+    try {
+      await renderPoliceHealthPanel(container);
+
+      expect(container.innerHTML.match(/class="health-source-item"/g)?.length).toBe(10);
+      expect(container.innerHTML).toContain("查看 6 個來源明細（另 2 個省略）");
+      expect(container.innerHTML).toContain("另有 2 個正常來源已省略");
+      expect(container.innerHTML).toContain("錯誤摘要");
+      expect(container.innerHTML).toContain("…已截斷");
+      expect(container.innerHTML).toContain("警政來源 10");
+      expect(container.innerHTML).not.toContain("警政來源 11");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("provenance fetch 不可用時會顯示不可用空狀態", async () => {
     const container = stubFetch({}, { runs: [] }, false);
 
