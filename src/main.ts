@@ -569,7 +569,9 @@ async function refresh(): Promise<void> {
   const mapKey = `${viewKey}:${display.length}:${display[0]?.id ?? ""}:${display[display.length - 1]?.id ?? ""}`;
   if (mapKey !== lastMapKey) {
     lastMapKey = mapKey;
-    void mapView.render(display, s.scope, { fit: !focusId && !focusCluster });
+    // 聚焦/情報群切換後也重新 fit：避免從 popup 進關聯網時，焦點事件落在舊視口外，
+    // 地圖看起來像「被清空」。一般清單與聚焦狀態都以目前 display 作為地圖真相。
+    void mapView.render(display, s.scope);
   }
   renderTimeline(document.getElementById("timeline")!, display);
   renderAiBrief(document.getElementById("aibrief")!, summary, s.scope, display);
