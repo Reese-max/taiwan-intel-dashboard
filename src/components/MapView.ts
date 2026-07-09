@@ -181,6 +181,7 @@ export class MapView {
   private onShowList?: () => void;
   private popupOpen = false;
   private emptyEl?: HTMLElement;
+  private lastScope: Scope = "domestic";
 
   constructor(el: HTMLElement, options: MapViewOptions = {}) {
     this.ready = this.init(el);
@@ -244,6 +245,13 @@ export class MapView {
     this.redraw();
   }
 
+  async reveal(): Promise<void> {
+    await this.ready;
+    this.map.invalidateSize(true);
+    if (!this.popupOpen) this.fitToLocated(this.lastScope);
+    this.redraw();
+  }
+
   async render(events: IntelEvent[], scope: Scope = events[0]?.scope ?? "domestic", options: RenderOptions = {}): Promise<void> {
     if (events === this._cachedEvents) {
       this.located = this._cachedLocated;
@@ -253,25 +261,30 @@ export class MapView {
       this.located = this._cachedLocated;
     }
     await this.ready;
+    this.lastScope = scope;
     this.updateEmptyHint(events.length);
+    const shouldFit = options.fit !== false;
+    if (shouldFit) this.fitToLocated(scope);
+    this.redraw();
+  }
+
+  private fitToLocated(scope: Scope): void {
     const taiwanBounds = this.lib.latLngBounds([
       [TAIWAN_BBOX.minLat, TAIWAN_BBOX.minLng],
       [TAIWAN_BBOX.maxLat, TAIWAN_BBOX.maxLng],
     ]);
     this.map.setMaxBounds(scope === "domestic" ? taiwanBounds.pad(0.5) : undefined);
     const fitLocated = scope === "domestic" ? this.located.filter(isInsideTaiwanBBox) : this.located;
-    const shouldFit = options.fit !== false;
-    if (shouldFit && fitLocated.length) {
+    if (fitLocated.length) {
       const bounds = this.lib.latLngBounds(
         fitLocated.map((e) => [e.lat!, e.lng!] as [number, number]),
       );
-      // 先（無動畫）對齊視口、再 redraw：⑦ 的視口裁切只渲染可見範圍，若先 redraw 再 fitBounds，
-      // 切換 scope（如國內→國際時地圖仍停在台灣）會把新範圍外的標點剪掉而看不到。
+      // 先（無動畫）對齊視口、再 redraw：視口裁切只渲染可見範圍，若先 redraw 再 fitBounds，
+      // 切換 scope 或在手機隱藏地圖分頁套篩選時，標點會被舊視口剪掉而看不到。
       this.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 8, animate: false });
-    } else if (shouldFit && scope === "domestic") {
+    } else if (scope === "domestic") {
       this.map.setView([23.7, 121], 7, { animate: false });
     }
-    this.redraw();
   }
 
   private updateEmptyHint(totalEvents: number): void {

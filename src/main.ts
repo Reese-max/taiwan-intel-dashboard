@@ -143,11 +143,11 @@ function setMobileView(view: MobileView, options: { scroll?: boolean } = {}): vo
   } catch {
     // localStorage 不可用時略過保存
   }
-  if (view === "map") void mapView.resize().catch(() => {});
+  if (view === "map") void mapView.reveal().catch(() => {});
   if (options.scroll) {
     window.requestAnimationFrame(() => {
       mobileViewTarget(view)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      if (view === "map") void mapView.resize().catch(() => {});
+      if (view === "map") void mapView.reveal().catch(() => {});
     });
   }
 }
