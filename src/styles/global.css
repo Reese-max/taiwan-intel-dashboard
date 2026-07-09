@@ -536,13 +536,19 @@ h4 {
 
 .layout {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 0.7fr;
+  grid-template-columns: minmax(360px, 1.4fr) minmax(280px, 1fr) minmax(220px, 0.7fr);
   gap: var(--space-4);
   padding: 4px 24px 28px;
 }
 
+.col-map,
+.col-list,
+.col-side {
+  min-width: 0;
+}
+
 body.layout-compact .layout {
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: minmax(360px, 1.4fr) minmax(280px, 1fr);
 }
 
 body.layout-compact .col-side {
@@ -576,16 +582,25 @@ body.layout-compact .col-list {
   background: var(--color-accent);
   box-shadow: 0 0 8px var(--color-accent);
 }
-@media (max-width: 1000px) {
+@media (min-width: 641px) and (max-width: 1000px) {
   .layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr);
+  }
+  .col-map {
+    grid-column: 1 / -1;
+  }
+  .col-list {
+    max-height: calc(100vh - 126px);
+  }
+  .col-side {
+    align-self: start;
+  }
+  body.layout-compact .layout {
     grid-template-columns: minmax(0, 1fr);
   }
-  /* 單欄時 grid item 預設 min-width:auto(=min-content)，會被地圖 tile／長字撐出
-     比視窗寬的軌道造成整頁橫向溢出，歸零以允許收縮至容器寬度。 */
-  .col-map,
-  .col-list,
-  .col-side {
-    min-width: 0;
+  body.layout-compact .col-map,
+  body.layout-compact .col-list {
+    grid-column: 1;
   }
 }
 /* 寬螢幕：地圖與情報列表黏附視窗頂端，捲動長右欄時左側控制台持續可見，
@@ -718,12 +733,14 @@ body.layout-compact .col-list {
   background: color-mix(in srgb, var(--color-panel) 78%, transparent);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  min-width: 0;
 }
 .side-section > summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+  min-width: 0;
   padding: 10px 12px;
   color: var(--color-text);
   cursor: pointer;
@@ -1732,6 +1749,7 @@ body.layout-compact .col-list {
   cursor: pointer;
   display: grid;
   gap: 2px;
+  min-width: 0;
   padding: 8px 9px;
   text-align: left;
   width: 100%;
@@ -1748,11 +1766,13 @@ body.layout-compact .col-list {
   font-size: 0.82rem;
   font-weight: 700;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .cluster-meta,
 .cluster-time {
   color: var(--color-muted);
   font-size: 0.7rem;
+  overflow-wrap: anywhere;
 }
 .source-card {
   background: var(--color-panel);
