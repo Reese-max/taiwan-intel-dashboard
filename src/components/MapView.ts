@@ -19,6 +19,8 @@ const RISK_LABEL: Record<RiskLevel, string> = {
 const RISK_RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, critical: 3 };
 // 聚合網格邊長（像素）：同網格內多個事件聚成一顆計數泡泡，避免市區大量標點重疊。
 const CELL = 46;
+const CLUSTER_POPUP_ITEMS = 2;
+const CLUSTER_TITLE_LIMIT = 34;
 const TAIWAN_BBOX = { minLat: 21.9, maxLat: 26.3, minLng: 118.1, maxLng: 122.1 };
 
 interface MapViewOptions {
@@ -87,6 +89,12 @@ function locationPrecisionLabel(value: IntelEvent["locationPrecision"]): string 
   }
 }
 
+function compactClusterTitle(title: string): string {
+  const chars = Array.from(title.trim());
+  if (chars.length <= CLUSTER_TITLE_LIMIT) return title;
+  return `${chars.slice(0, CLUSTER_TITLE_LIMIT).join("")}…`;
+}
+
 export function eventFocusHash(e: IntelEvent): string {
   const params = new URLSearchParams();
   params.set("scope", e.scope);
@@ -115,7 +123,7 @@ export function clusterPopupHtml(events: IntelEvent[]): string {
       if (risk) return risk;
       return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
     })
-    .slice(0, 3);
+    .slice(0, CLUSTER_POPUP_ITEMS);
   const hidden = Math.max(0, events.length - shown.length);
   const primary = shown[0];
   const riskSummary = (["critical", "high", "medium", "low"] as RiskLevel[])
@@ -128,7 +136,7 @@ export function clusterPopupHtml(events: IntelEvent[]): string {
       .map(
         (e) => `<li>
         <span class="map-cluster-risk risk-${esc(e.riskLevel)}">${esc(RISK_LABEL[e.riskLevel])}</span>
-        <span class="map-cluster-title">${esc(e.title)}</span>
+        <span class="map-cluster-title" title="${esc(e.title)}">${esc(compactClusterTitle(e.title))}</span>
         <span class="map-cluster-meta">${esc(e.region)}｜${esc(e.category)}</span>
         <a class="map-cluster-action map-focus-btn" data-map-focus="${esc(e.id)}" href="${esc(eventFocusHash(e))}">查看</a>
         </li>`,

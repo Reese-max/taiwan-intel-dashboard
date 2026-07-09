@@ -86,6 +86,27 @@ describe("MapView helpers", () => {
     expect(html).toContain("查看");
   });
 
+  it("keeps large cluster popups compact", () => {
+    const longTitle = "這是一個非常非常長的地圖聚合事件標題用來確認手機版泡泡不會塞滿整個畫面";
+    const html = clusterPopupHtml([
+      { ...EVENT, id: "critical-long", title: longTitle, riskLevel: "critical" },
+      { ...EVENT, id: "high-2", title: "第二高風險事件", riskLevel: "high" },
+      { ...EVENT, id: "medium-3", title: "第三則不應直接展開", riskLevel: "medium" },
+      { ...EVENT, id: "low-4", title: "第四則不應直接展開", riskLevel: "low" },
+    ]);
+
+    const renderedTitles = html.match(/<span class="map-cluster-title" title="[^"]+">([^<]+)<\/span>/g) ?? [];
+    const firstTitle = renderedTitles[0]?.match(/>([^<]+)<\/span>/)?.[1] ?? "";
+
+    expect(renderedTitles).toHaveLength(2);
+    expect(firstTitle).toMatch(/…$/);
+    expect(firstTitle).not.toBe(longTitle);
+    expect(html).toContain(`title="${longTitle}"`);
+    expect(html).toContain("另有 2 則，放大後再拆讀。");
+    expect(html).not.toContain("第三則不應直接展開");
+    expect(html).not.toContain("第四則不應直接展開");
+  });
+
   it("builds focus hashes from event scope and id", () => {
     expect(eventFocusHash(EVENT)).toBe("#scope=domestic&focus=twnews-map-test");
   });
