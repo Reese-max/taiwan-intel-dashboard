@@ -153,6 +153,12 @@ export function isMapDisplayable(e: IntelEvent): e is MapDisplayable {
   return e.lat != null && e.lng != null && !(e.lat === 0 && e.lng === 0) && e.locationPrecision !== "global";
 }
 
+export function mapEmptyLabel(totalEvents: number, locatedEvents: number): string {
+  if (locatedEvents > 0) return "";
+  if (totalEvents > 0) return "這批事件缺少可標示座標，請改看列表或放寬地理條件。";
+  return "目前條件沒有可標示的地圖點，請改看列表或放寬篩選。";
+}
+
 function isInsideTaiwanBBox(e: MapDisplayable): boolean {
   return (
     e.lat >= TAIWAN_BBOX.minLat &&
@@ -172,6 +178,7 @@ export class MapView {
   private ready: Promise<void>;
   private onFocus?: (eventId: string) => void;
   private popupOpen = false;
+  private emptyEl?: HTMLElement;
 
   constructor(el: HTMLElement, options: MapViewOptions = {}) {
     this.ready = this.init(el);
@@ -212,6 +219,12 @@ export class MapView {
     radar.className = "map-radar";
     radar.setAttribute("aria-hidden", "true");
     el.appendChild(radar);
+    const empty = document.createElement("div");
+    empty.className = "map-empty-hint";
+    empty.setAttribute("role", "status");
+    empty.hidden = true;
+    el.appendChild(empty);
+    this.emptyEl = empty;
 
     el.addEventListener("click", (ev) => {
       const target = (ev.target as HTMLElement).closest<HTMLElement>(".map-focus-btn[data-map-focus]");
@@ -237,6 +250,7 @@ export class MapView {
       this.located = this._cachedLocated;
     }
     await this.ready;
+    this.updateEmptyHint(events.length);
     const taiwanBounds = this.lib.latLngBounds([
       [TAIWAN_BBOX.minLat, TAIWAN_BBOX.minLng],
       [TAIWAN_BBOX.maxLat, TAIWAN_BBOX.maxLng],
@@ -255,6 +269,13 @@ export class MapView {
       this.map.setView([23.7, 121], 7, { animate: false });
     }
     this.redraw();
+  }
+
+  private updateEmptyHint(totalEvents: number): void {
+    if (!this.emptyEl) return;
+    const label = mapEmptyLabel(totalEvents, this.located.length);
+    this.emptyEl.hidden = !label;
+    this.emptyEl.textContent = label;
   }
 
   private singleMarker(e: IntelEvent): L.CircleMarker {

@@ -4,6 +4,7 @@ import {
   clusterPopupHtml,
   eventFocusHash,
   isMapDisplayable,
+  mapEmptyLabel,
   mapPopupHtml,
   markerClass,
 } from "../src/components/MapView";
@@ -51,6 +52,12 @@ describe("MapView helpers", () => {
   it("does not display global 0,0 events as normal map points", () => {
     expect(isMapDisplayable({ ...EVENT, lat: 0, lng: 0, locationPrecision: "global" })).toBe(false);
     expect(isMapDisplayable(EVENT)).toBe(true);
+  });
+
+  it("explains empty map states without implying data load failure", () => {
+    expect(mapEmptyLabel(0, 0)).toBe("目前條件沒有可標示的地圖點，請改看列表或放寬篩選。");
+    expect(mapEmptyLabel(3, 0)).toBe("這批事件缺少可標示座標，請改看列表或放寬地理條件。");
+    expect(mapEmptyLabel(3, 2)).toBe("");
   });
 
   it("shows readable event summaries for clustered map points", () => {
