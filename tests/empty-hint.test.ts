@@ -44,11 +44,29 @@ describe("emptyListHint", () => {
     expect(emptyListHint(all, { category: "採購", sinceDays: 3, minRisk: "high" }, BASE_TIME)).toBeNull();
   });
 
-  it("無 category 或無 sinceDays 時回 null", () => {
+  it("無 sinceDays 時回 null", () => {
     const all: IntelEvent[] = [mkEvent("採購", new Date(BASE_TIME - 4 * 86_400_000).toISOString(), { id: "p1" })];
 
-    expect(emptyListHint(all, { sinceDays: 3 }, BASE_TIME)).toBeNull();
     expect(emptyListHint(all, { category: "採購" }, BASE_TIME)).toBeNull();
+  });
+
+  it("無 category 但整個視圖都在時間窗外時，提示改看全部時間", () => {
+    const all: IntelEvent[] = [
+      mkEvent("地緣政治", new Date(BASE_TIME - 6 * 86_400_000).toISOString(), {
+        id: "i1",
+        scope: "international",
+        region: "國際",
+      }),
+      mkEvent("資安", new Date(BASE_TIME - 8 * 86_400_000).toISOString(), {
+        id: "i2",
+        scope: "international",
+        region: "國際",
+      }),
+    ];
+
+    const msg = emptyListHint(all, { sinceDays: 3 }, BASE_TIME);
+
+    expect(msg).toBe("此視圖最近一筆在 6 天前，改選「全部時間」可檢視");
   });
 
   it("該分類在全量資料無資料時回 null（避免當成時間窗外）", () => {

@@ -10,10 +10,10 @@ export function emptyListHint(
   },
   nowMs: number,
 ): string | null {
-  if (!state.category || !state.sinceDays) return null;
+  if (!state.sinceDays) return null;
   if (state.query || state.minRisk) return null;
 
-  const matching = all.filter((e) => e.category === state.category);
+  const matching = state.category ? all.filter((e) => e.category === state.category) : all;
   if (!matching.length) return null;
 
   let newest = Number.NEGATIVE_INFINITY;
@@ -26,5 +26,7 @@ export function emptyListHint(
   const ageDays = Math.ceil((nowMs - newest) / 86_400_000);
   if (ageDays <= state.sinceDays) return null;
 
-  return `此分類最近一筆在 ${ageDays} 天前，改選「全部時間」可檢視`;
+  return state.category
+    ? `此分類最近一筆在 ${ageDays} 天前，改選「全部時間」可檢視`
+    : `此視圖最近一筆在 ${ageDays} 天前，改選「全部時間」可檢視`;
 }
