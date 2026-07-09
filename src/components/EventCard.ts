@@ -85,18 +85,20 @@ function eventContext(e: IntelEvent): string {
   if (e.source.recordRef) rawParts.push(`<span class="ctx-wide"><b>原始編號</b>${esc(e.source.recordRef)}</span>`);
   if (e.source.query) rawParts.push(`<span class="ctx-query" title="${esc(e.source.query)}"><b>查詢</b>可重現查詢</span>`);
 
-  return `<details class="event-context event-verify" aria-label="完整脈絡：查證依據">
-    <summary><strong>查證依據</strong><span>${verifyParts.length} 項</span></summary>
-    <div class="event-context-body">${verifyParts.join("")}</div>
-  </details>
-  ${
-    rawParts.length
-      ? `<details class="event-context event-raw" aria-label="完整脈絡：原始資料">
-          <summary><strong>原始資料</strong><span>${rawParts.length} 項</span></summary>
-          <div class="event-context-body">${rawParts.join("")}</div>
-        </details>`
-      : ""
-  }`;
+  const rawSection = rawParts.length
+    ? `<div class="event-context-group">
+        <b class="event-context-heading">原始資料</b>
+        <div class="event-context-body">${rawParts.join("")}</div>
+      </div>`
+    : "";
+  return `<details class="event-context event-verify" aria-label="完整脈絡：查證依據與原始資料">
+    <summary><strong>查證依據</strong><span>${verifyParts.length + rawParts.length} 項</span></summary>
+    <div class="event-context-group">
+      <b class="event-context-heading">查證依據</b>
+      <div class="event-context-body">${verifyParts.join("")}</div>
+    </div>
+    ${rawSection}
+  </details>`;
 }
 
 function temporalBadge(temporal: IntelEvent["temporal"]): string {

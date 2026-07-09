@@ -219,8 +219,11 @@ export class MapView {
         if (!this.popupOpen) this.redraw();
       }, 150),
     );
-    this.map.on("popupopen", () => {
+    this.map.on("popupopen", (ev) => {
       this.popupOpen = true;
+      window.setTimeout(() => {
+        this.attachPopupFocusHandlers((ev as L.PopupEvent).popup.getElement());
+      }, 0);
     });
     this.map.on("popupclose", () => {
       this.popupOpen = false;
@@ -335,7 +338,25 @@ export class MapView {
     marker.on("click", () => {
       this.popupOpen = true;
     });
+    marker.on("popupopen", () => {
+      window.setTimeout(() => {
+        this.attachPopupFocusHandlers(marker.getPopup()?.getElement());
+      }, 0);
+    });
     return marker;
+  }
+
+  private attachPopupFocusHandlers(popupEl?: HTMLElement): void {
+    popupEl?.querySelectorAll<HTMLAnchorElement>(".map-focus-btn[data-map-focus]").forEach((btn) => {
+      btn.onclick = (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const id = btn.dataset.mapFocus;
+        this.popupOpen = false;
+        this.map.closePopup();
+        if (id && this.onFocus) this.onFocus(id);
+      };
+    });
   }
 
   private attachClusterPopupHandlers(marker: L.Marker, centroid: L.LatLng): void {
@@ -353,6 +374,7 @@ export class MapView {
     marker.on("click", () => openPopup());
     marker.on("popupopen", () => {
       const popupEl = marker.getPopup()?.getElement();
+      this.attachPopupFocusHandlers(popupEl);
       const zoomBtn = popupEl?.querySelector<HTMLButtonElement>(".map-cluster-zoom");
       if (!zoomBtn) return;
       zoomBtn.onclick = (ev) => {

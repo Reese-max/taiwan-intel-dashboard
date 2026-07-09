@@ -942,11 +942,24 @@ body.layout-compact .col-list {
 .event-context[open] summary::after {
   content: "收合";
 }
+.event-context-group {
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  padding: 7px 8px 8px;
+}
+.event-context summary + .event-context-group {
+  border-top: 0;
+}
+.event-context-heading {
+  color: var(--color-accent);
+  display: block;
+  font-size: 0.66rem;
+  margin-bottom: 5px;
+}
 .event-context-body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 10px;
-  padding: 8px;
+  padding: 0;
 }
 .event-context-body span {
   display: inline-block;
@@ -2374,16 +2387,14 @@ body.layout-compact .col-list {
     line-height: 1.42;
   }
   .event-decision {
-    grid-template-columns: 1fr;
-    gap: 5px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
   }
   .event-decision span {
-    display: flex;
-    gap: 8px;
-    justify-content: space-between;
+    padding: 5px 6px;
   }
   .event-decision b {
-    margin-bottom: 0;
+    margin-bottom: 2px;
   }
   .event-card footer {
     gap: 6px 9px;

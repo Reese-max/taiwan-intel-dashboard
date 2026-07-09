@@ -30,6 +30,7 @@ describe("eventCard", () => {
     expect(html).toContain("行動判斷");
     expect(html).toContain("查證依據");
     expect(html).toContain("原始資料");
+    expect(html.match(/class="event-context /g)).toHaveLength(1);
     expect(html).toContain("<b>建議</b>");
     expect(html).toContain("金流／帳戶");
     expect(html).toContain("避免匯款並核對來源");
