@@ -4,6 +4,7 @@ import {
   clusterPopupHtml,
   eventFocusHash,
   isMapDisplayable,
+  isClusterTapGesture,
   mapEmptyLabel,
   mapPopupHtml,
   markerClass,
@@ -109,5 +110,11 @@ describe("MapView helpers", () => {
 
   it("builds focus hashes from event scope and id", () => {
     expect(eventFocusHash(EVENT)).toBe("#scope=domestic&focus=twnews-map-test");
+  });
+
+  it("distinguishes cluster taps from drag gestures", () => {
+    expect(isClusterTapGesture({ x: 120, y: 200, at: 1000 }, { x: 127, y: 205, at: 1150 })).toBe(true);
+    expect(isClusterTapGesture({ x: 120, y: 200, at: 1000 }, { x: 152, y: 218, at: 1150 })).toBe(false);
+    expect(isClusterTapGesture({ x: 120, y: 200, at: 1000 }, { x: 123, y: 204, at: 1900 })).toBe(false);
   });
 });

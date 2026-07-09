@@ -21,6 +21,8 @@ const RISK_RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, criti
 const CELL = 46;
 const CLUSTER_POPUP_ITEMS = 2;
 const CLUSTER_TITLE_LIMIT = 34;
+const CLUSTER_TAP_MOVE_PX = 12;
+const CLUSTER_TAP_MAX_MS = 700;
 const TAIWAN_BBOX = { minLat: 21.9, maxLat: 26.3, minLng: 118.1, maxLng: 122.1 };
 
 interface MapViewOptions {
@@ -33,6 +35,12 @@ interface RenderOptions {
 }
 
 export type MapDisplayable = IntelEvent & { lat: number; lng: number };
+
+export interface ClusterTapPoint {
+  x: number;
+  y: number;
+  at: number;
+}
 
 function throttle<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
   let last = 0;
@@ -55,6 +63,23 @@ function throttle<T extends (...args: unknown[]) => void>(fn: T, ms: number): T 
       }, remaining);
     }
   }) as T;
+}
+
+export function isClusterTapGesture(
+  start: ClusterTapPoint,
+  end: ClusterTapPoint,
+  maxMovePx = CLUSTER_TAP_MOVE_PX,
+  maxMs = CLUSTER_TAP_MAX_MS,
+): boolean {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  return Math.hypot(dx, dy) <= maxMovePx && end.at - start.at <= maxMs;
+}
+
+function touchPoint(ev: TouchEvent): ClusterTapPoint | null {
+  const touch = ev.changedTouches[0] ?? ev.touches[0];
+  if (!touch) return null;
+  return { x: touch.clientX, y: touch.clientY, at: Date.now() };
 }
 
 // 危急／高風險標點加 class，由 CSS 套脈衝光暈動畫。
@@ -360,6 +385,8 @@ export class MapView {
   }
 
   private attachClusterPopupHandlers(marker: L.Marker, centroid: L.LatLng): void {
+    let touchStart: ClusterTapPoint | null = null;
+    let lastTouchOpen = 0;
     const openPopup = (ev?: Event): void => {
       ev?.preventDefault();
       ev?.stopPropagation();
@@ -368,10 +395,14 @@ export class MapView {
       this.map.panTo(marker.getLatLng(), { animate: false });
       marker.openPopup();
     };
-    marker.on("mousedown", () => {
-      this.popupOpen = true;
+    marker.on("click", (ev) => {
+      if (Date.now() - lastTouchOpen < 450) {
+        ev.originalEvent?.preventDefault();
+        ev.originalEvent?.stopPropagation();
+        return;
+      }
+      openPopup(ev.originalEvent);
     });
-    marker.on("click", () => openPopup());
     marker.on("popupopen", () => {
       const popupEl = marker.getPopup()?.getElement();
       this.attachPopupFocusHandlers(popupEl);
@@ -388,16 +419,34 @@ export class MapView {
     const el = marker.getElement();
     const cluster = el?.querySelector<HTMLElement>(".map-cluster");
     const hit = el?.querySelector<HTMLElement>(".map-cluster-hit");
-    cluster?.addEventListener("click", openPopup);
-    hit?.addEventListener("click", openPopup);
-    cluster?.addEventListener("touchstart", () => {
-      this.popupOpen = true;
-    }, { passive: true });
-    hit?.addEventListener("touchstart", () => {
-      this.popupOpen = true;
-    }, { passive: true });
-    cluster?.addEventListener("touchend", openPopup);
-    hit?.addEventListener("touchend", openPopup);
+    const handleClick = (ev: MouseEvent): void => {
+      if (Date.now() - lastTouchOpen < 450) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        return;
+      }
+      openPopup(ev);
+    };
+    const handleTouchStart = (ev: TouchEvent): void => {
+      touchStart = touchPoint(ev);
+    };
+    const handleTouchEnd = (ev: TouchEvent): void => {
+      const end = touchPoint(ev);
+      const start = touchStart;
+      touchStart = null;
+      if (!start || !end || !isClusterTapGesture(start, end)) {
+        this.popupOpen = false;
+        return;
+      }
+      lastTouchOpen = Date.now();
+      openPopup(ev);
+    };
+    cluster?.addEventListener("click", handleClick);
+    hit?.addEventListener("click", handleClick);
+    cluster?.addEventListener("touchstart", handleTouchStart, { passive: true });
+    hit?.addEventListener("touchstart", handleTouchStart, { passive: true });
+    cluster?.addEventListener("touchend", handleTouchEnd);
+    hit?.addEventListener("touchend", handleTouchEnd);
   }
 
   // 依目前 zoom 將鄰近事件聚成網格群：單一→風險點；多個→計數泡泡（點擊放大去聚合）。
