@@ -252,6 +252,12 @@ export class MapView {
     this.redraw();
   }
 
+  async closePopup(): Promise<void> {
+    await this.ready;
+    this.popupOpen = false;
+    this.map.closePopup();
+  }
+
   async render(events: IntelEvent[], scope: Scope = events[0]?.scope ?? "domestic", options: RenderOptions = {}): Promise<void> {
     if (events === this._cachedEvents) {
       this.located = this._cachedLocated;
