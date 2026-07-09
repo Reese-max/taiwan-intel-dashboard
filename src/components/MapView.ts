@@ -23,6 +23,7 @@ const TAIWAN_BBOX = { minLat: 21.9, maxLat: 26.3, minLng: 118.1, maxLng: 122.1 }
 
 interface MapViewOptions {
   onFocus?: (eventId: string) => void;
+  onShowList?: () => void;
 }
 
 interface RenderOptions {
@@ -177,12 +178,14 @@ export class MapView {
   private _cachedLocated: MapDisplayable[] = [];
   private ready: Promise<void>;
   private onFocus?: (eventId: string) => void;
+  private onShowList?: () => void;
   private popupOpen = false;
   private emptyEl?: HTMLElement;
 
   constructor(el: HTMLElement, options: MapViewOptions = {}) {
     this.ready = this.init(el);
     this.onFocus = options.onFocus;
+    this.onShowList = options.onShowList;
   }
 
   // Leaflet 動態載入：把 ~44KB JS 移出初始 bundle，地圖區塊就緒後才下載並建圖。
@@ -275,7 +278,22 @@ export class MapView {
     if (!this.emptyEl) return;
     const label = mapEmptyLabel(totalEvents, this.located.length);
     this.emptyEl.hidden = !label;
-    this.emptyEl.textContent = label;
+    this.emptyEl.replaceChildren();
+    if (!label) return;
+    const text = document.createElement("span");
+    text.textContent = label;
+    this.emptyEl.appendChild(text);
+    if (this.onShowList) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "看列表";
+      button.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this.onShowList?.();
+      });
+      this.emptyEl.appendChild(button);
+    }
   }
 
   private singleMarker(e: IntelEvent): L.CircleMarker {

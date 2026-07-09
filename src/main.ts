@@ -101,7 +101,18 @@ app.innerHTML = `
     <button id="mq-filter" type="button">篩選</button>
   </nav>`;
 
-const mapView = new MapView(document.getElementById("map")!, { onFocus: focusEvent });
+function revealListFromMapHint(): void {
+  if (window.matchMedia("(max-width: 640px)").matches) {
+    setMobileView("list", { scroll: true });
+    return;
+  }
+  document.querySelector<HTMLElement>(".col-list")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+const mapView = new MapView(document.getElementById("map")!, {
+  onFocus: focusEvent,
+  onShowList: revealListFromMapHint,
+});
 
 // 手機底部快捷列：搜尋同步寫入 store；篩選鈕捲到頂並聚焦篩選器。
 const mqQuery = document.getElementById("mq-query") as HTMLInputElement | null;
