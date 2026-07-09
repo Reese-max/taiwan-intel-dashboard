@@ -153,6 +153,18 @@ function setMobileView(view: MobileView, options: { scroll?: boolean } = {}): vo
   }
 }
 
+function currentMobileView(): MobileView {
+  if (document.body.classList.contains("mobile-view-map")) return "map";
+  if (document.body.classList.contains("mobile-view-insights")) return "insights";
+  return "list";
+}
+
+function revealScopeChangeOnMobile(): void {
+  if (!window.matchMedia("(max-width: 640px)").matches) return;
+  const view = currentMobileView();
+  setMobileView(view === "insights" ? "list" : view, { scroll: true });
+}
+
 function initMobileView(): void {
   let view: MobileView = "list";
   try {
@@ -670,6 +682,7 @@ document.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((btn) => {
     setActiveScopeTab(scope);
     setState({ scope, category: undefined, minRisk: undefined, query: undefined, sinceDays: DEFAULT_SINCE_DAYS });
     renderFilterBar(document.getElementById("filterbar")!, scope);
+    revealScopeChangeOnMobile();
   };
 });
 
