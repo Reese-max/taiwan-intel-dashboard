@@ -18,4 +18,24 @@ describe("renderTopClusters", () => {
 
     expect(el.innerHTML.indexOf('data-cluster="story"')).toBeLessThan(el.innerHTML.indexOf('data-cluster="junk"'));
   });
+
+  it("預設只顯示前三群且只保留第一群摘要，避免側欄過長", () => {
+    const el = container();
+    const clusters: NetCluster[] = Array.from({ length: 6 }, (_, i) => ({
+      id: `c${i}`,
+      members: [],
+      size: 10 - i,
+      representativeTitle: `群組 ${i}`,
+      topCategory: "治安",
+      latestTs: "2026-06-22T00:00:00+08:00",
+    }));
+    const summaries = Object.fromEntries(clusters.map((c) => [c.id, `這是 ${c.id} 的很長 AI 摘要，應該只在前兩群顯示並被縮短以降低側欄高度。`]));
+
+    renderTopClusters(el, clusters, summaries);
+
+    expect((el.innerHTML.match(/data-cluster="/g) ?? [])).toHaveLength(3);
+    expect((el.innerHTML.match(/class="cluster-summary"/g) ?? [])).toHaveLength(1);
+    expect(el.innerHTML).toContain('title="這是 c0 的很長 AI 摘要');
+    expect(el.innerHTML).not.toContain('data-cluster="c3"');
+  });
 });

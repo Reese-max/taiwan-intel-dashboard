@@ -71,4 +71,31 @@ describe("clusterSummariesForScope", () => {
     expect(container.innerHTML).toContain("行動判斷");
     expect(container.innerHTML).toContain("避免匯款並核對來源");
   });
+
+  it("renderAiBrief 會壓縮長摘要與分類數量，避免側欄過高", () => {
+    const container = { innerHTML: "" } as HTMLElement;
+    const longSummary: AiSummary = {
+      domestic: "國內摘要".repeat(80),
+      international: "國際摘要".repeat(80),
+      recent24h: "近 24 小時".repeat(40),
+      trend: "趨勢".repeat(80),
+      byCategory: {
+        治安: "治安分類摘要".repeat(30),
+        反詐: "反詐分類摘要".repeat(30),
+        資安: "資安分類摘要".repeat(30),
+        災防: "災防分類摘要不應顯示",
+      },
+      generatedAt: "2026-06-27T05:37:00+08:00",
+    };
+
+    renderAiBrief(container, longSummary, "domestic", []);
+
+    expect(container.innerHTML).toContain("國內摘要國內摘要");
+    expect(container.innerHTML).toContain("…");
+    expect((container.innerHTML.match(/<li/g) ?? [])).toHaveLength(1);
+    expect(container.innerHTML).not.toContain("反詐分類摘要");
+    expect(container.innerHTML).not.toContain("資安分類摘要");
+    expect(container.innerHTML).not.toContain("災防分類摘要不應顯示");
+    expect(container.innerHTML).toContain('title="國內摘要');
+  });
 });

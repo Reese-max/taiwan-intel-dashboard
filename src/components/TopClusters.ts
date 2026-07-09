@@ -24,11 +24,17 @@ function compareTopCluster(a: NetCluster, b: NetCluster): number {
   return clusterScore(b) - clusterScore(a) || b.size - a.size || clusterLatestMs(b) - clusterLatestMs(a);
 }
 
+function compactText(text: string, limit: number): string {
+  const chars = Array.from(text.trim());
+  if (chars.length <= limit) return text;
+  return `${chars.slice(0, limit).join("")}…`;
+}
+
 export function renderTopClusters(
   container: HTMLElement,
   clusters: NetCluster[],
   summaries: Record<string, string> = {},
-  limit = 8,
+  limit = 3,
 ): void {
   const top = clusters
     .slice()
@@ -41,12 +47,13 @@ export function renderTopClusters(
       ${
         top.length
           ? `<ol class="cluster-list">${top
-              .map((c) => {
+              .map((c, index) => {
                 const ai = summaries[c.id];
+                const aiSummary = ai && index < 1 ? compactText(ai, 48) : "";
                 return `<li>
                   <button type="button" class="cluster-link" data-cluster="${esc(c.id)}">
                     <span class="cluster-title">${esc(c.representativeTitle || c.id)}</span>
-                    ${ai ? `<span class="cluster-summary">🤖 ${esc(ai)}</span>` : ""}
+                    ${aiSummary ? `<span class="cluster-summary" title="${esc(ai)}">🤖 ${esc(aiSummary)}</span>` : ""}
                     <span class="cluster-meta">${esc(c.topCategory || "情報")}｜${esc((c.regions ?? []).join("、") || "未標地區")}｜${c.sourceCount ?? 0} 源 · ${c.size} 則</span>
                     <span class="cluster-time">${esc(fmtDate(c.latestTs))}</span>
                   </button>

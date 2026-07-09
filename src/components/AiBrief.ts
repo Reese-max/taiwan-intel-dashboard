@@ -42,7 +42,17 @@ export function actionDecisionBrief(events: IntelEvent[]): string {
   const decisions = notable.slice(0, 6).map((e) => getActionDecision(e));
   const domains = [...new Set(decisions.map((d) => d.domain))].slice(0, 3).join("、");
   const recommendations = [...new Set(decisions.map((d) => d.recommendation))].slice(0, 2).join("；");
-  return `行動判斷：${notable.length} 則需留意，主要影響 ${domains}。優先：${recommendations}`;
+  return `行動判斷：${notable.length} 則｜${domains}｜${recommendations}`;
+}
+
+function compactText(text: string, limit: number): string {
+  const chars = Array.from(text.trim());
+  if (chars.length <= limit) return text;
+  return `${chars.slice(0, limit).join("")}…`;
+}
+
+function compactParagraph(className: string, text: string, limit: number): string {
+  return `<p class="${className}" title="${esc(text)}">${esc(compactText(text, limit))}</p>`;
 }
 
 export function renderAiBrief(container: HTMLElement, summary: AiSummary | null, scope: Scope, events: IntelEvent[] = []): void {
@@ -58,20 +68,23 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
 
   // 國際 scope：只顯示國際每日摘要（近24h/趨勢/分類為國內資料）。
   if (scope !== "domestic") {
-    container.innerHTML = `${head}<p class="ai-brief-body">${esc(summary.international)}</p>${actionHtml}${meta}`;
+    container.innerHTML = `${head}${compactParagraph("ai-brief-body", summary.international, 110)}${actionHtml}${meta}`;
     return;
   }
 
   // 國內：每日 + 近 24h 即時 + 趨勢 + 分類別。
-  const parts = [`<p class="ai-brief-body">${esc(summary.domestic)}</p>`];
+  const parts = [compactParagraph("ai-brief-body", summary.domestic, 110)];
   if (actionHtml) parts.push(actionHtml);
   if (summary.recent24h)
-    parts.push(`<div class="ai-sub"><span class="ai-sub-tag">⚡ 近 24 小時</span>${esc(summary.recent24h)}</div>`);
+    parts.push(`<div class="ai-sub" title="${esc(summary.recent24h)}"><span class="ai-sub-tag">⚡ 近 24 小時</span>${esc(compactText(summary.recent24h, 48))}</div>`);
   if (summary.trend)
-    parts.push(`<div class="ai-sub"><span class="ai-sub-tag">📈 趨勢</span>${esc(summary.trend)}</div>`);
+    parts.push(`<div class="ai-sub" title="${esc(summary.trend)}"><span class="ai-sub-tag">📈 趨勢</span>${esc(compactText(summary.trend, 48))}</div>`);
   const cats = summary.byCategory ? Object.entries(summary.byCategory) : [];
   if (cats.length) {
-    const items = cats.map(([c, t]) => `<li><b>${esc(c)}</b>${esc(t)}</li>`).join("");
+    const items = cats
+      .slice(0, 1)
+      .map(([c, t]) => `<li title="${esc(t)}"><b>${esc(c)}</b>${esc(compactText(t, 42))}</li>`)
+      .join("");
     parts.push(`<ul class="ai-cats">${items}</ul>`);
   }
   container.innerHTML = `${head}${parts.join("")}${meta}`;
