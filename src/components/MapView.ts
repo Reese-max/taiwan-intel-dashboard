@@ -416,7 +416,6 @@ export class MapView {
       };
     });
     const el = marker.getElement();
-    const cluster = el?.querySelector<HTMLElement>(".map-cluster");
     const hit = el?.querySelector<HTMLElement>(".map-cluster-hit");
     const handleClick = (ev: MouseEvent): void => {
       if (Date.now() - lastTouchOpen < 450) {
@@ -440,11 +439,8 @@ export class MapView {
       lastTouchOpen = Date.now();
       openPopup(ev);
     };
-    cluster?.addEventListener("click", handleClick);
     hit?.addEventListener("click", handleClick);
-    cluster?.addEventListener("touchstart", handleTouchStart, { passive: true });
     hit?.addEventListener("touchstart", handleTouchStart, { passive: true });
-    cluster?.addEventListener("touchend", handleTouchEnd);
     hit?.addEventListener("touchend", handleTouchEnd);
   }
 
