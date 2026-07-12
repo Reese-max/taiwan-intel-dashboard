@@ -2,6 +2,7 @@
 // on Node 25 — exit 9 / 0xC0000409. esbuild CLI mode works fine).
 // 產出可部署的 dist/：bundle + index.html + data 快照。
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   mkdirSync,
   copyFileSync,
@@ -40,6 +41,10 @@ execFileSync(
   ],
   { stdio: "inherit" },
 );
+
+function assetVersion(name) {
+  return createHash("sha256").update(readFileSync(`${OUT}/assets/${name}`)).digest("hex").slice(0, 12);
+}
 
 // 複製資料快照。domestic/international：剝掉前端用不到的 aiEntities/aiTopic（僅供
 // build-network 關聯用，已先跑完）並壓掉縮排，縮減前端 payload；其餘原樣複製。
@@ -132,11 +137,11 @@ const dashboardHtml = `<!doctype html>
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;800&display=swap"
     />
-    <link rel="stylesheet" href="./assets/main.css" />
+    <link rel="stylesheet" href="./assets/main.css?v=${assetVersion("main.css")}" />
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./assets/main.js"></script>
+    <script type="module" src="./assets/main.js?v=${assetVersion("main.js")}"></script>
   </body>
 </html>
 `;
@@ -157,11 +162,11 @@ writeFileSync(
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>警政查詢助手</title>
-    <link rel="stylesheet" href="./assets/query.css" />
+    <link rel="stylesheet" href="./assets/query.css?v=${assetVersion("query.css")}" />
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./assets/query.js"></script>
+    <script type="module" src="./assets/query.js?v=${assetVersion("query.js")}"></script>
   </body>
 </html>
 `,
