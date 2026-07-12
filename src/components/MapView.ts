@@ -391,7 +391,6 @@ export class MapView {
       ev?.preventDefault();
       ev?.stopPropagation();
       this.popupOpen = true;
-      this.map.getContainer().scrollIntoView({ block: "center", inline: "nearest" });
       this.map.panTo(marker.getLatLng(), { animate: false });
       marker.openPopup();
     };
