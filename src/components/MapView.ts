@@ -213,6 +213,7 @@ export class MapView {
   private onFocus?: (eventId: string) => void;
   private onShowList?: () => void;
   private popupOpen = false;
+  private clusterTouchActive = false;
   private emptyEl?: HTMLElement;
   private lastScope: Scope = "domestic";
 
@@ -241,7 +242,7 @@ export class MapView {
     this.map.on(
       "moveend",
       throttle(() => {
-        if (!this.popupOpen) this.redraw();
+        if (!this.popupOpen && !this.clusterTouchActive) this.redraw();
       }, 150),
     );
     this.map.on("popupopen", (ev) => {
@@ -427,21 +428,29 @@ export class MapView {
     };
     const handleTouchStart = (ev: TouchEvent): void => {
       touchStart = touchPoint(ev);
+      this.clusterTouchActive = touchStart !== null;
     };
     const handleTouchEnd = (ev: TouchEvent): void => {
       const end = touchPoint(ev);
       const start = touchStart;
       touchStart = null;
+      this.clusterTouchActive = false;
       if (!start || !end || !isClusterTapGesture(start, end)) {
-        this.popupOpen = false;
+        if (!this.popupOpen) this.redraw();
         return;
       }
       lastTouchOpen = Date.now();
       openPopup(ev);
     };
+    const handleTouchCancel = (): void => {
+      touchStart = null;
+      this.clusterTouchActive = false;
+      if (!this.popupOpen) this.redraw();
+    };
     hit?.addEventListener("click", handleClick);
     hit?.addEventListener("touchstart", handleTouchStart, { passive: true });
     hit?.addEventListener("touchend", handleTouchEnd);
+    hit?.addEventListener("touchcancel", handleTouchCancel);
   }
 
   // 依目前 zoom 將鄰近事件聚成網格群：單一→風險點；多個→計數泡泡（點擊放大去聚合）。

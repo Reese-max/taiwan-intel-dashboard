@@ -16,24 +16,32 @@ test("行動版切到地圖後立即點聚合數字標，彈窗不應閃退", as
 
   const hit = page.locator(".map-cluster-hit").first();
   await expect(hit).toBeVisible({ timeout: 30_000 });
-
-  let previous = "";
-  let stableSamples = 0;
   await expect
     .poll(async () => {
-      const box = await hit.boundingBox();
-      const scrollY = await page.evaluate(() => window.scrollY);
-      const sample = box ? `${Math.round(box.x)}:${Math.round(box.y)}:${Math.round(scrollY)}` : "detached";
-      stableSamples = sample === previous ? stableSamples + 1 : 0;
-      previous = sample;
-      return stableSamples;
-    }, { timeout: 10_000, intervals: [100] })
-    .toBeGreaterThanOrEqual(2);
+      return page.evaluate(() =>
+        Array.from(document.querySelectorAll<HTMLElement>(".map-cluster-hit")).some((candidate) => {
+          const box = candidate.getBoundingClientRect();
+          if (box.top < 0 || box.bottom > window.innerHeight) return false;
+          const topmost = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+          return topmost?.closest(".map-cluster-hit") === candidate;
+        }),
+      );
+    })
+    .toBe(true);
 
   const scrollBefore = await page.evaluate(() => window.scrollY);
-  const box = await hit.boundingBox();
-  expect(box).not.toBeNull();
-  await page.touchscreen.tap(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  const tapPoint = await page.evaluate(() => {
+    for (const candidate of document.querySelectorAll<HTMLElement>(".map-cluster-hit")) {
+      const box = candidate.getBoundingClientRect();
+      if (box.top < 0 || box.bottom > window.innerHeight) continue;
+      const x = box.left + box.width / 2;
+      const y = box.top + box.height / 2;
+      if (document.elementFromPoint(x, y)?.closest(".map-cluster-hit") === candidate) return { x, y };
+    }
+    return null;
+  });
+  expect(tapPoint).not.toBeNull();
+  await page.touchscreen.tap(tapPoint!.x, tapPoint!.y);
   await expect(page.locator(".leaflet-popup")).toHaveCount(1);
   await page.waitForTimeout(500);
   await expect(page.locator(".leaflet-popup")).toHaveCount(1);
