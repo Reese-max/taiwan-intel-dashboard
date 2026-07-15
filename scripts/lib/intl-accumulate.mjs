@@ -66,12 +66,25 @@ export function selectDiverseByCategory(events, cap) {
 // → 丟棄超過 retentionDays 天的事件 → 分主題挑選至 cap。
 export function accumulateInternational(fresh, old, { retentionDays = 5, cap = 250, now = Date.now() } = {}) {
   const cutoff = now - retentionDays * 86400000;
+  const freshList = Array.isArray(fresh) ? fresh : [];
+  const oldList = Array.isArray(old) ? old : [];
+  const statefulDataset = (e) => e?.source?.retentionPolicy === "stateful" && e?.source?.datasetId
+    ? e.source.datasetId
+    : "";
+  // 官方狀態資料是完整快照：本輪有新快照時，同 dataset 的舊列不再沿用。
+  const replacedStateful = new Set(freshList.map(statefulDataset).filter(Boolean));
   const byId = new Map();
-  for (const e of [...(Array.isArray(fresh) ? fresh : []), ...(Array.isArray(old) ? old : [])]) {
+  for (const e of [...freshList, ...oldList]) {
     if (!e || !e.id || byId.has(e.id)) continue;
+    const datasetId = statefulDataset(e);
+    if (oldList.includes(e) && datasetId && replacedStateful.has(datasetId)) continue;
     const t = new Date(e.timestamp).getTime();
-    if (Number.isFinite(t) && t < cutoff) continue; // 超過保留窗的舊事件丟棄
+    if (!datasetId && Number.isFinite(t) && t < cutoff) continue; // 滾動新聞超過保留窗即丟棄
     byId.set(e.id, e);
   }
-  return selectDiverseByCategory([...byId.values()], cap);
+  const stateful = [];
+  const rolling = [];
+  for (const event of byId.values()) (statefulDataset(event) ? stateful : rolling).push(event);
+  // 狀態資料不與新聞競爭 cap；cap 僅限制滾動新聞池。
+  return [...stateful, ...selectDiverseByCategory(rolling, cap)].sort(byRiskThenTime);
 }

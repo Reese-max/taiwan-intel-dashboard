@@ -8,8 +8,11 @@ interface ProvSource {
   scope?: string;
   category?: string;
   count: number;
-  fetchedAt: string;
+  fetchedAt?: string;
   lastSuccessAt?: string;
+  configured?: boolean;
+  stale?: boolean;
+  error?: string;
   latestDataDate?: string;
   query?: string;
   license?: string;
@@ -59,8 +62,10 @@ function sourceTypeLabel(type?: string): string {
 }
 
 function freshness(source: ProvSource, generatedAt: string): { label: string; className: string; order: number } {
+  if (source.configured === false) return { label: "尚未設定", className: "bad", order: -2 };
+  if (source.stale === true) return { label: "抓取失敗", className: "bad", order: -1 };
   const reference = Date.parse(generatedAt);
-  const last = Date.parse(source.lastSuccessAt ?? source.fetchedAt);
+  const last = Date.parse(source.lastSuccessAt ?? source.fetchedAt ?? "");
   if (!Number.isFinite(reference) || !Number.isFinite(last)) return { label: "時間未知", className: "unknown", order: 3 };
   const age = Math.max(0, reference - last);
   if (age <= DAY_MS) return { label: "同步正常", className: "ok", order: 0 };
@@ -74,6 +79,8 @@ function datasetLink(datasetId: string): string {
 }
 
 function sourceDecision(source: ProvSource, generatedAt: string): string {
+  if (source.configured === false) return "需設定憑證";
+  if (source.stale === true) return "需檢查同步";
   const fresh = freshness(source, generatedAt);
   if (fresh.className === "bad") return "需檢查同步";
   if (source.count <= 0) return "觀察是否空轉";

@@ -97,6 +97,80 @@ describe("auditSourceFreshness（來源新鮮度看門狗）", () => {
     });
   });
 
+  it("結構化來源本輪失敗且從未成功時，不得把本輪 fetchedAt 當成功時間", () => {
+    const r = auditSourceFreshness(
+      provenance([
+        {
+          name: "警政署 交通事故",
+          type: "gov-open-data",
+          category: "交通",
+          fetchedAt: generatedAt,
+          stale: true,
+        },
+      ]),
+      { now },
+    );
+
+    expect(r.ok).toBe(false);
+    expect(r.staleStructured[0]).toMatchObject({
+      name: "警政署 交通事故",
+      ageHours: null,
+      reason: "no-success-timestamp",
+    });
+  });
+
+  it("結構化來源本輪失敗但有近期成功快照時，仍依 lastSuccessAt 的寬限門檻判定", () => {
+    const r = auditSourceFreshness(
+      provenance([
+        {
+          name: "警政署 交通事故",
+          type: "gov-open-data",
+          category: "交通",
+          fetchedAt: generatedAt,
+          lastSuccessAt: "2026-07-04T12:00:00.000Z",
+          stale: true,
+        },
+      ]),
+      { now },
+    );
+
+    expect(r.ok).toBe(true);
+  });
+
+  it("來源可依官方更新頻率覆寫預設門檻", () => {
+    const r = auditSourceFreshness(
+      provenance([
+        {
+          name: "CDC 類流感急診就診人次",
+          type: "gov-open-data",
+          category: "衛生",
+          lastSuccessAt: "2026-06-29T00:00:00.000Z",
+          maxAgeHours: 192,
+        },
+      ]),
+      { now },
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("未設定必要憑證的可選來源列入資訊，但不冒充已檢查來源", () => {
+    const r = auditSourceFreshness(
+      provenance([
+        {
+          name: "環境部 AQI",
+          type: "gov-open-data",
+          category: "環境",
+          configured: false,
+          stale: true,
+        },
+      ]),
+      { now },
+    );
+    expect(r.ok).toBe(true);
+    expect(r.structuredChecked).toBe(0);
+    expect(r.unconfiguredStructured).toEqual(["環境部 AQI"]);
+  });
+
   it("generatedAt 可作固定 now 預設值", () => {
     const r = auditSourceFreshness(
       provenance([

@@ -14,6 +14,8 @@ const manifest = {
     // 國際：2 筆，皆 news-rss（0 官方），其中 1 筆過期（兩天前）不算活躍
     { type: "news-rss", scope: "international" as const, fetchedAt: "2026-06-27T05:00:00+08:00" },
     { type: "news-rss", scope: "international" as const, fetchedAt: "2026-06-25T00:00:00+08:00" },
+    // 時間雖新但本輪失敗，不得顯示為活躍。
+    { type: "gov-open-data", scope: "international" as const, fetchedAt: "2026-06-27T05:20:00+08:00", stale: true },
   ],
 };
 
@@ -27,9 +29,9 @@ describe("computeProvStat", () => {
 
   it("國際：只計國際來源，官方占比為 0%、過期來源不算活躍", () => {
     const stat = computeProvStat(manifest, "international")!;
-    expect(stat.total).toBe(2);
+    expect(stat.total).toBe(3);
     expect(stat.active).toBe(1); // 過期那筆排除
-    expect(stat.officialPct).toBe(0);
+    expect(stat.officialPct).toBe(33);
   });
 
   it("manifest 為 null 時回 null，不丟錯", () => {

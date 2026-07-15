@@ -91,6 +91,47 @@ describe("renderSourcePanel", () => {
     }
   });
 
+  it("不把本輪失敗或未設定憑證的來源顯示為同步正常", async () => {
+    const manifest = {
+      generatedAt: "2026-07-16T10:00:00+08:00",
+      sources: [
+        {
+          name: "警政署 交通事故",
+          type: "gov-open-data",
+          scope: "domestic",
+          category: "交通",
+          count: 1,
+          fetchedAt: "2026-07-16T09:00:00+08:00",
+          lastSuccessAt: "2026-07-16T09:00:00+08:00",
+          stale: true,
+          error: "MCP HTTP 500",
+        },
+        {
+          name: "環境部 AQI",
+          type: "gov-open-data",
+          scope: "domestic",
+          category: "環境",
+          count: 0,
+          configured: false,
+          stale: true,
+          error: "MOENV_API_KEY 未設定",
+        },
+      ],
+    };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(manifest), { status: 200 })));
+    const container = { innerHTML: "" } as HTMLElement;
+
+    try {
+      await renderSourcePanel(container);
+      expect(container.innerHTML).toContain("抓取失敗");
+      expect(container.innerHTML).toContain("尚未設定");
+      expect(container.innerHTML).toContain("需設定憑證");
+      expect(container.innerHTML).not.toContain("同步正常");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("限制展開後的來源明細數量，避免側欄資訊過載", async () => {
     const sources = Array.from({ length: 20 }, (_, index) => ({
       name: `來源 ${String(index + 1).padStart(2, "0")}`,

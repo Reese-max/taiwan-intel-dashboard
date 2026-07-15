@@ -56,6 +56,7 @@ describe("fetch-mofa mapper", () => {
       type: "gov-open-data",
       datasetId: "mofa-travel-warning",
       fetchedAt: FETCHED_AT,
+      retentionPolicy: "stateful",
     });
 
     expect(validateEventContract([event])).toEqual({ valid: [event], invalid: [] });

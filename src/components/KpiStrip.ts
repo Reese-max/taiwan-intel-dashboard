@@ -12,8 +12,9 @@ interface ProvStat {
 interface ProvSource {
   type?: string;
   scope?: Scope;
-  fetchedAt: string;
+  fetchedAt?: string;
   lastSuccessAt?: string;
+  stale?: boolean;
 }
 
 interface ProvManifest {
@@ -105,7 +106,8 @@ export function computeProvStat(manifest: ProvManifest | null, scope: Scope): Pr
   const total = sources.length;
   const reference = Date.parse(manifest.generatedAt);
   const active = sources.filter((s) => {
-    const last = Date.parse(s.lastSuccessAt ?? s.fetchedAt);
+    if (s.stale === true) return false;
+    const last = Date.parse(s.lastSuccessAt ?? s.fetchedAt ?? "");
     return Number.isFinite(reference) && Number.isFinite(last) && reference - last <= DAY_MS;
   }).length;
   const official = sources.filter((s) => s.type === "gov-open-data" || s.type === "cwa").length;

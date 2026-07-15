@@ -42,6 +42,7 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
   const sources = Array.isArray(provenance?.sources) ? provenance.sources : [];
   const staleStructured = [];
   let structuredChecked = 0;
+  const unconfiguredStructured = [];
   let newsStaleCount = 0;
   let worst = null;
 
@@ -50,7 +51,8 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
     const type = sourceField(source.type);
     const name = sourceField(source.name, "(未命名來源)");
     const category = sourceField(source.category);
-    const ageBase = parseTime(source.lastSuccessAt || source.fetchedAt);
+    // stale=true 代表本輪失敗；此時 fetchedAt 可能只是「嘗試時間」，不可冒充成功時間。
+    const ageBase = parseTime(source.lastSuccessAt || (source.stale === true ? "" : source.fetchedAt));
     const ageHours = Number.isFinite(nowMs) && Number.isFinite(ageBase) ? (nowMs - ageBase) / 3.6e6 : NaN;
 
     if (Number.isFinite(ageHours)) {
@@ -59,9 +61,22 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
     }
 
     if (STRUCTURED_TYPES.has(type)) {
+      if (source.configured === false) {
+        unconfiguredStructured.push(name);
+        continue;
+      }
       structuredChecked++;
-      const threshold = numericThreshold(limits[type], DEFAULT_THRESHOLDS[type]);
-      if (Number.isFinite(ageHours) && ageHours > threshold) {
+      const threshold = numericThreshold(source.maxAgeHours, numericThreshold(limits[type], DEFAULT_THRESHOLDS[type]));
+      if (!Number.isFinite(ageHours)) {
+        staleStructured.push({
+          name,
+          type,
+          category,
+          ageHours: null,
+          threshold,
+          reason: "no-success-timestamp",
+        });
+      } else if (ageHours > threshold) {
         staleStructured.push({
           name,
           type,
@@ -76,12 +91,16 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
     if (source.stale === true || (type === "news-rss" && Number.isFinite(ageHours) && ageHours > 0)) newsStaleCount++;
   }
 
-  staleStructured.sort((a, b) => b.ageHours - a.ageHours || a.name.localeCompare(b.name, "zh-Hant"));
+  staleStructured.sort(
+    (a, b) => (b.ageHours ?? Number.POSITIVE_INFINITY) - (a.ageHours ?? Number.POSITIVE_INFINITY)
+      || a.name.localeCompare(b.name, "zh-Hant"),
+  );
 
   return {
     ok: staleStructured.length === 0,
     generatedAt,
     structuredChecked,
+    unconfiguredStructured,
     staleStructured,
     newsStaleCount,
     worst,
@@ -107,6 +126,9 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
 
   console.log(`來源新鮮度稽核（generatedAt=${result.generatedAt || "未知"}）：`);
   console.log(`  結構化來源 ${result.structuredChecked} 筆；newsStaleCount=${result.newsStaleCount}（news-rss carry-over 僅資訊，不作 gate）`);
+  if (result.unconfiguredStructured.length) {
+    console.log(`  未設定的可選結構化來源：${result.unconfiguredStructured.join("、")}`);
+  }
   if (result.worst) console.log(`  最舊來源：${result.worst.name} age=${result.worst.ageHours.toFixed(1)}h`);
 
   if (result.ok) {
@@ -114,7 +136,10 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
   } else {
     console.error("結構化來源陳舊：");
     for (const row of result.staleStructured) {
-      console.error(`  - ${row.name} (${row.type}/${row.category || "未分類"}) age=${row.ageHours.toFixed(1)}h > ${row.threshold}h`);
+      const detail = row.reason === "no-success-timestamp"
+        ? "無可信的成功時間"
+        : `age=${row.ageHours.toFixed(1)}h > ${row.threshold}h`;
+      console.error(`  - ${row.name} (${row.type}/${row.category || "未分類"}) ${detail}`);
     }
     process.exit(1);
   }

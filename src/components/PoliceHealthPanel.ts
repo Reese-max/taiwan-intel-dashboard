@@ -25,7 +25,7 @@ interface ProvSource {
   datasetId?: string;
   category?: string;
   count: number;
-  fetchedAt: string;
+  fetchedAt?: string;
   lastSuccessAt?: string;
   query?: string;
   stale?: boolean;
@@ -91,7 +91,7 @@ function formatDateTime(value?: string): string {
 
 function sourceLastSuccess(source: ProvSource, sub?: PoliceSubstatus): string {
   if (source.lastSuccessAt) return source.lastSuccessAt;
-  if (sub?.ok !== false && source.count > 0 && !source.stale) return source.fetchedAt;
+  if (sub?.ok !== false && source.count > 0 && !source.stale) return source.fetchedAt || "";
   return "";
 }
 

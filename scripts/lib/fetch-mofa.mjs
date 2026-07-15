@@ -59,6 +59,7 @@ export function mapMofaTravelWarningEvent(item, { fetchedAt = new Date().toISOSt
       url: link || MOFA_TRAVEL_WARNING_FEED.url,
       fetchedAt,
       datasetId: "mofa-travel-warning",
+      retentionPolicy: "stateful",
       recordRef: link || title,
       query: "外交部領事事務局 國外旅遊警示 RSS",
     },

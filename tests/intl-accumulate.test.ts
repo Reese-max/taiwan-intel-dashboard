@@ -83,4 +83,40 @@ describe("intl accumulate", () => {
     const out = accumulateInternational([], old, { retentionDays: 5, cap: 250, now });
     expect(out).toHaveLength(250);
   });
+
+  it("accumulateInternational: stateful official warnings survive the rolling-news age window", () => {
+    const now = new Date("2026-07-10T00:00:00Z").getTime();
+    const warning = {
+      ...ev("mofa-old", "地緣政治", "high", "2026-05-01T00:00:00Z"),
+      source: { datasetId: "mofa-travel-warning", retentionPolicy: "stateful" },
+    };
+    const out = accumulateInternational([], [warning], { retentionDays: 5, cap: 2, now });
+    expect(out.map((e: { id: string }) => e.id)).toContain("mofa-old");
+  });
+
+  it("accumulateInternational: a fresh stateful snapshot replaces prior rows from that dataset", () => {
+    const now = new Date("2026-07-10T00:00:00Z").getTime();
+    const fresh = [{
+      ...ev("mofa-current", "地緣政治", "medium", "2026-01-01T00:00:00Z"),
+      source: { datasetId: "mofa-travel-warning", retentionPolicy: "stateful" },
+    }];
+    const old = [{
+      ...ev("mofa-withdrawn", "地緣政治", "high", "2026-01-01T00:00:00Z"),
+      source: { datasetId: "mofa-travel-warning", retentionPolicy: "stateful" },
+    }];
+    const out = accumulateInternational(fresh, old, { retentionDays: 5, cap: 2, now });
+    expect(out.map((e: { id: string }) => e.id)).toEqual(["mofa-current"]);
+  });
+
+  it("accumulateInternational: stateful warnings do not consume the rolling-news cap", () => {
+    const now = new Date("2026-07-10T00:00:00Z").getTime();
+    const stateful = {
+      ...ev("mofa", "地緣政治", "high", "2026-01-01T00:00:00Z"),
+      source: { datasetId: "mofa-travel-warning", retentionPolicy: "stateful" },
+    };
+    const news = [ev("n1", "資安", "medium", "2026-07-09T00:00:00Z"), ev("n2", "金融", "low", "2026-07-09T00:00:00Z")];
+    const out = accumulateInternational([stateful, ...news], [], { retentionDays: 5, cap: 2, now });
+    expect(out).toHaveLength(3);
+    expect(out.map((e: { id: string }) => e.id).sort()).toEqual(["mofa", "n1", "n2"]);
+  });
 });
