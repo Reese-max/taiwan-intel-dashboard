@@ -86,10 +86,48 @@ function taiwanDateIso(value, fallback) {
   return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : fallback;
 }
 
-async function fetchChecked(url, { fetchImpl = fetch, timeoutMs = 30000, json = false } = {}) {
-  const response = await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs) });
-  if (!response.ok) throw new Error(`${new URL(url).hostname} HTTP ${response.status}`);
-  return json ? response.json() : response.text();
+function isRetriableFetchError(error) {
+  const status = Number(error?.status);
+  return error?.name === "TypeError"
+    || error?.name === "TimeoutError"
+    || error?.name === "AbortError"
+    || status === 408
+    || status === 429
+    || status >= 500;
+}
+
+function fetchErrorDetail(error) {
+  const cause = error?.cause;
+  return [error?.message, cause?.code, cause?.message]
+    .filter(Boolean)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .join(": ");
+}
+
+async function fetchChecked(url, {
+  fetchImpl = fetch,
+  timeoutMs = 30000,
+  json = false,
+  attempts = 1,
+  retryDelayMs = 1000,
+} = {}) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs) });
+      if (!response.ok) {
+        const error = new Error(`${new URL(url).hostname} HTTP ${response.status}`);
+        error.status = response.status;
+        throw error;
+      }
+      return json ? response.json() : response.text();
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts || !isRetriableFetchError(error)) break;
+      if (retryDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt));
+    }
+  }
+  throw new Error(`${new URL(url).hostname} ${fetchErrorDetail(lastError) || "fetch failed"}`, { cause: lastError });
 }
 
 export function parseMndActivityLinks(html) {
@@ -209,9 +247,15 @@ export function mapCdcInfluenzaEvent(rows, { fetchedAt = new Date().toISOString(
   };
 }
 
-export async function fetchCdcInfluenza({ fetchImpl = fetch } = {}) {
+export async function fetchCdcInfluenza({ fetchImpl = fetch, retryDelayMs = 1000 } = {}) {
   const fetchedAt = new Date().toISOString();
-  const rows = await fetchChecked(CDC_URL, { fetchImpl, timeoutMs: 90000, json: true });
+  const rows = await fetchChecked(CDC_URL, {
+    fetchImpl,
+    timeoutMs: 90000,
+    json: true,
+    attempts: 3,
+    retryDelayMs,
+  });
   return [mapCdcInfluenzaEvent(rows, { fetchedAt })];
 }
 

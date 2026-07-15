@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 // @ts-expect-error — JS ESM module without types
 import {
   fetchAqi,
+  fetchCdcInfluenza,
   fetchMndActivity,
   fetchTfdaNoncompliant,
   mapAqiEvents,
@@ -77,6 +78,30 @@ describe("第一波官方來源 mapper", () => {
     expect(event.summary).toContain("260");
     expect(event.summary).toContain("30%");
     expect(validateEventContract([event]).invalid).toEqual([]);
+  });
+
+  it("CDC 官方端暫時性連線失敗時有限重試，成功後仍通過契約", async () => {
+    const rows = [
+      { 年: "2026", 週: "26", 類流感急診就診人次: "100" },
+      { 年: "2026", 週: "27", 類流感急診就診人次: "120" },
+    ];
+    let attempts = 0;
+    const fetchImpl = async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        const cause = Object.assign(new Error("socket reset"), { code: "ECONNRESET" });
+        throw new TypeError("fetch failed", { cause });
+      }
+      return new Response(JSON.stringify(rows), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    };
+
+    const events = await fetchCdcInfluenza({ fetchImpl, retryDelayMs: 0 });
+    expect(attempts).toBe(2);
+    expect(events).toHaveLength(1);
+    expect(validateEventContract(events).invalid).toEqual([]);
   });
 
   it("只收 TFDA 最近期間的不合格食品邊境查驗", () => {
