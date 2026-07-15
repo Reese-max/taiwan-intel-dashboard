@@ -12,15 +12,15 @@ describe("resolveFetchMode", () => {
   it("maps hourly cron to CWA + police + missing + Taiwan news + international RSS", () => {
     const mode = resolveFetchMode({ schedule: "5 * * * *" });
     expect(mode.label).toBe("hourly");
-    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,mofa,ncdr");
-    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50");
+    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,aqi");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,police,mofa,ncdr,mnd --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("maps daily refresh cron to full exclusive refresh including CWA and international RSS", () => {
     const mode = resolveFetchMode({ schedule: "30 18 * * *" });
     expect(mode.label).toBe("refresh");
-    expect(mode.args).toBe("--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr --exclusive");
-    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50");
+    expect(mode.args).toBe("--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr,mnd,cdc,aqi,tfda --exclusive");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,pcc,police,mofa,ncdr,mnd,cdc,tfda --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("accepts explicit daily mode alias", () => {
@@ -118,7 +118,7 @@ describe("resolveFetchMode", () => {
   it("defaults to hourly mode when mode is empty and schedule is hourly", () => {
     const mode = resolveFetchMode({ mode: "", schedule: "5 * * * *" });
     expect(mode.label).toBe("hourly");
-    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,mofa,ncdr");
+    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,aqi");
   });
 
   it("defaults to hourly mode when only schedule is missing", () => {
@@ -151,6 +151,12 @@ describe("resolveFetchMode", () => {
     const workflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
     expect(workflow).toContain("if: contains(steps.mode.outputs.args, 'twnews')");
     expect(workflow).toContain("npm run audit:news-source-contribution");
+  });
+
+  it("gates source freshness and the generated coverage matrix before deploy", () => {
+    const workflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
+    expect(workflow).toContain("npm run audit:source-freshness");
+    expect(workflow).toContain("npm run audit:coverage");
   });
 
   it("writes GitHub output for label, fetch args, and assertion args", () => {

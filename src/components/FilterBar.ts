@@ -4,7 +4,7 @@ import { esc } from "../utils/escape";
 import { debounce } from "../utils/debounce";
 
 const CATS: Record<Scope, string[]> = {
-  domestic: ["治安", "社會", "反詐", "災防", "採購", "協尋", "交通", "食安", "衛生", "環境", "資安"],
+  domestic: ["治安", "社會", "反詐", "災防", "國防", "採購", "協尋", "交通", "食安", "衛生", "環境", "資安"],
   international: ["地緣政治", "災害", "資安", "金融"],
 };
 

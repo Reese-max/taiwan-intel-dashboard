@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 
 // mofa/ncdr：2026-07-07 接線缺口修復——fetch-live 預設含此二源，但 CI 走顯式清單，
 // 漏列導致 MOFA 旅遊警示與 NCDR 示警在排程 run 永遠 skipped（實際從未上線）。
-export const HOURLY_ARGS = "--sources=cwa,police,missing,twnews,rss,mofa,ncdr";
-export const REFRESH_ARGS = "--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr --exclusive";
+export const HOURLY_ARGS = "--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,aqi";
+export const REFRESH_ARGS = "--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr,mnd,cdc,aqi,tfda --exclusive";
 export const CWA_ARGS = "--sources=cwa";
 export const INTERNATIONAL_ARGS = "--sources=rss";
 export const CWA_INTERNATIONAL_ARGS = "--sources=cwa,rss";
@@ -15,6 +15,8 @@ export const INTERNATIONAL_CORE_ASSERT_ARGS = "--require=international --min-int
 export const CWA_INTERNATIONAL_ASSERT_ARGS =
   "--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50";
 export const TWNEWS_ASSERT_ARGS = "--require=twnews";
+export const HOURLY_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,police,mofa,ncdr,mnd --min-international-feeds=10 --min-international-raw=50";
+export const REFRESH_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,pcc,police,mofa,ncdr,mnd,cdc,tfda --min-international-feeds=10 --min-international-raw=50";
 export const FETCH_MODE_CHOICES = [
   "hourly",
   "cwa",
@@ -123,7 +125,7 @@ export function resolveFetchMode({ schedule = "", mode = "" } = {}) {
     return {
       label: "refresh",
       args: REFRESH_ARGS,
-      assertArgs: CWA_INTERNATIONAL_ASSERT_ARGS,
+      assertArgs: REFRESH_ASSERT_ARGS,
       internationalFeedTier: "expanded",
       internationalFeedTopic: "all",
       message: "選用 refresh（完整，含 CWA、國際 RSS、新聞、LLM、警政、失蹤人口、司法）",
@@ -133,7 +135,7 @@ export function resolveFetchMode({ schedule = "", mode = "" } = {}) {
   return {
     label: "hourly",
     args: HOURLY_ARGS,
-    assertArgs: CWA_INTERNATIONAL_ASSERT_ARGS,
+    assertArgs: HOURLY_ASSERT_ARGS,
     internationalFeedTier: "expanded",
     internationalFeedTopic: "all",
     message: "選用 hourly（每小時，含 CWA、國際 RSS、警政、台灣新聞、失蹤人口；非 exclusive 保留其他資料）",

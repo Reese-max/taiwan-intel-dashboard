@@ -12,6 +12,13 @@ import { fetchPcc } from "./lib/fetch-pcc.mjs";
 import { fetchCwa, fetchCwaWarnings } from "./lib/fetch-cwa.mjs";
 import { fetchMofaTravelWarnings } from "./lib/fetch-mofa.mjs";
 import { fetchNcdrAlerts, NCDR_DATASET_ID } from "./lib/fetch-ncdr.mjs";
+import {
+  fetchAqi,
+  fetchCdcInfluenza,
+  fetchMndActivity,
+  fetchTfdaNoncompliant,
+  OFFICIAL_SOURCE_META,
+} from "./lib/fetch-official.mjs";
 import { fetchJudicialBulk } from "./lib/fetch-judicial.mjs";
 import { fetchMissing } from "./lib/fetch-missing.mjs";
 import {
@@ -45,6 +52,7 @@ import { applyDailyRollup, taiwanLocalDay } from "./lib/daily-rollup.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
 import { validateEventContract, clampImplausibleTimestamps } from "./lib/event-contract.mjs";
 import { applyTemporal } from "./lib/temporal.mjs";
+import { buildCoverageMatrix } from "./audit-coverage.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -194,8 +202,10 @@ export async function run() {
   // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
   // 未選的來源會沿用上一版快照（carry-over）。
   const sourcesArg = process.argv.find((a) => a.startsWith("--sources="))?.slice("--sources=".length);
-  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr").split(",").map((s) => s.trim());
+  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,aqi,tfda").split(",").map((s) => s.trim());
   const want = (s) => SOURCES.includes(s);
+  // 本機既有工具使用 TWINKLE_HUB_TOKEN；CI 使用 TWINKLE_MCP_TOKEN。接受兩者可避免同一服務憑證漂移。
+  const twinkleToken = process.env.TWINKLE_HUB_TOKEN || process.env.TWINKLE_MCP_TOKEN;
   // EXCLUSIVE：只保留本次選取的來源；未選來源不沿用舊快照（一次性窄抓用）。
   // 預設 off，故 n8n 分頻 carry-over 行為不變。
   const EXCLUSIVE = process.argv.includes("--exclusive") || process.env.EXCLUSIVE === "1";
@@ -235,7 +245,7 @@ export async function run() {
     try {
       tenders = await fetchPcc({
         url: process.env.TWINKLE_MCP_URL,
-        token: process.env.TWINKLE_MCP_TOKEN,
+        token: twinkleToken,
         today,
         limit: 15,
       });
@@ -252,7 +262,7 @@ export async function run() {
     try {
       policeResult = await fetchPolice({
         url: process.env.TWINKLE_MCP_URL,
-        token: process.env.TWINKLE_MCP_TOKEN,
+        token: twinkleToken,
         today,
       });
       status.police = { ok: true, count: policeResult.events.length, ...policeResult.substatus };
@@ -272,7 +282,7 @@ export async function run() {
       const runSeed = now.getUTCHours() + now.getUTCDate() * 24;
       const judicial = await fetchJudicialBulk({
         url: process.env.TWINKLE_MCP_URL,
-        token: process.env.TWINKLE_MCP_TOKEN,
+        token: twinkleToken,
         perQuery: 30,
         queryCount: 12,
         runSeed,
@@ -384,6 +394,35 @@ export async function run() {
     }
   } else status.ncdr = { skipped: true };
 
+  // --- 第一波官方來源：MND/CDC/MOENV/TFDA（互相獨立、fail-soft）---
+  const officialFresh = { mnd: [], cdc: [], aqi: [], tfda: [] };
+  const officialFetchers = {
+    mnd: () => fetchMndActivity({}),
+    cdc: () => fetchCdcInfluenza({}),
+    aqi: () => fetchAqi({ apiKey: process.env.MOENV_API_KEY }),
+    tfda: () => fetchTfdaNoncompliant({}),
+  };
+  const officialLabels = { mnd: "MND 臺海動態", cdc: "CDC 類流感", aqi: "環境部 AQI", tfda: "TFDA 邊境查驗" };
+  await Promise.all(Object.keys(officialFetchers).map(async (key) => {
+    if (!want(key)) {
+      status[key] = { skipped: true };
+      return;
+    }
+    if (key === "aqi" && !String(process.env.MOENV_API_KEY || "").trim()) {
+      status.aqi = { skipped: true, configured: false, error: "MOENV_API_KEY 未設定" };
+      console.warn("環境部 AQI：MOENV_API_KEY 未設定，保留舊快照並列入 coverage 缺口");
+      return;
+    }
+    try {
+      officialFresh[key] = await officialFetchers[key]();
+      status[key] = { ok: true, configured: true, count: officialFresh[key].length };
+      console.log(`${officialLabels[key]}：${officialFresh[key].length} 筆`);
+    } catch (e) {
+      status[key] = { ok: false, configured: true, error: e.message };
+      console.error(`${officialLabels[key]}失敗：${e.message}`);
+    }
+  }));
+
   // --- 台灣警政新聞：全量收錄（解耦）---
   //  抓取層 perFeed 拉滿、全量去重 → LLM 精修最近一批（地理定位上地球儀）＋其餘輕量收錄（免 LLM）。
   let twnews = [];
@@ -479,6 +518,19 @@ export async function run() {
   const quakeEvents = carryOver({ status: status.cwa, fresh: quakes, dropStale, oldEvents: oldDomestic, match: "E-A0015-001" });
   const warningEvents = carryOver({ status: status.cwaWarnings, fresh: warnings, dropStale, oldEvents: oldDomestic, match: "W-C0033-001" });
   const ncdrEvents = carryOver({ status: status.ncdr, fresh: ncdr, dropStale, oldEvents: oldDomestic, match: NCDR_DATASET_ID });
+  const officialEventsByKey = Object.fromEntries(
+    Object.entries(OFFICIAL_SOURCE_META).map(([key, meta]) => [
+      key,
+      carryOver({
+        status: status[key],
+        fresh: officialFresh[key],
+        dropStale,
+        oldEvents: oldDomestic,
+        match: meta.datasetId,
+      }),
+    ]),
+  );
+  const officialEvents = Object.values(officialEventsByKey).flat();
   const tenderEvents = carryOver({
     status: status.pcc,
     fresh: tenders,
@@ -491,6 +543,11 @@ export async function run() {
   if (!status.cwaWarnings?.ok && warningEvents.length)
     console.warn(`天氣警特報${why(status.cwaWarnings)}，沿用舊快照 ${warningEvents.length} 筆`);
   if (!status.ncdr?.ok && ncdrEvents.length) console.warn(`NCDR 災防示警${why(status.ncdr)}，沿用舊快照 ${ncdrEvents.length} 筆`);
+  for (const [key, events] of Object.entries(officialEventsByKey)) {
+    if (status[key]?.ok === false && events.length) {
+      console.warn(`${officialLabels[key]}失敗，沿用舊快照 ${events.length} 筆`);
+    }
+  }
   if (!status.pcc?.ok && tenderEvents.length) console.warn(`採購${why(status.pcc)}，沿用舊快照 ${tenderEvents.length} 筆`);
   // 跨輪累積 + 保留窗：成功時 union 本輪與舊 tw-news（recordRef→標題去重，本輪優先以保留 LLM 精修版），
   // 再剪掉超過保留窗者 → 量隨時間複利成長到保留窗深度，每輪仍只 when:Nd 抓增量、LLM 成本不變。
@@ -569,7 +626,15 @@ export async function run() {
     if (policeEvents.length) console.warn(`警政${why(status.police)}，沿用舊快照 ${policeEvents.length} 筆`);
   }
 
-  const domesticClamp = clampImplausibleTimestamps([...quakeEvents, ...warningEvents, ...ncdrEvents, ...tenderEvents, ...policeEvents, ...newsEvents]);
+  const domesticClamp = clampImplausibleTimestamps([
+    ...quakeEvents,
+    ...warningEvents,
+    ...ncdrEvents,
+    ...officialEvents,
+    ...tenderEvents,
+    ...policeEvents,
+    ...newsEvents,
+  ]);
   if (domesticClamp.clamped) console.warn(`[時間戳] 夾住 ${domesticClamp.clamped} 筆遠未來時間戳（疑來源解析錯誤，如民國→西元誤植）`);
   const domesticEvents = applyTemporal(domesticClamp.events.sort(byTimeDesc), { now: nowMs, historicalDays: TEMPORAL_HISTORICAL_DAYS });
   const temporalCounts = domesticEvents.reduce(
@@ -702,8 +767,55 @@ export async function run() {
 
   // --- provenance（誠實標註；carry-over 來源標 stale 並用舊 fetchedAt）---
   const sources = [];
-  const staleFetchedAt = (events) => events[0]?.source?.fetchedAt || nowIso;
-  if (tenderEvents.length)
+  const previousProvenance = readJson("provenance.json", { sources: [] });
+  const previousSources = Array.isArray(previousProvenance?.sources) ? previousProvenance.sources : [];
+  const latestFetchedAt = (events) => (Array.isArray(events) ? events : [])
+    .map((event) => event?.source?.fetchedAt)
+    .filter((value) => value && Number.isFinite(Date.parse(value)))
+    .sort()
+    .pop();
+  const previousSourceFor = ({ datasetId, key, name }) => {
+    if (key) {
+      const exact = previousSources.find((source) =>
+        source?.key === key
+          && (!datasetId || source?.datasetId === datasetId)
+          && (!name || source?.name === name),
+      );
+      if (exact) return exact;
+    }
+    if (datasetId) {
+      const exact = previousSources.find((source) =>
+        source?.datasetId === datasetId && (!name || source?.name === name),
+      );
+      if (exact) return exact;
+    }
+    return name ? previousSources.find((source) => source?.name === name) : undefined;
+  };
+  const sourceHealthFields = ({ sourceStatus, events, datasetId, key, name }) => {
+    const previous = previousSourceFor({ datasetId, key, name });
+    const successful = sourceStatus?.ok === true;
+    const configured = sourceStatus?.configured !== false;
+    const attempted = sourceStatus && (sourceStatus.skipped !== true || configured === false);
+    const eventSuccessAt = latestFetchedAt(events);
+    const previousSuccessAt = previous?.lastSuccessAt
+      || (previous?.stale !== true ? previous?.fetchedAt : undefined)
+      || eventSuccessAt;
+    const lastSuccessAt = successful ? eventSuccessAt || nowIso : previousSuccessAt;
+    const stale = sourceStatus?.skipped === true && configured
+      ? previous?.stale
+      : successful
+        ? undefined
+        : true;
+    return {
+      configured,
+      fetchedAt: lastSuccessAt,
+      lastSuccessAt,
+      lastAttemptAt: attempted ? nowIso : previous?.lastAttemptAt,
+      stale: stale || undefined,
+      ...(sourceStatus?.error ? { error: sourceStatus.error } : {}),
+    };
+  };
+  if (tenderEvents.length || want("pcc"))
     sources.push({
       name: "政府電子採購網 決標公告",
       type: "gov-open-data",
@@ -711,12 +823,11 @@ export async function run() {
       scope: "domestic",
       category: "採購",
       count: tenderEvents.length,
-      fetchedAt: status.pcc?.ok ? nowIso : staleFetchedAt(tenderEvents),
-      stale: !status.pcc?.ok || undefined,
+      ...sourceHealthFields({ sourceStatus: status.pcc, events: tenderEvents, datasetId: "pcc-tender" }),
       query: `announcement_type='決標公告' AND award_price != '' AND date <= '${today}' ORDER BY date DESC (twinkle-hub query_rows)`,
       license: "政府網站資料開放宣告 — 行政院公共工程委員會 政府電子採購網 (https://web.pcc.gov.tw)",
     });
-  if (quakeEvents.length)
+  if (quakeEvents.length || want("cwa"))
     sources.push({
       name: "中央氣象署 顯著有感地震報告",
       type: "cwa",
@@ -724,12 +835,11 @@ export async function run() {
       scope: "domestic",
       category: "災防",
       count: quakeEvents.length,
-      fetchedAt: status.cwa?.ok ? nowIso : staleFetchedAt(quakeEvents),
-      stale: !status.cwa?.ok || undefined,
+      ...sourceHealthFields({ sourceStatus: status.cwa, events: quakeEvents, datasetId: "E-A0015-001" }),
       query: "CWA opendata API E-A0015-001 (顯著有感地震報告)",
       license: "政府資料開放授權條款-第1版 — 交通部中央氣象署",
     });
-  if (warningEvents.length)
+  if (warningEvents.length || want("cwa"))
     sources.push({
       name: "中央氣象署 天氣警特報",
       type: "cwa",
@@ -737,12 +847,24 @@ export async function run() {
       scope: "domestic",
       category: "災防",
       count: warningEvents.length,
-      fetchedAt: status.cwaWarnings?.ok ? nowIso : staleFetchedAt(warningEvents),
-      stale: !status.cwaWarnings?.ok || undefined,
+      ...sourceHealthFields({ sourceStatus: status.cwaWarnings, events: warningEvents, datasetId: "W-C0033-001" }),
       query: "CWA opendata API W-C0033-001 (天氣特報-各縣市目前天氣警特報情形)",
       license: "政府資料開放授權條款-第1版 — 交通部中央氣象署",
     });
-  if (policeEvents.length) {
+  if (ncdrEvents.length || want("ncdr") || previousSourceFor({ datasetId: NCDR_DATASET_ID }))
+    sources.push({
+      name: "NCDR 災防示警 CAP",
+      type: "gov-open-data",
+      datasetId: NCDR_DATASET_ID,
+      scope: "domestic",
+      category: "災防",
+      count: ncdrEvents.length,
+      maxAgeHours: 6,
+      ...sourceHealthFields({ sourceStatus: status.ncdr, events: ncdrEvents, datasetId: NCDR_DATASET_ID }),
+      query: "NCDR JSON Atom Feed + CAP 1.2 明細（突發地理示警白名單）",
+      license: "政府資料開放授權條款-第1版 — 國家災害防救科技中心／發布機關",
+    });
+  if (policeEvents.length || want("police")) {
     const policeSourceDefs = [
       { key: "traffic", name: "警政署 114年傷亡道路交通事故", datasetId: "177136", category: "交通" },
       { key: "speedHotspots", name: "警政署 測速執法點取締件數", datasetId: "13908", category: "交通" },
@@ -799,17 +921,15 @@ export async function run() {
       });
       const count = currentEvents.length;
       const sub = status.police?.[def.key];
-      if (!count && sub?.ok !== false) continue;
       const previousEvents = oldDomestic.filter((e) => {
         if (def.datasetId === "taipei-crime") return POLICE_TAIPEI_IDS.has(e.source?.datasetId || "");
         if (def.datasetId === "pcc-tender") return e.id?.startsWith("pcc-police-");
         return e.source?.datasetId === def.datasetId;
       });
-      const successFetchedAt = [...currentEvents, ...previousEvents]
-        .map((e) => e.source?.fetchedAt)
-        .filter(Boolean)
-        .sort()
-        .pop();
+      if (!count && !sub && !previousEvents.length) continue;
+      const defStatus = def.key === "missing"
+        ? status.missing || status.police
+        : sub || (count && status.police?.ok ? { ok: true } : status.police);
       sources.push({
         key: def.key,
         name: def.name,
@@ -818,9 +938,13 @@ export async function run() {
         scope: "domestic",
         category: def.category,
         count,
-        fetchedAt: sub?.ok === false ? successFetchedAt || staleFetchedAt(previousEvents) : currentEvents[0]?.source?.fetchedAt || nowIso,
-        lastSuccessAt: successFetchedAt || undefined,
-        stale: sub?.ok === false || !status.police?.ok || undefined,
+        ...sourceHealthFields({
+          sourceStatus: defStatus,
+          events: currentEvents.length ? currentEvents : previousEvents,
+          datasetId: def.datasetId,
+          key: def.key,
+          name: def.name,
+        }),
         query: `twinkle-hub police/${def.key}`,
         license: "政府資料開放授權條款-第1版 — 內政部警政署／地方政府警察局",
       });
@@ -844,7 +968,7 @@ export async function run() {
       });
   }
   const mofaEvents = intlEvents.filter((e) => e.source?.datasetId === "mofa-travel-warning");
-  if (mofaEvents.length)
+  if (mofaEvents.length || want("mofa") || previousSourceFor({ datasetId: "mofa-travel-warning" }))
     sources.push({
       name: "外交部領事事務局 旅遊警示",
       type: "gov-open-data",
@@ -852,12 +976,21 @@ export async function run() {
       scope: "international",
       category: "地緣政治",
       count: mofaEvents.length,
-      fetchedAt: status.mofa?.ok ? nowIso : staleFetchedAt(mofaEvents),
-      stale: !status.mofa?.ok || undefined,
+      maxAgeHours: 6,
+      ...sourceHealthFields({ sourceStatus: status.mofa, events: mofaEvents, datasetId: "mofa-travel-warning" }),
       query: "外交部領事事務局 國外旅遊警示 RSS（結構化燈號映射，不經 LLM）",
       license: "政府網站資料開放宣告 — 外交部領事事務局",
     });
-  if (intlOk) {
+  for (const [key, meta] of Object.entries(OFFICIAL_SOURCE_META)) {
+    const events = officialEventsByKey[key] || [];
+    if (!events.length && !want(key) && !previousSourceFor({ datasetId: meta.datasetId })) continue;
+    sources.push({
+      ...meta,
+      count: events.length,
+      ...sourceHealthFields({ sourceStatus: status[key], events, datasetId: meta.datasetId, name: meta.name }),
+    });
+  }
+  if (status.international?.ok) {
     for (const f of feedStatus.filter((x) => x.ok && x.count)) {
       const c = intlEvents.filter((e) => e.source.name === f.label).length;
       if (!c) continue;
@@ -889,12 +1022,18 @@ export async function run() {
       });
   }
 
+  writeJson("coverage.json", buildCoverageMatrix({
+    generatedAt: nowIso,
+    events: [...domesticEvents, ...intlEvents],
+    sources,
+  }));
+
   writeJson("provenance.json", {
     generatedAt: nowIso,
     note:
       "Live 抓取。座標：採購為依機關所在縣市/區中心推估、新聞事件為 LLM 依事件地點推估，皆非原始資料欄位；地震為真實震央。風險等級為衍生指標（採購依決標金額、地震依規模、新聞由 LLM 依嚴重度判定），非原始欄位。新聞摘要與分類由 LLM " +
       respondedModel() +
-      " 自 RSS 原文生成，原始連結保留可回溯。",
+      " 自 RSS 原文生成，原始連結保留可回溯。MND、CDC、AQI、TFDA 與 MOFA/NCDR 皆為官方資料的規則映射，不經 LLM。",
     pipeline: status,
     sources,
   });

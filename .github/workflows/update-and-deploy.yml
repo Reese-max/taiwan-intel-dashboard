@@ -4,7 +4,7 @@ name: 更新資料並部署
 # 把產出的靜態網站 force-push 到 gh-pages 分支（同時當「網站」與「增量狀態庫」）。
 on:
   schedule:
-    - cron: "5,35 * * * *" # 每30分鐘 :05/:35 → CWA+國際+警政+新聞+失蹤人口（非 exclusive）
+    - cron: "5,35 * * * *" # 每30分鐘 :05/:35 → CWA+國際+警政+MOFA+NCDR+MND+AQI（非 exclusive）
     - cron: "30 18 * * *" # 每日 18:30 UTC ≈ 02:30 台北 → full refresh（exclusive 清重建）
   workflow_dispatch:
     inputs:
@@ -83,6 +83,7 @@ jobs:
           TWINKLE_MCP_URL=${{ secrets.TWINKLE_MCP_URL }}
           TWINKLE_MCP_TOKEN=${{ secrets.TWINKLE_MCP_TOKEN }}
           CWA_API_KEY=${{ secrets.CWA_API_KEY }}
+          MOENV_API_KEY=${{ secrets.MOENV_API_KEY }}
           EOF
 
       - name: 決定抓取模式
@@ -98,6 +99,7 @@ jobs:
           INTERNATIONAL_FEED_TIER: ${{ steps.mode.outputs.international_feed_tier }}
           INTERNATIONAL_FEED_TOPIC: ${{ steps.mode.outputs.international_feed_topic }}
           INTL_RENORM_ALL: ${{ github.event.inputs.renorm_intl }}
+          NODE_OPTIONS: --use-system-ca
         run: node --env-file=.env scripts/fetch-live.mjs ${{ steps.mode.outputs.args }}
 
       - name: 驗證必要來源已更新
@@ -108,6 +110,12 @@ jobs:
       - name: 檢查新聞來源實際貢獻
         if: contains(steps.mode.outputs.args, 'twnews')
         run: npm run audit:news-source-contribution
+
+      - name: 檢查結構化來源新鮮度
+        run: npm run audit:source-freshness
+
+      - name: 檢查 coverage 每日矩陣
+        run: npm run audit:coverage
 
       - name: 執行測試
         run: npm test

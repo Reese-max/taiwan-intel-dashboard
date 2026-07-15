@@ -755,6 +755,19 @@ describe("fetch-live pipeline integration (MOFA + NCDR)", () => {
         failedDetail: 0,
       });
       expect(provenance.pipeline.ncdr.excludedCategory).toMatchObject({ 停水: 1 });
+      const ncdrSource = provenance.sources.find((source: any) => source.datasetId === "ncdr-cap-alert");
+      expect(ncdrSource).toMatchObject({
+        count: 1,
+        lastSuccessAt: expect.any(String),
+        lastAttemptAt: expect.any(String),
+      });
+      expect(ncdrSource.stale).toBeUndefined();
+      const mofaSource = provenance.sources.find((source: any) => source.datasetId === "mofa-travel-warning");
+      expect(mofaSource).toMatchObject({
+        count: 3,
+        lastSuccessAt: expect.any(String),
+      });
+      expect(mofaSource.stale).toBeUndefined();
 
       const domestic = readJson(join(dataDir, "domestic.json"));
       const domesticContract = validateEventContract(domestic);
@@ -784,6 +797,17 @@ describe("fetch-live pipeline integration (MOFA + NCDR)", () => {
       expect(mofaEvents.find((event: any) => event.region === "加薩走廊")?.riskLevel).toBe("critical");
       expect(mofaEvents.find((event: any) => event.region === "以色列")?.riskLevel).toBe("high");
       expect(mofaEvents.find((event: any) => event.region === "智利")?.riskLevel).toBe("medium");
+      const coverage = readJson(join(dataDir, "coverage.json"));
+      expect(coverage.rows).toContainEqual(expect.objectContaining({
+        scope: "domestic",
+        category: "災防",
+        officialEvents: expect.any(Number),
+      }));
+      expect(coverage.rows).toContainEqual(expect.objectContaining({
+        scope: "international",
+        category: "地緣政治",
+        officialEvents: 3,
+      }));
       expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
     },
     60_000,
