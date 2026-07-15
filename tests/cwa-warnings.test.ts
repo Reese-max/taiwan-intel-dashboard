@@ -1,7 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { mapCwaWarningEvents } from "../scripts/lib/fetch-cwa.mjs";
+import { afterEach, describe, it, expect, vi } from "vitest";
+import { fetchCwa, fetchCwaWarnings, mapCwaWarningEvents } from "../scripts/lib/fetch-cwa.mjs";
 
 const FETCHED_AT = "2026-06-19T00:00:00.000Z";
+
+afterEach(() => vi.unstubAllGlobals());
 
 // 真實 W-C0033-001 結構（取自實打）：location[] 內每縣市帶 hazardConditions.hazards[]，
 // 每筆 hazard = { info:{phenomena, significance}, validTime:{startTime, endTime} }。
@@ -67,6 +69,42 @@ const LOCATIONS = [
 ];
 
 describe("mapCwaWarningEvents", () => {
+  it("地震與警特報遇到暫時性連線失敗時各自有限重試", async () => {
+    const attempts = new Map<string, number>();
+    const fetchMock = vi.fn(async (url: string) => {
+      const datasetId = url.includes("E-A0015-001") ? "E-A0015-001" : "W-C0033-001";
+      const attempt = (attempts.get(datasetId) || 0) + 1;
+      attempts.set(datasetId, attempt);
+      if (attempt === 1) {
+        const cause = Object.assign(new Error("Connect Timeout Error"), { code: "UND_ERR_CONNECT_TIMEOUT" });
+        throw new TypeError("fetch failed", { cause });
+      }
+      const payload = datasetId === "E-A0015-001"
+        ? {
+          records: {
+            Earthquake: [{
+              EarthquakeNo: 1,
+              Web: "https://scweb.cwa.gov.tw/zh-tw/earthquake/details/1",
+              EarthquakeInfo: {
+                OriginTime: "2026-06-19T01:00:00+08:00",
+                Epicenter: { Location: "花蓮縣政府東方 10 公里", EpicenterLatitude: 24, EpicenterLongitude: 122 },
+                EarthquakeMagnitude: { MagnitudeValue: 4.5 },
+              },
+            }],
+          },
+        }
+        : { records: { location: LOCATIONS } };
+      return new Response(JSON.stringify(payload), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const quakes = await fetchCwa({ apiKey: "test", retryDelayMs: 0 });
+    const warnings = await fetchCwaWarnings({ apiKey: "test", retryDelayMs: 0 });
+    expect(quakes).toHaveLength(1);
+    expect(warnings).toHaveLength(5);
+    expect(attempts).toEqual(new Map([["E-A0015-001", 2], ["W-C0033-001", 2]]));
+  });
+
   it("skips counties with no active hazards and emits one event per hazard", () => {
     const events = mapCwaWarningEvents({ locations: LOCATIONS, fetchedAt: FETCHED_AT });
     // 連江 1 + 宜蘭 2 + 花蓮 1 + 澎湖 1 = 5（臺中無告警被略過）

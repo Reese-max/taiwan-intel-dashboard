@@ -2,6 +2,49 @@
 // 座標為真實震央；風險為依規模衍生之指標。
 import { countyCoordFromAddr } from "./coords.mjs";
 
+function isRetriableFetchError(error) {
+  const status = Number(error?.status);
+  return error?.name === "TypeError"
+    || error?.name === "TimeoutError"
+    || error?.name === "AbortError"
+    || status === 408
+    || status === 429
+    || status >= 500;
+}
+
+function fetchErrorDetail(error) {
+  const cause = error?.cause;
+  return [error?.message, cause?.code, cause?.message]
+    .filter(Boolean)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .join(": ");
+}
+
+async function fetchCwaJson(url, {
+  fetchImpl = fetch,
+  attempts = 3,
+  retryDelayMs = 1000,
+  timeoutMs = 30000,
+} = {}) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs) });
+      if (!response.ok) {
+        const error = new Error(`HTTP ${response.status}`);
+        error.status = response.status;
+        throw error;
+      }
+      return response.json();
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts || !isRetriableFetchError(error)) break;
+      if (retryDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt));
+    }
+  }
+  throw new Error(`${new URL(url).hostname} ${fetchErrorDetail(lastError) || "fetch failed"}`, { cause: lastError });
+}
+
 function riskByMagnitude(m) {
   const n = Number(m);
   if (!Number.isFinite(n)) return "low";
@@ -24,11 +67,9 @@ function refFromWeb(web, fallback) {
   return m ? m[1] : String(fallback);
 }
 
-export async function fetchCwa({ apiKey, limit = 10 }) {
+export async function fetchCwa({ apiKey, limit = 10, fetchImpl = fetch, retryDelayMs = 1000 }) {
   const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization=${apiKey}&limit=${limit}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`CWA HTTP ${res.status}`);
-  const json = await res.json();
+  const json = await fetchCwaJson(url, { fetchImpl, retryDelayMs });
   const quakes = json?.records?.Earthquake || [];
   const fetchedAt = new Date().toISOString();
 
@@ -131,11 +172,9 @@ export function mapCwaWarningEvents({ locations, fetchedAt }) {
   return events;
 }
 
-export async function fetchCwaWarnings({ apiKey }) {
+export async function fetchCwaWarnings({ apiKey, fetchImpl = fetch, retryDelayMs = 1000 }) {
   const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0033-001?Authorization=${apiKey}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`CWA 警特報 HTTP ${res.status}`);
-  const json = await res.json();
+  const json = await fetchCwaJson(url, { fetchImpl, retryDelayMs });
   const locations = json?.records?.location || [];
   return mapCwaWarningEvents({ locations, fetchedAt: new Date().toISOString() });
 }
