@@ -10,6 +10,7 @@ import {
   mapCdcInfluenzaEvent,
   mapMndActivityEvent,
   mapTfdaEvents,
+  parseCdcWeeklyReports,
   parseMndActivityLinks,
 } from "../scripts/lib/fetch-official.mjs";
 import { validateEventContract } from "../scripts/lib/event-contract.mjs";
@@ -101,6 +102,49 @@ describe("第一波官方來源 mapper", () => {
     const events = await fetchCdcInfluenza({ fetchImpl, retryDelayMs: 0 });
     expect(attempts).toBe(2);
     expect(events).toHaveLength(1);
+    expect(validateEventContract(events).invalid).toEqual([]);
+  });
+
+  it("RODS 主機持續連線失敗時改用 CDC 官方疫情監測週報，且不冒充就診數", async () => {
+    const weeklyHtml = `
+      <table><tbody><tr>
+        <td headers="weeks">27</td>
+        <td headers="date">2026/7/5-2026/7/11</td>
+        <td headers="link"><a href="/File/Get/report-27">例行記者會疫情監測週報_2026年第27週.pdf</a></td>
+      </tr></tbody></table>
+    `;
+    expect(parseCdcWeeklyReports(weeklyHtml)).toEqual([{
+      year: 2026,
+      week: 27,
+      dateRange: "2026/7/5-2026/7/11",
+      url: "https://www.cdc.gov.tw/File/Get/report-27",
+      title: "例行記者會疫情監測週報_2026年第27週.pdf",
+    }]);
+
+    let rodsAttempts = 0;
+    const fetchImpl = async (url: string) => {
+      if (url.includes("od.cdc.gov.tw")) {
+        rodsAttempts += 1;
+        const cause = Object.assign(new Error("Connect Timeout Error"), { code: "UND_ERR_CONNECT_TIMEOUT" });
+        throw new TypeError("fetch failed", { cause });
+      }
+      return new Response(weeklyHtml, { status: 200, headers: { "content-type": "text/html" } });
+    };
+
+    const events = await fetchCdcInfluenza({ fetchImpl, retryDelayMs: 0 });
+    expect(rodsAttempts).toBe(3);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      category: "衛生",
+      region: "全國",
+      riskLevel: "low",
+      source: {
+        datasetId: "cdc-weekly-surveillance-report",
+        fallbackFrom: "cdc-rods-influenza",
+        url: "https://www.cdc.gov.tw/File/Get/report-27",
+      },
+    });
+    expect(events[0].summary).not.toMatch(/就診人次\s*\d/);
     expect(validateEventContract(events).invalid).toEqual([]);
   });
 

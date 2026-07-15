@@ -18,6 +18,7 @@ import {
   fetchMndActivity,
   fetchTfdaNoncompliant,
   OFFICIAL_SOURCE_META,
+  OFFICIAL_SOURCE_DATASET_IDS,
 } from "./lib/fetch-official.mjs";
 import { fetchJudicialBulk } from "./lib/fetch-judicial.mjs";
 import { fetchMissing } from "./lib/fetch-missing.mjs";
@@ -402,7 +403,7 @@ export async function run() {
     aqi: () => fetchAqi({ apiKey: process.env.MOENV_API_KEY }),
     tfda: () => fetchTfdaNoncompliant({}),
   };
-  const officialLabels = { mnd: "MND 臺海動態", cdc: "CDC 類流感", aqi: "環境部 AQI", tfda: "TFDA 邊境查驗" };
+  const officialLabels = { mnd: "MND 臺海動態", cdc: "CDC 官方監測", aqi: "環境部 AQI", tfda: "TFDA 邊境查驗" };
   await Promise.all(Object.keys(officialFetchers).map(async (key) => {
     if (!want(key)) {
       status[key] = { skipped: true };
@@ -415,8 +416,15 @@ export async function run() {
     }
     try {
       officialFresh[key] = await officialFetchers[key]();
-      status[key] = { ok: true, configured: true, count: officialFresh[key].length };
-      console.log(`${officialLabels[key]}：${officialFresh[key].length} 筆`);
+      const source = officialFresh[key][0]?.source;
+      status[key] = {
+        ok: true,
+        configured: true,
+        count: officialFresh[key].length,
+        ...(source?.datasetId ? { datasetId: source.datasetId } : {}),
+        ...(source?.fallbackFrom ? { fallbackFrom: source.fallbackFrom } : {}),
+      };
+      console.log(`${officialLabels[key]}：${officialFresh[key].length} 筆${source?.fallbackFrom ? "（官方週報 fallback）" : ""}`);
     } catch (e) {
       status[key] = { ok: false, configured: true, error: e.message };
       console.error(`${officialLabels[key]}失敗：${e.message}`);
@@ -526,7 +534,7 @@ export async function run() {
         fresh: officialFresh[key],
         dropStale,
         oldEvents: oldDomestic,
-        match: meta.datasetId,
+        match: (event) => (OFFICIAL_SOURCE_DATASET_IDS[key] || [meta.datasetId]).includes(event.source?.datasetId),
       }),
     ]),
   );
@@ -983,11 +991,29 @@ export async function run() {
     });
   for (const [key, meta] of Object.entries(OFFICIAL_SOURCE_META)) {
     const events = officialEventsByKey[key] || [];
-    if (!events.length && !want(key) && !previousSourceFor({ datasetId: meta.datasetId })) continue;
+    const datasetIds = OFFICIAL_SOURCE_DATASET_IDS[key] || [meta.datasetId];
+    const previous = datasetIds.map((datasetId) => previousSourceFor({ datasetId })).find(Boolean);
+    if (!events.length && !want(key) && !previous) continue;
+    const eventSource = events[0]?.source;
+    const effectiveMeta = eventSource
+      ? {
+        ...meta,
+        ...Object.fromEntries(
+          ["name", "type", "datasetId", "scope", "category", "query", "license", "cadence", "maxAgeHours"]
+            .filter((field) => eventSource[field] != null)
+            .map((field) => [field, eventSource[field]]),
+        ),
+      }
+      : meta;
     sources.push({
-      ...meta,
+      ...effectiveMeta,
       count: events.length,
-      ...sourceHealthFields({ sourceStatus: status[key], events, datasetId: meta.datasetId, name: meta.name }),
+      ...sourceHealthFields({
+        sourceStatus: status[key],
+        events,
+        datasetId: effectiveMeta.datasetId,
+        name: effectiveMeta.name,
+      }),
     });
   }
   if (status.international?.ok) {

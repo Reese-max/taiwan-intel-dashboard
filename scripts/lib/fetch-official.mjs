@@ -6,6 +6,9 @@ import { countyCoordFromAddr } from "./coords.mjs";
 const MND_BASE = "https://air.mnd.gov.tw";
 const MND_LIST_URL = `${MND_BASE}/TW/News/News_List.aspx?CID=213`;
 const CDC_URL = "https://od.cdc.gov.tw/eic/RODS_Influenza_like_illness.json";
+const CDC_WEEKLY_BASE = "https://www.cdc.gov.tw";
+const CDC_WEEKLY_URL = `${CDC_WEEKLY_BASE}/Category/Page/5f7iWnXma8LNhr_Q_7FVrQ`;
+const CDC_WEEKLY_DATASET_ID = "cdc-weekly-surveillance-report";
 const TFDA_URL = "https://data.fda.gov.tw/data/opendata/export/52/json";
 const AQI_URL = "https://data.moenv.gov.tw/api/v2/aqx_p_432";
 
@@ -55,6 +58,13 @@ export const OFFICIAL_SOURCE_META = {
     maxAgeHours: 48,
   },
 };
+
+export const OFFICIAL_SOURCE_DATASET_IDS = Object.fromEntries(
+  Object.entries(OFFICIAL_SOURCE_META).map(([key, meta]) => [
+    key,
+    key === "cdc" ? [meta.datasetId, CDC_WEEKLY_DATASET_ID] : [meta.datasetId],
+  ]),
+);
 
 function stableId(prefix, value) {
   return `${prefix}-${createHash("sha1").update(String(value)).digest("hex").slice(0, 16)}`;
@@ -247,16 +257,89 @@ export function mapCdcInfluenzaEvent(rows, { fetchedAt = new Date().toISOString(
   };
 }
 
+export function parseCdcWeeklyReports(html) {
+  const reports = [];
+  for (const rowMatch of String(html || "").matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const row = rowMatch[1];
+    const week = Number(row.match(/<td\b[^>]*headers=["']weeks["'][^>]*>\s*(\d+)\s*<\/td>/i)?.[1]);
+    const dateRange = decodeHtml(row.match(/<td\b[^>]*headers=["']date["'][^>]*>([\s\S]*?)<\/td>/i)?.[1]);
+    const link = row.match(/<td\b[^>]*headers=["']link["'][^>]*>[\s\S]*?<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i);
+    const title = decodeHtml(link?.[2]);
+    const year = Number(title.match(/_(\d{4})年第\d+週/i)?.[1] || dateRange.match(/^(\d{4})\//)?.[1]);
+    if (!Number.isInteger(year) || !Number.isInteger(week) || !dateRange || !link?.[1] || !title) continue;
+    reports.push({
+      year,
+      week,
+      dateRange,
+      url: new URL(link[1], CDC_WEEKLY_BASE).toString(),
+      title,
+    });
+  }
+  return reports.sort((a, b) => (b.year * 100 + b.week) - (a.year * 100 + a.week));
+}
+
+function mapCdcWeeklyReportEvent(report, { fetchedAt = new Date().toISOString() } = {}) {
+  const endDate = report.dateRange.match(/-\s*(\d{4}\/\d{1,2}\/\d{1,2})\s*$/)?.[1];
+  return {
+    id: stableId("cdc-weekly", `${report.year}-W${report.week}`),
+    title: `CDC 疫情監測週報：${report.year} 年第 ${report.week} 週`,
+    region: "全國",
+    timestamp: taiwanDateIso(endDate, fetchedAt),
+    category: "衛生",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "僅表示最新官方監測週報已發布，未由 PDF 內容推導疫情強度",
+    summary: `疾管署已發布 ${report.year} 年第 ${report.week} 週疫情監測週報，涵蓋期間 ${report.dateRange}；請開啟官方週報查閱各類傳染病最新監測。`,
+    locationPrecision: "country",
+    source: {
+      ...OFFICIAL_SOURCE_META.cdc,
+      name: "衛生福利部疾病管制署 例行疫情監測週報",
+      datasetId: CDC_WEEKLY_DATASET_ID,
+      query: "疾管署例行記者會疫情監測週報最新週",
+      license: "政府網站資料開放宣告 — 衛生福利部疾病管制署",
+      cadence: "weekly",
+      maxAgeHours: 192,
+      url: report.url,
+      fetchedAt,
+      recordRef: `${report.year}-W${String(report.week).padStart(2, "0")}`,
+      retentionPolicy: "stateful",
+      fallbackFrom: OFFICIAL_SOURCE_META.cdc.datasetId,
+    },
+  };
+}
+
 export async function fetchCdcInfluenza({ fetchImpl = fetch, retryDelayMs = 1000 } = {}) {
   const fetchedAt = new Date().toISOString();
-  const rows = await fetchChecked(CDC_URL, {
-    fetchImpl,
-    timeoutMs: 90000,
-    json: true,
-    attempts: 3,
-    retryDelayMs,
-  });
-  return [mapCdcInfluenzaEvent(rows, { fetchedAt })];
+  let rodsError;
+  try {
+    const rows = await fetchChecked(CDC_URL, {
+      fetchImpl,
+      timeoutMs: 90000,
+      json: true,
+      attempts: 3,
+      retryDelayMs,
+    });
+    return [mapCdcInfluenzaEvent(rows, { fetchedAt })];
+  } catch (error) {
+    rodsError = error;
+  }
+
+  try {
+    const html = await fetchChecked(CDC_WEEKLY_URL, {
+      fetchImpl,
+      timeoutMs: 30000,
+      attempts: 2,
+      retryDelayMs,
+    });
+    const report = parseCdcWeeklyReports(html)[0];
+    if (!report) throw new Error("CDC 疫情監測週報清單解析為 0 筆");
+    return [mapCdcWeeklyReportEvent(report, { fetchedAt })];
+  } catch (weeklyError) {
+    throw new Error(
+      `CDC RODS 失敗（${fetchErrorDetail(rodsError)}）；官方週報 fallback 失敗（${fetchErrorDetail(weeklyError)}）`,
+      { cause: weeklyError },
+    );
+  }
 }
 
 export function mapTfdaEvents(rows, {
