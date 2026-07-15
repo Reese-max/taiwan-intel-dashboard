@@ -109,6 +109,9 @@ jobs:
         if: contains(steps.mode.outputs.args, 'twnews')
         run: npm run audit:news-source-contribution
 
+      - name: 執行測試
+        run: npm test
+
       - name: 建置靜態網站
         run: npm run build
 

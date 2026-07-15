@@ -139,7 +139,7 @@ function warningFixture() {
   };
 }
 
-function mofaRssFixture() {
+function mofaRssFixture(pubDate = new Date().toUTCString()) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
@@ -148,19 +148,19 @@ function mofaRssFixture() {
       <title><![CDATA[第四級：紅色儘速離境 - 加薩走廊 -]]></title>
       <link>https://www.boca.gov.tw/sp-trwa-content-1-red.html</link>
       <description><![CDATA[紅色警示測試摘要]]></description>
-      <pubDate>Sun, 05 Jul 2026 00:00:00 GMT</pubDate>
+      <pubDate>${pubDate}</pubDate>
     </item>
     <item>
       <title><![CDATA[第三級：橙色避免前往 - 以色列 - Israel]]></title>
       <link>https://www.boca.gov.tw/sp-trwa-content-1-orange.html</link>
       <description><![CDATA[橙色警示測試摘要]]></description>
-      <pubDate>Sun, 05 Jul 2026 01:00:00 GMT</pubDate>
+      <pubDate>${pubDate}</pubDate>
     </item>
     <item>
       <title><![CDATA[第二級：黃色注意 - 智利 - Chile]]></title>
       <link>https://www.boca.gov.tw/sp-trwa-content-1-yellow.html</link>
       <description><![CDATA[黃色警示測試摘要]]></description>
-      <pubDate>Sun, 05 Jul 2026 02:00:00 GMT</pubDate>
+      <pubDate>${pubDate}</pubDate>
     </item>
   </channel>
 </rss>`;
