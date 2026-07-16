@@ -448,6 +448,23 @@ function disableCrimeWeeklyFetch() {
   }));
 }
 
+function enableCrimeWeeklyFetch() {
+  vi.doMock("node:child_process", () => ({
+    spawnSync: () => ({
+      status: 0,
+      stdout: JSON.stringify({
+        period: "115年第28週",
+        periodEnd: new Date().toISOString(),
+        fileName: "crime-weekly.ods",
+        sourceUrl: "https://data.gov.tw/dataset/13166",
+        currentCounts: { 竊盜: 1 },
+        totalCurrent: 1,
+      }),
+      stderr: "",
+    }),
+  }));
+}
+
 function isNewsRssFetch(url: string) {
   if (url.includes("news.google.com")) return true;
   if (url.includes("llm.invalid") || url.includes("summary.invalid")) return false;
@@ -988,13 +1005,13 @@ describe("fetch-live pipeline integration (police + missing)", () => {
   );
 
   it(
-    "carries over previous police domestic events when every police endpoint returns 500",
+    "does not let the direct crime weekly source hide a systemic MCP outage",
     async () => {
       const dataDir = setupEnv();
       process.env.SOURCES = "police";
       const carryOver = makeCarryOverPolice();
       writeFileSync(join(dataDir, "domestic.json"), JSON.stringify([carryOver], null, 2), "utf8");
-      disableCrimeWeeklyFetch();
+      enableCrimeWeeklyFetch();
       const { unexpected } = makeMockFetch({ twinkleAll500: true });
       const run = await importRun();
 

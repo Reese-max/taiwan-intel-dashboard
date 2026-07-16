@@ -2318,8 +2318,8 @@ export async function fetchPolice({
     }
   });
 
-  if (!Object.values(substatus).some((s) => s.ok)) {
-    throw new Error("all police sources failed");
+  if (!labels.some((label) => label !== "crimeWeekly" && substatus[label].ok)) {
+    throw new Error("all MCP police sources failed");
   }
 
   return { events, substatus };

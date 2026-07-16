@@ -20,7 +20,7 @@ describe("resolveFetchMode", () => {
     const mode = resolveFetchMode({ schedule: "30 18 * * *" });
     expect(mode.label).toBe("refresh");
     expect(mode.args).toBe("--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra --exclusive");
-    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,pcc,police,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra --min-international-feeds=10 --min-international-raw=50");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,pcc,police,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("accepts explicit daily mode alias", () => {
