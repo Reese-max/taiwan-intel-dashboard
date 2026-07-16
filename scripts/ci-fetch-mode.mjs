@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 
 // mofa/ncdr：2026-07-07 接線缺口修復——fetch-live 預設含此二源，但 CI 走顯式清單，
 // 漏列導致 MOFA 旅遊警示與 NCDR 示警在排程 run 永遠 skipped（實際從未上線）。
-export const HOURLY_ARGS = "--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,aqi,cga,twcert,taipower,wra";
-export const REFRESH_ARGS = "--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr,mnd,cdc,aqi,tfda,cga,twcert,taipower,wra --exclusive";
+export const HOURLY_ARGS = "--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,cga,twcert,taipower,wra";
+export const REFRESH_ARGS = "--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra --exclusive";
 export const CWA_ARGS = "--sources=cwa";
 export const INTERNATIONAL_ARGS = "--sources=rss";
 export const CWA_INTERNATIONAL_ARGS = "--sources=cwa,rss";
@@ -15,8 +15,8 @@ export const INTERNATIONAL_CORE_ASSERT_ARGS = "--require=international --min-int
 export const CWA_INTERNATIONAL_ASSERT_ARGS =
   "--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50";
 export const TWNEWS_ASSERT_ARGS = "--require=twnews";
-export const HOURLY_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,police,mofa,ncdr,mnd,aqi,cga,twcert,taipower,wra --min-international-feeds=10 --min-international-raw=50";
-export const REFRESH_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,pcc,police,mofa,ncdr,mnd,cdc,aqi,tfda,cga,twcert,taipower,wra --min-international-feeds=10 --min-international-raw=50";
+export const HOURLY_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,police,mofa,ncdr,mnd,cga,twcert,taipower,wra --min-international-feeds=10 --min-international-raw=50";
+export const REFRESH_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,pcc,police,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra --min-international-feeds=10 --min-international-raw=50";
 export const FETCH_MODE_CHOICES = [
   "hourly",
   "cwa",

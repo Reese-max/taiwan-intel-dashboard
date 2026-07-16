@@ -83,7 +83,6 @@ jobs:
           TWINKLE_MCP_URL=${{ secrets.TWINKLE_MCP_URL }}
           TWINKLE_MCP_TOKEN=${{ secrets.TWINKLE_MCP_TOKEN }}
           CWA_API_KEY=${{ secrets.CWA_API_KEY }}
-          MOENV_API_KEY=${{ secrets.MOENV_API_KEY }}
           EOF
 
       - name: 決定抓取模式

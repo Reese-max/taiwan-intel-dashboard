@@ -43,7 +43,7 @@
 
 - GitHub Secrets：TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID（CI 告警）、LLM_FALLBACK_*（LLM 端點劣化的本源解）。
 - R3 LLM prompt 校準（非確定性、無法用比對閘驗證）。
-- 環境部 AQI（需 API key）、CDC 疫情（需事件門檻定義）、MND 共軍維度（roadmap topPick）。
+- CDC 疫情（需事件門檻定義）、MND 共軍維度（roadmap topPick）。
 - 趨勢前端（等 rollup 累積 ≥2 天）；ground truth 標註（工具已備，見 scripts/ground-truth-*）。
 - 國際 LLM 正規化劣化（7/6 起 129 批 ~25 分鐘）之根因在 NVIDIA 免費端點，時間預算只是止血。
 

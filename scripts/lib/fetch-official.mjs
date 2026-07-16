@@ -1,4 +1,4 @@
-// 官方資料源：MND、CDC、MOENV、TFDA、海巡署、TWCERT/CC、台電與水利署。
+// 官方資料源：MND、CDC、TFDA、海巡署、TWCERT/CC、台電與水利署。
 // 僅做官方資料的保守規則映射，不經 LLM；共用網路與來源 metadata，避免重複框架。
 import { createHash } from "node:crypto";
 import { countyCoordFromAddr } from "./coords.mjs";
@@ -11,7 +11,6 @@ const CDC_WEEKLY_BASE = "https://www.cdc.gov.tw";
 const CDC_WEEKLY_URL = `${CDC_WEEKLY_BASE}/Category/Page/5f7iWnXma8LNhr_Q_7FVrQ`;
 const CDC_WEEKLY_DATASET_ID = "cdc-weekly-surveillance-report";
 const TFDA_URL = "https://data.fda.gov.tw/data/opendata/export/52/json";
-const AQI_URL = "https://data.moenv.gov.tw/api/v2/aqx_p_432";
 const CGA_BASE = "https://www.cga.gov.tw";
 const CGA_URL = `${CGA_BASE}/GipOpen/wSite/lp?ctNode=650&mp=999`;
 const TWCERT_URL = "https://www.twcert.org.tw/tw/rss-132-1.xml";
@@ -40,17 +39,6 @@ export const OFFICIAL_SOURCE_META = {
     license: "政府資料開放授權條款-第1版 — 衛生福利部疾病管制署",
     cadence: "daily",
     maxAgeHours: 48,
-  },
-  aqi: {
-    name: "環境部 空氣品質監測網 AQI",
-    type: "gov-open-data",
-    datasetId: "moenv-aqi-hourly",
-    scope: "domestic",
-    category: "環境",
-    query: "環境部資料開放平臺 aqx_p_432 即時 AQI",
-    license: "政府資料開放授權條款-第1版 — 環境部",
-    cadence: "hourly",
-    maxAgeHours: 6,
   },
   tfda: {
     name: "衛生福利部食品藥物管理署 邊境查驗不符合食品資訊",
@@ -453,68 +441,6 @@ export async function fetchTfdaNoncompliant({ fetchImpl = fetch, retentionDays =
     throw new Error("TFDA 回應不是有效資料列陣列");
   }
   return mapTfdaEvents(rows, { fetchedAt, retentionDays, limit });
-}
-
-function aqiRisk(status, aqi) {
-  const text = String(status || "");
-  if (/非常不健康|危害/.test(text) || aqi > 200) return "critical";
-  if (/所有族群不健康/.test(text) || aqi > 150) return "high";
-  if (/敏感族群不健康/.test(text) || aqi > 100) return "medium";
-  return "low";
-}
-
-export function mapAqiEvents(payload, { fetchedAt = new Date().toISOString() } = {}) {
-  const highestByCounty = new Map();
-  for (const row of Array.isArray(payload?.records) ? payload.records : []) {
-    const county = compact(row?.county, 20);
-    const aqi = Number(row?.aqi);
-    if (!county || !Number.isFinite(aqi) || aqi <= 100) continue;
-    if (!highestByCounty.has(county) || aqi > highestByCounty.get(county).aqi) highestByCounty.set(county, { row, aqi });
-  }
-  return [...highestByCounty.entries()].map(([county, { row, aqi }]) => {
-    const latText = String(row.latitude ?? "").trim();
-    const lngText = String(row.longitude ?? "").trim();
-    const officialLat = Number(latText);
-    const officialLng = Number(lngText);
-    const officialCoord = latText && lngText
-      && Number.isFinite(officialLat) && officialLat >= -90 && officialLat <= 90
-      && Number.isFinite(officialLng) && officialLng >= -180 && officialLng <= 180
-      ? { lat: officialLat, lng: officialLng, region: county }
-      : null;
-    const coord = officialCoord || countyCoordFromAddr(county);
-    const timestamp = taiwanDateIso(row.datacreationdate || row.publishtime, fetchedAt);
-    return {
-      id: stableId("aqi", `${county}|${row.sitename}|${timestamp}`),
-      title: `${county}${row.sitename ? ` ${row.sitename}測站` : ""} AQI ${aqi}（${row.status || "狀態未提供"}）`,
-      region: coord?.region || county,
-      timestamp,
-      category: "環境",
-      scope: "domestic",
-      riskLevel: aqiRisk(row.status, aqi),
-      riskBasis: "依環境部 AQI 狀態文字映射",
-      summary: `AQI ${aqi}，空氣品質狀態：${row.status || "未提供"}。`,
-      ...(coord
-        ? { lat: coord.lat, lng: coord.lng, locationPrecision: officialCoord ? "exact" : "county-center" }
-        : { locationPrecision: "county" }),
-      source: {
-        ...OFFICIAL_SOURCE_META.aqi,
-        name: `${OFFICIAL_SOURCE_META.aqi.name}${row.sitename ? `（${row.sitename}）` : ""}`,
-        url: "https://airtw.moenv.gov.tw/",
-        fetchedAt,
-        recordRef: `${county}|${row.sitename || ""}|${timestamp}`,
-        retentionPolicy: "stateful",
-      },
-    };
-  });
-}
-
-export async function fetchAqi({ apiKey, fetchImpl = fetch } = {}) {
-  if (!String(apiKey || "").trim()) throw new Error("MOENV_API_KEY 未設定（環境部 API 要求 api_key）");
-  const fetchedAt = new Date().toISOString();
-  const url = `${AQI_URL}?format=json&limit=1000&api_key=${encodeURIComponent(apiKey)}`;
-  const payload = await fetchChecked(url, { fetchImpl, json: true });
-  if (!Array.isArray(payload?.records)) throw new Error("MOENV AQI 回應缺少 records");
-  return mapAqiEvents(payload, { fetchedAt });
 }
 
 const OFFICIAL_USER_AGENT = { "User-Agent": "Mozilla/5.0 (taiwan-intel-dashboard pipeline)" };

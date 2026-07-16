@@ -157,7 +157,7 @@ describe("auditSourceFreshness（來源新鮮度看門狗）", () => {
     const r = auditSourceFreshness(
       provenance([
         {
-          name: "環境部 AQI",
+          name: "未設定官方來源",
           type: "gov-open-data",
           category: "環境",
           configured: false,
@@ -168,7 +168,7 @@ describe("auditSourceFreshness（來源新鮮度看門狗）", () => {
     );
     expect(r.ok).toBe(true);
     expect(r.structuredChecked).toBe(0);
-    expect(r.unconfiguredStructured).toEqual(["環境部 AQI"]);
+    expect(r.unconfiguredStructured).toEqual(["未設定官方來源"]);
   });
 
   it("generatedAt 可作固定 now 預設值", () => {

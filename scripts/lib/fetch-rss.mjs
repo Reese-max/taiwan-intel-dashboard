@@ -167,7 +167,6 @@ export const TW_NEWS_FEEDS = [
   // ══ 第七輪擴充（2026-06-27 _audit-candidates 實測 ≥13；新機關第一手官方平台 + 未涵蓋題材）══
   // ── 新增第一手官方機關（提升官方來源占比；直連政府 RSS 仍全數 404，故走 GN site:）──
   { label: "司法院官網", url: gq("site:judicial.gov.tw"), hint: "治安" },
-  { label: "環境部官網", url: gq("site:moenv.gov.tw 污染 OR 稽查 OR 裁罰"), hint: "環境" },
   { label: "疾管署官網", url: gq("site:cdc.gov.tw 疫情 OR 防疫 OR 群聚"), hint: "衛生" },
   { label: "農業部官網", url: gq("site:moa.gov.tw 走私 OR 防疫 OR 查獲"), hint: "食安" },
   { label: "食藥署官網", url: gq("site:fda.gov.tw 查獲 OR 違規 OR 回收"), hint: "食安" },

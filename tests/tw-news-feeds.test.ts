@@ -47,7 +47,6 @@ describe("主題來源 hint（2026-07-04 漏斗診斷處置）", () => {
     expect(hintOf("食藥署官網")).toBe("食安");
     expect(hintOf("疾管署官網")).toBe("衛生");
     expect(hintOf("GN 環境污染偷排")).toBe("環境");
-    expect(hintOf("環境部官網")).toBe("環境");
   });
   it("資安與 EN 來源 hint 不變", () => {
     expect(hintOf("TechNews 科技新報 RSS")).toBe("資安");

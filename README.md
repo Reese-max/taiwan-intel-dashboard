@@ -20,14 +20,17 @@
 | `ncdr` | NCDR 災防示警 | 官方 Atom + CAP 1.2 |
 | `mnd` | 國防部臺海周邊海空域動態 | 官方每日動態 |
 | `cdc` | 疾管署類流感急診趨勢 | 官方週資料；每日完整刷新 |
-| `aqi` | 環境部即時 AQI | 需 `MOENV_API_KEY`；只產出 AQI > 100 的縣市最高測站 |
 | `tfda` | 食藥署邊境查驗不符合食品 | 官方開放資料；近 30 天 |
+| `cga` | 海巡署海巡新聞 | 海域執法、救援、走私與偷渡事件 |
+| `twcert` | TWCERT/CC 漏洞公告 | 官方 TVN RSS |
+| `taipower` | 台電系統供需 | 每 10 分鐘更新 |
+| `wra` | 水利署水庫水情 | 收錄蓄水率低於或等於 70% 的水庫 |
 
 失敗容錯：單源失敗沿用上一版快照（carry-over），不以空資料覆蓋。
 
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
-- 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+mofa+ncdr+mnd+aqi 增量
+- 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+mofa+ncdr+mnd+cga+twcert+taipower+wra 增量
 - 每日 18:30 UTC（台北 02:30）：全來源 exclusive 重建（另含 pcc/judicial/cdc/tfda）
 - 手動 `workflow_dispatch`：`mode` 選來源組合；`renorm_intl=true` 忽略國際快取全量重評（緊急用；平時靠 `INTL_RECALIBRATE_DAYS` 3 天生命週期自然換血）
 
@@ -65,7 +68,6 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 | `NEWS_RETENTION_DAYS` | 台灣新聞保留窗（預設 5 天）|
 | `TWINKLE_MCP_TOKEN` / `TWINKLE_HUB_TOKEN` | twinkle-hub MCP 憑證（本機優先使用 `TWINKLE_HUB_TOKEN`）|
 | `CWA_API_KEY` | 中央氣象署 API key |
-| `MOENV_API_KEY` | 環境部資料開放平臺 API key（AQI；可選，未設時明列 coverage 缺口）|
 
 ## 文件索引
 

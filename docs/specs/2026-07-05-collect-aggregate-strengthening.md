@@ -35,7 +35,7 @@
 | RSS fetchOne 加有界重試 + 告警 + 失敗路徑保留窗修剪 | 單次 12s 無重試、瞬斷掉整條 feed | S/低 |
 
 ## Phase 3 — 一手結構化來源擴充（把稀疏類/國安從「猜新聞」升級為官方 API；全比照 fetch-cwa、自帶座標、可並行）
-CDC 傳染病（消滅衛生稀疏）、環境部 AQI 即時測站、FDA 食安邊境查驗/回收、NCDR/CWA CAP 災害示警、TWCERT/CC 台灣資安 RSS（S）、國防部共機擾台每日動態。各 M/低（MND 中）。
+CDC 傳染病（消滅衛生稀疏）、FDA 食安邊境查驗/回收、NCDR/CWA CAP 災害示警、TWCERT/CC 台灣資安 RSS（S）、國防部共機擾台每日動態。各 M/低（MND 中）。
 
 ## Phase 4 — 去重、實體解析與分類治理（可信情報網的基礎）
 | 項目 | 價值 | eff/risk |

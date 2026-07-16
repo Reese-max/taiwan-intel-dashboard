@@ -23,7 +23,7 @@
 實查診斷（避免灌水）：
 - 既有 ~40 個 twinkle 來源是**正規化快照**，兩次抓取間不變 → ledger 飽和後 `newPoliceRelatedCount=0`
   （實測：6887 筆全重複）。歷史上的「200/hr」是消化一次性 backlog，已耗盡。
-- 採購（pcc-tender）半月批次、判決 search_judicial 是語意非日期排序、AQI 需金鑰（示範金鑰已失效）。
+- 採購（pcc-tender）半月批次、判決 search_judicial 是語意非日期排序。
 - 結論：**twinkle 快照無法產生每小時新資料；需直連活來源，或引入高量真實 corpus。**
 
 解法：**司法院裁判書 churn 引擎**（真實、警政相關、高量、無需金鑰）。

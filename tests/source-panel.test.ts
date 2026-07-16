@@ -107,14 +107,14 @@ describe("renderSourcePanel", () => {
           error: "MCP HTTP 500",
         },
         {
-          name: "環境部 AQI",
+          name: "未設定官方來源",
           type: "gov-open-data",
           scope: "domestic",
           category: "環境",
           count: 0,
           configured: false,
           stale: true,
-          error: "MOENV_API_KEY 未設定",
+          error: "API_KEY 未設定",
         },
       ],
     };

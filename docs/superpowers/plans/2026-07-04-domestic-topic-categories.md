@@ -285,7 +285,6 @@ Expected: FAIL —— hint 仍為舊值（治安/災防）。
 ```js
   { label: "GN 食安黑心", url: gq("黑心食品 OR 食安 OR 病死豬 OR 餿水油"), hint: "食安" },
   { label: "GN 環境污染偷排", url: gq("環境 污染 OR 廢水 OR 偷排"), hint: "環境" },
-  { label: "環境部官網", url: gq("site:moenv.gov.tw 污染 OR 稽查 OR 裁罰"), hint: "環境" },
   { label: "疾管署官網", url: gq("site:cdc.gov.tw 疫情 OR 防疫 OR 群聚"), hint: "衛生" },
   { label: "農業部官網", url: gq("site:moa.gov.tw 走私 OR 防疫 OR 查獲"), hint: "食安" },
   { label: "食藥署官網", url: gq("site:fda.gov.tw 查獲 OR 違規 OR 回收"), hint: "食安" },
