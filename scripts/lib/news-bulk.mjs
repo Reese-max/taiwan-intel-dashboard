@@ -21,7 +21,7 @@ const COUNTY_MATCH = [
   [/連江|馬祖/, "連江縣"],
 ];
 
-function detectCounty(text) {
+export function detectCounty(text) {
   const s = String(text || "");
   for (const [re, key] of COUNTY_MATCH) {
     if (re.test(s)) {

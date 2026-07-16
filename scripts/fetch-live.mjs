@@ -14,9 +14,13 @@ import { fetchMofaTravelWarnings } from "./lib/fetch-mofa.mjs";
 import { fetchNcdrAlerts, NCDR_DATASET_ID } from "./lib/fetch-ncdr.mjs";
 import {
   fetchAqi,
+  fetchCgaMaritime,
   fetchCdcInfluenza,
   fetchMndActivity,
+  fetchTaipowerSupply,
   fetchTfdaNoncompliant,
+  fetchTwcertVulnerabilities,
+  fetchWraReservoirLevels,
   OFFICIAL_SOURCE_META,
   OFFICIAL_SOURCE_DATASET_IDS,
 } from "./lib/fetch-official.mjs";
@@ -63,7 +67,6 @@ const DATA_DIR = process.env.FETCH_LIVE_DATA_DIR || join(ROOT, "public", "data")
 
 // 若未透過 --env-file 載入，手動讀 .env（n8n Execute Command 等情境）
 function loadDotEnv() {
-  if (process.env.NVIDIA_API_KEY) return;
   const p = join(ROOT, ".env");
   if (!existsSync(p)) return;
   for (const line of readFileSync(p, "utf8").split("\n")) {
@@ -167,7 +170,7 @@ function writeJson(name, obj) {
   writeFileSync(join(DATA_DIR, name), json, "utf8");
   // 若已有部署用 dist，同步寫入，使 prod 資料即時更新（不需重 build）
   let synced = "";
-  if (existsSync(DIST_DATA_DIR)) {
+  if (!process.env.FETCH_LIVE_DATA_DIR && existsSync(DIST_DATA_DIR)) {
     writeFileSync(join(DIST_DATA_DIR, name), json, "utf8");
     synced = " (+dist)";
   }
@@ -203,7 +206,7 @@ export async function run() {
   // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
   // 未選的來源會沿用上一版快照（carry-over）。
   const sourcesArg = process.argv.find((a) => a.startsWith("--sources="))?.slice("--sources=".length);
-  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,aqi,tfda").split(",").map((s) => s.trim());
+  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,aqi,tfda,cga,twcert,taipower,wra").split(",").map((s) => s.trim());
   const want = (s) => SOURCES.includes(s);
   // 本機既有工具使用 TWINKLE_HUB_TOKEN；CI 使用 TWINKLE_MCP_TOKEN。接受兩者可避免同一服務憑證漂移。
   const twinkleToken = process.env.TWINKLE_HUB_TOKEN || process.env.TWINKLE_MCP_TOKEN;
@@ -395,15 +398,28 @@ export async function run() {
     }
   } else status.ncdr = { skipped: true };
 
-  // --- 第一波官方來源：MND/CDC/MOENV/TFDA（互相獨立、fail-soft）---
-  const officialFresh = { mnd: [], cdc: [], aqi: [], tfda: [] };
+  // --- 官方來源：第一波 + 海巡／資安／能源／水情（互相獨立、fail-soft）---
+  const officialFresh = Object.fromEntries(Object.keys(OFFICIAL_SOURCE_META).map((key) => [key, []]));
   const officialFetchers = {
     mnd: () => fetchMndActivity({}),
     cdc: () => fetchCdcInfluenza({}),
     aqi: () => fetchAqi({ apiKey: process.env.MOENV_API_KEY }),
     tfda: () => fetchTfdaNoncompliant({}),
+    cga: () => fetchCgaMaritime({}),
+    twcert: () => fetchTwcertVulnerabilities({}),
+    taipower: () => fetchTaipowerSupply({}),
+    wra: () => fetchWraReservoirLevels({}),
   };
-  const officialLabels = { mnd: "MND 臺海動態", cdc: "CDC 官方監測", aqi: "環境部 AQI", tfda: "TFDA 邊境查驗" };
+  const officialLabels = {
+    mnd: "MND 臺海動態",
+    cdc: "CDC 官方監測",
+    aqi: "環境部 AQI",
+    tfda: "TFDA 邊境查驗",
+    cga: "海巡署海域事件",
+    twcert: "TWCERT/CC 漏洞公告",
+    taipower: "台電系統供需",
+    wra: "水利署水庫水情",
+  };
   await Promise.all(Object.keys(officialFetchers).map(async (key) => {
     if (!want(key)) {
       status[key] = { skipped: true };
@@ -1059,7 +1075,7 @@ export async function run() {
     note:
       "Live 抓取。座標：採購為依機關所在縣市/區中心推估、新聞事件為 LLM 依事件地點推估，皆非原始資料欄位；地震為真實震央。風險等級為衍生指標（採購依決標金額、地震依規模、新聞由 LLM 依嚴重度判定），非原始欄位。新聞摘要與分類由 LLM " +
       respondedModel() +
-      " 自 RSS 原文生成，原始連結保留可回溯。MND、CDC、AQI、TFDA 與 MOFA/NCDR 皆為官方資料的規則映射，不經 LLM。",
+      " 自 RSS 原文生成，原始連結保留可回溯。MND、CDC、AQI、TFDA、海巡署、TWCERT/CC、台電、水利署與 MOFA/NCDR 皆為官方資料的規則映射，不經 LLM。",
     pipeline: status,
     sources,
   });

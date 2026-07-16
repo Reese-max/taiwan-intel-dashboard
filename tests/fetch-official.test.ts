@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
 import {
+  mapCgaEvents,
   fetchAqi,
   fetchCdcInfluenza,
   fetchMndActivity,
@@ -9,9 +10,15 @@ import {
   mapAqiEvents,
   mapCdcInfluenzaEvent,
   mapMndActivityEvent,
+  mapTaipowerSupplyEvent,
   mapTfdaEvents,
+  mapTwcertEvents,
+  mapWraReservoirEvents,
   parseCdcWeeklyReports,
+  parseCgaNewsLinks,
   parseMndActivityLinks,
+  parseTwcertRss,
+  parseWraReservoirRows,
 } from "../scripts/lib/fetch-official.mjs";
 import { validateEventContract } from "../scripts/lib/event-contract.mjs";
 
@@ -197,5 +204,39 @@ describe("第一波官方來源 mapper", () => {
     ] }, { fetchedAt: FETCHED_AT });
     expect(events[0]).toMatchObject({ lat: 25.0375, lng: 121.5637, locationPrecision: "county-center" });
     await expect(fetchAqi({ apiKey: "" })).rejects.toThrow("MOENV_API_KEY 未設定");
+  });
+
+  it("第二波四個官方來源皆映射為可驗證事件，且排除水庫計畫性空庫", () => {
+    const cga = mapCgaEvents(parseCgaNewsLinks(`
+      <a href="ct?xItem=168424&amp;ctNode=650&amp;mp=999">
+        115/07/14 颱風甫過中國海警隨即襲擾金門 海巡強勢驅離
+      </a>
+    `), { fetchedAt: FETCHED_AT, now: Date.parse(FETCHED_AT) });
+    const twcert = mapTwcertEvents(parseTwcertRss(`
+      <item><title><![CDATA[範例系統 - SQL Injection]]></title>
+      <link>https://www.twcert.org.tw/tw/cp-132-11035-test-1.html</link>
+      <pubDate>Wed, 15 Jul 2026 07:11:00 GMT</pubDate></item>
+    `), { fetchedAt: FETCHED_AT, now: Date.parse(FETCHED_AT) });
+    const taipower = mapTaipowerSupplyEvent({ records: [
+      { curr_load: "3727.4", curr_util_rate: "74" },
+      { fore_peak_dema_load: "4050.0", fore_peak_resv_capacity: "324", fore_peak_resv_rate: "8.0", fore_peak_resv_indicator: "Y", publish_time: "115.07.16(四)09:20" },
+    ] }, { fetchedAt: FETCHED_AT });
+    const wra = mapWraReservoirEvents(parseWraReservoirRows(`
+      <table><tr><th>水庫</th><th>有效蓄水量</th><th>水位</th><th>蓄水率</th><th>記錄時間</th></tr>
+      <tr><td>石門水庫</td><td>5000</td><td>220</td><td>25%</td><td>115-07-16 09:00</td></tr>
+      <tr><td>阿公店水庫 每年6/1至9/10為空庫防淤期不蓄水</td><td>64</td><td>30.47</td><td>4.32%</td><td>115-07-16 08:00</td></tr></table>
+    `), { fetchedAt: FETCHED_AT });
+
+    expect(cga[0]).toMatchObject({ category: "海事", region: "金門縣", source: { datasetId: "cga-maritime-news" } });
+    expect(twcert[0]).toMatchObject({ category: "資安", region: "全國", source: { datasetId: "twcert-tvn-rss" } });
+    expect(taipower).toMatchObject({
+      category: "能源",
+      timestamp: "2026-07-16T01:20:00.000Z",
+      riskLevel: "high",
+      source: { datasetId: "taipower-supply-demand" },
+    });
+    expect(wra).toHaveLength(1);
+    expect(wra[0]).toMatchObject({ category: "水情", region: "桃園市", source: { datasetId: "wra-reservoir-levels" } });
+    expect(validateEventContract([...cga, ...twcert, taipower, ...wra]).invalid).toEqual([]);
   });
 });

@@ -86,7 +86,7 @@ export const TW_NEWS_FEEDS = [
   { label: "Focus Taiwan (EN)", url: "https://feeds.feedburner.com/rsscna/engnews", hint: "治安" },
   { label: "Taipei Times (EN)", url: "https://www.taipeitimes.com/xml/index.rss", hint: "治安" },
   // ── 政府機關一手 feed ──
-  { label: "海巡署 海巡新聞", url: "https://www.cga.gov.tw/GipOpen/wSite/rss?ctNode=650&mp=999", hint: "治安" },
+  // 海巡署新聞已由 fetch-official 直接映射為可驗證官方事件，避免同篇再走新聞層重複收錄。
   { label: "移民署 新聞", url: "https://news.immigration.gov.tw/Rss/Content/9?lang=TW", hint: "治安" },
   { label: "法務部 新聞發布", url: "https://www.moj.gov.tw/2204/2795/2796/rss", hint: "治安" },
   { label: "衛福部 焦點新聞", url: "https://www.mohw.gov.tw/rss-16-1.html", hint: "治安" },

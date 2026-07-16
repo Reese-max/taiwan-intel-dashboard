@@ -4,12 +4,12 @@ name: 更新資料並部署
 # 把產出的靜態網站 force-push 到 gh-pages 分支（同時當「網站」與「增量狀態庫」）。
 on:
   schedule:
-    - cron: "5,35 * * * *" # 每30分鐘 :05/:35 → CWA+國際+警政+MOFA+NCDR+MND+AQI（非 exclusive）
+    - cron: "5,35 * * * *" # 每30分鐘 :05/:35 → CWA+國際+警政+官方第一／二波（非 exclusive）
     - cron: "30 18 * * *" # 每日 18:30 UTC ≈ 02:30 台北 → full refresh（exclusive 清重建）
   workflow_dispatch:
     inputs:
       mode:
-        description: "hourly / cwa / international-* / cwa-international / twnews / daily / refresh"
+        description: "hourly（含官方第一／二波）/ cwa / international-* / cwa-international / twnews / daily / refresh"
         default: hourly
         type: choice
         options: [hourly, cwa, international, international-expanded, international-core, international-general, international-cyber, international-disaster, international-health, international-humanitarian, international-finance, cwa-international, twnews, daily, refresh, police]
