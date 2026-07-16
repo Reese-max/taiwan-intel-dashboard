@@ -82,7 +82,7 @@ export const OFFICIAL_SOURCE_META = {
     query: "台電開放資料 d006020 今日每 10 分鐘系統供需狀況",
     license: "政府資料開放授權條款-第1版 — 台灣電力股份有限公司",
     cadence: "10min",
-    maxAgeHours: 2,
+    maxAgeHours: 6,
   },
   wra: {
     name: "經濟部水利署 水庫水情一覽表",

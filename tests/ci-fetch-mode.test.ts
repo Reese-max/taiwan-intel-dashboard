@@ -13,14 +13,14 @@ describe("resolveFetchMode", () => {
     const mode = resolveFetchMode({ schedule: "5 * * * *" });
     expect(mode.label).toBe("hourly");
     expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,cga,twcert,taipower,wra");
-    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,police,mofa,ncdr,mnd,cga,twcert,taipower,wra --min-international-feeds=10 --min-international-raw=50");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,police --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("maps daily refresh cron to full exclusive refresh including CWA and international RSS", () => {
     const mode = resolveFetchMode({ schedule: "30 18 * * *" });
     expect(mode.label).toBe("refresh");
     expect(mode.args).toBe("--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra --exclusive");
-    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,pcc,police,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra --min-international-feeds=10 --min-international-raw=50");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,pcc,police,judicial --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("accepts explicit daily mode alias", () => {

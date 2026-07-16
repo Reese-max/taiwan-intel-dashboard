@@ -204,7 +204,7 @@ describe("官方來源 mapper", () => {
       category: "能源",
       timestamp: "2026-07-16T01:20:00.000Z",
       riskLevel: "high",
-      source: { datasetId: "taipower-supply-demand" },
+      source: { datasetId: "taipower-supply-demand", cadence: "10min", maxAgeHours: 6 },
     });
     expect(wra).toHaveLength(1);
     expect(wra[0]).toMatchObject({ category: "水情", region: "桃園市", source: { datasetId: "wra-reservoir-levels" } });

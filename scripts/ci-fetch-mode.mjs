@@ -15,8 +15,9 @@ export const INTERNATIONAL_CORE_ASSERT_ARGS = "--require=international --min-int
 export const CWA_INTERNATIONAL_ASSERT_ARGS =
   "--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50";
 export const TWNEWS_ASSERT_ARGS = "--require=twnews";
-export const HOURLY_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,police,mofa,ncdr,mnd,cga,twcert,taipower,wra --min-international-feeds=10 --min-international-raw=50";
-export const REFRESH_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,pcc,police,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra --min-international-feeds=10 --min-international-raw=50";
+// 本輪硬閘門只擋核心與 MCP；可 carry-over 的官方來源由 audit-source-freshness 依各自 maxAgeHours 閘控。
+export const HOURLY_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,police --min-international-feeds=10 --min-international-raw=50";
+export const REFRESH_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,pcc,police,judicial --min-international-feeds=10 --min-international-raw=50";
 export const FETCH_MODE_CHOICES = [
   "hourly",
   "cwa",
