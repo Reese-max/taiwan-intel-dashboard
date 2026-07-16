@@ -118,6 +118,22 @@ describe("mapBulkNews", () => {
     expect(ev[0].region).toBe("全國");
     expect(ev[0].lat).toBeNull();
   });
+
+  it("保留官方新聞來源的轄區 provenance", () => {
+    const [ev] = mapBulkNews([{
+      title: "警方發布最新治安消息",
+      link: "https://police.taichung.gov.tw/news/1",
+      description: "警方說明案件進度",
+      source: "臺中市警局官網",
+      sourceUrl: "https://news.google.com/rss/search?q=site%3Apolice.taichung.gov.tw",
+      hint: "治安",
+      official: true,
+      jurisdiction: "臺中市",
+      pubDate: "Fri, 20 Jun 2026 03:00:00 +0800",
+    }], { fetchedAt: FETCHED_AT });
+
+    expect(ev.source).toMatchObject({ authority: "official", jurisdiction: "臺中市" });
+  });
 });
 
 describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {

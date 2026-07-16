@@ -40,6 +40,23 @@ describe("fetch-rss retry", () => {
     expect(result.feedStatus[1].gn).toBeUndefined();
   });
 
+  it("政府網域 feed 保留官方屬性與地方轄區", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(xml, { status: 200 })));
+
+    const result = await fetchRssItems({
+      feeds: [{
+        label: "臺中市警局官網",
+        url: "https://news.google.com/rss/search?q=site%3Apolice.taichung.gov.tw",
+        hint: "治安",
+      }],
+      perFeed: 5,
+      timeoutMs: 100,
+      retryDelayMs: 0,
+    });
+
+    expect(result.items[0]).toMatchObject({ official: true, jurisdiction: "臺中市" });
+  });
+
   it("HTTP 5xx 第一次失敗時退避重試一次並回傳第二次成功結果", async () => {
     const fetchMock = vi
       .fn()

@@ -2,6 +2,7 @@
 // 只負責「抓原文」；中文摘要/分類/風險/座標由 nvidia.mjs 正規化。
 
 import { INTERNATIONAL_FEEDS } from "./international-feeds.mjs";
+import { countyCoordFromAddr } from "./coords.mjs";
 
 // 向後相容：既有呼叫未指定 feeds 時，預設使用國際新聞池。
 export const FEEDS = INTERNATIONAL_FEEDS;
@@ -251,6 +252,17 @@ function feedQueryLabel(label = "") {
   return String(label || "").startsWith("GN ") ? label : undefined;
 }
 
+function isOfficialFeed(feed) {
+  const rawUrls = `${feed?.url || ""} ${feed?.fallbackUrl || ""}`;
+  let decodedUrls = rawUrls;
+  try {
+    decodedUrls = decodeURIComponent(rawUrls);
+  } catch {
+    // Feed URL 仍可用原字串判斷；不因不完整 percent encoding 中斷抓取。
+  }
+  return feed?.advisory === true || /\.gov\.(?:tw|taipei)(?:[\s/?#:]|$)/i.test(decodedUrls);
+}
+
 export function deriveNewsProvenance(item, { fetchedAt, model } = {}) {
   const viaGoogle = isGoogleNewsUrl(item.sourceUrl) || isGoogleNewsUrl(item.link);
   const queryLabel = feedQueryLabel(item.source);
@@ -271,6 +283,8 @@ export function deriveNewsProvenance(item, { fetchedAt, model } = {}) {
     ingestMethod: viaGoogle ? "google-news-rss" : "direct-rss",
     sourceConfidence: viaGoogle ? "aggregated" : "verified",
     feedLabel: item.source,
+    authority: item.official === true ? "official" : undefined,
+    jurisdiction: item.jurisdiction,
     advisory: item.advisory === true || undefined,
     retentionPolicy: item.advisory === true ? "advisory" : undefined,
     query: queryLabel
@@ -328,6 +342,8 @@ async function fetchOneAttempt(feed, perFeed, timeoutMs) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
+    const official = isOfficialFeed(feed);
+    const jurisdiction = official ? countyCoordFromAddr(feed.label)?.region : undefined;
     const res = await fetch(feed.url, {
       signal: ctrl.signal,
       headers: { "User-Agent": "Mozilla/5.0 (taiwan-intel-dashboard pipeline)" },
@@ -337,7 +353,15 @@ async function fetchOneAttempt(feed, perFeed, timeoutMs) {
     const items = parseFeed(xml)
       .filter((i) => i.title && i.link)
       .slice(0, perFeed)
-      .map((i) => ({ ...i, source: feed.label, sourceUrl: feed.url, hint: feed.hint, advisory: feed.advisory || undefined }));
+      .map((i) => ({
+        ...i,
+        source: feed.label,
+        sourceUrl: feed.url,
+        hint: feed.hint,
+        official: official || undefined,
+        jurisdiction,
+        advisory: feed.advisory || undefined,
+      }));
     return { ok: true, label: feed.label, advisory: feed.advisory || undefined, items };
   } finally {
     clearTimeout(timer);

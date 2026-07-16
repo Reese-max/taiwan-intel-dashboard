@@ -41,7 +41,7 @@ function lastSevenTaiwanDays(generatedAt) {
 }
 
 function sourceKind(source) {
-  if (OFFICIAL_TYPES.has(source?.type)) return "official";
+  if (OFFICIAL_TYPES.has(source?.type) || source?.authority === "official") return "official";
   if (source?.type === "news-rss" || source?.datasetId === "tw-news") return "news";
   return "";
 }
@@ -109,7 +109,10 @@ function buildSevenDayMatrix({ generatedAt, events, sources }) {
     if (event?.scope !== "domestic") continue;
     const day = taiwanDay(event.timestamp);
     const index = dayIndex.get(day);
-    const region = countyCoordFromAddr(event.region)?.region || String(event.region || "").replace(/^台/, "臺");
+    const regionText = event.source?.authority === "official" && event.source?.jurisdiction
+      ? `${event.region || ""} ${event.source.jurisdiction}`
+      : event.region;
+    const region = countyCoordFromAddr(regionText)?.region || String(event.region || "").replace(/^台/, "臺");
     const kind = sourceKind(event.source);
     if (index === undefined || !kind) continue;
     windowEvents++;
@@ -169,8 +172,9 @@ export function buildCoverageMatrix({ generatedAt = new Date().toISOString(), ev
     row.events++;
     if (event.riskLevel === "high" || event.riskLevel === "critical") row.elevatedEvents++;
     if (Number.isFinite(event.lat) && Number.isFinite(event.lng)) row.locatedEvents++;
-    if (OFFICIAL_TYPES.has(event.source?.type)) row.officialEvents++;
-    if (event.source?.type === "news-rss" || event.source?.datasetId === "tw-news") row.newsEvents++;
+    const kind = sourceKind(event.source);
+    if (kind === "official") row.officialEvents++;
+    if (kind === "news") row.newsEvents++;
   }
 
   for (const source of Array.isArray(sources) ? sources : []) {
@@ -179,7 +183,7 @@ export function buildCoverageMatrix({ generatedAt = new Date().toISOString(), ev
     row.sourceRows++;
     if (source.stale !== true) row.healthySources++;
     if (Number(source.count || 0) > 0) row.contributingSources++;
-    if (OFFICIAL_TYPES.has(source.type)) row.officialSources++;
+    if (sourceKind(source) === "official") row.officialSources++;
   }
 
   const list = [...rows.values()].sort(

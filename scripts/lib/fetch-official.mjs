@@ -16,6 +16,9 @@ const CGA_URL = `${CGA_BASE}/GipOpen/wSite/lp?ctNode=650&mp=999`;
 const TWCERT_URL = "https://www.twcert.org.tw/tw/rss-132-1.xml";
 const TAIPOWER_URL = "https://service.taipower.com.tw/data/opendata/apply/file/d006020/001.json";
 const WRA_URL = "https://www.wra.gov.tw/ReservoirWarningTable.aspx?n=46046";
+const WRA_RIVER_LEVEL_URL = "https://opendata.wra.gov.tw/api/v2/73c4c3de-4045-4765-abeb-89f9f9cd5ff0?format=JSON&sort=_importdate+asc";
+const WRA_RIVER_STATION_URL = "https://opendata.wra.gov.tw/api/v2/c4acc691-7416-40ca-9464-292c0c00da92?format=JSON&sort=_importdate+asc";
+const WRA_RIVER_DATASET_ID = "wra-river-levels";
 
 export const OFFICIAL_SOURCE_META = {
   mnd: {
@@ -90,10 +93,21 @@ export const OFFICIAL_SOURCE_META = {
     datasetId: "wra-reservoir-levels",
     scope: "domestic",
     category: "水情",
-    query: "水利署水庫水情一覽表：蓄水率低於或等於 70%",
+    query: "水利署水庫水情一覽表：全部非計畫性空庫水庫",
     license: "政府網站資料開放宣告 — 經濟部水利署",
     cadence: "hourly",
     maxAgeHours: 6,
+  },
+  wraRiver: {
+    name: "經濟部水利署 即時河川水位",
+    type: "gov-open-data",
+    datasetId: WRA_RIVER_DATASET_ID,
+    scope: "domestic",
+    category: "水情",
+    query: "水利署即時水位資料（25768）＋河川水位測站站況（22227）",
+    license: "政府資料開放授權條款-第1版 — 經濟部水利署",
+    cadence: "10min",
+    maxAgeHours: 2,
   },
 };
 
@@ -672,7 +686,7 @@ function reservoirRisk(storageRate) {
 
 export function mapWraReservoirEvents(rows, { fetchedAt = new Date().toISOString(), limit = 20 } = {}) {
   return (Array.isArray(rows) ? rows : [])
-    .filter((row) => !row?.plannedEmpty && Number.isFinite(row?.storageRate) && row.storageRate <= 70)
+    .filter((row) => !row?.plannedEmpty && Number.isFinite(row?.storageRate))
     .sort((a, b) => a.storageRate - b.storageRate)
     .slice(0, limit)
     .map((row) => {
@@ -703,10 +717,95 @@ export function mapWraReservoirEvents(rows, { fetchedAt = new Date().toISOString
     });
 }
 
+function riverLevelRisk(waterLevel, station) {
+  const threshold = (value) => String(value ?? "").trim() ? Number(value) : NaN;
+  if (Number.isFinite(threshold(station?.alertlevel1)) && waterLevel >= threshold(station.alertlevel1)) return "high";
+  if (Number.isFinite(threshold(station?.alertlevel2)) && waterLevel >= threshold(station.alertlevel2)) return "medium";
+  if (Number.isFinite(threshold(station?.alertlevel3)) && waterLevel >= threshold(station.alertlevel3)) return "medium";
+  return "low";
+}
+
+export function mapWraRiverLevelEvents(observations, stations, { fetchedAt = new Date().toISOString() } = {}) {
+  const stationById = new Map(
+    (Array.isArray(stations) ? stations : [])
+      .filter((station) => station?.basinidentifier)
+      .map((station) => [String(station.basinidentifier), station]),
+  );
+  const groups = new Map();
+  const riskRank = { low: 0, medium: 1, high: 2 };
+
+  for (const observation of Array.isArray(observations) ? observations : []) {
+    if (String(observation?.checkresult).toLowerCase() !== "true") continue;
+    const waterLevel = Number(observation?.waterlevel);
+    const station = stationById.get(String(observation?.stationid || ""));
+    const coord = countyCoordFromAddr(station?.locationaddress);
+    if (!station || !coord || !Number.isFinite(waterLevel)) continue;
+    const timestamp = taiwanDateIso(observation.datetime, fetchedAt);
+    const riskLevel = riverLevelRisk(waterLevel, station);
+    const group = groups.get(coord.region) || {
+      region: coord.region,
+      lat: coord.lat,
+      lng: coord.lng,
+      count: 0,
+      alertCount: 0,
+      alertStations: [],
+      riskLevel: "low",
+      timestamp,
+    };
+    group.count++;
+    if (riskLevel !== "low") {
+      group.alertCount++;
+      if (group.alertStations.length < 3) group.alertStations.push(station.observatoryname || observation.stationid);
+    }
+    if (riskRank[riskLevel] > riskRank[group.riskLevel]) group.riskLevel = riskLevel;
+    if (timestamp > group.timestamp) group.timestamp = timestamp;
+    groups.set(coord.region, group);
+  }
+
+  return [...groups.values()]
+    .sort((a, b) => a.region.localeCompare(b.region, "zh-Hant"))
+    .map((group) => ({
+      id: stableId("wra-river", `${group.region}|${group.timestamp}`),
+      title: `${group.region}即時河川水位（${group.count}站）`,
+      region: group.region,
+      timestamp: group.timestamp,
+      category: "水情",
+      scope: "domestic",
+      riskLevel: group.riskLevel,
+      riskBasis: "依水利署測站警戒水位門檻彙整；一級警戒為高、二至三級為中，未達為低",
+      summary: compact(
+        `有效觀測 ${group.count} 站；${group.alertCount} 站達警戒值${group.alertStations.length ? `（${group.alertStations.join("、")}）` : ""}；最新資料 ${group.timestamp}。`,
+        500,
+      ),
+      lat: group.lat,
+      lng: group.lng,
+      locationPrecision: "county-center",
+      source: {
+        ...OFFICIAL_SOURCE_META.wraRiver,
+        url: WRA_RIVER_LEVEL_URL,
+        fetchedAt,
+        recordRef: `${group.region}|${group.timestamp}`,
+        retentionPolicy: "stateful",
+      },
+    }));
+}
+
 export async function fetchWraReservoirLevels({ fetchImpl = fetch, limit = 20 } = {}) {
   const fetchedAt = new Date().toISOString();
   const html = await fetchChecked(WRA_URL, { fetchImpl, timeoutMs: 60000, headers: OFFICIAL_USER_AGENT, attempts: 2 });
   const rows = parseWraReservoirRows(html);
   if (!rows.length) throw new Error("水利署水庫水情解析為 0 筆");
   return mapWraReservoirEvents(rows, { fetchedAt, limit });
+}
+
+export async function fetchWraRiverLevels({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const [observations, stations] = await Promise.all([
+    fetchChecked(WRA_RIVER_LEVEL_URL, { fetchImpl, timeoutMs: 60000, json: true, attempts: 2 }),
+    fetchChecked(WRA_RIVER_STATION_URL, { fetchImpl, timeoutMs: 60000, json: true, attempts: 2 }),
+  ]);
+  if (!Array.isArray(observations) || !Array.isArray(stations)) throw new Error("水利署即時水位回應不是有效資料列陣列");
+  const events = mapWraRiverLevelEvents(observations, stations, { fetchedAt });
+  if (!events.length) throw new Error("水利署即時水位可定位縣市解析為 0 筆");
+  return events;
 }

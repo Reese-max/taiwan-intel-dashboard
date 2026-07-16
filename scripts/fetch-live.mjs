@@ -20,6 +20,7 @@ import {
   fetchTfdaNoncompliant,
   fetchTwcertVulnerabilities,
   fetchWraReservoirLevels,
+  fetchWraRiverLevels,
   OFFICIAL_SOURCE_META,
   OFFICIAL_SOURCE_DATASET_IDS,
 } from "./lib/fetch-official.mjs";
@@ -205,7 +206,7 @@ export async function run() {
   // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
   // 未選的來源會沿用上一版快照（carry-over）。
   const sourcesArg = process.argv.find((a) => a.startsWith("--sources="))?.slice("--sources=".length);
-  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra").split(",").map((s) => s.trim());
+  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver").split(",").map((s) => s.trim());
   const want = (s) => SOURCES.includes(s);
   // 本機既有工具使用 TWINKLE_HUB_TOKEN；CI 使用 TWINKLE_MCP_TOKEN。接受兩者可避免同一服務憑證漂移。
   const twinkleToken = process.env.TWINKLE_HUB_TOKEN || process.env.TWINKLE_MCP_TOKEN;
@@ -407,6 +408,7 @@ export async function run() {
     twcert: () => fetchTwcertVulnerabilities({}),
     taipower: () => fetchTaipowerSupply({}),
     wra: () => fetchWraReservoirLevels({}),
+    wraRiver: () => fetchWraRiverLevels({}),
   };
   const officialLabels = {
     mnd: "MND 臺海動態",
@@ -416,6 +418,7 @@ export async function run() {
     twcert: "TWCERT/CC 漏洞公告",
     taipower: "台電系統供需",
     wra: "水利署水庫水情",
+    wraRiver: "水利署即時河川水位",
   };
   await Promise.all(Object.keys(officialFetchers).map(async (key) => {
     if (!want(key)) {
@@ -967,21 +970,31 @@ export async function run() {
     }
   }
   if (newsEvents.length) {
-    const newsByFeed = {};
-    for (const e of newsEvents) newsByFeed[e.source.name] = (newsByFeed[e.source.name] || 0) + 1;
-    for (const [name, count] of Object.entries(newsByFeed))
+    const newsByFeed = new Map();
+    for (const e of newsEvents) {
+      const name = e.source.feedLabel || e.source.name;
+      const key = `${name}\u0000${e.category || "治安"}`;
+      if (!newsByFeed.has(key)) newsByFeed.set(key, { name, category: e.category || "治安", count: 0, source: e.source });
+      newsByFeed.get(key).count++;
+    }
+    for (const { name, category, count, source } of newsByFeed.values()) {
       sources.push({
         name: `台灣新聞：${name}`,
         type: "news-rss",
         datasetId: "tw-news",
         scope: "domestic",
-        category: "治安",
+        category,
         count,
-        fetchedAt: newsEvents.find((e) => e.source.name === name)?.source?.fetchedAt || nowIso,
+        fetchedAt: source?.fetchedAt || nowIso,
+        authority: source?.authority,
+        jurisdiction: source?.jurisdiction,
         stale: !status.twnews?.ok || undefined,
         query: `台灣社會新聞 RSS → LLM(${respondedModel()}) 正規化`,
-        license: "各新聞媒體著作權所有；本平台僅彙整標題/摘要與原文連結，分類與座標為 LLM 衍生",
+        license: source?.authority === "official"
+          ? "政府網站資料開放宣告；實際授權條款以原始來源網站為準"
+          : "各新聞媒體著作權所有；本平台僅彙整標題/摘要與原文連結，分類與座標為 LLM 衍生",
       });
+    }
   }
   const mofaEvents = intlEvents.filter((e) => e.source?.datasetId === "mofa-travel-warning");
   if (mofaEvents.length || want("mofa") || previousSourceFor({ datasetId: "mofa-travel-warning" }))

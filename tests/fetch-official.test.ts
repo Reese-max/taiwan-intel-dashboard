@@ -11,6 +11,7 @@ import {
   mapTaipowerSupplyEvent,
   mapTfdaEvents,
   mapTwcertEvents,
+  mapWraRiverLevelEvents,
   mapWraReservoirEvents,
   parseCdcWeeklyReports,
   parseCgaNewsLinks,
@@ -194,7 +195,7 @@ describe("官方來源 mapper", () => {
     ] }, { fetchedAt: FETCHED_AT });
     const wra = mapWraReservoirEvents(parseWraReservoirRows(`
       <table><tr><th>水庫</th><th>有效蓄水量</th><th>水位</th><th>蓄水率</th><th>記錄時間</th></tr>
-      <tr><td>石門水庫</td><td>5000</td><td>220</td><td>25%</td><td>115-07-16 09:00</td></tr>
+      <tr><td>石門水庫</td><td>5000</td><td>220</td><td>95%</td><td>115-07-16 09:00</td></tr>
       <tr><td>阿公店水庫 每年6/1至9/10為空庫防淤期不蓄水</td><td>64</td><td>30.47</td><td>4.32%</td><td>115-07-16 08:00</td></tr></table>
     `), { fetchedAt: FETCHED_AT });
 
@@ -207,7 +208,32 @@ describe("官方來源 mapper", () => {
       source: { datasetId: "taipower-supply-demand", cadence: "10min", maxAgeHours: 6 },
     });
     expect(wra).toHaveLength(1);
-    expect(wra[0]).toMatchObject({ category: "水情", region: "桃園市", source: { datasetId: "wra-reservoir-levels" } });
+    expect(wra[0]).toMatchObject({ category: "水情", region: "桃園市", riskLevel: "low", source: { datasetId: "wra-reservoir-levels" } });
     expect(validateEventContract([...cga, ...twcert, taipower, ...wra]).invalid).toEqual([]);
   });
+
+  it("即時河川水位依測站地址彙成縣市級官方水情", () => {
+    const events = mapWraRiverLevelEvents([
+      { stationid: "1010H006", checkresult: "true", datetime: "2026-07-16T09:20:00", waterlevel: "7.1" },
+      { stationid: "1010H007", checkresult: "true", datetime: "2026-07-16T09:30:00", waterlevel: "2.3" },
+      { stationid: "1010H008", checkresult: "false", datetime: "2026-07-16T09:30:00", waterlevel: "99" },
+    ], [
+      { basinidentifier: "1010H006", observatoryname: "甲站", rivername: "基隆河", locationaddress: "新北市汐止區", alertlevel1: "9", alertlevel2: "8", alertlevel3: "6" },
+      { basinidentifier: "1010H007", observatoryname: "乙站", rivername: "新店溪", locationaddress: "新北市新店區", alertlevel1: "", alertlevel2: "", alertlevel3: "" },
+      { basinidentifier: "1010H008", observatoryname: "異常站", rivername: "淡水河", locationaddress: "臺北市中正區", alertlevel1: "1" },
+    ], { fetchedAt: FETCHED_AT });
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      category: "水情",
+      region: "新北市",
+      timestamp: "2026-07-16T01:30:00.000Z",
+      riskLevel: "medium",
+      source: { datasetId: "wra-river-levels", cadence: "10min", maxAgeHours: 2 },
+    });
+    expect(events[0].summary).toContain("有效觀測 2 站");
+    expect(events[0].summary).toContain("1 站達警戒值");
+    expect(validateEventContract(events).invalid).toEqual([]);
+  });
+
 });

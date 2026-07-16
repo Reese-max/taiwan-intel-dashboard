@@ -62,4 +62,25 @@ describe("coverage 每日矩陣", () => {
       rows: [{ scope: "domestic", category: "治安", events: 1, sourceRows: 0 }],
     })).toMatchObject({ ok: false });
   });
+
+  it("官方 RSS 依來源轄區計入 official 縣市格", () => {
+    const matrix = buildCoverageMatrix({
+      generatedAt: "2026-07-16T02:00:00.000Z",
+      events: [{
+        scope: "domestic",
+        category: "治安",
+        region: "全國",
+        timestamp: "2026-07-16T01:00:00.000Z",
+        source: { type: "news-rss", authority: "official", jurisdiction: "臺中市" },
+      }],
+    });
+
+    expect(matrix.totals).toMatchObject({ officialEvents: 1, newsEvents: 0 });
+    expect(matrix.matrix7d.rows).toContainEqual(expect.objectContaining({
+      region: "臺中市",
+      category: "治安",
+      sourceKind: "official",
+      events: 1,
+    }));
+  });
 });
