@@ -8,7 +8,7 @@ describe("coverage 每日矩陣", () => {
     const matrix = buildCoverageMatrix({
       generatedAt: "2026-07-16T02:00:00.000Z",
       events: [
-        { scope: "domestic", category: "國防", region: "臺北市", timestamp: "2026-07-15T04:00:00.000Z", riskLevel: "medium", lat: 25, lng: 121, source: { type: "gov-open-data", datasetId: "mnd-pla-activity" } },
+        { scope: "domestic", category: "國防", region: "臺北市中正區", timestamp: "2026-07-15T04:00:00.000Z", riskLevel: "medium", lat: 25, lng: 121, source: { type: "gov-open-data", datasetId: "mnd-pla-activity" } },
         { scope: "domestic", category: "治安", region: "高雄市", timestamp: "2026-07-16T01:00:00.000Z", riskLevel: "high", source: { name: "測試新聞", type: "news-rss", datasetId: "tw-news" } },
         { scope: "domestic", category: "能源", region: "全國", timestamp: "2026-07-16T01:20:00.000Z", riskLevel: "low", source: { type: "gov-open-data", datasetId: "taipower-supply-demand" } },
       ],

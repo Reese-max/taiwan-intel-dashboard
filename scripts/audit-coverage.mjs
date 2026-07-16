@@ -1,7 +1,7 @@
 // 每日 coverage 矩陣：把事件與 provenance 來源依 scope/category 對齊，供 CI 與人工盤點盲區。
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { COUNTY_CENTER } from "./lib/coords.mjs";
+import { COUNTY_CENTER, countyCoordFromAddr } from "./lib/coords.mjs";
 
 const OFFICIAL_TYPES = new Set(["gov-open-data", "cwa"]);
 const SOURCE_KINDS = ["official", "news"];
@@ -109,7 +109,7 @@ function buildSevenDayMatrix({ generatedAt, events, sources }) {
     if (event?.scope !== "domestic") continue;
     const day = taiwanDay(event.timestamp);
     const index = dayIndex.get(day);
-    const region = String(event.region || "").replace(/^台/, "臺");
+    const region = countyCoordFromAddr(event.region)?.region || String(event.region || "").replace(/^台/, "臺");
     const kind = sourceKind(event.source);
     if (index === undefined || !kind) continue;
     windowEvents++;
