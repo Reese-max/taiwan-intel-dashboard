@@ -360,8 +360,8 @@ h4 {
 .search-box:focus-within .search-icon {
   color: var(--color-accent);
 }
-/* 蓋掉 .filterbar input 的框/底（框由膠囊提供），用較高 specificity 免 !important */
-.filterbar .search-box input {
+/* 蓋掉搜尋 input 的框/底（框由膠囊提供） */
+.search-box input {
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -372,10 +372,10 @@ h4 {
   color: var(--color-text);
   font-size: var(--text-sm);
 }
-.filterbar .search-box input:focus {
+.search-box input:focus {
   outline: none;
 }
-.filterbar .search-box input::placeholder {
+.search-box input::placeholder {
   color: var(--color-dim);
 }
 /* 原生 type=search 清除鈕：改成主題色小叉，hover 變 accent */
