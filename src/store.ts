@@ -1,10 +1,11 @@
-import type { Scope, RiskLevel } from "./types/event";
+import type { Scope, RiskLevel, NewsAuthority } from "./types/event";
 
 export interface AppState {
   scope: Scope;
   category?: string;
   minRisk?: RiskLevel;
   source?: string;
+  newsAuthority?: NewsAuthority;
   sinceDays?: number;
   query?: string;
 }

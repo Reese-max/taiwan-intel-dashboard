@@ -17,7 +17,7 @@ import { renderPoliceHealthPanel } from "./components/PoliceHealthPanel";
 import { renderTopClusters } from "./components/TopClusters";
 import { renderTriageInbox } from "./components/TriageInbox";
 import { MapView } from "./components/MapView";
-import type { IntelEvent, RiskLevel, Scope } from "./types/event";
+import type { IntelEvent, NewsAuthority, RiskLevel, Scope } from "./types/event";
 import { emptyListHint } from "./utils/emptyHint";
 import { applySearchSubnet } from "./search";
 import { loadTriageAcked, saveTriageAcked } from "./utils/triage";
@@ -321,6 +321,10 @@ function setActiveScopeTab(scope: Scope): void {
   });
 }
 
+function isNewsAuthority(v: string | null): v is NewsAuthority {
+  return v === "official" || v === "media";
+}
+
 function writeHash(mode: "replace" | "push" = "replace"): void {
   if (applyingHash) return;
   const s = getState();
@@ -328,6 +332,7 @@ function writeHash(mode: "replace" | "push" = "replace"): void {
   params.set("scope", s.scope);
   if (s.category) params.set("category", s.category);
   if (s.minRisk) params.set("risk", s.minRisk);
+  if (s.newsAuthority) params.set("news", s.newsAuthority);
   if (s.sinceDays) params.set("since", String(s.sinceDays));
   if (s.query) params.set("q", s.query);
   if (focusCluster) params.set("cluster", focusCluster);
@@ -344,6 +349,7 @@ function applyHash(): void {
   const params = new URLSearchParams(location.hash.replace(/^#/, ""));
   const scopeRaw = params.get("scope");
   const riskRaw = params.get("risk");
+  const newsRaw = params.get("news");
   const scope: Scope = isScope(scopeRaw) ? scopeRaw : "domestic";
   const risk: RiskLevel | undefined = isRisk(riskRaw) ? riskRaw : undefined;
   const sinceRaw = params.get("since");
@@ -354,6 +360,7 @@ function applyHash(): void {
     scope,
     category: params.get("category") || undefined,
     minRisk: risk,
+    newsAuthority: scope === "domestic" && isNewsAuthority(newsRaw) ? newsRaw : undefined,
     sinceDays,
     query: params.get("q") || undefined,
   });
@@ -384,6 +391,8 @@ function renderFilterSummary(displayCount: number, totalCount: number, focusLabe
   const chips: string[] = [];
   chips.push(`<span class="filter-chip is-base">${s.scope === "domestic" ? "國內" : "國際"}</span>`);
   if (s.category) chips.push(`<button type="button" class="filter-chip" data-clear-filter="category">分類：${esc(s.category)} ✕</button>`);
+  if (s.newsAuthority)
+    chips.push(`<button type="button" class="filter-chip" data-clear-filter="newsAuthority">來源：${s.newsAuthority === "official" ? "官方警政新聞" : "媒體警政新聞"} ✕</button>`);
   if (s.minRisk)
     chips.push(`<button type="button" class="filter-chip" data-clear-filter="risk">風險：${esc(riskFilterLabel(s.minRisk))} ✕</button>`);
   if (s.sinceDays)
@@ -488,7 +497,7 @@ async function refresh(): Promise<void> {
     ? `cluster:${focusCluster}`
     : focusId
       ? `focus:${focusId}`
-      : `list:${s.scope}:${s.category ?? ""}:${s.minRisk ?? ""}:${s.sinceDays ?? ""}:${s.query ?? ""}`;
+      : `list:${s.scope}:${s.category ?? ""}:${s.newsAuthority ?? ""}:${s.minRisk ?? ""}:${s.sinceDays ?? ""}:${s.query ?? ""}`;
   const relationById = new Map<string, { label: string; why: string }>();
   if (focusCluster && net.cluster(focusCluster)) {
     const members = new Set(net.cluster(focusCluster)!.members);
@@ -641,6 +650,9 @@ document.getElementById("filter-summary")!.addEventListener("click", (ev) => {
     case "risk":
       setState({ minRisk: undefined });
       break;
+    case "newsAuthority":
+      setState({ newsAuthority: undefined });
+      break;
     case "since":
       setState({ sinceDays: undefined });
       break;
@@ -656,7 +668,7 @@ document.getElementById("filter-summary")!.addEventListener("click", (ev) => {
     case "all":
       focusId = null;
       focusCluster = null;
-      setState({ category: undefined, minRisk: undefined, query: undefined, sinceDays: DEFAULT_SINCE_DAYS });
+      setState({ category: undefined, newsAuthority: undefined, minRisk: undefined, query: undefined, sinceDays: DEFAULT_SINCE_DAYS });
       break;
   }
   renderFilterBar(document.getElementById("filterbar")!, scope);
@@ -693,7 +705,7 @@ document.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((btn) => {
     focusId = null;
     focusCluster = null;
     setActiveScopeTab(scope);
-    setState({ scope, category: undefined, minRisk: undefined, query: undefined, sinceDays: DEFAULT_SINCE_DAYS });
+    setState({ scope, category: undefined, newsAuthority: undefined, minRisk: undefined, query: undefined, sinceDays: DEFAULT_SINCE_DAYS });
     renderFilterBar(document.getElementById("filterbar")!, scope);
     revealScopeChangeOnMobile();
   };

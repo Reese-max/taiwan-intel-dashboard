@@ -1,4 +1,4 @@
-import type { IntelEvent, Scope, RiskLevel } from "../types/event";
+import type { IntelEvent, Scope, RiskLevel, NewsAuthority } from "../types/event";
 import { RISK_ORDER } from "../types/event";
 
 export interface FilterOptions {
@@ -6,6 +6,7 @@ export interface FilterOptions {
   category?: string;
   minRisk?: RiskLevel;
   source?: string;
+  newsAuthority?: NewsAuthority;
   sinceDays?: number;
 }
 
@@ -17,6 +18,12 @@ export function filterEvents(events: IntelEvent[], opts: FilterOptions): IntelEv
     if (opts.category && e.category !== opts.category) return false;
     if (opts.minRisk && RISK_ORDER[e.riskLevel] < RISK_ORDER[opts.minRisk]) return false;
     if (opts.source && e.source.name !== opts.source) return false;
+    const isOfficialPoliceNews =
+      e.source.datasetId === "7505" ||
+      (e.source.datasetId === "tw-news" && e.source.authority === "official");
+    const isMediaPoliceNews = e.source.datasetId === "tw-news" && e.source.authority !== "official";
+    if (opts.newsAuthority === "official" && !isOfficialPoliceNews) return false;
+    if (opts.newsAuthority === "media" && !isMediaPoliceNews) return false;
     const eventTime = new Date(e.timestamp).getTime();
     if (Number.isFinite(eventTime)) {
       if (maxFuture && eventTime > maxFuture) return false;

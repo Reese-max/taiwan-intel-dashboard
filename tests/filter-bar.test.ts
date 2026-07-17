@@ -17,6 +17,7 @@ type FakeContainer = {
 const createContainer = (): { el: FakeContainer; refs: Record<string, FakeElement> } => {
   const refs: Record<string, FakeElement> = {
     "#f-cat": { value: "" },
+    "#f-authority": { value: "" },
     "#f-risk": { value: "" },
     "#f-range": { value: "" },
     "#f-query": { value: "" },
@@ -43,6 +44,7 @@ const resetState = (): void => {
     category: undefined,
     minRisk: undefined,
     source: undefined,
+    newsAuthority: undefined,
     sinceDays: 3,
     query: undefined,
   });
@@ -89,6 +91,27 @@ describe("FilterBar 國內分類選項", () => {
     select.onchange?.({ target: select } as unknown as Event);
 
     expect(getState().category).toBe("交通");
+  });
+
+  it("國內可一鍵切換官方／媒體警政新聞", () => {
+    const { el } = createContainer();
+    renderFilterBar(el as unknown as HTMLElement, "domestic");
+
+    expect(el.innerHTML).toContain('<option value="official">官方警政新聞</option>');
+    expect(el.innerHTML).toContain('<option value="media">媒體警政新聞</option>');
+
+    const select = el.querySelector("#f-authority")!;
+    select.value = "official";
+    select.onchange?.({ target: select } as unknown as Event);
+
+    expect(getState().newsAuthority).toBe("official");
+  });
+
+  it("國際範圍不顯示警政新聞來源篩選", () => {
+    const { el } = createContainer();
+    renderFilterBar(el as unknown as HTMLElement, "international");
+
+    expect(el.innerHTML).not.toContain('id="f-authority"');
   });
 
   it("選擇風險門檻時會更新 store 狀態 minRisk", () => {

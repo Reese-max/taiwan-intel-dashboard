@@ -1,5 +1,5 @@
 import { getState, setState } from "../store";
-import type { RiskLevel, Scope } from "../types/event";
+import type { NewsAuthority, RiskLevel, Scope } from "../types/event";
 import { esc } from "../utils/escape";
 import { debounce } from "../utils/debounce";
 
@@ -13,6 +13,11 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
   const cats = CATS[scope].map((c) => `<option value="${c}">${c}</option>`).join("");
   container.innerHTML = `
     <select id="f-cat" aria-label="分類篩選"><option value="">全部分類</option>${cats}</select>
+    ${scope === "domestic" ? `<select id="f-authority" aria-label="警政新聞來源篩選">
+      <option value="">全部警政新聞</option>
+      <option value="official">官方警政新聞</option>
+      <option value="media">媒體警政新聞</option>
+    </select>` : ""}
     <select id="f-risk" aria-label="風險篩選">
       <option value="">全部風險</option>
       <option value="medium">中以上</option>
@@ -30,10 +35,16 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
       <kbd class="search-hint" aria-hidden="true">/</kbd>
     </div>`;
   container.querySelector<HTMLSelectElement>("#f-cat")!.value = state.category ?? "";
+  const authority = container.querySelector<HTMLSelectElement>("#f-authority");
+  if (authority) authority.value = state.newsAuthority ?? "";
   container.querySelector<HTMLSelectElement>("#f-risk")!.value = state.minRisk ?? "";
   container.querySelector<HTMLSelectElement>("#f-range")!.value = state.sinceDays ? String(state.sinceDays) : "";
   container.querySelector<HTMLSelectElement>("#f-cat")!.onchange = (ev) =>
     setState({ category: (ev.target as HTMLSelectElement).value || undefined });
+  if (authority) {
+    authority.onchange = (ev) =>
+      setState({ newsAuthority: ((ev.target as HTMLSelectElement).value || undefined) as NewsAuthority | undefined });
+  }
   container.querySelector<HTMLSelectElement>("#f-risk")!.onchange = (ev) =>
     setState({
       minRisk: ((ev.target as HTMLSelectElement).value || undefined) as RiskLevel | undefined,

@@ -42,6 +42,21 @@ describe("filterEvents", () => {
     expect(filterEvents(events, { source: "警政署" }).map((e) => e.id)).toEqual(["b"]);
   });
 
+  it("依官方／媒體警政新聞定義篩選", () => {
+    const events: IntelEvent[] = [
+      { ...base, id: "official-api", source: { ...base.source, datasetId: "7505" } },
+      { ...base, id: "official-rss", source: { ...base.source, datasetId: "tw-news", authority: "official" } },
+      { ...base, id: "media-rss", source: { ...base.source, datasetId: "tw-news" } },
+      { ...base, id: "other-official", source: { ...base.source, datasetId: "E-A0015-001" } },
+    ];
+
+    expect(filterEvents(events, { newsAuthority: "official" }).map((e) => e.id)).toEqual([
+      "official-api",
+      "official-rss",
+    ]);
+    expect(filterEvents(events, { newsAuthority: "media" }).map((e) => e.id)).toEqual(["media-rss"]);
+  });
+
   it("用 sinceDays 下界時，會排除低於 cutoff 的事件", () => {
     vi.useFakeTimers();
     try {
