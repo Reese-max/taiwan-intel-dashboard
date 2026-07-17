@@ -73,6 +73,9 @@ jobs:
           NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}
           NVIDIA_BASE_URL=${{ secrets.NVIDIA_BASE_URL }}
           NVIDIA_MODEL=${{ secrets.NVIDIA_MODEL }}
+          LLM_FALLBACK_API_KEY=${{ secrets.NVIDIA_API_KEY }}
+          LLM_FALLBACK_BASE_URL=${{ secrets.NVIDIA_BASE_URL }}
+          LLM_FALLBACK_MODEL=${{ secrets.NVIDIA_MODEL }}
           SUMMARY_LLM=${{ secrets.SUMMARY_LLM }}
           SUMMARY_API_KEY=${{ secrets.SUMMARY_API_KEY }}
           SUMMARY_BASE_URL=${{ secrets.SUMMARY_BASE_URL }}

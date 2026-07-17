@@ -153,6 +153,13 @@ describe("resolveFetchMode", () => {
     expect(workflow).toContain("npm run audit:news-source-contribution");
   });
 
+  it("wires the existing NVIDIA credentials into the primary LLM fallback", () => {
+    const workflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
+    expect(workflow).toContain("LLM_FALLBACK_API_KEY=${{ secrets.NVIDIA_API_KEY }}");
+    expect(workflow).toContain("LLM_FALLBACK_BASE_URL=${{ secrets.NVIDIA_BASE_URL }}");
+    expect(workflow).toContain("LLM_FALLBACK_MODEL=${{ secrets.NVIDIA_MODEL }}");
+  });
+
   it("gates source freshness and the generated coverage matrix before deploy", () => {
     const workflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
     expect(workflow).toContain("npm run audit:source-freshness");
