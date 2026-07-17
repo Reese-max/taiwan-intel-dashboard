@@ -491,8 +491,6 @@ ${listing}
   for (const o of Array.isArray(arr) ? arr : []) {
     const it = items[o.idx];
     if (!it) continue;
-    const ruledCategory = categoryFromItem(it.title, it.hint);
-    const hasCategoryRule = ruledCategory.basis.startsWith("rule:");
     const enrichment = groundEventEnrichment(
       {
         aiEntities: cleanEntities(o.entities),
@@ -506,8 +504,8 @@ ${listing}
       title: o.title_zh || it.title,
       region: o.region || "全國",
       timestamp: toIso(it.pubDate),
-      category: hasCategoryRule ? ruledCategory.category : clampTwCat(o.category),
-      categoryBasis: hasCategoryRule ? ruledCategory.basis : "llm",
+      category: clampTwCat(o.category),
+      categoryBasis: "llm",
       scope: "domestic",
       riskLevel: clampRisk(o.riskLevel),
       summary: o.summary_zh || it.description?.slice(0, 200) || "",
@@ -602,7 +600,14 @@ export async function normalizeDomesticNews(
   const seen = new Set();
   const merged = [];
   for (const raw of [...refreshedReused, ...results.flat()]) {
-    const ev = raw ? applyDomesticCountyLocation({ ...raw, categoryBasis: raw.categoryBasis || "llm" }) : raw;
+    const item = raw && currentItemById.get(raw.id);
+    const ruledCategory = item && categoryFromItem(item.title, item.hint);
+    const hasCategoryRule = ruledCategory?.basis.startsWith("rule:");
+    const ev = raw ? applyDomesticCountyLocation({
+      ...raw,
+      category: hasCategoryRule ? ruledCategory.category : raw.category,
+      categoryBasis: hasCategoryRule ? ruledCategory.basis : raw.categoryBasis || "llm",
+    }) : raw;
     if (!ev || seen.has(ev.id)) continue;
     seen.add(ev.id);
     merged.push(ev);

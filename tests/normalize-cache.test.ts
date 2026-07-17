@@ -91,4 +91,31 @@ describe("normalize cross-run cache", () => {
     expect(event.timestamp).toBe("2026-07-17T02:06:00.000Z");
     expect(event.aiTopic).toBe("既有分析");
   });
+
+  it("reapplies high-confidence category rules to reused domestic events", async () => {
+    const item = {
+      title: "失智老婦騎三輪車迷航40公里 東港警助返家",
+      link: "https://example.com/wandering",
+      description: "警方協助返家",
+      source: "測試源",
+      sourceUrl: "https://example.com",
+      hint: "治安",
+    };
+    const id = eventIdFor("domestic", item.link);
+    const priorById = new Map([[id, {
+      id,
+      title: item.title,
+      category: "治安",
+      categoryBasis: "llm",
+      riskLevel: "low",
+      scope: "domestic",
+      aiTopic: "既有分析",
+      source: { name: item.source },
+    }]]);
+
+    const [event] = await normalizeDomesticNews([item], { max: 10, priorById });
+
+    expect(event.category).toBe("協尋");
+    expect(event.categoryBasis).toBe("rule:協尋");
+  });
 });
