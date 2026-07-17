@@ -14,6 +14,9 @@ interface PipelineStatus {
     hourLocal?: string;
     newPoliceRelatedCount?: number;
     newMinimumPerHour?: number;
+    newMinimumLookbackDays?: number;
+    newMinimumPercentile?: number;
+    newMinimumSampleSize?: number;
     deferredNewCandidateCount?: number;
     meetsNewHourlyMinimum?: boolean;
     skipped?: boolean;
@@ -24,6 +27,7 @@ interface ProvSource {
   key?: string;
   name: string;
   datasetId?: string;
+  authority?: string;
   category?: string;
   count: number;
   fetchedAt?: string;
@@ -50,6 +54,12 @@ interface HourlyRun {
 
 interface HourlyHistory {
   runs: HourlyRun[];
+  calibration?: {
+    minimumNewPerHour: number;
+    lookbackDays: number;
+    percentile: number;
+    sampleSize: number;
+  };
 }
 
 const POLICE_VISIBLE_LIMIT = 4;
@@ -106,6 +116,31 @@ function isPoliceSource(source: ProvSource): boolean {
   if (source.key) return true;
   const text = `${source.name}${source.datasetId || ""}`;
   return /警|165|交通事故|測速|毒品|集會遊行/.test(text);
+}
+
+function newsChannelSummary(sources: ProvSource[], official: boolean, generatedAt: string) {
+  const selected = sources.filter((source) => {
+    const isOfficial = source.datasetId === "7505" || (source.datasetId === "tw-news" && source.authority === "official");
+    const isMedia = source.datasetId === "tw-news" && source.authority !== "official";
+    return official ? isOfficial : isMedia;
+  });
+  const timestamps = selected
+    .map((source) => Date.parse(source.lastSuccessAt || source.fetchedAt || ""))
+    .filter(Number.isFinite);
+  const latest = timestamps.length ? Math.max(...timestamps) : Number.NaN;
+  const age = Date.parse(generatedAt) - latest;
+  const freshness = !Number.isFinite(latest)
+    ? "無同步紀錄"
+    : age <= 86400000
+      ? "24 小時內"
+      : age <= 3 * 86400000
+        ? "3 日內"
+        : "超過 3 日";
+  return {
+    count: selected.reduce((sum, source) => sum + source.count, 0),
+    freshness,
+    latest: Number.isFinite(latest) ? new Date(latest).toISOString() : "",
+  };
 }
 
 function renderHourlyTrend(runs: HourlyRun[]): string {
@@ -219,7 +254,19 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
   const newPoliceRelatedCount = historicalRun?.newPoliceRelatedCount ?? police?.newPoliceRelatedCount ?? 0;
   const deferredNewCandidateCount = historicalRun?.deferredNewCandidateCount ?? police?.deferredNewCandidateCount ?? 0;
   const minimumNewPerHour = historicalRun?.minimumNewPerHour ?? police?.newMinimumPerHour ?? 200;
+  const calibration =
+    history.calibration ||
+    (typeof police?.newMinimumSampleSize === "number"
+      ? {
+          minimumNewPerHour,
+          lookbackDays: police.newMinimumLookbackDays || 7,
+          percentile: police.newMinimumPercentile || 25,
+          sampleSize: police.newMinimumSampleSize,
+        }
+      : undefined);
   const policeSources = provenance.sources.filter(isPoliceSource);
+  const officialNews = newsChannelSummary(provenance.sources, true, provenance.generatedAt);
+  const mediaNews = newsChannelSummary(provenance.sources, false, provenance.generatedAt);
   const okSources = policeSources.filter((s) => sourceStatus(s, police).cls === "ok").length;
   const failedSources = policeSources.filter((s) => sourceStatus(s, police).cls === "bad");
   const generated = new Date(provenance.generatedAt).toLocaleString("zh-TW", { hour12: false });
@@ -270,6 +317,9 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
   const metricTime = historicalRun
     ? `警政時段：${esc(historicalRun.hourLocal)}`
     : `更新：${esc(generated)}`;
+  const minimumLabel = calibration
+    ? `${calibration.lookbackDays} 日 P${calibration.percentile} 動態門檻：${minimumNewPerHour} 筆／小時（${calibration.sampleSize} 個有效時段）`
+    : `目標：${minimumNewPerHour} 筆／小時`;
 
   container.innerHTML = `
     <section class="police-health-card">
@@ -280,8 +330,13 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
         <div><b>${newPoliceRelatedCount}</b><span>本小時全新</span></div>
         <div><b>${deferredNewCandidateCount}</b><span>候選池</span></div>
       </div>
+      <h5 class="police-news-title">警政新聞通道</h5>
+      <div class="health-kpis police-news-kpis">
+        <div><b>${officialNews.count}</b><span>官方警政新聞</span><small>${officialNews.freshness}｜最新同步 ${esc(formatDateTime(officialNews.latest))}</small></div>
+        <div><b>${mediaNews.count}</b><span>媒體警政新聞</span><small>${mediaNews.freshness}｜最新同步 ${esc(formatDateTime(mediaNews.latest))}</small></div>
+      </div>
       <p class="health-decision"><b>處理建議</b>${decision}</p>
-      <p class="health-meta">${metricTime}｜目標：${minimumNewPerHour} 筆／小時</p>
+      <p class="health-meta">${metricTime}｜${minimumLabel}</p>
       <div class="retry-row">
         <button type="button" class="retry-btn" data-retry-failed ${failedSources.length ? "" : "disabled"}>
           失敗來源重試

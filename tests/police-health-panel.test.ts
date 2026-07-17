@@ -95,6 +95,23 @@ describe("renderPoliceHealthPanel", () => {
     }
   });
 
+  it("顯示 7 日分布校準資訊", async () => {
+    const manifest = makeManifest(93, 93);
+    const history = {
+      ...makeHistory(93, 93),
+      calibration: { minimumNewPerHour: 93, lookbackDays: 7, percentile: 25, sampleSize: 2 },
+    };
+    const container = stubFetch(manifest, history);
+
+    try {
+      await renderPoliceHealthPanel(container);
+
+      expect(container.innerHTML).toContain("7 日 P25 動態門檻：93 筆／小時（2 個有效時段）");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("本輪未跑 police 時沿用最新 hourly 入帳結果，不顯示假 0", async () => {
     const manifest = {
       ...makeManifest(0, 200),
@@ -109,6 +126,49 @@ describe("renderPoliceHealthPanel", () => {
       expect(container.innerHTML).toContain("<b>93</b><span>本小時全新</span>");
       expect(container.innerHTML).toContain("顯示上次警政入帳結果");
       expect(container.innerHTML).toContain("警政時段：2026-06-21 01:00");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("分列官方與媒體警政新聞筆數及各自新鮮度", async () => {
+    const manifest = {
+      ...makeManifest(93, 100),
+      sources: [
+        {
+          key: "policeNews",
+          name: "警政署 各警察機關新聞發布",
+          type: "gov-open-data",
+          datasetId: "7505",
+          count: 120,
+          fetchedAt: "2026-06-21T00:00:00+08:00",
+        },
+        {
+          name: "台灣新聞：移民署 新聞",
+          type: "news-rss",
+          datasetId: "tw-news",
+          authority: "official",
+          count: 30,
+          fetchedAt: "2026-06-20T23:30:00+08:00",
+        },
+        {
+          name: "台灣新聞：自由時報 社會",
+          type: "news-rss",
+          datasetId: "tw-news",
+          count: 70,
+          fetchedAt: "2026-06-17T23:00:00+08:00",
+        },
+      ],
+    };
+    const container = stubFetch(manifest, makeHistory(93, 100));
+
+    try {
+      await renderPoliceHealthPanel(container);
+
+      expect(container.innerHTML).toContain("<b>150</b><span>官方警政新聞</span>");
+      expect(container.innerHTML).toContain("<b>70</b><span>媒體警政新聞</span>");
+      expect(container.innerHTML).toContain("24 小時內｜最新同步");
+      expect(container.innerHTML).toContain("超過 3 日｜最新同步");
     } finally {
       vi.unstubAllGlobals();
     }

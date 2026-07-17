@@ -1418,6 +1418,16 @@ body.layout-compact .col-list {
   color: var(--color-muted);
   font-size: 0.72rem;
 }
+.health-kpis small {
+  color: var(--color-muted);
+  display: block;
+  font-size: 0.72rem;
+  margin-top: 4px;
+}
+.police-news-title {
+  font-size: 0.8rem;
+  margin: 10px 0 6px;
+}
 .health-decision {
   background: rgba(148, 163, 184, 0.08);
   border: 1px solid var(--color-border);
