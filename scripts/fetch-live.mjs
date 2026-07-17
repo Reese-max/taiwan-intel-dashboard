@@ -52,7 +52,7 @@ import {
   lastDomesticNormalizeSkippedBatches,
 } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
-import { applyPoliceHourlyRun } from "./lib/police-hourly-history.mjs";
+import { applyPoliceHourlyRun, eventFingerprint } from "./lib/police-hourly-history.mjs";
 import { applyDailyRollup, taiwanLocalDay } from "./lib/daily-rollup.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
 import { validateEventContract, clampImplausibleTimestamps } from "./lib/event-contract.mjs";
@@ -587,6 +587,8 @@ export async function run() {
   } else if (!status.twnews?.ok && newsEvents.length) {
     console.warn(`台灣新聞${why(status.twnews)}，沿用舊快照 ${newsEvents.length} 筆`);
   }
+  const oldNewsFingerprints = new Set(oldNews.map(eventFingerprint));
+  const newNewsEvents = newsEvents.filter((event) => !oldNewsFingerprints.has(eventFingerprint(event)));
 
   let policeEvents = [];
   let policeHourly = null;
@@ -616,7 +618,7 @@ export async function run() {
     const previousLedger = readJson("police-seen-ledger.json", { seen: [] });
     policeHourly = applyPoliceHourlyRun({
       generatedAt: nowIso,
-      events: policeEvents,
+      events: [...newNewsEvents, ...policeEvents.filter((event) => event.source?.datasetId === "7505")],
       previousHistory,
       previousLedger,
       minimumNewPerHour: POLICE_NEW_PER_HOUR_MINIMUM,
@@ -631,7 +633,7 @@ export async function run() {
     status.police.meetsNewHourlyMinimum = policeHourly.run.meetsNewHourlyMinimum;
     if (!policeHourly.run.meetsNewHourlyMinimum) {
       console.warn(
-        `警政全新資料不足：${policeHourly.run.newPoliceRelatedCount}/${POLICE_NEW_PER_HOUR_MINIMUM}（重複 ${policeHourly.run.duplicateFromPriorCount} 筆）`,
+        `警政新聞全新資料不足：${policeHourly.run.newPoliceRelatedCount}/${POLICE_NEW_PER_HOUR_MINIMUM}（重複 ${policeHourly.run.duplicateFromPriorCount} 筆）`,
       );
     }
   } else {

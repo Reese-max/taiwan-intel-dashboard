@@ -1005,6 +1005,28 @@ describe("fetch-live pipeline integration (police + missing)", () => {
   );
 
   it(
+    "counts fresh police news instead of unrelated structured police rows",
+    async () => {
+      const dataDir = setupEnv();
+      process.env.SOURCES = "police,twnews";
+      disableCrimeWeeklyFetch();
+      const { unexpected } = makeMockFetch({ policeRows: policeNewsRows() });
+      const run = await importRun();
+
+      await expect(run()).resolves.toBeUndefined();
+
+      const history = readJson(join(dataDir, "police-hourly-history.json"));
+      const datasetIds = new Set(history.runs[0].newRecords.map((record: any) => record.datasetId));
+      expect(datasetIds).toEqual(new Set(["7505", "tw-news"]));
+
+      const provenance = readJson(join(dataDir, "provenance.json"));
+      expect(provenance.pipeline.police.newPoliceRelatedCount).toBeGreaterThan(1);
+      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
+    },
+    60_000,
+  );
+
+  it(
     "does not let the direct crime weekly source hide a systemic MCP outage",
     async () => {
       const dataDir = setupEnv();
