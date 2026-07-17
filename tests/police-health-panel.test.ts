@@ -95,6 +95,25 @@ describe("renderPoliceHealthPanel", () => {
     }
   });
 
+  it("本輪未跑 police 時沿用最新 hourly 入帳結果，不顯示假 0", async () => {
+    const manifest = {
+      ...makeManifest(0, 200),
+      pipeline: { police: { skipped: true } },
+    };
+    const history = makeHistory(93, 200);
+    const container = stubFetch(manifest, history);
+
+    try {
+      await renderPoliceHealthPanel(container);
+
+      expect(container.innerHTML).toContain("<b>93</b><span>本小時全新</span>");
+      expect(container.innerHTML).toContain("顯示上次警政入帳結果");
+      expect(container.innerHTML).toContain("警政時段：2026-06-21 01:00");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("限制警政來源展開明細並截斷錯誤堆疊", async () => {
     const longStack = `Error: source failed\n${"x".repeat(520)}`;
     const manifest = {

@@ -16,6 +16,7 @@ interface PipelineStatus {
     newMinimumPerHour?: number;
     deferredNewCandidateCount?: number;
     meetsNewHourlyMinimum?: boolean;
+    skipped?: boolean;
   };
 }
 
@@ -213,6 +214,11 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
   const provenance = (await provRes.json()) as ProvenanceManifest;
   const history = historyRes.ok ? ((await historyRes.json()) as HourlyHistory) : { runs: [] };
   const police = provenance.pipeline?.police;
+  const latestRun = [...history.runs].sort((a, b) => a.hourLocal.localeCompare(b.hourLocal)).at(-1);
+  const historicalRun = police?.skipped === true ? latestRun : undefined;
+  const newPoliceRelatedCount = historicalRun?.newPoliceRelatedCount ?? police?.newPoliceRelatedCount ?? 0;
+  const deferredNewCandidateCount = historicalRun?.deferredNewCandidateCount ?? police?.deferredNewCandidateCount ?? 0;
+  const minimumNewPerHour = historicalRun?.minimumNewPerHour ?? police?.newMinimumPerHour ?? 200;
   const policeSources = provenance.sources.filter(isPoliceSource);
   const okSources = policeSources.filter((s) => sourceStatus(s, police).cls === "ok").length;
   const failedSources = policeSources.filter((s) => sourceStatus(s, police).cls === "bad");
@@ -256,6 +262,14 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
   const visibleRows = rowItems.slice(0, POLICE_VISIBLE_LIMIT).join("");
   const extraRows = rowItems.slice(POLICE_VISIBLE_LIMIT, POLICE_VISIBLE_LIMIT + POLICE_EXTRA_LIMIT).join("");
   const hiddenCount = Math.max(0, rowItems.length - POLICE_VISIBLE_LIMIT - POLICE_EXTRA_LIMIT);
+  const decision = failedSources.length
+    ? `先重試 ${failedSources.length} 個失敗來源`
+    : historicalRun
+      ? "本輪未執行警政來源，顯示上次警政入帳結果"
+      : "來源狀態正常，細節可按需展開";
+  const metricTime = historicalRun
+    ? `警政時段：${esc(historicalRun.hourLocal)}`
+    : `更新：${esc(generated)}`;
 
   container.innerHTML = `
     <section class="police-health-card">
@@ -263,11 +277,11 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
       <div class="health-kpis">
         <div><b>${policeSources.length}</b><span>來源</span></div>
         <div><b>${okSources}</b><span>正常</span></div>
-        <div><b>${police?.newPoliceRelatedCount ?? 0}</b><span>本小時全新</span></div>
-        <div><b>${police?.deferredNewCandidateCount ?? 0}</b><span>候選池</span></div>
+        <div><b>${newPoliceRelatedCount}</b><span>本小時全新</span></div>
+        <div><b>${deferredNewCandidateCount}</b><span>候選池</span></div>
       </div>
-      <p class="health-decision"><b>處理建議</b>${failedSources.length ? `先重試 ${failedSources.length} 個失敗來源` : "來源狀態正常，細節可按需展開"}</p>
-      <p class="health-meta">更新：${esc(generated)}｜目標：${police?.newMinimumPerHour ?? 200} 筆／小時</p>
+      <p class="health-decision"><b>處理建議</b>${decision}</p>
+      <p class="health-meta">${metricTime}｜目標：${minimumNewPerHour} 筆／小時</p>
       <div class="retry-row">
         <button type="button" class="retry-btn" data-retry-failed ${failedSources.length ? "" : "disabled"}>
           失敗來源重試
