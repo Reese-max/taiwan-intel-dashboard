@@ -53,6 +53,10 @@ describe("mapBulkNews", () => {
       category: "協尋",
       basis: "rule:協尋",
     });
+    expect(categoryFromItem("老婦騎三輪車迷航40公里 東港警助返家", "治安")).toEqual({
+      category: "協尋",
+      basis: "rule:協尋",
+    });
     // 災防語境優先：溺水/搜救類失蹤維持災防。
     expect(categoryFromItem("東港漁民落海失蹤 海巡搜救中", "治安").category).toBe("災防");
     // 反詐優先：詐團話術含失聯不得改判協尋。
@@ -188,6 +192,7 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
 
   it("未列 TOPIC_RE 的 hint 照舊走警政漏斗（回歸保護）", () => {
     expect(isRelevantNewsItem(mk("高雄街頭砍人送醫", "治安"))).toBe(true);
+    expect(isRelevantNewsItem(mk("老婦騎三輪車迷航40公里 東港警助返家", "治安"))).toBe(true);
     expect(isRelevantNewsItem(mk("新北市躋身全球幸福城市前50名", "治安"))).toBe(false);
     expect(isRelevantNewsItem(mk("球團回應打假球傳聞 聯盟啟動調查", "治安"))).toBe(true);
   });
@@ -213,6 +218,8 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(mk("藍綠互批治安政策 朝野再爆口水", "治安"))).toBe(false);
     expect(isRelevantNewsItem(mk("藍委砍預算 市府反擊：施政恐受影響", "治安"))).toBe(false);
     expect(isRelevantNewsItem(mk("朝野互批政策攻擊 總統府回應", "治安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("別一屍多命 國民黨桃園議員致電黨部狂罵要求快處理", "治安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("香港獨立書店店員遭捕 民進黨團舉牌聲援", "治安"))).toBe(false);
     expect(isRelevantNewsItem(mk("市議員詐領助理費遭檢方起訴", "治安"))).toBe(true);
     expect(isRelevantNewsItem(mk("前幫派成員涉共諜案遭判刑", "治安"))).toBe(true);
   });
