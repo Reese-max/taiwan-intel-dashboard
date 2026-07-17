@@ -64,4 +64,31 @@ describe("normalize cross-run cache", () => {
     expect(out.every((e: { aiTopic?: string }) => e.aiTopic === "舊事件主題")).toBe(true);
     expect(out.every((e: { region?: string; lat?: number | null; lng?: number | null }) => e.region === "全國" && e.lat === null && e.lng === null)).toBe(true);
   });
+
+  it("refreshes a reused domestic event timestamp from the current RSS item", async () => {
+    const item = {
+      title: "資安事件",
+      link: "https://example.com/security",
+      description: "",
+      source: "iThome Security RSS",
+      sourceUrl: "https://www.ithome.com.tw/rss/security",
+      pubDate: "2026-07-17T10:06+08:00",
+    };
+    const id = eventIdFor("domestic", item.link);
+    const priorById = new Map([[id, {
+      id,
+      title: item.title,
+      timestamp: "2026-07-17T10:06:00.000Z",
+      region: "全國",
+      riskLevel: "medium",
+      scope: "domestic",
+      aiTopic: "既有分析",
+      source: { name: item.source },
+    }]]);
+
+    const [event] = await normalizeDomesticNews([item], { max: 10, priorById });
+
+    expect(event.timestamp).toBe("2026-07-17T02:06:00.000Z");
+    expect(event.aiTopic).toBe("既有分析");
+  });
 });

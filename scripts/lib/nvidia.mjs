@@ -561,6 +561,15 @@ export async function normalizeDomesticNews(
   }
   // 跨輪快取：命中前一輪者重用、跳過 LLM；只有新項才送 LLM。
   const { reused, fresh } = partitionByCache(deduped, "domestic", priorById);
+  const currentItemById = new Map(
+    deduped.map((item) => [eventIdFor("domestic", item.link), item]),
+  );
+  const refreshedReused = reused.map((event) => {
+    const publishedAt = Date.parse(currentItemById.get(event.id)?.pubDate);
+    return Number.isFinite(publishedAt)
+      ? { ...event, timestamp: new Date(publishedAt).toISOString() }
+      : event;
+  });
   const batches = [];
   for (let i = 0; i < fresh.length; i += batchSize) batches.push(fresh.slice(i, i + batchSize));
   const deadline = Date.now() + budgetMs;
@@ -589,7 +598,7 @@ export async function normalizeDomesticNews(
   }
   const seen = new Set();
   const merged = [];
-  for (const raw of [...reused, ...results.flat()]) {
+  for (const raw of [...refreshedReused, ...results.flat()]) {
     const ev = raw ? applyDomesticCountyLocation({ ...raw, categoryBasis: raw.categoryBasis || "llm" }) : raw;
     if (!ev || seen.has(ev.id)) continue;
     seen.add(ev.id);
