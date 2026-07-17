@@ -88,7 +88,7 @@ const PCC_POLICE_QUERY =
   "announcement_type='決標公告' AND (agency LIKE '%警察%' OR agency LIKE '%警政%') AND award_price != '' AND date <= '{TODAY}' ORDER BY date DESC";
 
 export const POLICE_HOURLY_MINIMUM = 200;
-export const POLICE_NEW_PER_HOUR_MINIMUM = 200;
+export const POLICE_NEW_PER_HOUR_FALLBACK = 200;
 export const POLICE_TODAY_MINIMUM = 150;
 
 export const POLICE_DEFAULT_LIMITS = {

@@ -190,6 +190,37 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(mk("新北市躋身全球幸福城市前50名", "治安"))).toBe(false);
     expect(isRelevantNewsItem(mk("球團回應打假球傳聞 聯盟啟動調查", "治安"))).toBe(true);
   });
+
+  it("移民署來源排除新住民生活與便民公告，但保留真實執法事件", () => {
+    const immigration = (title: string) => ({ ...mk(title, "治安"), source: "移民署 新聞" });
+
+    expect(isRelevantNewsItem(immigration("【百人百聲】澳門青年：自由，是我選擇台灣的理由"))).toBe(false);
+    expect(isRelevantNewsItem(immigration("搭起臺韓文化鵲橋 新住民講師帶你解密韓國七夕"))).toBe(false);
+    expect(isRelevantNewsItem(immigration("來臺更便利！TWAC填報期限放寬至抵臺前7天"))).toBe(false);
+    expect(isRelevantNewsItem(immigration("曾誤闖警局鬧笑話 臺南移民署邀新住民暢談勤學扎根路"))).toBe(false);
+    expect(isRelevantNewsItem(immigration("移民署攜手企業 助新住民子女探索職涯"))).toBe(false);
+    expect(isRelevantNewsItem(immigration("移民署查獲非法仲介藏匿18名失聯移工 全案移送"))).toBe(true);
+    expect(isRelevantNewsItem(immigration("移民署破獲人口販運集團 逮捕主嫌"))).toBe(true);
+    expect(isRelevantNewsItem(immigration("甜言蜜語誘投資 警銀聯手攔阻80萬元假交友詐騙"))).toBe(true);
+    expect(isRelevantNewsItem(immigration("泰國桂圓暗藏大麻 刑事局攜手海關瓦解跨境運毒"))).toBe(true);
+    expect(isRelevantNewsItem(immigration("菲籍母子車站走散 捷警10分鐘尋回7歲童"))).toBe(true);
+  });
+
+  it("排除純政治口水，保留政治人物涉刑案的司法進度", () => {
+    expect(isRelevantNewsItem(mk("苗博雅嗆蔣萬安缺席食安會 市府反擊", "食安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("致癌油風暴 蔣萬安號召人民上街頭", "食安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("藍綠互批治安政策 朝野再爆口水", "治安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("藍委砍預算 市府反擊：施政恐受影響", "治安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("朝野互批政策攻擊 總統府回應", "治安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("市議員詐領助理費遭檢方起訴", "治安"))).toBe(true);
+    expect(isRelevantNewsItem(mk("前幫派成員涉共諜案遭判刑", "治安"))).toBe(true);
+  });
+
+  it("政治口水詞不誤殺槍擊與天災中的一般動詞", () => {
+    expect(isRelevantNewsItem(mk("血染音樂教室 教授砍死店長 警方連轟4槍制伏", "治安"))).toBe(true);
+    expect(isRelevantNewsItem(mk("颱風暴雨狂轟北台 多處道路淹水", "災防"))).toBe(true);
+    expect(isRelevantNewsItem(mk("北市爆集體虐童 家長怒轟市府擺爛", "治安"))).toBe(true);
+  });
 });
 
 describe("isForeignNonTaiwan（bulk domestic 純外國負面閘門）", () => {

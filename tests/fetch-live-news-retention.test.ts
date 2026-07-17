@@ -30,6 +30,23 @@ describe("twnews carry-over retention", () => {
     expect(result.map((e: { id: string }) => e.id)).toEqual(["keep"]);
   });
 
+  it("沿用舊快照時同步清掉新規則判定的移民生活雜訊", () => {
+    const now = Date.parse("2026-07-10T00:00:00.000Z");
+    const oldNews = [
+      news("移民署攜手企業 助新住民子女探索職涯", "2026-07-09T00:00:00.000Z", { name: "移民署 新聞" }),
+      news("移民署查獲非法仲介藏匿失聯移工", "2026-07-09T01:00:00.000Z", { name: "移民署 新聞" }),
+    ];
+
+    const result = buildTwNewsEvents({
+      oldNews,
+      twnewsStatus: { ok: false },
+      retentionDays: 5,
+      now,
+    });
+
+    expect(result.map((e: { id: string }) => e.id)).toEqual(["移民署查獲非法仲介藏匿失聯移工"]);
+  });
+
   it("依事件來源套 advisory 長保留窗，但一般新聞維持短窗", () => {
     const now = Date.parse("2026-07-31T00:00:00.000Z");
     const twnews = [

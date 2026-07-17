@@ -1,4 +1,5 @@
 const TAIWAN_OFFSET_MS = 8 * 60 * 60 * 1000;
+const NEWS_DATASET_IDS = new Set(["tw-news", "7505"]);
 
 export function taiwanLocalHour(isoLike) {
   const time = Date.parse(isoLike);
@@ -10,6 +11,39 @@ export function eventFingerprint(event) {
   const datasetId = event?.source?.datasetId || "no-dataset";
   const recordRef = event?.source?.recordRef || event?.id || event?.title || "no-record";
   return `${datasetId}:${recordRef}`;
+}
+
+export function calibratePoliceHourlyMinimum({
+  generatedAt,
+  previousHistory = { runs: [] },
+  fallback = 200,
+  lookbackDays = 7,
+} = {}) {
+  const now = Date.parse(generatedAt);
+  const currentHour = taiwanLocalHour(generatedAt);
+  const cutoff = now - lookbackDays * 86400000;
+  const counts = (previousHistory?.runs || [])
+    .filter((run) => {
+      const runAt = Date.parse(run.generatedAt || `${String(run.hourLocal).replace(" ", "T")}:00+08:00`);
+      const hasNewsRecord = (run.newRecords || []).some((record) => NEWS_DATASET_IDS.has(String(record.datasetId)));
+      return (
+        Number.isFinite(now) &&
+        Number.isFinite(runAt) &&
+        runAt >= cutoff &&
+        runAt <= now &&
+        run.hourLocal !== currentHour &&
+        Number(run.newPoliceRelatedCount) > 0 &&
+        hasNewsRecord
+      );
+    })
+    .map((run) => Number(run.newPoliceRelatedCount))
+    .sort((a, b) => a - b);
+  const percentile = 25;
+  const minimumNewPerHour = counts.length
+    ? counts[Math.floor((counts.length - 1) * (percentile / 100))]
+    : Math.max(1, Math.round(Number(fallback) || 200));
+
+  return { minimumNewPerHour, lookbackDays, percentile, sampleSize: counts.length };
 }
 
 function recordNode(event, fingerprint) {

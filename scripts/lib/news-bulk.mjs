@@ -116,7 +116,7 @@ export function riskFromTitle(title, hint) {
 }
 
 // 警政相關性關鍵字（標題＋摘要任一命中才收）。濾掉政府/綜合 feed 的非犯罪內容（政策、活動、排名、衛教…）。
-const POLICE_RE = /詐|車手|毒品|緝毒|販毒|製毒|安非他命|海洛因|大麻|愷他命|竊|偷|扒|搶|強盜|劫|侵占|命案|兇殺|凶殺|殺人|砍|刺|鬥毆|毆|傷害|施暴|槍|彈藥|爆裂|爆炸|氣爆|性侵|性騷|猥褻|偷拍|性影像|妨害|家暴|虐|跟蹤|跟騷|騷擾|恐嚇|脅迫|擄|勒贖|綁架|賭|博弈|簽賭|假球|娼|應召|嫖|幫派|黑道|圍事|角頭|走私|偷渡|人口販運|人蛇|洗錢|貪污|收賄|圖利|掏空|背信|內線|偽造|偽鈔|變造|假冒|冒用|盜刷|盜用|個資|駭客|勒索病毒|起訴|偵辦|偵查|搜索|約談|羈押|收押|交保|通緝|落網|到案|逮捕|查獲|破獲|查緝|查扣|移送|判刑|判決|定讞|求刑|犯|嫌|警方|員警|警察|刑事|刑警|檢方|檢警|地檢|調查局|海巡|移民署|消防|救護|搜救|溺|墜|罹難|傷亡|死傷|身亡|致死|喪命|奪命|縱火|火警|火災|肇事|肇逃|酒駕|毒駕|車禍|事故|失蹤|協尋|走失|失聯|襲警|拒檢|拒捕|臨檪|臨檢|攔查|路檢|掃蕩|掃黑|肅竊|取締|落水|中毒|外洩|不法|違法|非法|犯罪|刑案|治安|報案|110|165/;
+const POLICE_RE = /詐|車手|毒品|緝毒|販毒|製毒|安非他命|海洛因|大麻|愷他命|竊|偷|扒|搶|強盜|劫|侵占|命案|兇殺|凶殺|殺人|砍|刺|鬥毆|毆|傷害|施暴|槍|彈藥|爆裂|爆炸|氣爆|性侵|性騷|猥褻|偷拍|性影像|妨害|家暴|虐|跟蹤|跟騷|騷擾|恐嚇|脅迫|擄|勒贖|綁架|賭|博弈|簽賭|假球|娼|應召|嫖|幫派|黑道|圍事|角頭|走私|偷渡|人口販運|人蛇|洗錢|貪污|收賄|圖利|掏空|背信|內線|偽造|偽鈔|變造|假冒|冒用|盜刷|盜用|個資|駭客|勒索病毒|起訴|偵辦|偵查|搜索|約談|羈押|收押|交保|通緝|落網|到案|逮捕|查獲|破獲|查緝|查扣|移送|判刑|判決|定讞|求刑|犯|嫌|警方|員警|警察|捷警|鐵警|刑事|刑警|檢方|檢警|地檢|調查局|海巡|移民署|消防|救護|搜救|溺|墜|罹難|傷亡|死傷|身亡|致死|喪命|奪命|縱火|火警|火災|肇事|肇逃|酒駕|毒駕|車禍|事故|失蹤|協尋|尋回|走失|失聯|襲警|拒檢|拒捕|臨檪|臨檢|攔查|路檢|掃蕩|掃黑|肅竊|取締|落水|中毒|外洩|不法|違法|非法|犯罪|刑案|治安|報案|110|165/;
 
 const NON_EVENT_LANDING_RE = /查詢系統|管理資訊系統|資訊系統|資訊網站|全球資訊網|清冊|資料查詢/;
 const SPECIFIC_NON_EVENT_TITLE_RE = /環保稽查處分管制系統/;
@@ -145,6 +145,33 @@ function sourceText(source) {
     source.source,
     source.query,
   ].filter(Boolean).join(" ");
+}
+
+const IMMIGRATION_NEWS_SOURCE_RE = /移民署|移民新聞|新住民全球新聞網/;
+const IMMIGRATION_LIFESTYLE_RE =
+  /百人百聲|TWAC|文化交流|文化體驗|文化鵲橋|七夕|職涯|親子活動|親子連結|體驗營|課程|講座|宣導|說明會|報名|抽獎|好禮|得獎名單|表揚|頒獎|影音新聞|廉政動畫|療癒|暢談|扎根|便民|填報|申報|樂園|音樂祭|能力升級|數位資訊|服務站|人道關懷/;
+const IMMIGRATION_ENFORCEMENT_RE =
+  /查獲|查緝|查察|破獲|逮捕|拘提|搜索|移送|偵辦|起訴|判刑|收押|羈押|通緝|攔截|截獲|攔阻|瓦解|尋回|救出|救援|裁處|遣返|驅逐|偷渡|非法入境|逾期居留|失聯移工|人口販運|人蛇|假結婚|偽造證件|性剝削|勞力剝削/;
+const POLITICAL_CONTEXT_RE =
+  /總統|總統府|行政院|中央|市府|縣府|立法院|立院|議會|立委|議員|市長|縣長|候選人|政黨|藍營|綠營|藍綠|朝野|政治|施政|食安會|缺席/;
+const POLITICAL_RHETORIC_RE = /互嗆|喊話|批評|反擊|缺席|口水|杯葛|造勢|轟|酸/;
+const PURE_POLITICS_RE = /號召.{0,8}上街|選舉|罷免|民調|政黨攻防|藍綠互批|朝野攻防/;
+const CRIMINAL_PROCEEDING_RE =
+  /查獲|查緝|破獲|逮捕|拘提|搜索|移送|偵辦|偵查|起訴|羈押|收押|交保|判刑|判決|定讞|通緝|報案|涉嫌|涉案|被控|拒捕|襲警|詐騙|詐欺|貪污|收賄|行賄|圖利|洗錢|偽造|共諜|洩密|暴力|恐嚇|性騷|性侵|命案|殺人|砍(?:人|傷|死)|刺(?:人|傷|死)|虐童|兒虐|虐待|毒品|槍擊|竊盜|搶劫|酒駕|肇事|車禍|火災|爆炸|人口販運|食物中毒|偷排|裁罰|裁處|稽查/;
+
+export function isPoliceNewsNoise(item) {
+  const title = String(item?.title || "");
+  const text = `${title} ${String(item?.description || "")}`;
+  if (
+    IMMIGRATION_NEWS_SOURCE_RE.test(sourceText(item?.source)) &&
+    IMMIGRATION_LIFESTYLE_RE.test(text) &&
+    !IMMIGRATION_ENFORCEMENT_RE.test(text)
+  ) {
+    return true;
+  }
+  const politicalNoise = PURE_POLITICS_RE.test(title) ||
+    (POLITICAL_CONTEXT_RE.test(title) && POLITICAL_RHETORIC_RE.test(title));
+  return politicalNoise && !CRIMINAL_PROCEEDING_RE.test(title);
 }
 
 export function isNonEventNoise(item) {
@@ -199,6 +226,7 @@ const TOPIC_RE = {
 export function isRelevantNewsItem(item) {
   if (isNonEventNoise(item)) return false;
   if (isForeignNonTaiwan(item)) return false;
+  if (isPoliceNewsNoise(item)) return false;
   const topicRe = TOPIC_RE[item?.hint];
   if (topicRe) return topicRe.test(String(item?.title || "") + " " + String(item?.description || ""));
   return isPoliceRelevant(item?.title, item?.description);

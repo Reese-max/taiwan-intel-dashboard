@@ -30,7 +30,7 @@ import {
   fetchPolice,
   isPoliceDomesticEvent,
   POLICE_HOURLY_MINIMUM,
-  POLICE_NEW_PER_HOUR_MINIMUM,
+  POLICE_NEW_PER_HOUR_FALLBACK,
   POLICE_TODAY_MINIMUM,
   POLICE_TAIPEI_IDS,
 } from "./lib/fetch-police.mjs";
@@ -39,7 +39,12 @@ import { googleNewsHealth } from "./lib/gn-health.mjs";
 import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
 import { carryOver } from "./lib/carry-over.mjs";
-import { mapBulkNews, titleKey as bulkTitleKey, isRelevantNewsItem } from "./lib/news-bulk.mjs";
+import {
+  isPoliceNewsNoise,
+  isRelevantNewsItem,
+  mapBulkNews,
+  titleKey as bulkTitleKey,
+} from "./lib/news-bulk.mjs";
 import { buildNewsSourceContribution, eventFeedLabel, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
 import {
   normalizeInternational,
@@ -52,7 +57,11 @@ import {
   lastDomesticNormalizeSkippedBatches,
 } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
-import { applyPoliceHourlyRun, eventFingerprint } from "./lib/police-hourly-history.mjs";
+import {
+  applyPoliceHourlyRun,
+  calibratePoliceHourlyMinimum,
+  eventFingerprint,
+} from "./lib/police-hourly-history.mjs";
 import { applyDailyRollup, taiwanLocalDay } from "./lib/daily-rollup.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
 import { validateEventContract, clampImplausibleTimestamps } from "./lib/event-contract.mjs";
@@ -128,7 +137,9 @@ export function buildTwNewsEvents({
   now = Date.now(),
 } = {}) {
   const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
-  const keep = (event) => shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now });
+  const keep = (event) =>
+    !isPoliceNewsNoise(event) &&
+    shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now });
   const hasFreshTwnews = twnewsStatus?.ok && twnews.length;
   const carriedNews = carryOver({
     status: hasFreshTwnews ? twnewsStatus : undefined,
@@ -616,16 +627,24 @@ export async function run() {
 
     const previousHistory = readJson("police-hourly-history.json", { runs: [] });
     const previousLedger = readJson("police-seen-ledger.json", { seen: [] });
+    const policeMinimum = calibratePoliceHourlyMinimum({
+      generatedAt: nowIso,
+      previousHistory,
+      fallback: POLICE_NEW_PER_HOUR_FALLBACK,
+    });
     policeHourly = applyPoliceHourlyRun({
       generatedAt: nowIso,
       events: [...newNewsEvents, ...policeEvents.filter((event) => event.source?.datasetId === "7505")],
       previousHistory,
       previousLedger,
-      minimumNewPerHour: POLICE_NEW_PER_HOUR_MINIMUM,
-      maxNewPerRun: POLICE_NEW_PER_HOUR_MINIMUM,
+      minimumNewPerHour: policeMinimum.minimumNewPerHour,
       retentionDays: Number(process.env.POLICE_HISTORY_RETENTION_DAYS) || 14,
     });
-    status.police.newMinimumPerHour = POLICE_NEW_PER_HOUR_MINIMUM;
+    policeHourly.history.calibration = policeMinimum;
+    status.police.newMinimumPerHour = policeMinimum.minimumNewPerHour;
+    status.police.newMinimumLookbackDays = policeMinimum.lookbackDays;
+    status.police.newMinimumPercentile = policeMinimum.percentile;
+    status.police.newMinimumSampleSize = policeMinimum.sampleSize;
     status.police.hourLocal = policeHourly.run.hourLocal;
     status.police.newPoliceRelatedCount = policeHourly.run.newPoliceRelatedCount;
     status.police.duplicateFromPriorCount = policeHourly.run.duplicateFromPriorCount;
@@ -633,7 +652,7 @@ export async function run() {
     status.police.meetsNewHourlyMinimum = policeHourly.run.meetsNewHourlyMinimum;
     if (!policeHourly.run.meetsNewHourlyMinimum) {
       console.warn(
-        `警政新聞全新資料不足：${policeHourly.run.newPoliceRelatedCount}/${POLICE_NEW_PER_HOUR_MINIMUM}（重複 ${policeHourly.run.duplicateFromPriorCount} 筆）`,
+        `警政新聞全新資料不足：${policeHourly.run.newPoliceRelatedCount}/${policeMinimum.minimumNewPerHour}（7 日 P${policeMinimum.percentile}，${policeMinimum.sampleSize} 個有效時段；重複 ${policeHourly.run.duplicateFromPriorCount} 筆）`,
       );
     }
   } else {

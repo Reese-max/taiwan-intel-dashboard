@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyPoliceHourlyRun,
+  calibratePoliceHourlyMinimum,
   eventFingerprint,
   taiwanLocalHour,
 } from "../scripts/lib/police-hourly-history.mjs";
@@ -23,6 +24,57 @@ function event(id: string, category = "治安") {
 }
 
 describe("police hourly new-record history", () => {
+  it("用 7 日成功警政新聞時段的第 25 百分位校準門檻，忽略舊指標與失敗零值", () => {
+    const generatedAt = "2026-06-17T08:05:00.000Z";
+    const newsRun = (hoursAgo: number, count: number, datasetId = "tw-news") => {
+      const runAt = new Date(Date.parse(generatedAt) - hoursAgo * 3600000).toISOString();
+      return {
+        generatedAt: runAt,
+        hourLocal: taiwanLocalHour(runAt),
+        newPoliceRelatedCount: count,
+        newRecords: Array.from({ length: count }, (_, index) => ({
+          fingerprint: `${datasetId}:${hoursAgo}-${index}`,
+          datasetId,
+        })),
+      };
+    };
+    const previousHistory = {
+      runs: [
+        newsRun(1, 80),
+        newsRun(2, 100),
+        newsRun(3, 120),
+        newsRun(4, 160, "7505"),
+        newsRun(5, 200),
+        newsRun(6, 0),
+        newsRun(7, 5, "130105"),
+        newsRun(24 * 8, 20),
+        newsRun(0, 1),
+      ],
+    };
+
+    expect(calibratePoliceHourlyMinimum({ generatedAt, previousHistory })).toEqual({
+      minimumNewPerHour: 100,
+      lookbackDays: 7,
+      percentile: 25,
+      sampleSize: 5,
+    });
+  });
+
+  it("沒有 7 日成功警政新聞樣本時才使用冷啟動值", () => {
+    expect(
+      calibratePoliceHourlyMinimum({
+        generatedAt: "2026-06-17T08:05:00.000Z",
+        previousHistory: { runs: [] },
+        fallback: 150,
+      }),
+    ).toEqual({
+      minimumNewPerHour: 150,
+      lookbackDays: 7,
+      percentile: 25,
+      sampleSize: 0,
+    });
+  });
+
   it("uses stable police fingerprints instead of fetchedAt for new-record counting", () => {
     const a = event("same");
     const refetch = {
