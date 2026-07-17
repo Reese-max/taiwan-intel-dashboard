@@ -42,6 +42,7 @@ import { carryOver } from "./lib/carry-over.mjs";
 import {
   isPoliceNewsNoise,
   isRelevantNewsItem,
+  buildNewsRelevanceAudit,
   mapBulkNews,
   titleKey as bulkTitleKey,
 } from "./lib/news-bulk.mjs";
@@ -518,6 +519,10 @@ export async function run() {
         feedStatus: twFeedStatus,
       });
       const categoryBasis = buildCategoryBasisDistribution(deliveredTwnews);
+      const relevanceAudit = buildNewsRelevanceAudit(uniq, {
+        generatedAt: nowIso,
+        sampleSize: Number(process.env.NEWS_RELEVANCE_SAMPLE_SIZE) || 20,
+      });
       status.twnews = {
         ok: true,
         normalizeFailed: domesticNormalizeFailed(),
@@ -527,6 +532,7 @@ export async function run() {
         bulk: bulk.length,
         policeRelevant: policeUniq.length,
         rawUnique,
+        relevanceAudit: relevanceAudit.population,
         categoryBasis,
         gnHealth,
         sourceContribution: sourceContribution.rows,
@@ -534,7 +540,9 @@ export async function run() {
         lowContributionFeeds: sourceContribution.lowContributionFeeds,
         feeds: twFeedStatus,
       };
+      writeJson("news-relevance-audit.json", relevanceAudit);
       console.log(`台灣新聞：警政 ${twnews.length} 筆（LLM 精修 ${enriched.length}＋輕量 ${bulk.length}；警政相關 ${policeUniq.length}／全量去重 ${rawUnique}）`);
+      console.log(`新聞相關性抽樣：近 24 小時通過 ${relevanceAudit.population.accepted}／排除 ${relevanceAudit.population.rejected}`);
       console.log(formatNewsSourceContributionReport(sourceContribution, { limit: 20 }));
     } catch (e) {
       status.twnews = { ok: false, error: e.message, feeds: twFeedStatus };

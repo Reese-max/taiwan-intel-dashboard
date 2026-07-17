@@ -232,6 +232,43 @@ export function isRelevantNewsItem(item) {
   return isPoliceRelevant(item?.title, item?.description);
 }
 
+export function buildNewsRelevanceAudit(items, { generatedAt = new Date().toISOString(), sampleSize = 20 } = {}) {
+  const generatedMs = Date.parse(generatedAt);
+  const endMs = Number.isFinite(generatedMs) ? generatedMs : Date.now();
+  const windowHours = 24;
+  const windowStartMs = endMs - windowHours * 60 * 60 * 1000;
+  const limit = Math.max(1, Math.floor(Number(sampleSize) || 20));
+  const recent = (items || [])
+    .filter((item) => {
+      const publishedMs = Date.parse(item?.pubDate);
+      return Number.isFinite(publishedMs) && publishedMs >= windowStartMs && publishedMs <= endMs;
+    })
+    .sort((a, b) => Date.parse(b.pubDate) - Date.parse(a.pubDate));
+  const accepted = recent.filter(isRelevantNewsItem);
+  const rejected = recent.filter((item) => !isRelevantNewsItem(item));
+  const sample = (item) => ({
+    title: String(item?.title || ""),
+    link: String(item?.link || ""),
+    pubDate: String(item?.pubDate || ""),
+    source: String(item?.source || ""),
+    hint: String(item?.hint || ""),
+    authority: item?.official === true ? "official" : "media",
+    description: String(item?.description || "").slice(0, 200),
+  });
+
+  return {
+    generatedAt: new Date(endMs).toISOString(),
+    windowHours,
+    windowStart: new Date(windowStartMs).toISOString(),
+    note: "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+    population: { rawUnique: recent.length, accepted: accepted.length, rejected: rejected.length },
+    samples: {
+      potentialFalseNegatives: rejected.slice(0, limit).map(sample),
+      potentialFalsePositives: accepted.slice(0, limit).map(sample),
+    },
+  };
+}
+
 function toIso(pubDate) {
   if (!pubDate) return new Date().toISOString();
   const d = new Date(pubDate);

@@ -887,6 +887,11 @@ describe("fetch-live pipeline integration (twnews)", () => {
       expect(provenance.pipeline.twnews.sourceContribution.length).toBeGreaterThan(0);
       expect(provenance.pipeline.twnews.bulk).toBeGreaterThanOrEqual(3);
       expect(provenance.pipeline.twnews.enriched).toBe(0);
+      const relevanceAudit = readJson(join(dataDir, "news-relevance-audit.json"));
+      expect(relevanceAudit.population.accepted).toBeGreaterThanOrEqual(3);
+      expect(relevanceAudit.population.rejected).toBeGreaterThanOrEqual(2);
+      expect(relevanceAudit.samples.potentialFalseNegatives.length).toBeGreaterThan(0);
+      expect(relevanceAudit.samples.potentialFalsePositives.length).toBeGreaterThan(0);
       expect(unexpected.some((entry) => entry.url.includes("llm.invalid"))).toBe(true);
       expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
     },

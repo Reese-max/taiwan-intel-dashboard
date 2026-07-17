@@ -7,6 +7,7 @@ import {
   isForeignNonTaiwan,
   isNonEventNoise,
   isRelevantNewsItem,
+  buildNewsRelevanceAudit,
   riskFromTitle,
 } from "../scripts/lib/news-bulk.mjs";
 
@@ -220,6 +221,29 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(mk("血染音樂教室 教授砍死店長 警方連轟4槍制伏", "治安"))).toBe(true);
     expect(isRelevantNewsItem(mk("颱風暴雨狂轟北台 多處道路淹水", "災防"))).toBe(true);
     expect(isRelevantNewsItem(mk("北市爆集體虐童 家長怒轟市府擺爛", "治安"))).toBe(true);
+  });
+});
+
+describe("buildNewsRelevanceAudit（每日誤殺／漏網抽樣）", () => {
+  it("以近 24 小時母體分開列出被排除與通過的人工複核候選", () => {
+    const generatedAt = "2026-06-20T12:00:00.000Z";
+    const items = [
+      { title: "高雄街頭砍人送醫", hint: "治安", description: "", link: "https://x/pass", source: "媒體", sourceUrl: "u", pubDate: "2026-06-20T11:00:00.000Z" },
+      { title: "新北市躋身全球幸福城市前50名", hint: "治安", description: "", link: "https://x/drop", source: "媒體", sourceUrl: "u", pubDate: "2026-06-20T10:00:00.000Z" },
+      { title: "台南工廠火警濃煙竄天", hint: "災防", description: "", link: "https://x/old", source: "媒體", sourceUrl: "u", pubDate: "2026-06-18T10:00:00.000Z" },
+    ];
+
+    const report = buildNewsRelevanceAudit(items, { generatedAt, sampleSize: 5 });
+
+    expect(report.windowHours).toBe(24);
+    expect(report.population).toEqual({ rawUnique: 2, accepted: 1, rejected: 1 });
+    expect(report.samples.potentialFalseNegatives.map((item) => item.title)).toEqual([
+      "新北市躋身全球幸福城市前50名",
+    ]);
+    expect(report.samples.potentialFalsePositives.map((item) => item.title)).toEqual([
+      "高雄街頭砍人送醫",
+    ]);
+    expect(report.note).toContain("待人工判讀");
   });
 });
 
