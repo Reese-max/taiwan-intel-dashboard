@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
 import { buildCategoryBasisDistribution, buildTwNewsEvents } from "../scripts/fetch-live.mjs";
+// @ts-expect-error — JS ESM module without types
+import { isPoliceDomesticEvent } from "../scripts/lib/fetch-police.mjs";
 
 const news = (id: string, timestamp: string, source: Record<string, unknown> = {}) => ({
   id,
@@ -30,6 +32,20 @@ describe("twnews carry-over retention", () => {
     expect(result.map((e: { id: string }) => e.id)).toEqual(["keep"]);
   });
 
+  it("twnews 失敗沿用 oldNews 時仍會依 recordRef 去重", () => {
+    const now = Date.parse("2026-07-10T00:00:00.000Z");
+    const duplicated = news("duplicate", "2026-07-09T00:00:00.000Z");
+
+    const result = buildTwNewsEvents({
+      oldNews: [duplicated, { ...duplicated, id: "duplicate-copy" }],
+      twnewsStatus: { ok: false },
+      retentionDays: 5,
+      now,
+    });
+
+    expect(result.map((e: { id: string }) => e.id)).toEqual(["duplicate"]);
+  });
+
   it("沿用舊快照時同步清掉新規則判定的移民生活雜訊", () => {
     const now = Date.parse("2026-07-10T00:00:00.000Z");
     const oldNews = [
@@ -45,6 +61,34 @@ describe("twnews carry-over retention", () => {
     });
 
     expect(result.map((e: { id: string }) => e.id)).toEqual(["移民署查獲非法仲介藏匿失聯移工"]);
+  });
+
+  it("沿用正規化舊新聞時以 summary 清掉反詐宣導與影劇雜訊", () => {
+    const now = Date.parse("2026-07-10T00:00:00.000Z");
+    const oldNews = [
+      {
+        ...news("outreach", "2026-07-09T00:00:00.000Z"),
+        title: "東勢地政守護長者財產",
+        summary: "結合高齡換照講習，宣導不動產防詐。",
+      },
+      {
+        ...news("drama", "2026-07-09T01:00:00.000Z"),
+        title: "成毅新劇演警察狂練胸肌 拍攝現場粉絲圍觀",
+      },
+      {
+        ...news("enforcement", "2026-07-09T02:00:00.000Z"),
+        title: "警方反詐宣導現場查獲車手並移送",
+      },
+    ];
+
+    const result = buildTwNewsEvents({ oldNews, twnewsStatus: { ok: false }, retentionDays: 5, now });
+
+    expect(result.map((e: { id: string }) => e.id)).toEqual(["enforcement"]);
+  });
+
+  it("媒體 tw-news 不會因反詐分類混入官方警政 carry-over", () => {
+    expect(isPoliceDomesticEvent({ category: "反詐", source: { datasetId: "tw-news", query: "警政新聞" } })).toBe(false);
+    expect(isPoliceDomesticEvent({ category: "反詐", source: { datasetId: "176455" } })).toBe(true);
   });
 
   it("依事件來源套 advisory 長保留窗，但一般新聞維持短窗", () => {

@@ -40,6 +40,7 @@ import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/i
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
 import { carryOver } from "./lib/carry-over.mjs";
 import {
+  isNonEventNoise,
   isPoliceNewsNoise,
   isRelevantNewsItem,
   buildNewsRelevanceAudit,
@@ -138,9 +139,14 @@ export function buildTwNewsEvents({
   now = Date.now(),
 } = {}) {
   const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
-  const keep = (event) =>
-    !isPoliceNewsNoise(event) &&
-    shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now });
+  const keep = (event) => {
+    const item = event?.summary && !event?.description ? { ...event, description: event.summary } : event;
+    return (
+      !isNonEventNoise(item) &&
+      !isPoliceNewsNoise(item) &&
+      shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now })
+    );
+  };
   const hasFreshTwnews = twnewsStatus?.ok && twnews.length;
   const carriedNews = carryOver({
     status: hasFreshTwnews ? twnewsStatus : undefined,
@@ -149,19 +155,16 @@ export function buildTwNewsEvents({
     oldEvents: oldNews,
     match: keep,
   });
-  if (hasFreshTwnews) {
-    const seen = new Set();
-    const newsEvents = [];
-    for (const e of [...carriedNews, ...oldNews]) {
-      const k = newsDedupKey(e);
-      if (k && seen.has(k)) continue;
-      if (!keep(e)) continue; // 超過保留窗丟棄
-      if (k) seen.add(k);
-      newsEvents.push(e);
-    }
-    return newsEvents;
+  const seen = new Set();
+  const newsEvents = [];
+  for (const e of hasFreshTwnews ? [...carriedNews, ...oldNews] : carriedNews) {
+    const k = newsDedupKey(e);
+    if (k && seen.has(k)) continue;
+    if (!keep(e)) continue; // 超過保留窗丟棄
+    if (k) seen.add(k);
+    newsEvents.push(e);
   }
-  return carriedNews; // 超過保留窗丟棄
+  return newsEvents;
 }
 
 export function buildCategoryBasisDistribution(events = []) {

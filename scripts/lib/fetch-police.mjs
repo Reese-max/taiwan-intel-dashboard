@@ -1962,6 +1962,7 @@ export const POLICE_DATASET_IDS = new Set([
 
 export function isPoliceDomesticEvent(event) {
   const ds = event?.source?.datasetId;
+  if (ds === "tw-news") return false;
   if (ds && POLICE_DATASET_IDS.has(ds)) return true;
   if (event?.category === "反詐") return true;
   if (event?.source?.query?.includes("警政")) return true;
