@@ -184,8 +184,8 @@ export const TW_NEWS_FEEDS = [
   // ── 可直連 RSS（避免全靠聚合，來源可溯）──
   { label: "中央廣播電臺 RSS", url: "https://www.rti.org.tw/rss", fallbackUrl: gq("site:rti.org.tw"), hint: "治安" }, // 2026-07-05 起 CI（GitHub Actions IP）被 CloudFront WAF 擋 403、本機正常，故備援走 GN 聚合。
   { label: "TechNews 科技新報 RSS", url: "https://technews.tw/feed/", hint: "資安" },
-  { label: "iThome Security RSS", url: "https://www.ithome.com.tw/rss/security", hint: "資安" },
-  { label: "iThome News RSS", url: "https://www.ithome.com.tw/rss/news", hint: "資安" },
+  { label: "iThome Security RSS", url: "https://www.ithome.com.tw/rss/security", hint: "資安", naiveDateOffset: "+08:00" },
+  { label: "iThome News RSS", url: "https://www.ithome.com.tw/rss/news", hint: "資安", naiveDateOffset: "+08:00" },
   { label: "TWCERT/CC 資安新聞", url: "https://www.twcert.org.tw/tw/rss-104-1.xml", hint: "資安", advisory: true },
   { label: "報導者 RSS", url: "https://www.twreporter.org/a/rss2.xml", hint: "治安" },
   { label: "INSIDE RSS", url: "https://www.inside.com.tw/feed/rss", hint: "資安" },
@@ -315,6 +315,13 @@ const RSS_FETCH_ATTEMPTS = 2;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function applyNaiveDateOffset(pubDate, offset) {
+  const value = String(pubDate || "").trim();
+  if (!offset) return value;
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?)$/);
+  return match ? `${match[1]}T${match[2]}${offset}` : value;
+}
+
 function httpError(status) {
   const err = new Error(`HTTP ${status}`);
   err.status = status;
@@ -355,6 +362,7 @@ async function fetchOneAttempt(feed, perFeed, timeoutMs) {
       .slice(0, perFeed)
       .map((i) => ({
         ...i,
+        pubDate: applyNaiveDateOffset(i.pubDate, feed.naiveDateOffset),
         source: feed.label,
         sourceUrl: feed.url,
         hint: feed.hint,

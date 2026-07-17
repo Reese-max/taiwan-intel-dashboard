@@ -57,6 +57,24 @@ describe("fetch-rss retry", () => {
     expect(result.items[0]).toMatchObject({ official: true, jurisdiction: "臺中市" });
   });
 
+  it("套用來源指定時區到未帶時區的發布時間", async () => {
+    const localTimeXml = xml.replace(
+      "Sun, 05 Jul 2026 00:00:00 GMT",
+      "2026-07-17 10:06",
+    );
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(localTimeXml, { status: 200 })));
+
+    const result = await fetchRssItems({
+      feeds: [{ ...feed, naiveDateOffset: "+08:00" }],
+      perFeed: 5,
+      timeoutMs: 100,
+      retryDelayMs: 0,
+    });
+
+    expect(result.items[0].pubDate).toBe("2026-07-17T10:06+08:00");
+    expect(new Date(result.items[0].pubDate).toISOString()).toBe("2026-07-17T02:06:00.000Z");
+  });
+
   it("HTTP 5xx 第一次失敗時退避重試一次並回傳第二次成功結果", async () => {
     const fetchMock = vi
       .fn()
