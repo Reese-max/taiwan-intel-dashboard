@@ -139,6 +139,28 @@ describe("normalizeDomesticNews 全批失敗可見性（A3）", () => {
     expect(error).not.toHaveBeenCalled();
   });
 
+  it("LLM 精修後仍套用高信心協尋分類規則", async () => {
+    process.env.LLM_API_KEY = "test-key";
+    process.env.LLM_BASE_URL = "https://llm.test/v1";
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      okDomesticCompletion(JSON.stringify([{
+        idx: 0,
+        title_zh: "失智老婦迷航40公里",
+        summary_zh: "警方協助返家",
+        category: "治安",
+        riskLevel: "low",
+        region: "屏東縣",
+      }]))
+    ));
+
+    const out = await normalizeDomesticNews([
+      { ...item(2), title: "失智老婦騎三輪車迷航40公里 東港警助返家", hint: "治安" },
+    ], { max: 10, batchSize: 2, concurrency: 1 });
+
+    expect(out[0].category).toBe("協尋");
+    expect(out[0].categoryBasis).toBe("rule:協尋");
+  });
+
   it("全快取命中（fresh=0）：不標失敗", async () => {
     const items = [item(10), item(11)];
     const prior = new Map(

@@ -8,6 +8,7 @@
 import { countyCoordFromAddr } from "./coords.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
 import { selectDiverseByCategory } from "./intl-accumulate.mjs";
+import { categoryFromItem } from "./news-bulk.mjs";
 import { titleKey } from "./title-key.mjs";
 
 import { chat, extractJson, llmModel, respondedModel } from "./llm-client.mjs";
@@ -431,7 +432,7 @@ export async function normalizeInternational(
 }
 
 // 台灣社會/犯罪新聞分類（domestic）
-export const TW_CATEGORIES = ["治安", "社會", "交通", "災防", "反詐", "食安", "衛生", "環境", "資安"];
+export const TW_CATEGORIES = ["治安", "社會", "交通", "災防", "反詐", "食安", "衛生", "環境", "資安", "協尋"];
 const clampTwCat = (c) => (TW_CATEGORIES.includes(c) ? c : "社會");
 
 function domesticCountyLocation(region) {
@@ -490,6 +491,8 @@ ${listing}
   for (const o of Array.isArray(arr) ? arr : []) {
     const it = items[o.idx];
     if (!it) continue;
+    const ruledCategory = categoryFromItem(it.title, it.hint);
+    const hasCategoryRule = ruledCategory.basis.startsWith("rule:");
     const enrichment = groundEventEnrichment(
       {
         aiEntities: cleanEntities(o.entities),
@@ -503,8 +506,8 @@ ${listing}
       title: o.title_zh || it.title,
       region: o.region || "全國",
       timestamp: toIso(it.pubDate),
-      category: clampTwCat(o.category),
-      categoryBasis: "llm",
+      category: hasCategoryRule ? ruledCategory.category : clampTwCat(o.category),
+      categoryBasis: hasCategoryRule ? ruledCategory.basis : "llm",
       scope: "domestic",
       riskLevel: clampRisk(o.riskLevel),
       summary: o.summary_zh || it.description?.slice(0, 200) || "",
