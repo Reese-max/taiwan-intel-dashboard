@@ -212,6 +212,12 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(immigration("菲籍母子車站走散 捷警10分鐘尋回7歲童"))).toBe(true);
   });
 
+  it("排除反詐宣導行銷稿，但保留真實查緝事件", () => {
+    expect(isRelevantNewsItem(mk("東勢地政換照講習 宣導不動產防詐", "反詐"))).toBe(false);
+    expect(isRelevantNewsItem(mk("台南反詐宣傳聯名角色換上警察制服", "治安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("警方反詐宣導現場查獲車手並移送", "反詐"))).toBe(true);
+  });
+
   it("排除純政治口水，保留政治人物涉刑案的司法進度", () => {
     expect(isRelevantNewsItem(mk("苗博雅嗆蔣萬安缺席食安會 市府反擊", "食安"))).toBe(false);
     expect(isRelevantNewsItem(mk("致癌油風暴 蔣萬安號召人民上街頭", "食安"))).toBe(false);
@@ -220,6 +226,10 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(mk("朝野互批政策攻擊 總統府回應", "治安"))).toBe(false);
     expect(isRelevantNewsItem(mk("別一屍多命 國民黨桃園議員致電黨部狂罵要求快處理", "治安"))).toBe(false);
     expect(isRelevantNewsItem(mk("香港獨立書店店員遭捕 民進黨團舉牌聲援", "治安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("毒油案蔣萬安喊上街 綠嗆別搞政治秀", "食安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("國民黨號召上凱道 抗議政府食安失能", "食安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("致癌油食安風暴的政治責任", "食安"))).toBe(false);
+    expect(isRelevantNewsItem(mk("藍籲沒真相不准上架 綠稱食安決策要檢討", "食安"))).toBe(false);
     expect(isRelevantNewsItem(mk("市議員詐領助理費遭檢方起訴", "治安"))).toBe(true);
     expect(isRelevantNewsItem(mk("前幫派成員涉共諜案遭判刑", "治安"))).toBe(true);
   });
@@ -228,6 +238,7 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(mk("血染音樂教室 教授砍死店長 警方連轟4槍制伏", "治安"))).toBe(true);
     expect(isRelevantNewsItem(mk("颱風暴雨狂轟北台 多處道路淹水", "災防"))).toBe(true);
     expect(isRelevantNewsItem(mk("北市爆集體虐童 家長怒轟市府擺爛", "治安"))).toBe(true);
+    expect(isRelevantNewsItem(mk("白營走讀變調 爬拒馬襲警遭批根本造勢", "治安"))).toBe(true);
   });
 });
 
@@ -375,6 +386,7 @@ describe("isNonEventNoise / bulk domestic 負面閘門", () => {
       mk("環保稽查處分管制系統"),
       mk("非份之罪劇透1-10集｜賴慰玲捲石棺命案", "治安"),
       mk("玩命關頭11線上看 完整版預告片", "治安"),
+      mk("成毅新劇演警察狂練胸肌 拍攝現場粉絲圍觀", "治安"),
     ];
 
     for (const item of noise) {
