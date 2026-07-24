@@ -50,7 +50,7 @@ describe("coverage 每日矩陣", () => {
     }));
     expect(matrix.matrix7d.blindSpots).toContainEqual({ region: "臺北市", category: "國防", sourceKind: "news" });
     expect(matrix.matrix7d.blindSpots).toContainEqual({ region: "臺北市", category: "環境", sourceKind: "official" });
-    expect(matrix.matrix7d.summary).toMatchObject({ windowEvents: 3, events: 2, unmappedEvents: 1 });
+    expect(matrix.matrix7d.summary).toMatchObject({ windowEvents: 3, events: 2, unmappedEvents: 0, nationalEvents: 1 });
     expect(auditCoverageMatrix(matrix).ok).toBe(true);
   });
 

@@ -105,6 +105,9 @@ function buildSevenDayMatrix({ generatedAt, events, sources }) {
   const freshnessFor = buildFreshnessLookup(sources);
   let windowEvents = 0;
   let unmappedEvents = 0;
+  // 全國尺度事件（MND 台海動態、台電供需、TWCERT 公告、反詐儀表板…）本來就無縣市顆粒度，
+  // 與「縣市解析失敗」分開計數，避免盲區數字混入非缺口（實測 4354/6377 unmapped 全是「全國」）。
+  let nationalEvents = 0;
   for (const event of Array.isArray(events) ? events : []) {
     if (event?.scope !== "domestic") continue;
     const day = taiwanDay(event.timestamp);
@@ -117,7 +120,8 @@ function buildSevenDayMatrix({ generatedAt, events, sources }) {
     if (index === undefined || !kind) continue;
     windowEvents++;
     if (!TAIWAN_COUNTIES.includes(region)) {
-      unmappedEvents++;
+      if (region === "全國") nationalEvents++;
+      else unmappedEvents++;
       continue;
     }
     const row = rowsByKey.get(`${region}\u0000${event.category || "未分類"}\u0000${kind}`);
@@ -142,7 +146,7 @@ function buildSevenDayMatrix({ generatedAt, events, sources }) {
     sourceKinds: SOURCE_KINDS,
     freshness: ["fresh", "stale"],
     freshnessBasis: "current-provenance-health-over-7d-event-window",
-    interpretation: "blindSpots 表示 7 日內無縣市級觀測事件，不代表現實中沒有事件；全國或無法定位事件另計 unmappedEvents。",
+    interpretation: "blindSpots 表示 7 日內無縣市級觀測事件，不代表現實中沒有事件；全國尺度事件計 nationalEvents、無法定位事件計 unmappedEvents。",
     summary: {
       rows: rows.length,
       coveredRows: rows.length - blindSpots.length,
@@ -151,6 +155,7 @@ function buildSevenDayMatrix({ generatedAt, events, sources }) {
       events: rows.reduce((sum, row) => sum + row.events, 0),
       windowEvents,
       unmappedEvents,
+      nationalEvents,
     },
     blindSpots,
     staleOnly,
@@ -265,8 +270,8 @@ export function auditCoverageMatrix(matrix) {
     }
     const matrixEvents = matrixRows.reduce((sum, row) => sum + (Number(row?.events) || 0), 0);
     if (matrixEvents !== matrix7d?.summary?.events) errors.push(`matrix7d events ${matrix7d?.summary?.events} != row sum ${matrixEvents}`);
-    if (matrixEvents + matrix7d?.summary?.unmappedEvents !== matrix7d?.summary?.windowEvents) {
-      errors.push("matrix7d mapped and unmapped events do not match windowEvents");
+    if (matrixEvents + matrix7d?.summary?.unmappedEvents + (matrix7d?.summary?.nationalEvents || 0) !== matrix7d?.summary?.windowEvents) {
+      errors.push("matrix7d mapped, national and unmapped events do not match windowEvents");
     }
     const zeroRows = matrixRows.filter((row) => row?.events === 0).length;
     if (zeroRows !== matrix7d?.summary?.blindSpots || zeroRows !== matrix7d?.blindSpots?.length) {
@@ -288,7 +293,7 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
   }
   const result = auditCoverageMatrix(matrix);
   console.log(`Coverage 矩陣 ${matrix.day || "未知日期"}：${matrix.totals?.events || 0} 事件／${matrix.totals?.sourceRows || 0} 來源列`);
-  console.log(`  7 日縣市矩陣：${matrix.matrix7d?.summary?.coveredRows || 0}/${matrix.matrix7d?.summary?.rows || 0} 組有覆蓋；觀測盲點 ${matrix.matrix7d?.summary?.blindSpots || 0}；僅 stale ${matrix.matrix7d?.summary?.staleOnly || 0}；全國／未定位 ${matrix.matrix7d?.summary?.unmappedEvents || 0}`);
+  console.log(`  7 日縣市矩陣：${matrix.matrix7d?.summary?.coveredRows || 0}/${matrix.matrix7d?.summary?.rows || 0} 組有覆蓋；觀測盲點 ${matrix.matrix7d?.summary?.blindSpots || 0}；僅 stale ${matrix.matrix7d?.summary?.staleOnly || 0}；全國 ${matrix.matrix7d?.summary?.nationalEvents || 0}；未定位 ${matrix.matrix7d?.summary?.unmappedEvents || 0}`);
   for (const row of matrix.rows || []) {
     console.log(`  ${row.scope}/${row.category}: events=${row.events} sources=${row.healthySources}/${row.sourceRows} official=${row.officialEvents}`);
   }
