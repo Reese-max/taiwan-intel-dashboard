@@ -32,7 +32,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "leaflet": "^1.9.4"
+    "leaflet": "^1.9.4",
+    "opencc-js": "^1.4.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

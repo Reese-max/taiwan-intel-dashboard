@@ -1,4 +1,5 @@
 // LLM（OpenAI 相容端點）通訊基礎建設：請求 profile、並發閘、重試、JSON 解析。
+import * as OpenCC from "opencc-js";
 
 // 設定指定送出的模型名稱（請求用）。fallback：LLM_MODEL → NVIDIA_MODEL → ""。
 export const llmModel = () => process.env.LLM_MODEL || process.env.NVIDIA_MODEL || "";
@@ -83,6 +84,15 @@ export const llmGates = {};
 export const gateFor = (c) => (llmGates[c.name] ||= makeGate(c.maxConc));
 
 // 對單一端點發請求（含並發閘 / 逾時 / 重試）。回空字串＝推理被截斷無有效輸出。
+// LLM（MiniMax 等陸系模型）偶發輸出簡體字，prompt 要求繁體仍會洩漏（實例：summary.json「微软」）。
+// 在唯一輸出瓶頸點統一 cn→tw 字級轉換；OpenCC 只映射 CJK 字元，不影響 JSON 結構與 ASCII。
+let s2t = null;
+export function toTraditional(text) {
+  if (!text) return text;
+  if (!s2t) s2t = OpenCC.Converter({ from: "cn", to: "tw" });
+  return s2t(text);
+}
+
 export async function chatVia(c, messages, maxTokens, temperature) {
   if (!c.key) throw new Error("缺少 API key（LLM_API_KEY / NVIDIA_API_KEY / SUMMARY_API_KEY）");
   const gate = gateFor(c);
@@ -114,7 +124,7 @@ export async function chatVia(c, messages, maxTokens, temperature) {
         content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
         // 殘留未閉合 <think> ＝ 推理被 max_tokens 截斷、無有效輸出。
         if (/<think>/i.test(content)) return "";
-        return content;
+        return toTraditional(content);
       } catch (e) {
         // 逾時（AbortError）或網路錯誤 → 可重試；其餘（含 4xx）直接拋。
         const retriable =
