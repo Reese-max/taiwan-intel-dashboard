@@ -30,3 +30,6 @@ tmp/
 /e2e-artifacts/
 /test-results/
 /playwright-report/
+
+# 本機清理備份（2026-07-24 停用本機排程迴圈的還原點）
+.startup-lnk-backup-*/
