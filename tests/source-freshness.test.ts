@@ -171,6 +171,65 @@ describe("auditSourceFreshness（來源新鮮度看門狗）", () => {
     expect(r.unconfiguredStructured).toEqual(["未設定官方來源"]);
   });
 
+  it("本輪未嘗試（skippedThisRun）的陳舊來源 → 只警告不 gate（停擺後 hourly 自癒）", () => {
+    const r = auditSourceFreshness(
+      provenance([
+        {
+          name: "政府電子採購網 決標公告",
+          type: "gov-open-data",
+          category: "採購",
+          lastSuccessAt: "2026-06-30T00:00:00.000Z",
+          skippedThisRun: true,
+        },
+        {
+          name: "警政署 交通事故",
+          type: "gov-open-data",
+          category: "交通",
+          lastSuccessAt: "2026-07-04T00:30:00.000Z",
+        },
+      ]),
+      { now },
+    );
+
+    expect(r.ok).toBe(true);
+    expect(r.staleStructured).toHaveLength(0);
+    expect(r.staleSkippedThisRun).toEqual([
+      {
+        name: "政府電子採購網 決標公告",
+        type: "gov-open-data",
+        category: "採購",
+        ageHours: 120,
+        threshold: 48,
+      },
+    ]);
+  });
+
+  it("本輪有嘗試的陳舊來源照常 gate，不受 skippedThisRun 機制影響", () => {
+    const r = auditSourceFreshness(
+      provenance([
+        {
+          name: "政府電子採購網 決標公告",
+          type: "gov-open-data",
+          category: "採購",
+          lastSuccessAt: "2026-06-30T00:00:00.000Z",
+          skippedThisRun: true,
+        },
+        {
+          name: "食藥署 邊境查驗",
+          type: "gov-open-data",
+          category: "食安",
+          lastSuccessAt: "2026-06-30T00:00:00.000Z",
+        },
+      ]),
+      { now },
+    );
+
+    expect(r.ok).toBe(false);
+    expect(r.staleStructured).toHaveLength(1);
+    expect(r.staleStructured[0].name).toBe("食藥署 邊境查驗");
+    expect(r.staleSkippedThisRun).toHaveLength(1);
+  });
+
   it("generatedAt 可作固定 now 預設值", () => {
     const r = auditSourceFreshness(
       provenance([

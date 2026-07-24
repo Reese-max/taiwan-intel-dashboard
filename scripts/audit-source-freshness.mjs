@@ -41,6 +41,9 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
   const limits = { ...DEFAULT_THRESHOLDS, ...(thresholds || {}) };
   const sources = Array.isArray(provenance?.sources) ? provenance.sources : [];
   const staleStructured = [];
+  // 本輪抓取模式未涵蓋的來源（skippedThisRun）陳舊時只警告不 gate：
+  // 否則停擺 >48h 後，hourly 會被 daily-only 來源（pcc/tfda）永久擋住無法自癒。
+  const staleSkippedThisRun = [];
   let structuredChecked = 0;
   const unconfiguredStructured = [];
   let newsStaleCount = 0;
@@ -66,9 +69,10 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
         continue;
       }
       structuredChecked++;
+      const staleBucket = source.skippedThisRun === true ? staleSkippedThisRun : staleStructured;
       const threshold = numericThreshold(source.maxAgeHours, numericThreshold(limits[type], DEFAULT_THRESHOLDS[type]));
       if (!Number.isFinite(ageHours)) {
-        staleStructured.push({
+        staleBucket.push({
           name,
           type,
           category,
@@ -77,7 +81,7 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
           reason: "no-success-timestamp",
         });
       } else if (ageHours > threshold) {
-        staleStructured.push({
+        staleBucket.push({
           name,
           type,
           category,
@@ -102,6 +106,7 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
     structuredChecked,
     unconfiguredStructured,
     staleStructured,
+    staleSkippedThisRun,
     newsStaleCount,
     worst,
   };
@@ -130,6 +135,13 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
     console.log(`  未設定的可選結構化來源：${result.unconfiguredStructured.join("、")}`);
   }
   if (result.worst) console.log(`  最舊來源：${result.worst.name} age=${result.worst.ageHours.toFixed(1)}h`);
+  if (result.staleSkippedThisRun.length) {
+    console.log("  本輪未涵蓋的陳舊來源（不 gate，待涵蓋該來源的排程自癒）：");
+    for (const row of result.staleSkippedThisRun) {
+      const detail = row.reason === "no-success-timestamp" ? "無可信的成功時間" : `age=${row.ageHours.toFixed(1)}h > ${row.threshold}h`;
+      console.log(`  - ${row.name} (${row.type}/${row.category || "未分類"}) ${detail}`);
+    }
+  }
 
   if (result.ok) {
     console.log("健康：無結構化來源超過 age 門檻");

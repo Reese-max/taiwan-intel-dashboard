@@ -865,6 +865,8 @@ export async function run() {
       lastSuccessAt,
       lastAttemptAt: attempted ? nowIso : previous?.lastAttemptAt,
       stale: stale || undefined,
+      // 新鮮度稽核據此把「本輪抓取模式未涵蓋」的陳舊來源降為警告（停擺後 hourly 才能自癒）
+      skippedThisRun: attempted ? undefined : true,
       ...(sourceStatus?.error ? { error: sourceStatus.error } : {}),
     };
   };
