@@ -66,7 +66,7 @@ import {
 } from "./lib/police-hourly-history.mjs";
 import { applyDailyRollup, taiwanLocalDay } from "./lib/daily-rollup.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
-import { validateEventContract, clampImplausibleTimestamps } from "./lib/event-contract.mjs";
+import { validateEventContract, clampImplausibleTimestamps, isReferenceEvent } from "./lib/event-contract.mjs";
 import { applyTemporal } from "./lib/temporal.mjs";
 import { buildCoverageMatrix } from "./audit-coverage.mjs";
 
@@ -770,7 +770,9 @@ export async function run() {
   }
 
   const prevRollup = readJson("daily-rollup.json", { days: {} });
-  const dailyRollup = applyDailyRollup(prevRollup, [...domesticEvents, ...intlEvents]);
+  // 清單型 reference 來源（設施點位/歷史批次/統計）不進事件統計，避免灌水（保留於地圖/tree）
+  const domesticIncidents = domesticEvents.filter((e) => !isReferenceEvent(e));
+  const dailyRollup = applyDailyRollup(prevRollup, [...domesticIncidents, ...intlEvents]);
   writeJson("daily-rollup.json", dailyRollup);
   const rollupToday = taiwanLocalDay(nowIso);
   const rollupTodayDomestic = rollupToday
@@ -809,7 +811,7 @@ export async function run() {
 
   // --- AI 摘要（NVIDIA）---
   try {
-    const summary = await summarize({ domestic: domesticEvents, international: intlEvents, clusters: domesticClusters });
+    const summary = await summarize({ domestic: domesticIncidents, international: intlEvents, clusters: domesticClusters });
     writeJson("summary.json", summary);
     status.summary = { ok: true };
     console.log("AI 摘要：完成");

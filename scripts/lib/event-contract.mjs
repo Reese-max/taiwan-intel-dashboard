@@ -45,6 +45,37 @@ export function clampImplausibleTimestamps(events, { now = Date.now(), horizonDa
   return { events: out, clamped };
 }
 
+// 清單型來源（設施點位/歷史批次/統計報表）不是「事件」：timestamp 多為抓取時間或多年前批次，
+// 混進 recent24h/dailyCounts/摘要會灌水失真（實測 52.6% 事件池是此類，路口錄監 500 點每輪冒充當日事件）。
+// 保留於地圖/police-tree（reference layer），僅從事件統計面排除。
+const REFERENCE_DATASET_IDS = new Set([
+  "13908", // 警政署 測速執法點取締件數
+  "13166", // 警政署 犯罪資料統計週報
+  "176610", // 臺中 十大高肇事路口
+  "12197", // 警政署 歷史交通事故資料（2015 批次）
+  "136123", // 臺北 道路交通事故斑點圖
+  "169080", // 高雄 固定式違規照相設備
+  "146885", // 高雄 區間平均速率執法設備
+  "167814", // 新竹市 每月交通事故統計
+  "171164", // 苗栗 報案統計
+  "171167", // 苗栗 治安交通案件統計
+  "176021", // 南投 固定式科技執法
+  "78638", // 南投 車輛保管場
+  "155895", // 屏東 路口錄監系統
+  "171349", // 花蓮 區間測速執法地點
+  "172940", // 澎湖 科學儀器執法與測速照相
+  "157949", // 澎湖 交通秩序統計
+  "151006", // 金門 防空避難設施
+  "173142", // 台東 防空避難設施
+  "146936", // 連江 為民服務統計
+  "143467", // 宜蘭 CCTV
+]);
+
+export function isReferenceEvent(event) {
+  const id = event?.source?.datasetId;
+  return typeof id === "string" && REFERENCE_DATASET_IDS.has(id);
+}
+
 export function validateEventContract(events) {
   const input = Array.isArray(events) ? events : [];
   const valid = [];
