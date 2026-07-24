@@ -2320,7 +2320,13 @@ export async function fetchPolice({
   });
 
   if (!labels.some((label) => label !== "crimeWeekly" && substatus[label].ok)) {
-    throw new Error("all MCP police sources failed");
+    // 帶上子錯誤樣本，否則 401/timeout 等真因會被彙總訊息吞掉（2026-07 事故：token 失效查了半天）
+    const sample = labels
+      .filter((label) => !substatus[label].ok)
+      .slice(0, 3)
+      .map((label) => `${label}: ${String(substatus[label].error).split("\n")[0].slice(0, 160)}`)
+      .join("; ");
+    throw new Error(`all MCP police sources failed — ${sample}`);
   }
 
   return { events, substatus };

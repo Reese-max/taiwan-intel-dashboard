@@ -225,6 +225,8 @@ export async function run() {
   const want = (s) => SOURCES.includes(s);
   // 本機既有工具使用 TWINKLE_HUB_TOKEN；CI 使用 TWINKLE_MCP_TOKEN。接受兩者可避免同一服務憑證漂移。
   const twinkleToken = process.env.TWINKLE_HUB_TOKEN || process.env.TWINKLE_MCP_TOKEN;
+  // 標明 token 來源：本地 User env 的 TWINKLE_HUB_TOKEN 會蓋過 .env，曾造成「本地好好的、CI 全滅」假象
+  console.log(`TWINKLE token 來源：${process.env.TWINKLE_HUB_TOKEN ? "TWINKLE_HUB_TOKEN" : "TWINKLE_MCP_TOKEN"}`);
   // EXCLUSIVE：只保留本次選取的來源；未選來源不沿用舊快照（一次性窄抓用）。
   // 預設 off，故 n8n 分頻 carry-over 行為不變。
   const EXCLUSIVE = process.argv.includes("--exclusive") || process.env.EXCLUSIVE === "1";
