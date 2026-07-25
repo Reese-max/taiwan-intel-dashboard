@@ -1029,6 +1029,26 @@ export async function run() {
       });
     }
   }
+  // 司法裁判併入警政事件流，仍要保留獨立 provenance，讓領域完整性不被低估。
+  const judicialEvents = policeEvents.filter((event) => event.source?.datasetId === "judicial");
+  if (judicialEvents.length || want("judicial") || previousSourceFor({ datasetId: "judicial" })) {
+    sources.push({
+      name: "司法院 裁判書開放資料",
+      type: "judicial",
+      datasetId: "judicial",
+      scope: "domestic",
+      category: "司法判決",
+      count: judicialEvents.length,
+      ...sourceHealthFields({
+        sourceStatus: status.judicial || (judicialEvents.length ? { ok: true } : undefined),
+        events: judicialEvents,
+        datasetId: "judicial",
+        name: "司法院 裁判書開放資料",
+      }),
+      query: "search_judicial 多罪名語意檢索",
+      license: "政府資料開放授權條款 — 司法院裁判書開放資料",
+    });
+  }
   if (newsEvents.length) {
     const newsByFeed = new Map();
     for (const e of newsEvents) {
