@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
 import {
+  mapEducationSnapshotEvent,
   mapAgriculturePriceEvent,
   mapEconomicIndicatorEvent,
   mapFireStatisticsEvent,
   mapHealthcareFacilityEvent,
+  mapLegislatureBillsEvent,
   mapMoenvAirQualityEvents,
   mapParkingSummaryEvent,
+  mapSocialPopulationEvent,
+  mapTourismSnapshotEvent,
   PARKING_SOURCE_PROFILES,
 } from "../scripts/lib/fetch-official.mjs";
 
@@ -124,5 +128,68 @@ describe("補充領域官方資料 mapper", () => {
       source: { datasetId: "134922", latestDataDate: "115年1-4月", retentionPolicy: "reference" },
     });
     expect(event.summary).toContain("火災 20 件");
+  });
+
+  it("把立法院議案進度彙整為國會參考快照", () => {
+    const event = mapLegislatureBillsEvent({
+      columns: ["議案編號", "議案名稱", "最新進度日期", "議案狀態"],
+      rows: [
+        ["A1", "教育法案", "2026-07-20", "排入院會"],
+        ["A2", "預算案", "2026-07-21", "審查中"],
+      ],
+    }, { fetchedAt: "2026-07-25T00:00:00.000Z" });
+
+    expect(event).toMatchObject({
+      category: "國會",
+      region: "全國",
+      timestamp: "2026-07-21T00:00:00.000Z",
+      source: { datasetId: "ly-bills", latestDataDate: "2026-07-21", retentionPolicy: "reference" },
+    });
+    expect(event.summary).toContain("2 筆議案");
+  });
+
+  it("把觀光署五大客源群彙整為觀光參考快照", () => {
+    const event = mapTourismSnapshotEvent({
+      columns: ["name", "value"],
+      rows: [["日本", "100"], ["其他", "25"]],
+    }, { fetchedAt: "2026-07-25T00:00:00.000Z" });
+
+    expect(event).toMatchObject({
+      category: "觀光",
+      region: "全國",
+      timestamp: "2026-07-25T00:00:00.000Z",
+      source: { datasetId: "tad-index-inbound-lastmonth", retentionPolicy: "reference" },
+    });
+    expect(event.summary).toContain("合計 125");
+  });
+
+  it("把臺中市人口結構彙整為地方社福參考快照", () => {
+    const event = mapSocialPopulationEvent({
+      columns: ["區別", "里別", "性別", "0-4歲合計數量", "5-9歲合計數量", "100歲以上數量"],
+      rows: [["中區", "大誠里", "計", "10", "20", "1"], ["中區", "大誠里", "男", "5", "10", "0"]],
+    }, { fetchedAt: "2026-07-25T00:00:00.000Z" });
+
+    expect(event).toMatchObject({
+      category: "社福",
+      region: "臺中市",
+      timestamp: "2026-07-25T00:00:00.000Z",
+      source: { datasetId: "84049", retentionPolicy: "reference" },
+    });
+    expect(event.summary).toContain("31 人口");
+  });
+
+  it("保留新北市教育年度資料的最新年度並標成參考層", () => {
+    const event = mapEducationSnapshotEvent({
+      columns: ["field1", "field2", "item value3", "item value16"],
+      rows: [["2024", " 總計", "60", "97119"], ["2025", " 總計", "61", "98000"]],
+    }, { fetchedAt: "2026-07-25T00:00:00.000Z" });
+
+    expect(event).toMatchObject({
+      category: "教育",
+      region: "新北市",
+      timestamp: "2025-12-31T15:59:59.000Z",
+      source: { datasetId: "124173", latestDataDate: "2025", retentionPolicy: "reference" },
+    });
+    expect(event.summary).toContain("學生 98000");
   });
 });

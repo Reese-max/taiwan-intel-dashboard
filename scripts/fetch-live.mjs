@@ -15,16 +15,20 @@ import { fetchNcdrAlerts, NCDR_DATASET_ID } from "./lib/fetch-ncdr.mjs";
 import {
   fetchCgaMaritime,
   fetchCdcInfluenza,
+  fetchEducationSnapshot,
   fetchEconomicIndicators,
   fetchAgriculturePrices,
   fetchFireStatistics,
   fetchHealthcareFacilities,
+  fetchLegislatureBills,
   fetchMoenvAirQuality,
   fetchMndActivity,
   fetchParkingHsinchu,
   fetchParkingTaoyuan,
+  fetchSocialPopulation,
   fetchTaipowerSupply,
   fetchTfdaNoncompliant,
+  fetchTourismSnapshot,
   fetchTwcertVulnerabilities,
   fetchWraReservoirLevels,
   fetchWraRiverLevels,
@@ -229,7 +233,7 @@ export async function run() {
   // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
   // 未選的來源會沿用上一版快照（carry-over）。
   const sourcesArg = process.argv.find((a) => a.startsWith("--sources="))?.slice("--sources=".length);
-  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats").split(",").map((s) => s.trim());
+  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,legislature,tourismStat,socialPopulation,education").split(",").map((s) => s.trim());
   const want = (s) => SOURCES.includes(s);
   // 本機既有工具使用 TWINKLE_HUB_TOKEN；CI 使用 TWINKLE_MCP_TOKEN。接受兩者可避免同一服務憑證漂移。
   const twinkleToken = process.env.TWINKLE_HUB_TOKEN || process.env.TWINKLE_MCP_TOKEN;
@@ -441,6 +445,10 @@ export async function run() {
     agriPrices: () => fetchAgriculturePrices({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
     healthFacilities: () => fetchHealthcareFacilities({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
     fireStats: () => fetchFireStatistics({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    legislature: () => fetchLegislatureBills({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    tourismStat: () => fetchTourismSnapshot({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    socialPopulation: () => fetchSocialPopulation({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    education: () => fetchEducationSnapshot({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
   };
   const officialLabels = {
     mnd: "MND 臺海動態",
@@ -458,6 +466,10 @@ export async function run() {
     agriPrices: "農業部農產品價格",
     healthFacilities: "健保署居家醫療院所",
     fireStats: "臺北市消防統計",
+    legislature: "立法院議案進度",
+    tourismStat: "觀光署來臺旅客概況",
+    socialPopulation: "臺中市人口結構",
+    education: "新北市教育概況",
   };
   await Promise.all(Object.keys(officialFetchers).map(async (key) => {
     if (!want(key)) {

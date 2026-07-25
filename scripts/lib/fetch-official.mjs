@@ -29,6 +29,14 @@ const HEALTHCARE_DATASET_ID = "39331";
 const HEALTHCARE_SOURCE_URL = "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-D2000H-001";
 const FIRE_DATASET_ID = "134922";
 const FIRE_SOURCE_URL = "https://data.taipei/api/dataset/9adc3f7b-ef37-4e4e-b538-deb1e567d5db/resource/74ca9115-8c85-41d8-8b2e-73d4a422382c/download";
+const LEGISLATURE_DATASET_ID = "ly-bills";
+const LEGISLATURE_SOURCE_URL = "https://ppg.ly.gov.tw/ppg/bills";
+const TOURISM_DATASET_ID = "tad-index-inbound-lastmonth";
+const TOURISM_SOURCE_URL = "https://stat.taiwan.net.tw/";
+const SOCIAL_POPULATION_DATASET_ID = "84049";
+const SOCIAL_POPULATION_SOURCE_URL = "https://data.gov.tw/dataset/84049";
+const EDUCATION_DATASET_ID = "124173";
+const EDUCATION_SOURCE_URL = "https://data.gov.tw/dataset/124173";
 const AIR_STATION_COUNTY_FALLBACK = { 林森: "臺北市", 臺灣大道: "臺中市", 員林: "彰化縣" };
 
 export const PARKING_SOURCE_PROFILES = {
@@ -217,6 +225,50 @@ export const OFFICIAL_SOURCE_META = {
     license: "政府資料開放授權條款-第1版 — 臺北市政府消防局",
     cadence: "monthly",
     maxAgeHours: 2160,
+  },
+  legislature: {
+    name: "立法院 議案進度",
+    type: "gov-open-data",
+    datasetId: LEGISLATURE_DATASET_ID,
+    scope: "domestic",
+    category: "國會",
+    query: "立法院議案開放資料最新進度參考快照",
+    license: "政府資料開放授權條款 — 立法院議政資料",
+    cadence: "daily",
+    maxAgeHours: 96,
+  },
+  tourismStat: {
+    name: "交通部觀光署 來臺旅客上月概況",
+    type: "gov-open-data",
+    datasetId: TOURISM_DATASET_ID,
+    scope: "domestic",
+    category: "觀光",
+    query: "交通部觀光署觀光統計五大客源群上月入境概況",
+    license: "觀光署公開資料鏡像（非 data.gov.tw OGDL；研究用途）",
+    cadence: "monthly",
+    maxAgeHours: 2160,
+  },
+  socialPopulation: {
+    name: "臺中市民政局 各區人口結構",
+    type: "gov-open-data",
+    datasetId: SOCIAL_POPULATION_DATASET_ID,
+    scope: "domestic",
+    category: "社福",
+    query: "臺中市各區人口結構（年齡與性別）參考快照",
+    license: "政府資料開放授權條款-第1版 — 臺中市政府民政局",
+    cadence: "monthly",
+    maxAgeHours: 2160,
+  },
+  education: {
+    name: "新北市政府 境內高級中等學校教育概況",
+    type: "gov-open-data",
+    datasetId: EDUCATION_DATASET_ID,
+    scope: "domestic",
+    category: "教育",
+    query: "新北市高級中等學校教育概況年度統計參考快照",
+    license: "政府資料開放授權條款-第1版 — 新北市政府主計處",
+    cadence: "yearly",
+    maxAgeHours: 8760,
   },
 };
 
@@ -1253,6 +1305,158 @@ export function mapFireStatisticsEvent(payload, { fetchedAt = new Date().toISOSt
   };
 }
 
+function latestIsoDate(rows, fields) {
+  const values = rows
+    .flatMap((row) => fields.map((field) => String(row?.[field] || "").trim()))
+    .filter((value) => Number.isFinite(Date.parse(value)))
+    .sort();
+  return values.at(-1) || "";
+}
+
+export function mapLegislatureBillsEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
+  const rows = rowsAsObjects(payload).filter((row) => String(row?.議案名稱 || row?.案由 || row?.議案編號 || "").trim());
+  if (!rows.length) throw new Error("立法院議案沒有有效資料列");
+  const latestProgress = latestIsoDate(rows, ["最新進度日期", "提案日期", "資料抓取時間"]);
+  const statusCounts = new Map();
+  for (const row of rows) {
+    const status = String(row?.議案狀態 || row?.狀態 || "未標示").trim() || "未標示";
+    statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+  }
+  const statusText = [...statusCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "zh-Hant"))
+    .slice(0, 3)
+    .map(([status, count]) => `${status} ${count} 件`)
+    .join("；");
+  return {
+    id: stableId("legislature", `${LEGISLATURE_DATASET_ID}|${latestProgress || fetchedAt}|${rows.length}`),
+    title: `立法院議案進度參考：${latestProgress || "最新快照"}`,
+    region: "全國",
+    timestamp: latestProgress ? new Date(latestProgress).toISOString() : fetchedAt,
+    category: "國會",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "立法院公開議案進度參考快照；不對政策或政治風險做自動推論",
+    summary: `本次讀取 ${rows.length} 筆議案；最新進度 ${latestProgress || "未提供"}；${statusText || "沒有狀態彙整"}。`,
+    locationPrecision: "country",
+    source: {
+      ...OFFICIAL_SOURCE_META.legislature,
+      url: LEGISLATURE_SOURCE_URL,
+      fetchedAt,
+      ...(latestProgress ? { latestDataDate: latestProgress } : {}),
+      recordRef: `${latestProgress || fetchedAt}|${rows.length}`,
+      retentionPolicy: "reference",
+    },
+  };
+}
+
+export function mapTourismSnapshotEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
+  const rows = rowsAsObjects(payload)
+    .map((row) => ({ name: String(row?.name || row?.名稱 || "").trim(), value: numericValue(row?.value ?? row?.數值) }))
+    .filter((row) => row.name && Number.isFinite(row.value));
+  if (!rows.length) throw new Error("觀光統計沒有有效客源資料");
+  const total = rows.reduce((sum, row) => sum + row.value, 0);
+  return {
+    id: stableId("tourism", `${TOURISM_DATASET_ID}|${rows.map((row) => `${row.name}:${row.value}`).join("|")}`),
+    title: "交通部觀光署來臺旅客上月概況",
+    region: "全國",
+    timestamp: fetchedAt,
+    category: "觀光",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "觀光署統計參考快照；不由旅客量單獨推導經濟或安全結論",
+    summary: `五大客源群合計 ${total} 人次；${rows.map((row) => `${row.name} ${row.value}`).join("；")}。`,
+    locationPrecision: "country",
+    source: {
+      ...OFFICIAL_SOURCE_META.tourismStat,
+      url: TOURISM_SOURCE_URL,
+      fetchedAt,
+      recordRef: rows.map((row) => `${row.name}:${row.value}`).join("|") || fetchedAt,
+      retentionPolicy: "reference",
+    },
+  };
+}
+
+const POPULATION_AGE_FIELDS = [
+  "0-4歲合計數量", "5-9歲合計數量", "10-14歲合計數量", "15-19歲合計數量", "20-24歲合計數量",
+  "25-29歲合計數量", "30-34歲合計數量", "35-39歲合計數量", "40-44歲合計數量", "45-49歲合計數量",
+  "50-54歲合計數量", "55-59歲合計數量", "60-64歲合計數量", "65-69歲合計數量", "70-74歲合計數量",
+  "75-79歲合計數量", "80-84歲合計數量", "85-89歲合計數量", "90-94歲合計數量", "95-99歲合計數量", "100歲以上數量",
+];
+
+export function mapSocialPopulationEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
+  const rows = rowsAsObjects(payload).filter((row) => String(row?.區別 || row?.里別 || "").trim());
+  if (!rows.length) throw new Error("臺中市人口結構沒有有效資料列");
+  const totals = rows.filter((row) => String(row?.性別 || "").trim() === "計");
+  const baseRows = totals.length ? totals : rows;
+  const population = baseRows.reduce((total, row) => total + POPULATION_AGE_FIELDS.reduce((sum, field) => {
+    const value = numericValue(row?.[field]);
+    return sum + (Number.isFinite(value) ? value : 0);
+  }, 0), 0);
+  const districts = new Set(rows.map((row) => String(row?.區別 || "").trim()).filter(Boolean));
+  const villages = new Set(rows.map((row) => String(row?.里別 || "").trim()).filter(Boolean));
+  return {
+    id: stableId("social-population", `${SOCIAL_POPULATION_DATASET_ID}|${rows.length}|${population}`),
+    title: "臺中市人口結構參考快照",
+    region: "臺中市",
+    timestamp: fetchedAt,
+    category: "社福",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "地方人口結構參考快照；不代表全國人口或即時社福需求",
+    summary: `涵蓋臺中市 ${districts.size} 區、${villages.size} 里；依性別合計列估算 ${population} 人口。`,
+    locationPrecision: "county-center",
+    ...countyCoordFromAddr("臺中市"),
+    source: {
+      ...OFFICIAL_SOURCE_META.socialPopulation,
+      url: SOCIAL_POPULATION_SOURCE_URL,
+      fetchedAt,
+      recordRef: `${districts.size}|${villages.size}|${rows.length}`,
+      retentionPolicy: "reference",
+    },
+  };
+}
+
+function educationYearEndIso(year, fallback) {
+  const number = Number(year);
+  if (!Number.isInteger(number) || number < 1900 || number > 2200) return fallback;
+  return new Date(Date.UTC(number, 11, 31, 15, 59, 59)).toISOString();
+}
+
+export function mapEducationSnapshotEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
+  const rows = rowsAsObjects(payload).filter((row) => /^\d{4}$/.test(String(row?.field1 || "").trim()));
+  if (!rows.length) throw new Error("教育概況沒有有效年度資料列");
+  const latestYear = Math.max(...rows.map((row) => Number(row.field1)));
+  const latest = rows.filter((row) => Number(row.field1) === latestYear);
+  const totalRow = latest.find((row) => String(row?.field2 || "").includes("總計")) || latest[0];
+  const schoolCount = numericValue(totalRow?.["item value3"]);
+  const studentCount = numericValue(totalRow?.["item value16"]);
+  const values = [
+    Number.isFinite(schoolCount) ? `學校 ${schoolCount}` : "學校數未提供",
+    Number.isFinite(studentCount) ? `學生 ${studentCount}` : "學生數未提供",
+  ];
+  return {
+    id: stableId("education", `${EDUCATION_DATASET_ID}|${latestYear}`),
+    title: `新北市高級中等學校教育概況：${latestYear} 年`,
+    region: "新北市",
+    timestamp: educationYearEndIso(latestYear, fetchedAt),
+    category: "教育",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "地方年度教育統計參考快照；不代表全國教育即時狀態",
+    summary: `${latestYear} 年資料涵蓋 ${latest.length} 個統計列；${values.join("；")}。`,
+    locationPrecision: "county-center",
+    ...countyCoordFromAddr("新北市"),
+    source: {
+      ...OFFICIAL_SOURCE_META.education,
+      url: EDUCATION_SOURCE_URL,
+      fetchedAt,
+      latestDataDate: String(latestYear),
+      recordRef: `${latestYear}|${latest.length}`,
+      retentionPolicy: "reference",
+    },
+  };
+}
+
 async function fetchParkingSource(profile, { url, token } = {}) {
   const payload = await queryTwinkleRows({
     url,
@@ -1345,4 +1549,48 @@ export async function fetchFireStatistics({ url, token } = {}) {
     limit: 100,
   });
   return [mapFireStatisticsEvent(payload, { fetchedAt })];
+}
+
+export async function fetchLegislatureBills({ url, token } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: LEGISLATURE_DATASET_ID,
+    limit: 100,
+  });
+  return [mapLegislatureBillsEvent(payload, { fetchedAt })];
+}
+
+export async function fetchTourismSnapshot({ url, token } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: TOURISM_DATASET_ID,
+    limit: 10,
+  });
+  return [mapTourismSnapshotEvent(payload, { fetchedAt })];
+}
+
+export async function fetchSocialPopulation({ url, token } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: SOCIAL_POPULATION_DATASET_ID,
+    limit: 2500,
+  });
+  return [mapSocialPopulationEvent(payload, { fetchedAt })];
+}
+
+export async function fetchEducationSnapshot({ url, token } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: EDUCATION_DATASET_ID,
+    limit: 500,
+  });
+  return [mapEducationSnapshotEvent(payload, { fetchedAt })];
 }

@@ -76,6 +76,10 @@ const REFERENCE_DATASET_IDS = new Set([
   "70930", // 農業部農產品產地價格
   "39331", // 健保署居家醫療整合計畫參與院所
   "134922", // 臺北市消防局受理各類案件統計
+  "ly-bills", // 立法院議案進度
+  "tad-index-inbound-lastmonth", // 觀光署來臺旅客上月概況
+  "84049", // 臺中市各區人口結構
+  "124173", // 新北市高級中等學校教育概況
 ]);
 
 export function isReferenceEvent(event) {
