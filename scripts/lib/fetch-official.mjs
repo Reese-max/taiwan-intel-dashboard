@@ -37,6 +37,10 @@ const SOCIAL_POPULATION_DATASET_ID = "84049";
 const SOCIAL_POPULATION_SOURCE_URL = "https://data.gov.tw/dataset/84049";
 const EDUCATION_DATASET_ID = "124173";
 const EDUCATION_SOURCE_URL = "https://data.gov.tw/dataset/124173";
+const FINANCE_DATASET_ID = "11598";
+const FINANCE_SOURCE_URL = "https://www.taifex.com.tw/data_gov/taifex_open_data.asp?data_name=MarketDataOfMajorInstitutionalTradersDetailsOfOptionsContractsBytheDate";
+const LABOR_DATASET_ID = "123349";
+const LABOR_SOURCE_URL = "https://data.ntpc.gov.tw/api/datasets/20eb76dd-d307-44e9-9b24-c8903ed67a27/csv/file";
 const AIR_STATION_COUNTY_FALLBACK = { 林森: "臺北市", 臺灣大道: "臺中市", 員林: "彰化縣" };
 
 export const PARKING_SOURCE_PROFILES = {
@@ -266,6 +270,28 @@ export const OFFICIAL_SOURCE_META = {
     scope: "domestic",
     category: "教育",
     query: "新北市高級中等學校教育概況年度統計參考快照",
+    license: "政府資料開放授權條款-第1版 — 新北市政府主計處",
+    cadence: "yearly",
+    maxAgeHours: 8760,
+  },
+  financeDerivatives: {
+    name: "臺灣期貨交易所 三大法人選擇權",
+    type: "gov-open-data",
+    datasetId: FINANCE_DATASET_ID,
+    scope: "domestic",
+    category: "金融",
+    query: "臺灣期貨交易所每日三大法人選擇權契約統計參考快照",
+    license: "政府資料開放授權條款-第1版 — 臺灣期貨交易所",
+    cadence: "daily",
+    maxAgeHours: 2160,
+  },
+  laborStats: {
+    name: "新北市政府 失業率婚姻狀況統計",
+    type: "gov-open-data",
+    datasetId: LABOR_DATASET_ID,
+    scope: "domestic",
+    category: "勞動",
+    query: "新北市失業率按婚姻狀況與性別年度統計參考快照",
     license: "政府資料開放授權條款-第1版 — 新北市政府主計處",
     cadence: "yearly",
     maxAgeHours: 8760,
@@ -1462,6 +1488,83 @@ export function mapEducationSnapshotEvent(payload, { fetchedAt = new Date().toIS
   };
 }
 
+function compactDateIso(value, fallback) {
+  const text = String(value || "").trim();
+  const match = text.match(/^(\d{4})(\d{2})(\d{2})$/);
+  return match ? taiwanTimestamp(`${match[1]}-${match[2]}-${match[3]}`, fallback) : fallback;
+}
+
+export function mapFinanceDerivativesEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
+  const rows = rowsAsObjects(payload)
+    .map((row) => ({ row, date: String(row?.日期 || "").trim() }))
+    .filter((item) => /^(\d{4})(\d{2})(\d{2})$/.test(item.date));
+  if (!rows.length) throw new Error("期貨三大法人資料沒有有效日期");
+  const latestDataDate = rows.map((item) => item.date).sort().at(-1);
+  const latest = rows.filter((item) => item.date === latestDataDate);
+  const netOpenInterest = latest.reduce((total, { row }) => {
+    const value = numericValue(row?.["多空未平倉契約金額淨額(千元)"]);
+    return total + (Number.isFinite(value) ? value : 0);
+  }, 0);
+  const products = new Set(latest.map(({ row }) => String(row?.商品名稱 || "").trim()).filter(Boolean));
+  return {
+    id: stableId("finance-derivatives", `${FINANCE_DATASET_ID}|${latestDataDate}`),
+    title: `臺灣期貨交易所三大法人選擇權：${latestDataDate.slice(0, 4)}-${latestDataDate.slice(4, 6)}-${latestDataDate.slice(6)}`,
+    region: "全國",
+    timestamp: compactDateIso(latestDataDate, fetchedAt),
+    category: "金融",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "官方衍生性金融商品統計參考；不產生買賣訊號或投資建議",
+    summary: `資料日 ${latestDataDate.slice(0, 4)}-${latestDataDate.slice(4, 6)}-${latestDataDate.slice(6)}，涵蓋 ${products.size} 類選擇權商品、${latest.length} 筆法人列；多空未平倉契約金額淨額合計 ${netOpenInterest} 千元。`,
+    locationPrecision: "country",
+    source: {
+      ...OFFICIAL_SOURCE_META.financeDerivatives,
+      url: FINANCE_SOURCE_URL,
+      fetchedAt,
+      latestDataDate: `${latestDataDate.slice(0, 4)}-${latestDataDate.slice(4, 6)}-${latestDataDate.slice(6)}`,
+      recordRef: `${latestDataDate}|${latest.length}`,
+      retentionPolicy: "reference",
+    },
+  };
+}
+
+export function mapLaborStatisticsEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
+  const rows = rowsAsObjects(payload).filter((row) => /^\d{4}$/.test(String(row?.field1 || "").trim()));
+  if (!rows.length) throw new Error("失業率年度統計沒有有效資料列");
+  const latestYear = Math.max(...rows.map((row) => Number(row.field1)));
+  const latest = rows.find((row) => Number(row.field1) === latestYear) || {};
+  const fields = [
+    ["未婚男", "item value2"], ["未婚女", "item value3"],
+    ["有偶同居男", "item value4"], ["有偶同居女", "item value5"],
+    ["離婚喪偶及分居男", "item value6"], ["離婚喪偶及分居女", "item value7"],
+  ];
+  const values = fields
+    .map(([label, field]) => [label, numericValue(latest[field])])
+    .filter(([, value]) => Number.isFinite(value))
+    .map(([label, value]) => `${label} ${value}%`);
+  return {
+    id: stableId("labor-stats", `${LABOR_DATASET_ID}|${latestYear}`),
+    title: `新北市失業率年度統計：${latestYear} 年`,
+    region: "新北市",
+    timestamp: educationYearEndIso(latestYear, fetchedAt),
+    category: "勞動",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "地方年度勞動統計參考；不代表全國即時就業或職災風險",
+    summary: `${latestYear} 年失業率（婚姻狀況／性別）：${values.join("；") || "沒有可用數值"}。`,
+    locationPrecision: "county-center",
+    ...countyCoordFromAddr("新北市"),
+    source: {
+      ...OFFICIAL_SOURCE_META.laborStats,
+      url: LABOR_SOURCE_URL,
+      fetchedAt,
+      latestDataDate: String(latestYear),
+      recordRef: `${latestYear}|${rows.length}`,
+      retentionPolicy: "reference",
+    },
+  };
+}
+
 async function fetchParkingSource(profile, { url, token } = {}) {
   const payload = await queryTwinkleRows({
     url,
@@ -1598,4 +1701,26 @@ export async function fetchEducationSnapshot({ url, token } = {}) {
     limit: 500,
   });
   return [mapEducationSnapshotEvent(payload, { fetchedAt })];
+}
+
+export async function fetchFinanceDerivatives({ url, token } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: FINANCE_DATASET_ID,
+    limit: 100,
+  });
+  return [mapFinanceDerivativesEvent(payload, { fetchedAt })];
+}
+
+export async function fetchLaborStatistics({ url, token } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: LABOR_DATASET_ID,
+    limit: 100,
+  });
+  return [mapLaborStatisticsEvent(payload, { fetchedAt })];
 }

@@ -5,9 +5,11 @@ import {
   mapEducationSnapshotEvent,
   mapAgriculturePriceEvent,
   mapEconomicIndicatorEvent,
+  mapFinanceDerivativesEvent,
   mapFireStatisticsEvent,
   mapHealthcareFacilityEvent,
   mapLegislatureBillsEvent,
+  mapLaborStatisticsEvent,
   mapMoenvAirQualityEvents,
   mapParkingSummaryEvent,
   mapSocialPopulationEvent,
@@ -193,5 +195,43 @@ describe("補充領域官方資料 mapper", () => {
       source: { datasetId: "124173", latestDataDate: "2025", retentionPolicy: "reference" },
     });
     expect(event.summary).toContain("學生 98000");
+  });
+
+  it("把期貨三大法人每日選擇權統計標成金融參考層", () => {
+    const event = mapFinanceDerivativesEvent({
+      columns: ["日期", "商品名稱", "身份別", "多空未平倉契約金額淨額(千元)"],
+      rows: [
+        ["20260629", "臺指選擇權", "外資", "100"],
+        ["20260630", "臺指選擇權", "外資", "120"],
+        ["20260630", "電子選擇權", "自營商", "-20"],
+      ],
+    }, { fetchedAt: "2026-07-25T00:00:00.000Z" });
+
+    expect(event).toMatchObject({
+      category: "金融",
+      region: "全國",
+      timestamp: "2026-06-29T16:00:00.000Z",
+      source: { datasetId: "11598", latestDataDate: "2026-06-30", retentionPolicy: "reference" },
+    });
+    expect(event.summary).toContain("涵蓋 2 類選擇權商品");
+    expect(event.riskBasis).toContain("不產生買賣訊號");
+  });
+
+  it("把新北市失業率年度統計標成勞動參考層", () => {
+    const event = mapLaborStatisticsEvent({
+      columns: ["field1", "item value2", "item value3", "item value4", "item value5", "item value6", "item value7"],
+      rows: [
+        ["2023", "3.1", "3.0", "2.1", "2.2", "4.0", "4.1"],
+        ["2024", "3.2", "3.3", "2.2", "2.3", "4.2", "4.3"],
+      ],
+    }, { fetchedAt: "2026-07-25T00:00:00.000Z" });
+
+    expect(event).toMatchObject({
+      category: "勞動",
+      region: "新北市",
+      timestamp: "2024-12-31T15:59:59.000Z",
+      source: { datasetId: "123349", latestDataDate: "2024", retentionPolicy: "reference" },
+    });
+    expect(event.summary).toContain("未婚男 3.2%");
   });
 });

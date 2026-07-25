@@ -36,15 +36,17 @@
 | `tourismStat` | 交通部觀光署來臺旅客 | `tad-index-inbound-lastmonth` 五大客源群參考；研究用途鏡像 |
 | `socialPopulation` | 臺中市人口結構 | 84049 地方人口年齡／性別參考；不代表全國 |
 | `education` | 新北市高級中等學校教育概況 | 124173 年度教育參考；不代表全國即時狀態 |
+| `financeDerivatives` | 臺灣期貨交易所三大法人選擇權 | 11598 每日衍生性金融統計參考；不產生買賣訊號 |
+| `laborStats` | 新北市失業率婚姻狀況 | 123349 年度地方勞動統計參考；不代表全國即時就業／職災 |
 
 失敗容錯：單源失敗沿用上一版快照（carry-over），不以空資料覆蓋。
 
-完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件；`query.html` 另提供全台 5 萬+ 開放資料集搜尋與預覽。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」；教育、人口、觀光與國會目前已納入誠實的參考層，不冒充全國即時事件。現階段仍需補全台道路即時路況、消防即時案件、文化／體育專門來源，以及穩定授權的金融／電信來源。
+完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件；`query.html` 另提供全台 5 萬+ 開放資料集搜尋與預覽。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」；教育、人口、觀光、國會、金融與勞動目前已納入誠實的參考層，不冒充全國即時事件。現階段仍需補全台道路即時路況、消防即時案件、文化／體育專門來源，以及穩定授權的電信／網路服務來源。
 
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
 - 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver+moenvAir+parkingHsinchu+parkingTaoyuan+economy 增量
-- 每日 18:30 UTC（台北 02:30）：全來源 exclusive 重建（另含 pcc/judicial/cdc/tfda、農業價格、健保院所、國會、觀光、人口與教育參考層）
+- 每日 18:30 UTC（台北 02:30）：全來源 exclusive 重建（另含 pcc/judicial/cdc/tfda、農業價格、健保院所、國會、觀光、人口、教育、金融與勞動參考層）
 - 手動 `workflow_dispatch`：`mode` 選來源組合；`renorm_intl=true` 忽略國際快取全量重評（緊急用；平時靠 `INTL_RECALIBRATE_DAYS` 3 天生命週期自然換血）
 
 ## 本地開發

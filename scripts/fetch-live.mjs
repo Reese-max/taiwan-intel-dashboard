@@ -18,9 +18,11 @@ import {
   fetchEducationSnapshot,
   fetchEconomicIndicators,
   fetchAgriculturePrices,
+  fetchFinanceDerivatives,
   fetchFireStatistics,
   fetchHealthcareFacilities,
   fetchLegislatureBills,
+  fetchLaborStatistics,
   fetchMoenvAirQuality,
   fetchMndActivity,
   fetchParkingHsinchu,
@@ -233,7 +235,7 @@ export async function run() {
   // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
   // 未選的來源會沿用上一版快照（carry-over）。
   const sourcesArg = process.argv.find((a) => a.startsWith("--sources="))?.slice("--sources=".length);
-  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,legislature,tourismStat,socialPopulation,education").split(",").map((s) => s.trim());
+  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,legislature,tourismStat,socialPopulation,education,financeDerivatives,laborStats").split(",").map((s) => s.trim());
   const want = (s) => SOURCES.includes(s);
   // 本機既有工具使用 TWINKLE_HUB_TOKEN；CI 使用 TWINKLE_MCP_TOKEN。接受兩者可避免同一服務憑證漂移。
   const twinkleToken = process.env.TWINKLE_HUB_TOKEN || process.env.TWINKLE_MCP_TOKEN;
@@ -449,6 +451,8 @@ export async function run() {
     tourismStat: () => fetchTourismSnapshot({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
     socialPopulation: () => fetchSocialPopulation({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
     education: () => fetchEducationSnapshot({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    financeDerivatives: () => fetchFinanceDerivatives({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    laborStats: () => fetchLaborStatistics({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
   };
   const officialLabels = {
     mnd: "MND 臺海動態",
@@ -470,6 +474,8 @@ export async function run() {
     tourismStat: "觀光署來臺旅客概況",
     socialPopulation: "臺中市人口結構",
     education: "新北市教育概況",
+    financeDerivatives: "期貨三大法人統計",
+    laborStats: "新北市勞動統計",
   };
   await Promise.all(Object.keys(officialFetchers).map(async (key) => {
     if (!want(key)) {

@@ -80,6 +80,8 @@ const REFERENCE_DATASET_IDS = new Set([
   "tad-index-inbound-lastmonth", // 觀光署來臺旅客上月概況
   "84049", // 臺中市各區人口結構
   "124173", // 新北市高級中等學校教育概況
+  "11598", // 臺灣期貨交易所三大法人選擇權
+  "123349", // 新北市失業率婚姻狀況統計
 ]);
 
 export function isReferenceEvent(event) {

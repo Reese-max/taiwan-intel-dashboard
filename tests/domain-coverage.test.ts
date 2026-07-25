@@ -13,18 +13,21 @@ describe("領域完整性清單", () => {
         { scope: "domestic", category: "觀光", datasetId: "tad-index-inbound-lastmonth", name: "觀光統計", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
         { scope: "domestic", category: "社福", datasetId: "84049", name: "人口結構", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
         { scope: "domestic", category: "教育", datasetId: "124173", name: "教育概況", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
+        { scope: "domestic", category: "金融", datasetId: "11598", name: "期貨三大法人", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
+        { scope: "domestic", category: "勞動", datasetId: "123349", name: "失業率統計", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
       ],
     });
 
-    expect(report.counts).toMatchObject({ integrated: 10, reference: 7, "query-only": 4, gap: 1 });
+    expect(report.counts).toMatchObject({ integrated: 10, reference: 9, "query-only": 2, gap: 1 });
     expect(report.rows.find((row) => row.key === "農業")).toMatchObject({
       status: "reference",
       sourceCount: 1,
       healthySourceCount: 1,
     });
-    expect(report.rows.find((row) => row.key === "勞動／職災")).toMatchObject({ status: "query-only", sourceCount: 0 });
+    expect(report.rows.find((row) => row.key === "勞動／職災")).toMatchObject({ status: "reference", sourceCount: 1, healthySourceCount: 1 });
     expect(report.rows.find((row) => row.key === "司法／法務")).toMatchObject({ status: "integrated", sourceCount: 1, healthySourceCount: 1 });
     expect(report.rows.find((row) => row.key === "國會／立法")).toMatchObject({ status: "reference", sourceCount: 1, healthySourceCount: 1 });
     expect(report.rows.find((row) => row.key === "教育／科研")).toMatchObject({ status: "reference", sourceCount: 1, healthySourceCount: 1 });
+    expect(report.rows.find((row) => row.key === "金融市場")).toMatchObject({ status: "reference", sourceCount: 1, healthySourceCount: 1 });
   });
 });
