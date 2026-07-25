@@ -25,13 +25,22 @@
 | `twcert` | TWCERT/CC 漏洞公告 | 官方 TVN RSS |
 | `taipower` | 台電系統供需 | 每 10 分鐘更新 |
 | `wra` | 水利署水庫水情 | 收錄蓄水率低於或等於 70% 的水庫 |
+| `wraRiver` | 水利署即時河川水位 | 測站警戒值彙整至縣市 |
+| `moenvAir` | 環境部空氣品質 | 28178 最新小時值，逐測站保留 PM2.5／O3 等讀值 |
+| `parkingHsinchu` / `parkingTaoyuan` | 停車供給 | 新竹市／桃園市公開停車場可用量彙整；不等同道路壅塞 |
+| `economy` | 主計總處重要經濟指標 | 13228 最新月份統計，保留資料月份與抓取時間 |
+| `agriPrices` | 農業部農產品產地價格 | 70930 最新資料日品項價格參考；不產生買賣訊號 |
+| `healthFacilities` | 健保署居家醫療整合院所 | 39331 官方院所總數參考快照；不代表即時可掛號量 |
+| `fireStats` | 臺北市消防局受理案件統計 | 134922 最新期間統計參考；不代表全台即時派遣量 |
 
 失敗容錯：單源失敗沿用上一版快照（carry-over），不以空資料覆蓋。
 
+完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件；`query.html` 另提供全台 5 萬+ 開放資料集搜尋與預覽。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」；因此不會把 2018 年勞安資料或落後的金融快照誤標成即時情報。現階段仍需補全台道路即時路況、消防即時案件、教育／社福／文化觀光與穩定授權的金融／電信來源。
+
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
-- 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+mofa+ncdr+mnd+cga+twcert+taipower+wra 增量
-- 每日 18:30 UTC（台北 02:30）：全來源 exclusive 重建（另含 pcc/judicial/cdc/tfda）
+- 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver+moenvAir+parkingHsinchu+parkingTaoyuan+economy 增量
+- 每日 18:30 UTC（台北 02:30）：全來源 exclusive 重建（另含 pcc/judicial/cdc/tfda、農業價格與健保院所參考層）
 - 手動 `workflow_dispatch`：`mode` 選來源組合；`renorm_intl=true` 忽略國際快取全量重評（緊急用；平時靠 `INTL_RECALIBRATE_DAYS` 3 天生命週期自然換血）
 
 ## 本地開發

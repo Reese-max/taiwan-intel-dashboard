@@ -1,10 +1,9 @@
 import { appendFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-// mofa/ncdr：2026-07-07 接線缺口修復——fetch-live 預設含此二源，但 CI 走顯式清單，
-// 漏列導致 MOFA 旅遊警示與 NCDR 示警在排程 run 永遠 skipped（實際從未上線）。
-export const HOURLY_ARGS = "--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver";
-export const REFRESH_ARGS = "--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver --exclusive";
+// 顯式 CI 清單必須同步列入所有預設來源，否則排程會把未列出的來源標為 skipped。
+export const HOURLY_ARGS = "--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy";
+export const REFRESH_ARGS = "--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats --exclusive";
 export const CWA_ARGS = "--sources=cwa";
 export const INTERNATIONAL_ARGS = "--sources=rss";
 export const CWA_INTERNATIONAL_ARGS = "--sources=cwa,rss";

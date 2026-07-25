@@ -77,7 +77,7 @@ describe("FilterBar 國內分類選項", () => {
     renderFilterBar(el as unknown as HTMLElement, "domestic");
 
     const options = el.querySelectorAll("#f-cat option").map((o) => o.value);
-    for (const c of ["國防", "食安", "衛生", "環境", "資安", "治安", "社會", "反詐", "災防", "採購", "協尋", "交通"]) {
+    for (const c of ["國防", "食安", "衛生", "環境", "資安", "治安", "社會", "反詐", "災防", "司法判決", "消防", "採購", "協尋", "交通", "經濟", "農業"]) {
       expect(options).toContain(c);
     }
   });

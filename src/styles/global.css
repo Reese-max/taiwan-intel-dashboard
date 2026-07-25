@@ -96,6 +96,21 @@ h4 {
   transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease),
     color var(--dur-fast) var(--ease);
 }
+.catalog-link {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-muted);
+  padding: 7px 12px;
+  font-size: var(--text-sm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.catalog-link:hover,
+.catalog-link:focus-visible {
+  color: var(--color-text);
+  border-color: var(--border-accent);
+  background: rgba(56, 205, 245, 0.12);
+}
 .layout-toggle:hover {
   border-color: var(--border-accent);
   background: rgba(56, 205, 245, 0.12);

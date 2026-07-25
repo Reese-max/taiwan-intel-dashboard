@@ -15,7 +15,14 @@ import { fetchNcdrAlerts, NCDR_DATASET_ID } from "./lib/fetch-ncdr.mjs";
 import {
   fetchCgaMaritime,
   fetchCdcInfluenza,
+  fetchEconomicIndicators,
+  fetchAgriculturePrices,
+  fetchFireStatistics,
+  fetchHealthcareFacilities,
+  fetchMoenvAirQuality,
   fetchMndActivity,
+  fetchParkingHsinchu,
+  fetchParkingTaoyuan,
   fetchTaipowerSupply,
   fetchTfdaNoncompliant,
   fetchTwcertVulnerabilities,
@@ -69,6 +76,7 @@ import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
 import { validateEventContract, clampImplausibleTimestamps, isReferenceEvent } from "./lib/event-contract.mjs";
 import { applyTemporal } from "./lib/temporal.mjs";
 import { buildCoverageMatrix } from "./audit-coverage.mjs";
+import { buildDomainCoverage } from "./domain-coverage.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -221,7 +229,7 @@ export async function run() {
   // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
   // 未選的來源會沿用上一版快照（carry-over）。
   const sourcesArg = process.argv.find((a) => a.startsWith("--sources="))?.slice("--sources=".length);
-  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver").split(",").map((s) => s.trim());
+  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats").split(",").map((s) => s.trim());
   const want = (s) => SOURCES.includes(s);
   // 本機既有工具使用 TWINKLE_HUB_TOKEN；CI 使用 TWINKLE_MCP_TOKEN。接受兩者可避免同一服務憑證漂移。
   const twinkleToken = process.env.TWINKLE_HUB_TOKEN || process.env.TWINKLE_MCP_TOKEN;
@@ -426,6 +434,13 @@ export async function run() {
     taipower: () => fetchTaipowerSupply({}),
     wra: () => fetchWraReservoirLevels({}),
     wraRiver: () => fetchWraRiverLevels({}),
+    moenvAir: () => fetchMoenvAirQuality({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    parkingHsinchu: () => fetchParkingHsinchu({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    parkingTaoyuan: () => fetchParkingTaoyuan({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    economy: () => fetchEconomicIndicators({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    agriPrices: () => fetchAgriculturePrices({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    healthFacilities: () => fetchHealthcareFacilities({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
+    fireStats: () => fetchFireStatistics({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
   };
   const officialLabels = {
     mnd: "MND 臺海動態",
@@ -436,6 +451,13 @@ export async function run() {
     taipower: "台電系統供需",
     wra: "水利署水庫水情",
     wraRiver: "水利署即時河川水位",
+    moenvAir: "環境部空氣品質",
+    parkingHsinchu: "新竹市停車供給",
+    parkingTaoyuan: "桃園市停車供給",
+    economy: "主計總處經濟指標",
+    agriPrices: "農業部農產品價格",
+    healthFacilities: "健保署居家醫療院所",
+    fireStats: "臺北市消防統計",
   };
   await Promise.all(Object.keys(officialFetchers).map(async (key) => {
     if (!want(key)) {
@@ -1058,7 +1080,7 @@ export async function run() {
       ? {
         ...meta,
         ...Object.fromEntries(
-          ["name", "type", "datasetId", "scope", "category", "query", "license", "cadence", "maxAgeHours"]
+          ["name", "type", "datasetId", "scope", "category", "query", "license", "cadence", "maxAgeHours", "latestDataDate"]
             .filter((field) => eventSource[field] != null)
             .map((field) => [field, eventSource[field]]),
         ),
@@ -1112,6 +1134,7 @@ export async function run() {
     events: [...domesticEvents, ...intlEvents],
     sources,
   }));
+  writeJson("domain-coverage.json", buildDomainCoverage({ generatedAt: nowIso, sources }));
 
   writeJson("provenance.json", {
     generatedAt: nowIso,

@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { countyCoordFromAddr } from "./coords.mjs";
 import { detectCounty } from "./news-bulk.mjs";
+import { queryTwinkleRows, rowVal } from "./twinkle-query.mjs";
 
 const MND_BASE = "https://air.mnd.gov.tw";
 const MND_LIST_URL = `${MND_BASE}/TW/News/News_List.aspx?CID=213`;
@@ -19,6 +20,47 @@ const WRA_URL = "https://www.wra.gov.tw/ReservoirWarningTable.aspx?n=46046";
 const WRA_RIVER_LEVEL_URL = "https://opendata.wra.gov.tw/api/v2/73c4c3de-4045-4765-abeb-89f9f9cd5ff0?format=JSON&sort=_importdate+asc";
 const WRA_RIVER_STATION_URL = "https://opendata.wra.gov.tw/api/v2/c4acc691-7416-40ca-9464-292c0c00da92?format=JSON&sort=_importdate+asc";
 const WRA_RIVER_DATASET_ID = "wra-river-levels";
+const MOENV_AIR_DATASET_ID = "28178";
+const MOENV_AIR_STATION_URL = "https://geoser.moenv.gov.tw/stdserver/rest/services/31_Air/%E7%A9%BA%E6%B0%A3%E5%93%81%E8%B3%AA%E7%9B%A3%E6%B8%AC%E7%AB%99%E4%BD%8D%E7%BD%AE%E5%9C%96/MapServer/0/query?where=1%3D1&outFields=*&returnGeometry=true&f=json";
+const ECONOMIC_DATASET_ID = "13228";
+const AGRICULTURE_DATASET_ID = "70930";
+const AGRICULTURE_SOURCE_URL = "https://data.moa.gov.tw/Service/OpenData/TransService.aspx?UnitId=WVOiWSdDjWxx&IsTransData=1";
+const HEALTHCARE_DATASET_ID = "39331";
+const HEALTHCARE_SOURCE_URL = "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-D2000H-001";
+const FIRE_DATASET_ID = "134922";
+const FIRE_SOURCE_URL = "https://data.taipei/api/dataset/9adc3f7b-ef37-4e4e-b538-deb1e567d5db/resource/74ca9115-8c85-41d8-8b2e-73d4a422382c/download";
+const AIR_STATION_COUNTY_FALLBACK = { 林森: "臺北市", 臺灣大道: "臺中市", 員林: "彰化縣" };
+
+export const PARKING_SOURCE_PROFILES = {
+  hsinchu: {
+    name: "新竹市即時停車場剩餘車位",
+    datasetId: "129136",
+    region: "新竹市",
+    query: "twinkle-hub query_rows dataset 129136（FREEQUANTITY/TOTALQUANTITY）",
+    license: "政府資料開放授權條款-第1版 — 新竹市政府",
+    cadence: "daily",
+    maxAgeHours: 96,
+    url: "https://data.gov.tw/dataset/129136",
+    free: "FREEQUANTITY",
+    total: "TOTALQUANTITY",
+    updated: "UPDATETIME",
+    nameField: "PARKINGNAME",
+  },
+  taoyuan: {
+    name: "桃園市路外停車資訊",
+    datasetId: "25940",
+    region: "桃園市",
+    query: "twinkle-hub query_rows dataset 25940（surplusSpace/totalSpace）",
+    license: "政府資料開放授權條款-第1版 — 桃園市政府",
+    cadence: "daily",
+    maxAgeHours: 72,
+    url: "https://data.gov.tw/dataset/25940",
+    free: "surplusSpace",
+    total: "totalSpace",
+    updated: "",
+    nameField: "parkName",
+  },
+};
 
 export const OFFICIAL_SOURCE_META = {
   mnd: {
@@ -108,6 +150,73 @@ export const OFFICIAL_SOURCE_META = {
     license: "政府資料開放授權條款-第1版 — 經濟部水利署",
     cadence: "10min",
     maxAgeHours: 2,
+  },
+  moenvAir: {
+    name: "環境部 空氣品質監測小時值",
+    type: "gov-open-data",
+    datasetId: MOENV_AIR_DATASET_ID,
+    scope: "domestic",
+    category: "環境",
+    query: "環境部開放資料 28178 空氣品質監測小時值（PM2.5／O3／NO2／SO2／PM10／CO）",
+    license: "政府資料開放授權條款-第1版 — 環境部",
+    cadence: "daily",
+    maxAgeHours: 96,
+  },
+  parkingHsinchu: {
+    ...PARKING_SOURCE_PROFILES.hsinchu,
+    type: "gov-open-data",
+    scope: "domestic",
+    category: "交通",
+  },
+  parkingTaoyuan: {
+    ...PARKING_SOURCE_PROFILES.taoyuan,
+    type: "gov-open-data",
+    scope: "domestic",
+    category: "交通",
+  },
+  economy: {
+    name: "主計總處 重要經濟指標月資料",
+    type: "gov-open-data",
+    datasetId: ECONOMIC_DATASET_ID,
+    scope: "domestic",
+    category: "經濟",
+    query: "主計總處開放資料 13228 重要經濟指標月資料（最新月份）",
+    license: "政府資料開放授權條款-第1版 — 行政院主計總處",
+    cadence: "monthly",
+    maxAgeHours: 2160,
+  },
+  agriPrices: {
+    name: "農業部 農產品產地價格",
+    type: "gov-open-data",
+    datasetId: AGRICULTURE_DATASET_ID,
+    scope: "domestic",
+    category: "農業",
+    query: "農業部開放資料 70930 最新產地價格（依品項與日期彙整）",
+    license: "政府資料開放授權條款-第1版 — 農業部",
+    cadence: "daily",
+    maxAgeHours: 96,
+  },
+  healthFacilities: {
+    name: "健保署 居家醫療整合計畫參與院所",
+    type: "gov-open-data",
+    datasetId: HEALTHCARE_DATASET_ID,
+    scope: "domestic",
+    category: "衛生",
+    query: "健保署開放資料 39331 居家醫療整合計畫參與院所總數",
+    license: "政府資料開放授權條款-第1版 — 衛生福利部中央健康保險署",
+    cadence: "daily",
+    maxAgeHours: 72,
+  },
+  fireStats: {
+    name: "臺北市消防局 119 受理案件統計",
+    type: "gov-open-data",
+    datasetId: FIRE_DATASET_ID,
+    scope: "domestic",
+    category: "消防",
+    query: "臺北市資料集 134922 最新統計期間之消防、救護與救援受理案件",
+    license: "政府資料開放授權條款-第1版 — 臺北市政府消防局",
+    cadence: "monthly",
+    maxAgeHours: 2160,
   },
 };
 
@@ -808,4 +917,432 @@ export async function fetchWraRiverLevels({ fetchImpl = fetch } = {}) {
   const events = mapWraRiverLevelEvents(observations, stations, { fetchedAt });
   if (!events.length) throw new Error("水利署即時水位可定位縣市解析為 0 筆");
   return events;
+}
+
+function numericValue(value) {
+  const text = String(value ?? "").replace(/[rp]/gi, "").replace(/,/g, "").trim();
+  if (!text || ["x", "…", "-", "—"].includes(text)) return NaN;
+  const number = Number(text);
+  return Number.isFinite(number) ? number : NaN;
+}
+
+function rowsAsObjects(payload) {
+  const columns = Array.isArray(payload?.columns) ? payload.columns : [];
+  return (Array.isArray(payload?.rows) ? payload.rows : []).map((row) =>
+    Object.fromEntries(columns.map((column, index) => [column, row?.[index]])),
+  );
+}
+
+function taiwanTimestamp(value, fallback) {
+  const parsed = taiwanDateIso(value, fallback);
+  return Number.isFinite(Date.parse(parsed)) ? parsed : fallback;
+}
+
+function airRisk(metrics) {
+  const pm25 = metrics["PM2.5"];
+  const ozone = metrics.O3;
+  if ((Number.isFinite(pm25) && pm25 >= 54) || (Number.isFinite(ozone) && ozone >= 125)) return "high";
+  if ((Number.isFinite(pm25) && pm25 >= 35) || (Number.isFinite(ozone) && ozone >= 100)) return "medium";
+  return "low";
+}
+
+function stationAttributes(station) {
+  return station?.attributes || station || {};
+}
+
+export function mapMoenvAirQualityEvents(payload, stations = [], { fetchedAt = new Date().toISOString() } = {}) {
+  const columns = Array.isArray(payload?.columns) ? payload.columns : [];
+  const grouped = new Map();
+  for (const row of Array.isArray(payload?.rows) ? payload.rows : []) {
+    const siteid = String(rowVal(row, columns, "siteid") ?? "").trim();
+    const item = String(rowVal(row, columns, "itemengname") ?? "").trim();
+    if (!siteid || !["PM2.5", "PM10", "O3", "NO2", "SO2", "CO"].includes(item)) continue;
+    const date = String(rowVal(row, columns, "monitordate") ?? "").trim();
+    let latest = null;
+    for (let hour = 23; hour >= 0; hour--) {
+      const value = numericValue(rowVal(row, columns, `monitorvalue${String(hour).padStart(2, "0")}`));
+      if (!Number.isFinite(value)) continue;
+      latest = {
+        value,
+        timestamp: taiwanTimestamp(`${date} ${String(hour).padStart(2, "0")}:00:00`, fetchedAt),
+      };
+      break;
+    }
+    if (!latest) continue;
+    const key = siteid;
+    const current = grouped.get(key) || {
+      siteid,
+      sitename: String(rowVal(row, columns, "sitename") ?? siteid).trim(),
+      metrics: {},
+      timestamps: [],
+      latestDataDate: date,
+    };
+    current.metrics[item] = latest.value;
+    current.timestamps.push(latest.timestamp);
+    if (date > current.latestDataDate) current.latestDataDate = date;
+    grouped.set(key, current);
+  }
+
+  const stationById = new Map(
+    (Array.isArray(stations) ? stations : [])
+      .map(stationAttributes)
+      .filter((station) => station.Stcode != null)
+      .map((station) => [String(station.Stcode), station]),
+  );
+
+  return [...grouped.values()].map((group) => {
+    const station = stationById.get(group.siteid) || {};
+    const county = String(station.County || AIR_STATION_COUNTY_FALLBACK[group.sitename] || "").trim();
+    const coord = Number.isFinite(Number(station.TWD97_Lat)) && Number.isFinite(Number(station.TWD97_Lon))
+      ? { region: county || "全國", lat: Number(station.TWD97_Lat), lng: Number(station.TWD97_Lon) }
+      : countyCoordFromAddr(county);
+    const timestamp = [...group.timestamps].sort().at(-1) || fetchedAt;
+    const metricText = Object.entries(group.metrics)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, value]) => `${name} ${value}`)
+      .join("、");
+    return {
+      id: stableId("moenv-air", `${group.siteid}|${timestamp}`),
+      title: `環境部空品監測：${group.sitename}`,
+      region: coord?.region || "全國",
+      timestamp,
+      category: "環境",
+      scope: "domestic",
+      riskLevel: airRisk(group.metrics),
+      riskBasis: "依 PM2.5／O3 保守門檻分級；非環境部 AQI 官方燈號",
+      summary: `最新小時觀測：${metricText || "無有效污染物數值"}；測站資料日 ${group.latestDataDate || "未提供"}。`,
+      ...(coord?.lat != null && coord?.lng != null
+        ? { lat: coord.lat, lng: coord.lng, locationPrecision: "station" }
+        : { locationPrecision: "country" }),
+      source: {
+        ...OFFICIAL_SOURCE_META.moenvAir,
+        url: MOENV_AIR_STATION_URL,
+        fetchedAt,
+        latestDataDate: group.latestDataDate || undefined,
+        recordRef: `${group.siteid}|${group.latestDataDate || timestamp}`,
+        retentionPolicy: "reference",
+      },
+    };
+  });
+}
+
+export function mapParkingSummaryEvent(rows, profile, { fetchedAt = new Date().toISOString() } = {}) {
+  let free = 0;
+  let total = 0;
+  let latestUpdate = "";
+  let validRows = 0;
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const rowTotal = numericValue(row?.[profile.total]);
+    const rowFree = numericValue(row?.[profile.free]);
+    if (!Number.isFinite(rowTotal) || rowTotal <= 0 || !Number.isFinite(rowFree)) continue;
+    total += rowTotal;
+    free += Math.max(0, rowFree);
+    validRows++;
+    const updated = String(row?.[profile.updated] || "").trim();
+    if (updated > latestUpdate) latestUpdate = updated;
+  }
+  if (!validRows || total <= 0) return [];
+  const ratio = free / total;
+  const coord = countyCoordFromAddr(profile.region);
+  const timestamp = latestUpdate ? taiwanTimestamp(latestUpdate, fetchedAt) : fetchedAt;
+  return [{
+    id: stableId("parking", `${profile.datasetId}|${latestUpdate || fetchedAt}`),
+    title: `${profile.region}停車供給：可用 ${free}／${total}`,
+    region: coord?.region || profile.region,
+    timestamp,
+    category: "交通",
+    scope: "domestic",
+    riskLevel: ratio <= 0.05 ? "high" : ratio <= 0.1 ? "medium" : "low",
+    riskBasis: "依公開停車場回報可用比例分級；不代表全市道路壅塞程度",
+    summary: `${profile.region}納入 ${validRows} 座停車場，可用車位 ${free}／${total}（${Math.round(ratio * 1000) / 10}%）；${latestUpdate ? `最新回報 ${latestUpdate}` : "資料未提供回報時間"}。`,
+    ...(coord ? { lat: coord.lat, lng: coord.lng, locationPrecision: "county-center" } : { locationPrecision: "country" }),
+    source: {
+      type: "gov-open-data",
+      scope: "domestic",
+      category: "交通",
+      ...profile,
+      fetchedAt,
+      ...(latestUpdate ? { latestDataDate: latestUpdate } : {}),
+      recordRef: `${profile.region}|${latestUpdate || fetchedAt}`,
+      retentionPolicy: "reference",
+    },
+  }];
+}
+
+function monthEndIso(value, fallback) {
+  const match = String(value || "").match(/^(\d{4})(\d{2})$/);
+  if (!match) return fallback;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) return fallback;
+  return new Date(Date.UTC(year, month, 0, 15, 59, 59)).toISOString();
+}
+
+export function mapEconomicIndicatorEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
+  const rows = rowsAsObjects(payload)
+    .filter((row) => /^\d{6}$/.test(String(row["日期（月別）"] || "")))
+    .sort((a, b) => String(b["日期（月別）"]).localeCompare(String(a["日期（月別）"])));
+  const row = rows[0];
+  if (!row) throw new Error("主計總處經濟指標沒有有效資料月份");
+  const period = String(row["日期（月別）"] || "");
+  const value = (name) => {
+    const number = numericValue(row[name]);
+    return Number.isFinite(number) ? number : null;
+  };
+  const indicators = [
+    ["經濟成長率", value("經濟成長率"), "%"],
+    ["失業率", value("失業率（百分比）"), "%"],
+    ["消費者物價年增率", value("消費者物價-年增率"), "%"],
+    ["工業及服務業平均月薪資", value("工業及服務業平均月薪資（元）"), " 元"],
+  ].filter(([, current]) => current != null);
+  const summary = indicators.length
+    ? indicators.map(([name, current, unit]) => `${name} ${current}${unit}`).join("；")
+    : "最新月份沒有可用數值";
+  return {
+    id: stableId("economy", period),
+    title: `主計總處重要經濟指標：${period.slice(0, 4)} 年 ${Number(period.slice(4))} 月`,
+    region: "全國",
+    timestamp: monthEndIso(period, fetchedAt),
+    category: "經濟",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "官方統計快照；不由單月指標推導經濟風險結論",
+    summary: `${summary}。資料月份 ${period.slice(0, 4)}-${period.slice(4)}。`,
+    locationPrecision: "country",
+    source: {
+      ...OFFICIAL_SOURCE_META.economy,
+      fetchedAt,
+      latestDataDate: `${period.slice(0, 4)}-${period.slice(4)}`,
+      recordRef: period,
+      retentionPolicy: "reference",
+    },
+  };
+}
+
+function agriculturePeriodDay(value) {
+  const text = String(value ?? "").trim();
+  const numeric = Number(text);
+  if (Number.isInteger(numeric) && numeric >= 1 && numeric <= 31) return numeric;
+  if (text.includes("上旬")) return 10;
+  if (text.includes("中旬")) return 20;
+  if (text.includes("下旬")) return 30;
+  return 15;
+}
+
+function agricultureDate(row) {
+  const year = Number(row?.YEAR);
+  const month = Number(row?.MONTH);
+  if (!Number.isInteger(year) || year < 1900 || !Number.isInteger(month) || month < 1 || month > 12) return null;
+  const day = agriculturePeriodDay(row?.PERIOD);
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const safeDay = Math.min(day, lastDay);
+  return `${year}-${String(month).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
+}
+
+export function mapAgriculturePriceEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
+  const rows = rowsAsObjects(payload)
+    .map((row) => ({ row, date: agricultureDate(row), price: numericValue(row?.AVGPRICE) }))
+    .filter((item) => item.date && Number.isFinite(item.price) && String(item.row?.PRODUCTNAME || "").trim());
+  if (!rows.length) throw new Error("農產品產地價格沒有有效日期與價格資料");
+  const latestDataDate = rows.map((item) => item.date).sort().at(-1);
+  const latest = rows
+    .filter((item) => item.date === latestDataDate)
+    .sort((a, b) => String(a.row.PRODUCTNAME).localeCompare(String(b.row.PRODUCTNAME), "zh-Hant"));
+  const seen = new Set();
+  const samples = latest.filter(({ row }) => {
+    const product = String(row.PRODUCTNAME || "").trim();
+    if (seen.has(product)) return false;
+    seen.add(product);
+    return true;
+  }).slice(0, 8);
+  const sampleText = samples.map(({ row, price }) => `${String(row.PRODUCTNAME).trim()} ${price} 元`).join("；");
+  return {
+    id: stableId("agri-price", latestDataDate),
+    title: `農業部農產品產地價格：${latestDataDate}`,
+    region: "全國",
+    timestamp: taiwanTimestamp(latestDataDate, fetchedAt),
+    category: "農業",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "官方產地價格參考快照；不由單一品項價格推導市場或投資結論",
+    summary: `最新資料日 ${latestDataDate}，可用 ${latest.length} 筆品項價格；${sampleText || "沒有可展示的品項"}。`,
+    locationPrecision: "country",
+    source: {
+      ...OFFICIAL_SOURCE_META.agriPrices,
+      url: AGRICULTURE_SOURCE_URL,
+      fetchedAt,
+      latestDataDate,
+      recordRef: latestDataDate,
+      retentionPolicy: "reference",
+    },
+  };
+}
+
+export function mapHealthcareFacilityEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
+  const rows = rowsAsObjects(payload);
+  const row = rows[0] || {};
+  const count = numericValue(row.n ?? row.count ?? row["COUNT(*)"]);
+  if (!Number.isFinite(count) || count < 0) throw new Error("健保居家醫療院所總數沒有有效資料");
+  return {
+    id: stableId("health-facilities", `${HEALTHCARE_DATASET_ID}|${count}`),
+    title: "健保署居家醫療整合計畫參與院所",
+    region: "全國",
+    timestamp: fetchedAt,
+    category: "衛生",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "官方醫療服務量能參考快照；不代表即時可掛號量或醫療品質",
+    summary: `健保署資料集目前列有 ${count} 家居家醫療整合計畫參與院所；屬服務量能參考資料。`,
+    locationPrecision: "country",
+    source: {
+      ...OFFICIAL_SOURCE_META.healthFacilities,
+      url: HEALTHCARE_SOURCE_URL,
+      fetchedAt,
+      recordRef: `facility-count|${count}`,
+      retentionPolicy: "reference",
+    },
+  };
+}
+
+function firePeriodEnd(value) {
+  const match = String(value || "").match(/^(\d{3})年(\d{1,2})(?:-(\d{1,2}))?月/);
+  if (!match) return null;
+  const [, rocYear, startMonth, endMonth = startMonth] = match;
+  const month = Number(endMonth);
+  if (!Number.isInteger(month) || month < 1 || month > 12) return null;
+  const year = Number(rocYear) + 1911;
+  const day = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function mapFireStatisticsEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
+  const rows = rowsAsObjects(payload)
+    .map((row) => ({ row, period: String(row["統計期間"] || "").trim(), endDate: firePeriodEnd(row["統計期間"]) }))
+    .filter((item) => item.period && item.endDate);
+  if (!rows.length) throw new Error("臺北市消防統計沒有有效統計期間");
+  const latestEndDate = rows.map((item) => item.endDate).sort().at(-1);
+  const latest = rows.filter((item) => item.endDate === latestEndDate);
+  const sum = (name) => latest.reduce((total, { row }) => {
+    const value = numericValue(row[name]);
+    return total + (Number.isFinite(value) ? value : 0);
+  }, 0);
+  const fire = sum("受理火災統計數值");
+  const rescue = sum("受理救護統計數值");
+  const total = sum("總計");
+  const period = latest[0]?.period || latestEndDate;
+  return {
+    id: stableId("fire-stats", `${FIRE_DATASET_ID}|${period}`),
+    title: `臺北市消防局受理案件統計：${period}`,
+    region: "臺北市",
+    timestamp: taiwanTimestamp(latestEndDate, fetchedAt),
+    category: "消防",
+    scope: "domestic",
+    riskLevel: "low",
+    riskBasis: "官方期間統計參考；不是即時派遣量或全台消防風險推估",
+    summary: `臺北市 ${period} 共 ${total} 件受理案件，其中火災 ${fire} 件、救護 ${rescue} 件；涵蓋 ${latest.length} 個行政區。`,
+    locationPrecision: "county-center",
+    ...countyCoordFromAddr("臺北市"),
+    source: {
+      ...OFFICIAL_SOURCE_META.fireStats,
+      url: FIRE_SOURCE_URL,
+      fetchedAt,
+      latestDataDate: period,
+      recordRef: period,
+      retentionPolicy: "reference",
+    },
+  };
+}
+
+async function fetchParkingSource(profile, { url, token } = {}) {
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: profile.datasetId,
+    limit: 500,
+  });
+  const events = mapParkingSummaryEvent(rowsAsObjects(payload), profile);
+  if (!events.length) throw new Error(`${profile.name} 沒有有效停車容量資料`);
+  return events;
+}
+
+export async function fetchMoenvAirQuality({ url, token, fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: MOENV_AIR_DATASET_ID,
+    where: "itemengname IN ('PM2.5','PM10','O3','NO2','SO2','CO')",
+    order_by: "monitordate DESC",
+    limit: 600,
+  });
+  let stations = [];
+  try {
+    const stationPayload = await fetchChecked(MOENV_AIR_STATION_URL, {
+      fetchImpl,
+      json: true,
+      timeoutMs: 60000,
+      attempts: 2,
+    });
+    stations = stationPayload?.features || [];
+  } catch (error) {
+    console.warn(`環境部空品測站位置圖失敗，改用全國／縣市層級：${error.message}`);
+  }
+  const events = mapMoenvAirQualityEvents(payload, stations, { fetchedAt });
+  if (!events.length) throw new Error("環境部空品監測資料沒有有效測站值");
+  return events;
+}
+
+export async function fetchParkingHsinchu({ url, token } = {}) {
+  return fetchParkingSource(PARKING_SOURCE_PROFILES.hsinchu, { url, token });
+}
+
+export async function fetchParkingTaoyuan({ url, token } = {}) {
+  return fetchParkingSource(PARKING_SOURCE_PROFILES.taoyuan, { url, token });
+}
+
+export async function fetchEconomicIndicators({ url, token } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: ECONOMIC_DATASET_ID,
+    order_by: '"日期（月別）" DESC',
+    limit: 24,
+  });
+  return [mapEconomicIndicatorEvent(payload, { fetchedAt })];
+}
+
+export async function fetchAgriculturePrices({ url, token } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: AGRICULTURE_DATASET_ID,
+    order_by: "YEAR DESC, MONTH DESC, PERIOD DESC",
+    limit: 500,
+  });
+  return [mapAgriculturePriceEvent(payload, { fetchedAt })];
+}
+
+export async function fetchHealthcareFacilities({ url, token } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: HEALTHCARE_DATASET_ID,
+    columns: ["COUNT(*) AS n"],
+    limit: 1,
+  });
+  return [mapHealthcareFacilityEvent(payload, { fetchedAt })];
+}
+
+export async function fetchFireStatistics({ url, token } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const payload = await queryTwinkleRows({
+    url,
+    token,
+    dataset_id: FIRE_DATASET_ID,
+    limit: 100,
+  });
+  return [mapFireStatisticsEvent(payload, { fetchedAt })];
 }

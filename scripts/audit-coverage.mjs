@@ -7,8 +7,8 @@ const OFFICIAL_TYPES = new Set(["gov-open-data", "cwa"]);
 const SOURCE_KINDS = ["official", "news"];
 const TAIWAN_COUNTIES = [...new Set(Object.keys(COUNTY_CENTER).map((name) => name.replace(/^台/, "臺")))];
 const EXPECTED_DOMESTIC_CATEGORIES = [
-  "治安", "社會", "反詐", "災防", "國防", "海事", "採購", "協尋",
-  "交通", "食安", "衛生", "環境", "資安", "能源", "水情",
+  "治安", "社會", "反詐", "災防", "國防", "海事", "司法判決", "消防", "採購", "協尋",
+  "交通", "食安", "衛生", "環境", "資安", "能源", "水情", "經濟", "農業",
 ];
 
 function taiwanDay(value) {
