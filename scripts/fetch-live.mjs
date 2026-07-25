@@ -651,7 +651,7 @@ export async function run() {
       previousHistory,
       previousLedger,
       minimumNewPerHour: policeMinimum.minimumNewPerHour,
-      retentionDays: Number(process.env.POLICE_HISTORY_RETENTION_DAYS) || 14,
+      retentionDays: Number(process.env.POLICE_HISTORY_RETENTION_DAYS) || 7,
     });
     policeHourly.history.calibration = policeMinimum;
     status.police.newMinimumPerHour = policeMinimum.minimumNewPerHour;
