@@ -1319,7 +1319,12 @@ export function mapLegislatureBillsEvent(payload, { fetchedAt = new Date().toISO
   const latestProgress = latestIsoDate(rows, ["最新進度日期", "提案日期", "資料抓取時間"]);
   const statusCounts = new Map();
   for (const row of rows) {
-    const status = String(row?.議案狀態 || row?.狀態 || "未標示").trim() || "未標示";
+    const rawStatus = String(row?.議案狀態 || row?.狀態 || "").replace(/\s+/g, " ").trim();
+    // ponytail: 上游附件欄位偶爾造成欄位位移；寧缺毋濫，不把 URL／HTML 片段當狀態。
+    const status = rawStatus && rawStatus.length <= 40 && !/https?:\/\/|HTML結果|網址|\}\]|\}\s*$/.test(rawStatus)
+      ? rawStatus
+      : "";
+    if (!status) continue;
     statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
   }
   const statusText = [...statusCounts.entries()]

@@ -136,6 +136,7 @@ describe("補充領域官方資料 mapper", () => {
       rows: [
         ["A1", "教育法案", "2026-07-20", "排入院會"],
         ["A2", "預算案", "2026-07-21", "審查中"],
+        ["A3", "附件欄位位移", "2026-07-21", "HTML結果 https://example.test/bill/html"],
       ],
     }, { fetchedAt: "2026-07-25T00:00:00.000Z" });
 
@@ -145,7 +146,8 @@ describe("補充領域官方資料 mapper", () => {
       timestamp: "2026-07-21T00:00:00.000Z",
       source: { datasetId: "ly-bills", latestDataDate: "2026-07-21", retentionPolicy: "reference" },
     });
-    expect(event.summary).toContain("2 筆議案");
+    expect(event.summary).toContain("3 筆議案");
+    expect(event.summary).not.toContain("HTML結果");
   });
 
   it("把觀光署五大客源群彙整為觀光參考快照", () => {
