@@ -41,8 +41,8 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
   const limits = { ...DEFAULT_THRESHOLDS, ...(thresholds || {}) };
   const sources = Array.isArray(provenance?.sources) ? provenance.sources : [];
   const staleStructured = [];
-  // 本輪抓取模式未涵蓋的來源（skippedThisRun）陳舊時只警告不 gate：
-  // 否則停擺 >48h 後，hourly 會被 daily-only 來源（pcc/tfda）永久擋住無法自癒。
+  // 本輪抓取失敗或未涵蓋的來源只警告不 gate，讓舊快照仍可部署。
+  const staleFetchFailures = [];
   const staleSkippedThisRun = [];
   let structuredChecked = 0;
   const unconfiguredStructured = [];
@@ -69,7 +69,11 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
         continue;
       }
       structuredChecked++;
-      const staleBucket = source.skippedThisRun === true ? staleSkippedThisRun : staleStructured;
+      const staleBucket = source.skippedThisRun === true
+        ? staleSkippedThisRun
+        : source.stale === true
+          ? staleFetchFailures
+          : staleStructured;
       const threshold = numericThreshold(source.maxAgeHours, numericThreshold(limits[type], DEFAULT_THRESHOLDS[type]));
       if (!Number.isFinite(ageHours)) {
         staleBucket.push({
@@ -106,6 +110,7 @@ export function auditSourceFreshness(provenance, { now, thresholds } = {}) {
     structuredChecked,
     unconfiguredStructured,
     staleStructured,
+    staleFetchFailures,
     staleSkippedThisRun,
     newsStaleCount,
     worst,
@@ -138,6 +143,13 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
   if (result.staleSkippedThisRun.length) {
     console.log("  本輪未涵蓋的陳舊來源（不 gate，待涵蓋該來源的排程自癒）：");
     for (const row of result.staleSkippedThisRun) {
+      const detail = row.reason === "no-success-timestamp" ? "無可信的成功時間" : `age=${row.ageHours.toFixed(1)}h > ${row.threshold}h`;
+      console.log(`  - ${row.name} (${row.type}/${row.category || "未分類"}) ${detail}`);
+    }
+  }
+  if (result.staleFetchFailures.length) {
+    console.log("  本輪抓取失敗的來源（不 gate，沿用舊快照）：");
+    for (const row of result.staleFetchFailures) {
       const detail = row.reason === "no-success-timestamp" ? "無可信的成功時間" : `age=${row.ageHours.toFixed(1)}h > ${row.threshold}h`;
       console.log(`  - ${row.name} (${row.type}/${row.category || "未分類"}) ${detail}`);
     }

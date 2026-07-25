@@ -97,7 +97,7 @@ describe("auditSourceFreshness（來源新鮮度看門狗）", () => {
     });
   });
 
-  it("結構化來源本輪失敗且從未成功時，不得把本輪 fetchedAt 當成功時間", () => {
+  it("結構化來源本輪抓取失敗且從未成功時，只警告不 gate", () => {
     const r = auditSourceFreshness(
       provenance([
         {
@@ -105,29 +105,6 @@ describe("auditSourceFreshness（來源新鮮度看門狗）", () => {
           type: "gov-open-data",
           category: "交通",
           fetchedAt: generatedAt,
-          stale: true,
-        },
-      ]),
-      { now },
-    );
-
-    expect(r.ok).toBe(false);
-    expect(r.staleStructured[0]).toMatchObject({
-      name: "警政署 交通事故",
-      ageHours: null,
-      reason: "no-success-timestamp",
-    });
-  });
-
-  it("結構化來源本輪失敗但有近期成功快照時，仍依 lastSuccessAt 的寬限門檻判定", () => {
-    const r = auditSourceFreshness(
-      provenance([
-        {
-          name: "警政署 交通事故",
-          type: "gov-open-data",
-          category: "交通",
-          fetchedAt: generatedAt,
-          lastSuccessAt: "2026-07-04T12:00:00.000Z",
           stale: true,
         },
       ]),
@@ -135,6 +112,36 @@ describe("auditSourceFreshness（來源新鮮度看門狗）", () => {
     );
 
     expect(r.ok).toBe(true);
+    expect(r.staleStructured).toHaveLength(0);
+    expect(r.staleFetchFailures[0]).toMatchObject({
+      name: "警政署 交通事故",
+      ageHours: null,
+      reason: "no-success-timestamp",
+    });
+  });
+
+  it("結構化來源本輪抓取失敗且快照已過期時，只警告不 gate", () => {
+    const r = auditSourceFreshness(
+      provenance([
+        {
+          name: "警政署 交通事故",
+          type: "gov-open-data",
+          category: "交通",
+          fetchedAt: generatedAt,
+          lastSuccessAt: "2026-06-30T00:00:00.000Z",
+          stale: true,
+        },
+      ]),
+      { now },
+    );
+
+    expect(r.ok).toBe(true);
+    expect(r.staleStructured).toHaveLength(0);
+    expect(r.staleFetchFailures[0]).toMatchObject({
+      name: "警政署 交通事故",
+      ageHours: 120,
+      threshold: 48,
+    });
   });
 
   it("來源可依官方更新頻率覆寫預設門檻", () => {
@@ -179,6 +186,7 @@ describe("auditSourceFreshness（來源新鮮度看門狗）", () => {
           type: "gov-open-data",
           category: "採購",
           lastSuccessAt: "2026-06-30T00:00:00.000Z",
+          stale: true,
           skippedThisRun: true,
         },
         {
@@ -204,7 +212,7 @@ describe("auditSourceFreshness（來源新鮮度看門狗）", () => {
     ]);
   });
 
-  it("本輪有嘗試的陳舊來源照常 gate，不受 skippedThisRun 機制影響", () => {
+  it("來源已過期但未標示本輪抓取失敗時仍 gate", () => {
     const r = auditSourceFreshness(
       provenance([
         {
