@@ -48,6 +48,7 @@
 - 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver+moenvAir+parkingHsinchu+parkingTaoyuan+economy 增量
 - 每日 18:30 UTC（台北 02:30）：全來源 exclusive 重建（另含 pcc/judicial/cdc/tfda、農業價格、健保院所、國會、觀光、人口、教育、金融與勞動參考層）
 - 手動 `workflow_dispatch`：`mode` 選來源組合；`renorm_intl=true` 忽略國際快取全量重評（緊急用；平時靠 `INTL_RECALIBRATE_DAYS` 3 天生命週期自然換血）
+- Cloudflare 發佈後會再讀取 canonical `provenance.json`／`domain-coverage.json`；refresh 模式另強制確認金融 `11598` 與勞動 `123349` 已落地，避免部署成功但資料仍是舊快照。
 
 ## 本地開發
 

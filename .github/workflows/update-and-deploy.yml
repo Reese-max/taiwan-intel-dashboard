@@ -176,6 +176,12 @@ jobs:
           accountId: "03d40efd3c60181edea80af8d927ddc1"
           command: pages deploy dist --project-name=taiwan-intel-dashboard --branch=main
 
+      - name: 部署後線上 smoke
+        env:
+          DEPLOY_BASE_URL: https://taiwan-intel-dashboard.pages.dev
+          DEPLOY_FETCH_ARGS: ${{ steps.mode.outputs.args }}
+        run: node scripts/smoke-deployed.mjs
+
       - name: 失敗/取消通知（Telegram；未設 secrets 靜默跳過）
         if: failure() || cancelled()
         env:
