@@ -109,6 +109,19 @@ jobs:
           ALLOW_STALE_CWA: ${{ vars.ALLOW_STALE_CWA }}
         run: node scripts/assert-pipeline-sources.mjs ${{ steps.mode.outputs.assert_args }}
 
+      # RSS 單一來源失敗仍由上游 gate 採 fail-soft；此處只檢查正規化後的輸出品質。
+      - name: 驗證國際正規化結果門檻
+        if: contains(steps.mode.outputs.args, 'rss') && steps.mode.outputs.international_feed_tier == 'expanded'
+        run: >-
+          node scripts/assert-pipeline-sources.mjs
+          ${{ steps.mode.outputs.assert_args }}
+          --international-output=public/data/international.json
+          --international-topic="${{ steps.mode.outputs.international_feed_topic }}"
+          --min-official-police-events=20
+          --min-official-police-sources=7
+          --min-general-events=50
+          --min-general-sources=10
+
       - name: 檢查新聞來源實際貢獻
         if: contains(steps.mode.outputs.args, 'twnews')
         run: npm run audit:news-source-contribution
