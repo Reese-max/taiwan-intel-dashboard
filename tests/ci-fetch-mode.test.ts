@@ -12,14 +12,14 @@ describe("resolveFetchMode", () => {
   it("maps hourly cron to CWA + police + missing + Taiwan news + international RSS", () => {
     const mode = resolveFetchMode({ schedule: "5 * * * *" });
     expect(mode.label).toBe("hourly");
-    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy");
+    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy");
     expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,police,twnews --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("maps daily refresh cron to full exclusive refresh including CWA and international RSS", () => {
     const mode = resolveFetchMode({ schedule: "30 18 * * *" });
     expect(mode.label).toBe("refresh");
-    expect(mode.args).toBe("--sources=cwa,pcc,police,missing,twnews,rss,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,legislature,tourismStat,socialPopulation,education,financeDerivatives,laborStats --exclusive");
+    expect(mode.args).toBe("--sources=cwa,pcc,police,missing,twnews,rss,gdelt,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,legislature,tourismStat,socialPopulation,education,financeDerivatives,laborStats --exclusive");
     expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,pcc,police,judicial,twnews --min-international-feeds=10 --min-international-raw=50");
   });
 
@@ -40,7 +40,7 @@ describe("resolveFetchMode", () => {
   it("supports a manual international-only RSS mode with feed diversity assertions", () => {
     const mode = resolveFetchMode({ mode: "international" });
     expect(mode.label).toBe("international");
-    expect(mode.args).toBe("--sources=rss");
+    expect(mode.args).toBe("--sources=rss,gdelt");
     expect(mode.assertArgs).toBe("--require=international --min-international-feeds=10 --min-international-raw=50");
     expect(mode.internationalFeedTier).toBe("expanded");
     expect(mode.internationalFeedTopic).toBe("all");
@@ -63,7 +63,7 @@ describe("resolveFetchMode", () => {
   it("supports manual international topic modes with topic-specific assertions", () => {
     const cyber = resolveFetchMode({ mode: "international-cyber" });
     expect(cyber.label).toBe("international-cyber");
-    expect(cyber.args).toBe("--sources=rss");
+    expect(cyber.args).toBe("--sources=rss,gdelt");
     expect(cyber.internationalFeedTier).toBe("expanded");
     expect(cyber.internationalFeedTopic).toBe("cyber");
     expect(cyber.assertArgs).toBe("--require=international --min-international-feeds=4 --min-international-raw=10");
@@ -87,13 +87,13 @@ describe("resolveFetchMode", () => {
   it("accepts rss as an alias for international-only mode", () => {
     const mode = resolveFetchMode({ mode: "rss" });
     expect(mode.label).toBe("international");
-    expect(mode.args).toBe("--sources=rss");
+    expect(mode.args).toBe("--sources=rss,gdelt");
   });
 
   it("supports a manual CWA + international smoke mode", () => {
     const mode = resolveFetchMode({ mode: "cwa-international" });
     expect(mode.label).toBe("cwa-international");
-    expect(mode.args).toBe("--sources=cwa,rss");
+    expect(mode.args).toBe("--sources=cwa,rss,gdelt");
     expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50");
   });
 
@@ -128,7 +128,7 @@ describe("resolveFetchMode", () => {
   it("defaults to hourly mode when mode is empty and schedule is hourly", () => {
     const mode = resolveFetchMode({ mode: "", schedule: "5 * * * *" });
     expect(mode.label).toBe("hourly");
-    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy");
+    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy");
   });
 
   it("defaults to hourly mode when only schedule is missing", () => {
@@ -184,7 +184,7 @@ describe("resolveFetchMode", () => {
       expect(readFileSync(out, "utf8")).toBe(
         [
           "label=international",
-          "args=--sources=rss",
+          "args=--sources=rss,gdelt",
           "assert_args=--require=international --min-international-feeds=10 --min-international-raw=50",
           "international_feed_tier=expanded",
           "international_feed_topic=all",

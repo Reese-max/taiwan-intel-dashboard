@@ -30,6 +30,10 @@ export const INTERNATIONAL_FEEDS = [
   { label: "UK Border Force", url: "https://www.gov.uk/government/organisations/border-force.atom", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
   { label: "New Zealand Police News", url: "https://www.police.govt.nz/rss/news", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
   { label: "New Zealand Police Alerts", url: "https://www.police.govt.nz/rss/alerts", hint: "協尋", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "Swedish Police National News", url: "https://polisen.se/aktuellt/rss/hela-landet/nyheter-rss---nationella/", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "Swedish Police National Press", url: "https://polisen.se/aktuellt/rss/hela-landet/pressmeddelanden-hela-landet/", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "Netherlands Police News", url: "https://rss.politie.nl/rss/algemeen/nb/alle-nieuwsberichten.xml", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "Netherlands Police Investigations", url: "https://rss.politie.nl/rss/algemeen/ob/alle-gezochtberichten.xml", hint: "協尋", tier: "expanded", topic: "police", topics: ["police"], official: true },
 
   // ══ 擴充輪（2026-06-27 經 _audit-candidates 實測 ≥3 則、去重後保留；國際池 21 → 51）══
   // ── 地緣政治／國際時事（直連 RSS，穩定）──

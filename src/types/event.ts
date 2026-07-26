@@ -2,7 +2,7 @@ export type Scope = "domestic" | "international";
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 export type NewsAuthority = "official" | "media";
 export type SourceType = "gov-open-data" | "news-rss" | "cwa" | "manual";
-export type IngestMethod = "direct-rss" | "google-news-rss" | "gov-open-data" | "manual";
+export type IngestMethod = "direct-rss" | "google-news-rss" | "gdelt-doc" | "gov-open-data" | "manual";
 export type SourceConfidence = "verified" | "aggregated" | "inferred";
 export type LocationPrecision = "exact" | "address" | "district" | "city" | "country" | "global" | "unknown";
 

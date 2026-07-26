@@ -267,29 +267,33 @@ export function deriveNewsProvenance(item, { fetchedAt, model } = {}) {
   const viaGoogle = isGoogleNewsUrl(item.sourceUrl) || isGoogleNewsUrl(item.link);
   const queryLabel = feedQueryLabel(item.source);
   const publisherName = item.publisherName || (viaGoogle ? undefined : item.source);
+  const sourceName = item.sourceName || (viaGoogle ? "Google News 聚合" : item.source);
+  const aggregatorName = item.aggregatorName || (viaGoogle ? "Google News" : undefined);
+  const aggregatorUrl = item.aggregatorUrl || (viaGoogle ? item.sourceUrl : undefined);
+  const sourceConfidence = item.sourceConfidence || (viaGoogle ? "aggregated" : "verified");
   const normalization = model ? ` → LLM(${model}) 正規化` : "";
 
   return {
-    name: publisherName || (viaGoogle ? "Google News 聚合" : item.source),
+    name: publisherName || sourceName,
     type: "news-rss",
-    datasetId: "tw-news",
+    datasetId: item.datasetId || "tw-news",
     recordRef: item.link,
     url: item.link,
     fetchedAt,
     publisherName,
     publisherUrl: item.publisherUrl,
-    aggregatorName: viaGoogle ? "Google News" : undefined,
-    aggregatorUrl: viaGoogle ? item.sourceUrl : undefined,
-    ingestMethod: viaGoogle ? "google-news-rss" : "direct-rss",
-    sourceConfidence: viaGoogle ? "aggregated" : "verified",
-    feedLabel: item.source,
+    aggregatorName,
+    aggregatorUrl,
+    ingestMethod: item.ingestMethod || (viaGoogle ? "google-news-rss" : "direct-rss"),
+    sourceConfidence,
+    feedLabel: item.feedLabel || item.source,
     authority: item.official === true ? "official" : undefined,
     jurisdiction: item.jurisdiction,
     advisory: item.advisory === true || undefined,
     retentionPolicy: item.advisory === true ? "advisory" : undefined,
-    query: queryLabel
+    query: item.query || (queryLabel
       ? `${queryLabel}｜RSS ${item.sourceUrl || ""}${normalization}`
-      : `RSS ${item.sourceUrl || ""}${normalization}`,
+      : `RSS ${item.sourceUrl || ""}${normalization}`),
   };
 }
 
@@ -428,6 +432,8 @@ export async function fetchRssItems({ perFeed = 5, timeoutMs = 12000, feeds = FE
       label: r.label,
       ok: r.ok,
       count: r.items.length,
+      hint: feed?.hint,
+      topic: feed?.topic,
       advisory: r.advisory,
       error: r.error,
       fallback: r.fallback,

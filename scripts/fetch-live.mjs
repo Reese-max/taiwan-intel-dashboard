@@ -48,6 +48,7 @@ import {
   POLICE_TAIPEI_IDS,
 } from "./lib/fetch-police.mjs";
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
+import { fetchGdelt } from "./lib/fetch-gdelt.mjs";
 import { googleNewsHealth } from "./lib/gn-health.mjs";
 import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
@@ -235,7 +236,7 @@ export async function run() {
   // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
   // 未選的來源會沿用上一版快照（carry-over）。
   const sourcesArg = process.argv.find((a) => a.startsWith("--sources="))?.slice("--sources=".length);
-  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,legislature,tourismStat,socialPopulation,education,financeDerivatives,laborStats").split(",").map((s) => s.trim());
+  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,gdelt,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,legislature,tourismStat,socialPopulation,education,financeDerivatives,laborStats").split(",").map((s) => s.trim());
   const want = (s) => SOURCES.includes(s);
   // 本機既有工具使用 TWINKLE_HUB_TOKEN；CI 使用 TWINKLE_MCP_TOKEN。接受兩者可避免同一服務憑證漂移。
   const twinkleToken = process.env.TWINKLE_HUB_TOKEN || process.env.TWINKLE_MCP_TOKEN;
@@ -362,14 +363,50 @@ export async function run() {
         feeds: intlFeeds,
         concurrency: intlCfg.concurrency,
       });
-      feedStatus = rss.feedStatus;
-      const okFeeds = feedStatus.filter((f) => f.ok && f.count).length;
+      const rssFeedStatus = rss.feedStatus;
+      const rssOkFeeds = rssFeedStatus.filter((f) => f.ok && f.count).length;
       // 全 feed 失敗＝來源級故障，不可標 ok:true count:0（twnews/missing/police 同族修正）。
-      if (intlFeeds.length > 0 && okFeeds === 0) {
+      if (intlFeeds.length > 0 && rssOkFeeds === 0) {
         throw new Error(`國際 RSS 全數失敗（0/${intlFeeds.length} 來源有回）`);
       }
+
+      let gdelt = { ok: false, skipped: true, label: "GDELT Global News", items: [] };
+      if (want("gdelt") && (intlCfg.topic === "all" || intlCfg.topic === "general")) {
+        try {
+          gdelt = await fetchGdelt();
+          status.gdelt = {
+            ok: true,
+            count: gdelt.items.length,
+            query: gdelt.query,
+            timespan: gdelt.timespan,
+            maxRecords: gdelt.maxRecords,
+            fetchedAt: gdelt.fetchedAt,
+            requestUrl: gdelt.requestUrl,
+          };
+          console.log(`GDELT：${gdelt.items.length} 則原文`);
+        } catch (e) {
+          // GDELT 是補充訊號；API 限流或暫時失敗只告警，RSS 主線照常更新。
+          status.gdelt = { ok: false, error: e.message, label: "GDELT Global News" };
+          console.warn(`GDELT 失敗（補充來源，繼續部署）：${e.message}`);
+        }
+      } else {
+        status.gdelt = { skipped: true, reason: want("gdelt") ? `topic=${intlCfg.topic}` : "未選取" };
+      }
+
+      const rawItems = [...rss.items, ...(gdelt.ok ? gdelt.items : [])];
+      const gdeltFeedStatus = gdelt.ok || status.gdelt?.ok === false
+        ? [{
+            label: "GDELT Global News",
+            ok: gdelt.ok === true,
+            count: gdelt.ok ? gdelt.items.length : 0,
+            error: status.gdelt?.error,
+            method: "gdelt-doc",
+          }]
+        : [];
+      feedStatus = [...rssFeedStatus, ...gdeltFeedStatus];
+      const okFeeds = feedStatus.filter((f) => f.ok && f.count).length;
       console.log(
-        `RSS：${rss.items.length} 則原文（${okFeeds}/${intlFeeds.length} 來源有回；${feedStatus
+        `國際原文：${rawItems.length} 則（${okFeeds}/${feedStatus.length} 來源有回；${feedStatus
           .map((f) => `${f.label}:${f.ok ? f.count : "X"}`)
           .join(" ")}）`,
       );
@@ -379,21 +416,28 @@ export async function run() {
         process.env.INTL_RENORM_ALL === "true"
           ? new Map()
           : new Map(readOld("international.json").map((e) => [e.id, e]));
-      intl = await normalizeInternational(rss.items, { max: intlCfg.maxEvents, priorById: priorIntl });
+      intl = await normalizeInternational(rawItems, { max: intlCfg.maxEvents, priorById: priorIntl });
+      const normalizedByFeed = new Map();
+      for (const event of intl) {
+        const label = event.source?.feedLabel || event.source?.name;
+        if (label) normalizedByFeed.set(label, (normalizedByFeed.get(label) || 0) + 1);
+      }
       status.international = {
         ok: true,
         // 全批失敗（有新項卻零 LLM 產出）＝管線級故障：本輪只剩快取重用，需告警追查。
         normalizeFailed: intlNormalizeFailed(),
         ...(lastIntlNormalizeSkippedBatches > 0 ? { normalizeSkippedBatches: lastIntlNormalizeSkippedBatches } : {}),
         count: intl.length,
-        rawCount: rss.items.length,
+        rawCount: rawItems.length,
+        rssRawCount: rss.items.length,
+        gdeltRawCount: gdelt.ok ? gdelt.items.length : 0,
         okFeeds,
-        totalFeeds: intlFeeds.length,
+        totalFeeds: feedStatus.length,
         tier: intlCfg.tier,
         topic: intlCfg.topic,
         perFeed: intlCfg.perFeed,
         maxEvents: intlCfg.maxEvents,
-        feeds: feedStatus,
+        feeds: feedStatus.map((feed) => ({ ...feed, normalizedCount: normalizedByFeed.get(feed.label) || 0 })),
       };
       console.log(`國際正規化：${intl.length} 筆`);
     } catch (e) {
@@ -1136,37 +1180,47 @@ export async function run() {
       }),
     });
   }
-  if (status.international?.ok) {
-    for (const f of feedStatus.filter((x) => x.ok && x.count)) {
-      const c = intlEvents.filter((e) => e.source?.feedLabel === f.label || e.source?.name === f.label).length;
-      if (!c) continue;
-      sources.push({
-        name: `國際新聞：${f.label}`,
-        type: "news-rss",
-        scope: "international",
-        count: c,
-        fetchedAt: nowIso,
-        authority: f.official === true ? "official" : undefined,
-        query: `RSS ${f.label} → LLM(${respondedModel()}) 正規化`,
-      });
-    }
-  } else {
-    // carry-over：由舊國際快照還原各來源（標 stale）
+  const internationalFeedLabels = new Set();
+  for (const f of feedStatus) {
+    const name = `國際新聞：${f.label}`;
+    internationalFeedLabels.add(name);
+    const events = intlEvents.filter((e) => e.source?.feedLabel === f.label || e.source?.name === f.label);
+    const sourceStatus = f.ok === true ? { ok: true } : { ok: false, error: f.error || "來源抓取失敗" };
+    sources.push({
+      name,
+      type: "news-rss",
+      scope: "international",
+      category: f.hint || (f.method === "gdelt-doc" ? "地緣政治" : undefined),
+      count: events.length,
+      authority: f.official === true ? "official" : undefined,
+      query: f.method === "gdelt-doc"
+        ? `GDELT DOC ${status.gdelt?.query || ""} → LLM(${respondedModel()}) 正規化`
+        : `RSS ${f.label} → LLM(${respondedModel()}) 正規化`,
+      ...sourceHealthFields({ sourceStatus, events, name }),
+    });
+  }
+  if (!status.international?.ok) {
+    // carry-over：由舊國際快照還原未出現在本輪 feedStatus 的來源（標 stale）。
     const byName = {};
     for (const e of intlEvents) {
       if (e.source?.datasetId === "mofa-travel-warning") continue;
-      byName[e.source.name] = (byName[e.source.name] || 0) + 1;
+      const name = `國際新聞：${e.source?.feedLabel || e.source?.name}`;
+      if (internationalFeedLabels.has(name)) continue;
+      byName[name] = (byName[name] || 0) + 1;
     }
-    for (const [name, count] of Object.entries(byName))
+    for (const [name, count] of Object.entries(byName)) {
+      const event = intlEvents.find((e) => `國際新聞：${e.source?.feedLabel || e.source?.name}` === name);
       sources.push({
-        name: `國際新聞：${name}`,
+        name,
         type: "news-rss",
         scope: "international",
         count,
-        fetchedAt: intlEvents.find((e) => e.source.name === name)?.source?.fetchedAt || nowIso,
+        fetchedAt: event?.source?.fetchedAt || nowIso,
+        lastSuccessAt: event?.source?.fetchedAt || nowIso,
         stale: true,
-        query: `RSS ${name} → LLM(${respondedModel()}) 正規化`,
+        query: `RSS ${name.slice("國際新聞：".length)} → LLM(${respondedModel()}) 正規化`,
       });
+    }
   }
 
   writeJson("coverage.json", buildCoverageMatrix({

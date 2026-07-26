@@ -273,7 +273,7 @@ ${listing}
       groundedRatio: enrichment.groundedRatio,
       source: {
         ...deriveNewsProvenance(it, { fetchedAt, model }),
-        datasetId: undefined,
+        ...(it.datasetId ? { datasetId: it.datasetId } : {}),
       },
     });
   }
