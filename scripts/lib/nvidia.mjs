@@ -8,7 +8,7 @@
 import { countyCoordFromAddr } from "./coords.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
 import { selectDiverseByCategory } from "./intl-accumulate.mjs";
-import { categoryFromItem } from "./news-bulk.mjs";
+import { categoryFromItem, riskFromTitle } from "./news-bulk.mjs";
 import { titleKey } from "./title-key.mjs";
 
 import { chat, extractJson, llmModel, respondedModel } from "./llm-client.mjs";
@@ -182,6 +182,91 @@ function inferredLocationPrecision(scope, region, lat, lng) {
   if (scope === "domestic") return region && region !== "全國" ? "city" : "country";
   if (String(region || "").includes("全球")) return "global";
   return lat != null && lng != null ? "country" : "unknown";
+}
+
+// 官方警政 feed 不應被一般國際新聞的 LLM 取樣策略洗掉：每個有回資料的來源至少保留 3 則，
+// 缺少 LLM 輸出的項目以原文結構化落地，保留可追溯性並讓官方來源多樣性可被 gate 驗證。
+const OFFICIAL_POLICE_FLOOR_PER_FEED = 3;
+const OFFICIAL_POLICE_CATEGORIES = new Set(["治安", "反詐", "協尋"]);
+
+function isOfficialPoliceItem(item) {
+  const topic = String(item?.topic || "").trim().toLowerCase();
+  const hint = String(item?.hint || "").trim();
+  return item?.official === true && (topic === "police" || OFFICIAL_POLICE_CATEGORIES.has(hint));
+}
+
+function officialPoliceCategory(item) {
+  const hint = String(item?.hint || "").trim();
+  return OFFICIAL_POLICE_CATEGORIES.has(hint) ? hint : "治安";
+}
+
+function fallbackOfficialPoliceEvent(item) {
+  const title = String(item?.title || "").trim() || `${item?.source || "官方來源"} 警政事件`;
+  const summary = String(item?.description || "").replace(/\s+/g, " ").trim().slice(0, 400) || title;
+  const fetchedAt = new Date().toISOString();
+  const id = eventIdFor("international", item?.link) || `intl-${slug(`${item?.source || "official"}:${title}`)}`;
+  const category = officialPoliceCategory(item);
+  return {
+    id,
+    title,
+    region: "國際",
+    locationPrecision: "unknown",
+    locationNote: "官方 RSS 未提供可驗證的事件座標",
+    timestamp: toIso(item?.pubDate),
+    category,
+    categoryBasis: "official-feed-hint",
+    scope: "international",
+    riskLevel: riskFromTitle(title, category),
+    summary,
+    twRelevance: 0,
+    sentiment: "neutral",
+    groundedRatio: 1,
+    source: {
+      ...deriveNewsProvenance(item, { fetchedAt }),
+      normalizationMethod: "official-police-fallback",
+    },
+  };
+}
+
+function coerceOfficialPoliceEvent(event, item) {
+  if (!event || !isOfficialPoliceItem(item)) return event;
+  return {
+    ...event,
+    category: officialPoliceCategory(item),
+    categoryBasis: "official-feed-hint",
+    source: {
+      ...(event.source || deriveNewsProvenance(item, { fetchedAt: new Date().toISOString() })),
+      name: event.source?.name || item.source,
+      feedLabel: item.source,
+      authority: "official",
+    },
+  };
+}
+
+function selectInternationalWithOfficialPoliceFloor(events, officialItems, max) {
+  const byId = new Map((events || []).filter((event) => event?.id).map((event) => [event.id, event]));
+  const floor = [];
+  const floorIds = new Set();
+  const perFeed = new Map();
+
+  for (const item of officialItems || []) {
+    const feed = String(item?.source || "").trim();
+    if (!feed || (perFeed.get(feed) || 0) >= OFFICIAL_POLICE_FLOOR_PER_FEED) continue;
+    const id = eventIdFor("international", item?.link);
+    let event = id ? byId.get(id) : undefined;
+    event = event ? coerceOfficialPoliceEvent(event, item) : fallbackOfficialPoliceEvent(item);
+    if (!event?.id || floorIds.has(event.id)) continue;
+    byId.set(event.id, event);
+    floor.push(event);
+    floorIds.add(event.id);
+    perFeed.set(feed, (perFeed.get(feed) || 0) + 1);
+  }
+
+  const selected = selectDiverseByCategory([...byId.values()], max);
+  const required = floor.slice(0, max);
+  if (required.length >= max) return required;
+  const requiredIds = new Set(required.map((event) => event.id));
+  return [...required, ...selected.filter((event) => !requiredIds.has(event.id)).slice(0, Math.max(0, max - required.length))];
 }
 
 // 單批國際正規化（≤ batchSize 則）。idx 對應到傳入的 batchItems。
@@ -371,10 +456,18 @@ export async function normalizeInternational(
   const deduped = [];
   for (const it of items) {
     const k = titleKey(it.title);
-    if (!k || seenTitle.has(k)) continue;
-    seenTitle.add(k);
+    // 官方警政跨機關轉載同一事件時，保留各來源的一手紀錄；一般新聞仍沿用標題去重。
+    const dedupeKey = isOfficialPoliceItem(it) ? `${k}|official-police|${it.source || ""}` : k;
+    if (!k || seenTitle.has(dedupeKey)) continue;
+    seenTitle.add(dedupeKey);
     deduped.push(it);
   }
+  const itemById = new Map(
+    deduped
+      .map((item) => [eventIdFor("international", item.link), item])
+      .filter(([id]) => Boolean(id)),
+  );
+  const officialPoliceItems = deduped.filter(isOfficialPoliceItem);
   // 跨輪快取：命中前一輪者重用、跳過 LLM；只有新項才送 LLM。
   // 評級生命週期：快取超過 INTL_RECALIBRATE_DAYS（預設 3 天，0 停用）者重評。
   const recalDays = Number(process.env.INTL_RECALIBRATE_DAYS ?? 3);
@@ -423,16 +516,19 @@ export async function normalizeInternational(
   // 不重複降級以維持 idempotent）→ 依 id 去重 → 分主題多元挑選取前 max。
   // 不再用純風險排序截斷：那會讓 low/medium 在進累積池前被高風險洗光；
   // 最終榜單交由下游 accumulateInternational 再依主題多元挑選。
-  const calibratedFresh = llmEvents.map((e) => calibrateIntlRisk(e));
+  const calibratedFresh = llmEvents
+    .map((e) => calibrateIntlRisk(e))
+    .map((event) => coerceOfficialPoliceEvent(event, itemById.get(event?.id)));
+  const normalizedReused = reused.map((event) => coerceOfficialPoliceEvent(event, itemById.get(event?.id)));
   const seen = new Set();
   const merged = [];
-  for (const ev of [...reused, ...calibratedFresh]) {
+  for (const ev of [...normalizedReused, ...calibratedFresh]) {
     if (!ev || seen.has(ev.id)) continue;
     seen.add(ev.id);
     merged.push(ev);
   }
   // 高風險事件二次深度分析（補 implications；env INTL_DEEP_ANALYSIS=0 可關，失敗 graceful）。
-  return await deepAnalyzeHighRisk(selectDiverseByCategory(merged, max));
+  return await deepAnalyzeHighRisk(selectInternationalWithOfficialPoliceFloor(merged, officialPoliceItems, max));
 }
 
 // 台灣社會/犯罪新聞分類（domestic）

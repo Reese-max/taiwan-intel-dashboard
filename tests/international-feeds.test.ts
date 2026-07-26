@@ -86,8 +86,12 @@ describe("international feed registry", () => {
       "Swedish Police National Press",
       "Netherlands Police News",
       "Netherlands Police Investigations",
+      "RCMP All News",
+      "Queensland Police News",
+      "Tasmania Police News",
+      "UK National Police Chiefs' Council",
     ]));
-    expect(feeds.length).toBeGreaterThanOrEqual(12);
+    expect(feeds.length).toBeGreaterThanOrEqual(16);
     expect(feeds.every((feed) => feed.topic === "police")).toBe(true);
     expect(feeds.every((feed) => feed.official === true)).toBe(true);
   });

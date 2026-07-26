@@ -95,6 +95,38 @@ describe("normalizeInternational 全批失敗可見性（A3）", () => {
     const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
     expect(body.messages.map((m: { content: string }) => m.content).join("\n")).toContain("治安");
   });
+
+  it("LLM 選漏時仍保留每個官方警政來源的原文事件", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const feeds = [
+      "Europol News",
+      "UK National Crime Agency",
+      "UK Serious Fraud Office",
+      "UK Crown Prosecution Service",
+      "UK Border Force",
+      "New Zealand Police News",
+      "RCMP All News",
+      "Tasmania Police News",
+    ];
+    const out = await normalizeInternational(
+      feeds.map((source, i) => ({
+        ...item(i),
+        source,
+        topic: "police",
+        hint: i === 2 ? "反詐" : "治安",
+        official: true,
+        title: `Official police update ${i}`,
+      })),
+      { max: 40, batchSize: 2, concurrency: 1 },
+    );
+
+    expect(out).toHaveLength(feeds.length);
+    expect(new Set(out.map((event: any) => event.source.feedLabel))).toEqual(new Set(feeds));
+    expect(out.every((event: any) => event.source.authority === "official")).toBe(true);
+    expect(out.every((event: any) => ["治安", "反詐", "協尋"].includes(event.category))).toBe(true);
+    expect(out.every((event: any) => event.source.normalizationMethod === "official-police-fallback")).toBe(true);
+  });
 });
 
 describe("normalizeDomesticNews 全批失敗可見性（A3）", () => {

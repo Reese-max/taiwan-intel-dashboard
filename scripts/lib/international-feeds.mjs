@@ -34,6 +34,10 @@ export const INTERNATIONAL_FEEDS = [
   { label: "Swedish Police National Press", url: "https://polisen.se/aktuellt/rss/hela-landet/pressmeddelanden-hela-landet/", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
   { label: "Netherlands Police News", url: "https://rss.politie.nl/rss/algemeen/nb/alle-nieuwsberichten.xml", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
   { label: "Netherlands Police Investigations", url: "https://rss.politie.nl/rss/algemeen/ob/alle-gezochtberichten.xml", hint: "協尋", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "RCMP All News", url: "https://rcmp.ca/en/feed-flux/news-nouvelles", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "Queensland Police News", url: "https://mypolice.qld.gov.au/feed/", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "Tasmania Police News", url: "https://www.police.tas.gov.au/feed/", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "UK National Police Chiefs' Council", url: "https://news.npcc.police.uk/feed/rss", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
 
   // ══ 擴充輪（2026-06-27 經 _audit-candidates 實測 ≥3 則、去重後保留；國際池 21 → 51）══
   // ── 地緣政治／國際時事（直連 RSS，穩定）──
