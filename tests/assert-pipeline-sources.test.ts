@@ -1,10 +1,45 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   assertInternationalFeedCoverage,
+  assertInternationalPostFetchGates,
+  summarizeInternationalPostFetch,
   assertRequiredPipelineSources,
   warnOnGnSystemicFailure,
   warnOnNormalizeFailure,
 } from "../scripts/assert-pipeline-sources.mjs";
+
+const POLICE_FEEDS = [
+  "US DOJ Press Releases",
+  "Europol News",
+  "UK National Crime Agency",
+  "UK Serious Fraud Office",
+  "UK Crown Prosecution Service",
+  "UK Border Force",
+  "New Zealand Police News",
+];
+const GENERAL_FEEDS = [
+  "BBC World",
+  "NPR World",
+  "Al Jazeera",
+  "Guardian World",
+  "DW All News",
+  "France24 English",
+  "Politico EU",
+  "Yonhap EN",
+  "The Diplomat",
+  "NHK World News",
+];
+
+function internationalEvent(feedLabel: string, category = "地緣政治", authority?: string) {
+  return { category, source: { feedLabel, ...(authority ? { authority } : {}) } };
+}
+
+function passingInternationalEvents() {
+  return [
+    ...Array.from({ length: 20 }, (_, i) => internationalEvent(POLICE_FEEDS[i % POLICE_FEEDS.length], "治安", "official")),
+    ...Array.from({ length: 50 }, (_, i) => internationalEvent(GENERAL_FEEDS[i % GENERAL_FEEDS.length])),
+  ];
+}
 
 describe("assertRequiredPipelineSources", () => {
   it("accepts required sources that are ok, including zero weather warnings", () => {
@@ -132,6 +167,51 @@ describe("assertInternationalFeedCoverage", () => {
         { minFeeds: 10, minRawItems: 50 },
       ),
     ).toThrow("International raw item count too low: 12/50");
+  });
+});
+
+describe("assertInternationalPostFetchGates", () => {
+  it("accepts the full post-fetch minimums", () => {
+    const events = passingInternationalEvents();
+    expect(summarizeInternationalPostFetch(events)).toMatchObject({
+      officialPoliceEvents: 20,
+      officialPoliceSources: 7,
+      generalEvents: 50,
+      generalSources: 10,
+    });
+    expect(() => assertInternationalPostFetchGates(events)).not.toThrow();
+  });
+
+  it("rejects insufficient official police event volume", () => {
+    const events = passingInternationalEvents().filter((event) => event.category !== "治安").concat(
+      Array.from({ length: 19 }, (_, i) => internationalEvent(POLICE_FEEDS[i % POLICE_FEEDS.length], "治安", "official")),
+    );
+    expect(() => assertInternationalPostFetchGates(events)).toThrow("official police events too low: 19/20");
+  });
+
+  it("rejects insufficient official police source diversity", () => {
+    const events = passingInternationalEvents().map((event) =>
+      event.source.authority === "official" ? { ...event, source: { ...event.source, feedLabel: POLICE_FEEDS[0] } } : event,
+    );
+    expect(() => assertInternationalPostFetchGates(events)).toThrow("official police sources too low: 1/7");
+  });
+
+  it("rejects insufficient general normalized events and sources", () => {
+    const events = passingInternationalEvents().filter((event) => !GENERAL_FEEDS.includes(event.source.feedLabel));
+    expect(() => assertInternationalPostFetchGates(events)).toThrow("general normalized events too low: 0/50");
+    expect(() => assertInternationalPostFetchGates(passingInternationalEvents(), { topic: "general", minGeneralSources: 11 })).toThrow(
+      "general sources too low: 10/11",
+    );
+  });
+
+  it("scopes topic-specific runs to their requested gate", () => {
+    const policeOnly = Array.from({ length: 20 }, (_, i) =>
+      internationalEvent(POLICE_FEEDS[i % POLICE_FEEDS.length], "治安", "official"),
+    );
+    expect(() => assertInternationalPostFetchGates(policeOnly, { topic: "police" })).not.toThrow();
+    expect(() => assertInternationalPostFetchGates(policeOnly, { topic: "general" })).toThrow(
+      "general normalized events too low: 0/50",
+    );
   });
 });
 
