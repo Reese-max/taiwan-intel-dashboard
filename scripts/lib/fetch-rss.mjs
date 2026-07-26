@@ -260,7 +260,7 @@ function isOfficialFeed(feed) {
   } catch {
     // Feed URL 仍可用原字串判斷；不因不完整 percent encoding 中斷抓取。
   }
-  return feed?.advisory === true || /\.gov\.(?:tw|taipei)(?:[\s/?#:]|$)/i.test(decodedUrls);
+  return feed?.official === true || feed?.advisory === true || /\.gov\.(?:tw|taipei)(?:[\s/?#:]|$)/i.test(decodedUrls);
 }
 
 export function deriveNewsProvenance(item, { fetchedAt, model } = {}) {
@@ -302,7 +302,7 @@ function parseFeed(xml) {
       title: pick(b, ["title"]),
       link: pickLink(b),
       description: pick(b, ["description", "summary", "content"]),
-      pubDate: pick(b, ["pubDate", "updated", "published"]),
+      pubDate: pick(b, ["pubDate", "updated", "published", "dc:date", "date"]),
       publisherName: sourceMatch ? decode(sourceMatch[2]) : undefined,
       publisherUrl: sourceMatch?.[1],
     });
@@ -433,6 +433,7 @@ export async function fetchRssItems({ perFeed = 5, timeoutMs = 12000, feeds = FE
       fallback: r.fallback,
       primaryError: r.primaryError,
       gn: gn || undefined,
+      official: feed?.official === true || undefined,
     };
   });
   return { items, feedStatus };

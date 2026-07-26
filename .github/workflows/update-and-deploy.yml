@@ -12,7 +12,7 @@ on:
         description: "hourly（含官方來源與補充領域）/ cwa / international-* / cwa-international / twnews / daily / refresh"
         default: hourly
         type: choice
-        options: [hourly, cwa, international, international-expanded, international-core, international-general, international-cyber, international-disaster, international-health, international-humanitarian, international-finance, cwa-international, twnews, daily, refresh, police]
+        options: [hourly, cwa, international, international-expanded, international-core, international-general, international-police, international-cyber, international-disaster, international-health, international-humanitarian, international-finance, cwa-international, twnews, daily, refresh, police]
       renorm_intl:
         description: "忽略國際快取、全部重新正規化（一次性，用於套用新風險校準）"
         default: false

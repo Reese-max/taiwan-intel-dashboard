@@ -24,6 +24,7 @@ export const FETCH_MODE_CHOICES = [
   "international-expanded",
   "international-core",
   "international-general",
+  "international-police",
   "international-cyber",
   "international-disaster",
   "international-health",
@@ -38,7 +39,8 @@ export const FETCH_MODE_CHOICES = [
 
 const DAILY_REFRESH_CRON = "30 18 * * *";
 const TOPIC_ASSERT_MINIMUMS = {
-  general: { minFeeds: 4, minRawItems: 10 },
+  general: { minFeeds: 10, minRawItems: 50 },
+  police: { minFeeds: 7, minRawItems: 20 },
   cyber: { minFeeds: 4, minRawItems: 10 },
   disaster: { minFeeds: 2, minRawItems: 5 },
   health: { minFeeds: 2, minRawItems: 5 },
@@ -87,7 +89,7 @@ export function resolveFetchMode({ schedule = "", mode = "" } = {}) {
     });
   }
 
-  const topicMode = normalizedMode.match(/^international-(general|cyber|disaster|health|humanitarian|finance)$/)?.[1];
+  const topicMode = normalizedMode.match(/^international-(general|police|cyber|disaster|health|humanitarian|finance)$/)?.[1];
   if (topicMode) {
     const mins = TOPIC_ASSERT_MINIMUMS[topicMode];
     return internationalMode({
