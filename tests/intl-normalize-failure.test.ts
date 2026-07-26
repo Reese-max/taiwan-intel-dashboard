@@ -36,6 +36,7 @@ describe("normalizeInternational 全批失敗可見性（A3）", () => {
       else process.env[k] = v;
     }
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("多批全失敗：回傳 []、intlNormalizeFailed()=true、有 warn+error 留痕", async () => {
@@ -60,6 +61,39 @@ describe("normalizeInternational 全批失敗可見性（A3）", () => {
     const out = await normalizeInternational(items, { max: 10, priorById: prior });
     expect(out.length).toBe(2);
     expect(intlNormalizeFailed()).toBe(false);
+  });
+
+  it("保留國際警政新聞的治安分類", async () => {
+    process.env.LLM_API_KEY = "test-key";
+    process.env.LLM_BASE_URL = "https://llm.test/v1";
+    const fetchMock = vi.fn(async () =>
+      okDomesticCompletion(JSON.stringify([{
+        idx: 0,
+        title_zh: "跨境毒品查緝行動",
+        summary_zh: "警方跨國合作逮捕涉案嫌犯。",
+        category: "治安",
+        riskLevel: "high",
+        region: "歐洲",
+        lat: 50.85,
+        lng: 4.35,
+        entities: ["Europol"],
+        topic: "跨境犯罪查緝",
+      }]))
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const out = await normalizeInternational([{
+      ...item(99),
+      source: "Europol News",
+      hint: "治安",
+      title: "Europol supports operation against amphetamine producers",
+      description: "Police arrested suspects in a cross-border drug operation.",
+    }], { max: 10, batchSize: 2, concurrency: 1 });
+
+    expect(out).toHaveLength(1);
+    expect(out[0].category).toBe("治安");
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(body.messages.map((m: { content: string }) => m.content).join("\n")).toContain("治安");
   });
 });
 

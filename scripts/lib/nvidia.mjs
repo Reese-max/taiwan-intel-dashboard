@@ -14,7 +14,7 @@ import { titleKey } from "./title-key.mjs";
 import { chat, extractJson, llmModel, respondedModel } from "./llm-client.mjs";
 export { llmModel, respondedModel } from "./llm-client.mjs";
 
-const CATEGORIES = ["地緣政治", "災害", "資安", "金融", "其他"];
+const CATEGORIES = ["地緣政治", "治安", "反詐", "協尋", "災害", "資安", "金融", "其他"];
 const RISKS = ["low", "medium", "high", "critical"];
 const RISK_ORDER = { low: 0, medium: 1, high: 2, critical: 3 };
 
@@ -190,11 +190,11 @@ function inferredLocationPrecision(scope, region, lat, lng) {
 async function normalizeInternationalBatch(items, { max = 8 } = {}) {
   if (!items.length) return [];
   const listing = items
-    .map((it, i) => `[${i}] 來源:${it.source}｜標題:${it.title}｜摘要:${(it.description || "").slice(0, 300)}`)
+    .map((it, i) => `[${i}] 來源:${it.source}｜主題提示:${it.hint || "一般"}｜標題:${it.title}｜摘要:${(it.description || "").slice(0, 300)}`)
     .join("\n");
 
   const sys =
-    "你是台灣的國際情勢分析助理。從給定的新聞清單中，挑出對台灣/全球最具情報價值的事件，輸出繁體中文 JSON。";
+    "你是台灣的國際情勢與跨境治安情報分析助理。從給定的新聞清單中，挑出對台灣/全球最具情報價值的事件，輸出繁體中文 JSON。";
   const user = `以下是多則國際新聞原文（含索引）：
 ${listing}
 
@@ -203,6 +203,10 @@ ${listing}
 - title_zh: 繁體中文標題（精簡）
 - summary_zh: 繁體中文摘要（1-2 句，具體）
 - category: 必為其一 ${JSON.stringify(CATEGORIES)}
+  · 「治安」＝跨境犯罪、暴力、槍擊、毒品、人口販運、恐攻、逮捕、執法行動與警政機關新聞
+  · 「反詐」＝詐欺、洗錢、金融犯罪、網路犯罪集團與查緝行動
+  · 「協尋」＝失蹤人口、逃犯、通緝與尋人協查
+  · 來源的主題提示為「治安／反詐／協尋」時，符合上述條件的新聞應保留，不要因與台灣直接關聯較低而全部排除
 - riskLevel: 必為其一 ${JSON.stringify(RISKS)}。分級準則（務必拉開分布，切勿把過半事件評為 high/critical）：
     · 「重要性」≠「風險等級」：一則重要的外交或經濟新聞，風險等級可能只是 medium 或 low
     · critical（應屬罕見，通常 <15%）＝迫近或正在發生的大規模致命威脅（戰爭爆發或重大升級、重大恐攻、核子事件、直接衝擊台海的軍事行動）

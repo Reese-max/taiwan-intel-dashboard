@@ -21,10 +21,25 @@ export const INTERNATIONAL_FEEDS = [
   { label: "KrebsOnSecurity", url: "https://krebsonsecurity.com/feed/", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "SecurityWeek", url: "https://www.securityweek.com/feed/", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
 
+  // ── 國際警政／跨境犯罪（官方 RSS，避免國際執法新聞被一般地緣政治洗掉）──
+  { label: "US DOJ Press Releases", url: "https://www.justice.gov/news/rss?m=1&type=press_release", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "Europol News", url: "https://www.europol.europa.eu/rss.xml", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "UK National Crime Agency", url: "https://www.gov.uk/government/organisations/national-crime-agency.atom", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "UK Serious Fraud Office", url: "https://www.gov.uk/government/organisations/serious-fraud-office.atom", hint: "反詐", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "UK Crown Prosecution Service", url: "https://www.gov.uk/government/organisations/crown-prosecution-service.atom", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "UK Border Force", url: "https://www.gov.uk/government/organisations/border-force.atom", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "New Zealand Police News", url: "https://www.police.govt.nz/rss/news", hint: "治安", tier: "expanded", topic: "police", topics: ["police"], official: true },
+  { label: "New Zealand Police Alerts", url: "https://www.police.govt.nz/rss/alerts", hint: "協尋", tier: "expanded", topic: "police", topics: ["police"], official: true },
+
   // ══ 擴充輪（2026-06-27 經 _audit-candidates 實測 ≥3 則、去重後保留；國際池 21 → 51）══
   // ── 地緣政治／國際時事（直連 RSS，穩定）──
   { label: "Yonhap EN", url: "https://en.yna.co.kr/RSS/news.xml", hint: "地緣政治", tier: "expanded", topic: "general", topics: ["general"] },
   { label: "The Diplomat", url: "https://thediplomat.com/feed/", hint: "地緣政治", tier: "expanded", topic: "general", topics: ["general"] },
+  { label: "NHK World News", url: "https://www3.nhk.or.jp/rss/news/cat0.xml", hint: "地緣政治", tier: "expanded", topic: "general", topics: ["general"] },
+  { label: "RFI English", url: "https://www.rfi.fr/en/rss", hint: "地緣政治", tier: "expanded", topic: "general", topics: ["general"] },
+  { label: "Anadolu World", url: "https://www.aa.com.tr/en/rss/default?cat=world", hint: "地緣政治", tier: "expanded", topic: "general", topics: ["general"] },
+  { label: "The Conversation World", url: "https://theconversation.com/us/articles.atom", hint: "地緣政治", tier: "expanded", topic: "general", topics: ["general"] },
+  { label: "CBS World", url: "https://www.cbsnews.com/latest/rss/world", hint: "地緣政治", tier: "expanded", topic: "general", topics: ["general"] },
   { label: "Independent World", url: "https://www.independent.co.uk/news/world/rss", hint: "地緣政治", tier: "expanded", topic: "general", topics: ["general"] },
   { label: "NYT World", url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", hint: "地緣政治", tier: "expanded", topic: "general", topics: ["general"] },
   { label: "NYT Asia Pacific", url: "https://rss.nytimes.com/services/xml/rss/nyt/AsiaPacific.xml", hint: "地緣政治", tier: "expanded", topic: "general", topics: ["general"] },
@@ -1479,7 +1494,7 @@ export const INTERNATIONAL_FEEDS = [
   { label: "Diario Médico", url: "https://diariomedico.com/feed", hint: "災害", tier: "expanded", topic: "health", topics: ["health"] },
 ];
 
-export const INTERNATIONAL_TOPICS = ["general", "cyber", "disaster", "health", "humanitarian", "finance"];
+export const INTERNATIONAL_TOPICS = ["general", "police", "cyber", "disaster", "health", "humanitarian", "finance"];
 
 const CORE_LABELS = new Set(["BBC World", "NPR World", "Al Jazeera", "The Hacker News", "CNBC Finance"]);
 const TOPIC_SET = new Set(INTERNATIONAL_TOPICS);
@@ -1509,7 +1524,7 @@ export function getInternationalRuntimeConfig(env = process.env) {
     topic: normalizeTopic(env.INTERNATIONAL_FEED_TOPIC),
     perFeed: numberEnv(env, "INTERNATIONAL_RSS_PER_FEED", 10, 1, 25),
     concurrency: numberEnv(env, "INTERNATIONAL_RSS_CONCURRENCY", 5, 1, 10),
-    maxEvents: numberEnv(env, "INTERNATIONAL_NORMALIZE_MAX", 150, 1, 250),
+    maxEvents: numberEnv(env, "INTERNATIONAL_NORMALIZE_MAX", 250, 1, 250),
   };
 }
 

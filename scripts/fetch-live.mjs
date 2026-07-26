@@ -782,7 +782,8 @@ export async function run() {
   const intlEvents = intlOk
     ? accumulateInternational(freshIntlEvents, oldIntl, {
         retentionDays: Number(process.env.INTL_RETENTION_DAYS) || 5,
-        cap: Number(process.env.INTL_ACCUM_CAP) || 250,
+        // 預設 rolling cap 提高，讓新增的一般國際／警政來源能在五日窗口內留下；可由 CI 以 INTL_ACCUM_CAP 覆蓋。
+        cap: Number(process.env.INTL_ACCUM_CAP) || 400,
       })
     : dropIntlStale
       ? []
@@ -1137,7 +1138,7 @@ export async function run() {
   }
   if (status.international?.ok) {
     for (const f of feedStatus.filter((x) => x.ok && x.count)) {
-      const c = intlEvents.filter((e) => e.source.name === f.label).length;
+      const c = intlEvents.filter((e) => e.source?.feedLabel === f.label || e.source?.name === f.label).length;
       if (!c) continue;
       sources.push({
         name: `國際新聞：${f.label}`,
@@ -1145,6 +1146,7 @@ export async function run() {
         scope: "international",
         count: c,
         fetchedAt: nowIso,
+        authority: f.official === true ? "official" : undefined,
         query: `RSS ${f.label} → LLM(${respondedModel()}) 正規化`,
       });
     }

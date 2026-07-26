@@ -28,6 +28,7 @@ describe("international feed registry", () => {
   it("exposes stable topic choices for manual international runs", () => {
     expect(INTERNATIONAL_TOPICS).toEqual([
       "general",
+      "police",
       "cyber",
       "disaster",
       "health",
@@ -49,6 +50,18 @@ describe("international feed registry", () => {
     expect(labels(feeds)).toContain("GDACS Alerts");
   });
 
+  it("keeps a wider general-news pool for international volume", () => {
+    const feeds = selectInternationalFeeds({ tier: "expanded", topic: "general" });
+    expect(labels(feeds)).toEqual(expect.arrayContaining([
+      "NHK World News",
+      "RFI English",
+      "Anadolu World",
+      "The Conversation World",
+      "CBS World",
+    ]));
+    expect(feeds.length).toBeGreaterThanOrEqual(25);
+  });
+
   it("filters expanded feeds by cyber topic", () => {
     const feeds = selectInternationalFeeds({ tier: "expanded", topic: "cyber" });
     expect(labels(feeds)).toContain("The Hacker News");
@@ -56,6 +69,23 @@ describe("international feed registry", () => {
     expect(labels(feeds)).toContain("SecurityWeek");
     expect(labels(feeds)).not.toContain("BBC World");
     expect(feeds.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it("provides a dedicated international police pool", () => {
+    const feeds = selectInternationalFeeds({ tier: "expanded", topic: "police" });
+    expect(labels(feeds)).toEqual(expect.arrayContaining([
+      "US DOJ Press Releases",
+      "Europol News",
+      "UK National Crime Agency",
+      "UK Serious Fraud Office",
+      "UK Crown Prosecution Service",
+      "UK Border Force",
+      "New Zealand Police News",
+      "New Zealand Police Alerts",
+    ]));
+    expect(feeds.length).toBeGreaterThanOrEqual(8);
+    expect(feeds.every((feed) => feed.topic === "police")).toBe(true);
+    expect(feeds.every((feed) => feed.official === true)).toBe(true);
   });
 
   it("combines core tier and topic filtering", () => {
@@ -78,7 +108,7 @@ describe("international feed registry", () => {
     expect(cfg.topic).toBe("all");
     expect(cfg.perFeed).toBe(10);
     expect(cfg.concurrency).toBe(5);
-    expect(cfg.maxEvents).toBe(150);
+    expect(cfg.maxEvents).toBe(250);
   });
 
   it("clamps runtime config to safe ranges", () => {

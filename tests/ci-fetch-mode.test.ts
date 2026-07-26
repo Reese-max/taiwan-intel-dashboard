@@ -72,6 +72,16 @@ describe("resolveFetchMode", () => {
     expect(finance.label).toBe("international-finance");
     expect(finance.internationalFeedTopic).toBe("finance");
     expect(finance.assertArgs).toBe("--require=international --min-international-feeds=1 --min-international-raw=3");
+
+    const general = resolveFetchMode({ mode: "international-general" });
+    expect(general.label).toBe("international-general");
+    expect(general.internationalFeedTopic).toBe("general");
+    expect(general.assertArgs).toBe("--require=international --min-international-feeds=10 --min-international-raw=50");
+
+    const police = resolveFetchMode({ mode: "international-police" });
+    expect(police.label).toBe("international-police");
+    expect(police.internationalFeedTopic).toBe("police");
+    expect(police.assertArgs).toBe("--require=international --min-international-feeds=7 --min-international-raw=20");
   });
 
   it("accepts rss as an alias for international-only mode", () => {
