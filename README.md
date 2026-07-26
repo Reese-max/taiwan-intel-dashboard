@@ -10,6 +10,7 @@
 | 來源 | 內容 | 說明 |
 |---|---|---|
 | `rss` | 國際新聞 | 443 feeds → LLM 正規化＋風險評級 → 滾動窗口累積（5 天/250 筆）|
+| `gdelt` | GDELT 全球新聞索引 | GDELT DOC 近 24 小時補充訊號；失敗只告警，不覆蓋 RSS 主線|
 | `twnews` | 台灣社會新聞 | 警政關鍵字預篩（食安/衛生/環境/資安來源走各自主題關鍵字）→ LLM 精修＋輕量收錄，保留窗 5 天 |
 | `police` | 警政/治安 | 含 hourly 歷史、來源樹 |
 | `missing` | 失蹤人口 | |
@@ -45,7 +46,7 @@
 
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
-- 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver+moenvAir+parkingHsinchu+parkingTaoyuan+economy 增量
+- 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+gdelt+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver+moenvAir+parkingHsinchu+parkingTaoyuan+economy 增量
 - 每日 18:30 UTC（台北 02:30）：全來源 exclusive 重建（另含 pcc/judicial/cdc/tfda、農業價格、健保院所、國會、觀光、人口、教育、金融與勞動參考層）
 - 手動 `workflow_dispatch`：`mode` 選來源組合；`renorm_intl=true` 忽略國際快取全量重評（緊急用；平時靠 `INTL_RECALIBRATE_DAYS` 3 天生命週期自然換血）
 - Cloudflare 發佈後會再讀取 canonical `provenance.json`／`domain-coverage.json`；refresh 模式另強制確認金融 `11598` 與勞動 `123349` 已落地，避免部署成功但資料仍是舊快照。
@@ -59,7 +60,7 @@ npm run dev            # 前端 dev server
 npm test               # vitest 全套
 npm run build          # tsc + build-network + build-static → dist/
 npm run refresh:news   # 抓台灣新聞（吃 LLM 成本）
-node --env-file=.env scripts/fetch-live.mjs --sources=rss   # 只抓國際
+node --env-file=.env scripts/fetch-live.mjs --sources=rss,gdelt   # 抓國際 RSS＋GDELT 補充
 ```
 
 ## 稽核（CI 皆有掛）
@@ -81,6 +82,7 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 | `LLM_FALLBACK_*` | primary 失敗時備援端點（可選）|
 | `SUMMARY_*` | 摘要獨立端點（可選）|
 | `INTL_RECALIBRATE_DAYS` | 國際快取評級生命週期（預設 3 天，0 停用）|
+| `GDELT_QUERY/TIMESPAN/MAX_RECORDS/TIMEOUT_MS` | GDELT DOC 補充查詢、時間窗、筆數上限與逾時（可選）|
 | `NEWS_RETENTION_DAYS` | 台灣新聞保留窗（預設 5 天）|
 | `TWINKLE_MCP_TOKEN` / `TWINKLE_HUB_TOKEN` | twinkle-hub MCP 憑證（本機優先使用 `TWINKLE_HUB_TOKEN`）|
 | `CWA_API_KEY` | 中央氣象署 API key |

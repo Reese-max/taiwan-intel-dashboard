@@ -82,8 +82,12 @@ describe("international feed registry", () => {
       "UK Border Force",
       "New Zealand Police News",
       "New Zealand Police Alerts",
+      "Swedish Police National News",
+      "Swedish Police National Press",
+      "Netherlands Police News",
+      "Netherlands Police Investigations",
     ]));
-    expect(feeds.length).toBeGreaterThanOrEqual(8);
+    expect(feeds.length).toBeGreaterThanOrEqual(12);
     expect(feeds.every((feed) => feed.topic === "police")).toBe(true);
     expect(feeds.every((feed) => feed.official === true)).toBe(true);
   });

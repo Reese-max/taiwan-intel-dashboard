@@ -307,6 +307,16 @@ function emptyRssFixture() {
   return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel></channel></rss>`;
 }
 
+function internationalRssFixture() {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><item>
+  <title>International test item</title>
+  <link>https://example.com/international-test-item</link>
+  <description>International test item for the supplemental-source fail-soft gate.</description>
+  <pubDate>${new Date().toUTCString()}</pubDate>
+</item></channel></rss>`;
+}
+
 function missingPersonFixture(gender: "男" | "女") {
   const token = gender === "男" ? "MISSINGMALE001" : "MISSINGFEMALE001";
   const name = gender === "男" ? "測試阿明" : "測試小美";
@@ -534,6 +544,33 @@ function makeMockFetch(
     }
     if (url === ncdrCapHref) {
       return new Response(ncdrCapFixture(), { headers: { "content-type": "application/xml" } });
+    }
+    if (url.startsWith("https://api.gdeltproject.org/api/v2/doc/doc")) {
+      return new Response("GDELT rate limited", { status: 500 });
+    }
+    if (url.includes("llm.invalid") && process.env.SOURCES?.includes("gdelt")) {
+      return Response.json({
+        model: "test-model",
+        choices: [{ message: { content: JSON.stringify([{
+          idx: 0,
+          title_zh: "國際測試事件",
+          summary_zh: "補充來源失敗時 RSS 主線仍可正規化。",
+          category: "地緣政治",
+          riskLevel: "medium",
+          region: "全球",
+          lat: 0,
+          lng: 0,
+          entities: [],
+          topic: "國際測試事件",
+          twRelevance: 0,
+          sentiment: "neutral",
+          threatActors: [],
+          relations: [],
+        }]) } }],
+      });
+    }
+    if (process.env.SOURCES?.includes("gdelt") && url === "https://feeds.bbci.co.uk/news/world/rss.xml") {
+      return new Response(internationalRssFixture(), { headers: { "content-type": "application/rss+xml" } });
     }
     if (url.includes("news.google.com")) {
       if (!twnewsOk) return new Response("twnews GN RSS failure", { status: 500 });
@@ -1148,6 +1185,29 @@ describe("fetch-live pipeline — international 全滅語義（靜默全敗家�
         const provenance = readJson(join(dataDir, "provenance.json"));
         expect(provenance.pipeline.international.ok).toBe(false);
         expect(String(provenance.pipeline.international.error || "")).toContain("全數失敗");
+      } finally {
+        if (prevTier === undefined) delete process.env.INTERNATIONAL_FEED_TIER;
+        else process.env.INTERNATIONAL_FEED_TIER = prevTier;
+      }
+    },
+    90_000,
+  );
+
+  it(
+    "GDELT 補充來源失敗只告警，RSS 主線仍完成",
+    async () => {
+      const dataDir = setupEnv();
+      process.env.SOURCES = "rss,gdelt";
+      const prevTier = process.env.INTERNATIONAL_FEED_TIER;
+      process.env.INTERNATIONAL_FEED_TIER = "core";
+      try {
+        makeMockFetch({ cwaOk: false, cwaWarningsOk: false });
+        const run = await importRun();
+        await expect(run()).resolves.toBeUndefined();
+        const provenance = readJson(join(dataDir, "provenance.json"));
+        expect(provenance.pipeline.gdelt.ok).toBe(false);
+        expect(provenance.pipeline.international.ok).toBe(true);
+        expect(provenance.pipeline.international.rawCount).toBeGreaterThan(0);
       } finally {
         if (prevTier === undefined) delete process.env.INTERNATIONAL_FEED_TIER;
         else process.env.INTERNATIONAL_FEED_TIER = prevTier;

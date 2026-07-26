@@ -10,6 +10,9 @@ interface ProvSource {
   count: number;
   fetchedAt?: string;
   lastSuccessAt?: string;
+  lastAttemptAt?: string;
+  skippedThisRun?: boolean;
+  authority?: "official" | "media" | string;
   configured?: boolean;
   stale?: boolean;
   error?: string;
@@ -30,8 +33,30 @@ interface Manifest {
         finalEvents?: number;
       };
     };
+    international?: {
+      rawCount?: number;
+      count?: number;
+      okFeeds?: number;
+      totalFeeds?: number;
+      normalizeSkippedBatches?: number;
+      feeds?: FeedStatus[];
+    };
+    gdelt?: {
+      ok?: boolean;
+      count?: number;
+      error?: string;
+    };
   };
   sources: ProvSource[];
+}
+
+interface FeedStatus {
+  label: string;
+  ok?: boolean;
+  count?: number;
+  normalizedCount?: number;
+  error?: string;
+  method?: string;
 }
 
 const DAY_MS = 86400000;
@@ -117,6 +142,7 @@ function sourceItem(source: ProvSource, generatedAt: string): string {
       <div class="source-lineage">
         ${dataset}
         <span>最近同步 ${esc(fmtDate(source.lastSuccessAt ?? source.fetchedAt))}</span>
+        ${source.lastAttemptAt ? `<span>最近嘗試 ${esc(fmtDate(source.lastAttemptAt))}</span>` : ""}
         ${source.latestDataDate ? `<span>最新資料日 ${esc(source.latestDataDate)}</span>` : ""}
       </div>
       ${source.query ? `<code title="可重現查詢">${esc(source.query)}</code>` : ""}
@@ -157,6 +183,39 @@ function lowContributionBlock(manifest: Manifest): string {
   </section>`;
 }
 
+function internationalGapBlock(manifest: Manifest): string {
+  const pipeline = manifest.pipeline?.international;
+  const feeds = Array.isArray(pipeline?.feeds) ? pipeline.feeds : [];
+  if (!feeds.length) return "";
+  const gaps = feeds.filter((feed) => {
+    if (feed.ok === false || Number(feed.count || 0) <= 0) return true;
+    return typeof feed.normalizedCount === "number" && feed.normalizedCount <= 0;
+  });
+  const gapReason = (feed: FeedStatus): string => {
+    if (feed.ok === false) return `抓取失敗${feed.error ? `：${feed.error}` : ""}`;
+    if (Number(feed.count || 0) <= 0) return "回應但無原始資料";
+    if (typeof feed.normalizedCount === "number" && feed.normalizedCount <= 0) return "正規化未產出";
+    return "需觀察";
+  };
+  const visible = gaps.slice(0, 6);
+  const hidden = gaps.slice(6);
+  const metrics = [
+    typeof pipeline?.rawCount === "number" ? `原始 ${pipeline.rawCount}` : undefined,
+    typeof pipeline?.count === "number" ? `正規化 ${pipeline.count}` : undefined,
+    typeof pipeline?.okFeeds === "number" && typeof pipeline?.totalFeeds === "number"
+      ? `有資料來源 ${pipeline.okFeeds}/${pipeline.totalFeeds}`
+      : undefined,
+    pipeline?.normalizeSkippedBatches ? `跳過正規化 ${pipeline.normalizeSkippedBatches} 批` : undefined,
+  ].filter(Boolean).join("，");
+  const item = (feed: FeedStatus) => `<span title="${esc(gapReason(feed))}">${esc(feed.label)}：${esc(gapReason(feed))}</span>`;
+  return `<section class="source-alert source-alert-warn" aria-label="國際來源新鮮度與缺口">
+    <h5>國際來源新鮮度／缺口</h5>
+    <p>${esc(metrics || "已載入來源狀態")}；此區只告警，不直接阻斷部署。</p>
+    ${gaps.length ? `<div class="source-chip-list">${visible.map(item).join("")}</div>` : `<p>目前沒有已知來源缺口。</p>`}
+    ${hidden.length ? `<details class="source-alert-more"><summary>查看其餘 ${hidden.length} 個缺口</summary><div class="source-chip-list">${hidden.map(item).join("")}</div></details>` : ""}
+  </section>`;
+}
+
 export async function renderSourcePanel(container: HTMLElement): Promise<void> {
   const res = await fetch("./data/provenance.json");
   if (!res.ok) {
@@ -184,6 +243,7 @@ export async function renderSourcePanel(container: HTMLElement): Promise<void> {
         <div><b>官方來源 ${official}</b><span>政府／氣象署</span></div>
       </div>
       <p class="source-generated">擷取於 ${esc(generated)}</p>
+      ${internationalGapBlock(m)}
       ${lowContributionBlock(m)}
       <ul class="source-list">${items}</ul>
       ${

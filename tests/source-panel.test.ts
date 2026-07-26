@@ -91,6 +91,39 @@ describe("renderSourcePanel", () => {
     }
   });
 
+  it("顯示國際來源新鮮度與正規化缺口，但只作告警", async () => {
+    const manifest = {
+      generatedAt: "2026-07-26T00:00:00.000Z",
+      pipeline: {
+        international: {
+          rawCount: 120,
+          count: 48,
+          okFeeds: 8,
+          totalFeeds: 12,
+          normalizeSkippedBatches: 2,
+          feeds: [
+            { label: "Swedish Police National News", ok: true, count: 10, normalizedCount: 0 },
+            { label: "Europol News", ok: false, count: 0, error: "HTTP 503" },
+          ],
+        },
+      },
+      sources: [],
+    };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(manifest), { status: 200 })));
+    const container = { innerHTML: "" } as HTMLElement;
+
+    try {
+      await renderSourcePanel(container);
+      expect(container.innerHTML).toContain("國際來源新鮮度／缺口");
+      expect(container.innerHTML).toContain("原始 120，正規化 48");
+      expect(container.innerHTML).toContain("Swedish Police National News：正規化未產出");
+      expect(container.innerHTML).toContain("Europol News：抓取失敗：HTTP 503");
+      expect(container.innerHTML).toContain("只告警，不直接阻斷部署");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("不把本輪失敗或未設定憑證的來源顯示為同步正常", async () => {
     const manifest = {
       generatedAt: "2026-07-16T10:00:00+08:00",
