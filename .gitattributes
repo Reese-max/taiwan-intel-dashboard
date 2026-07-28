@@ -1,0 +1,8 @@
+# 統一以 LF 落地工作區。
+# 沒有這個檔時，Windows 上 core.autocrlf=true 的 clone 會把 .mjs 轉成 CRLF，
+# vite-node 載入 scripts/ground-truth-score.mjs 會噴 SyntaxError（tests/ground-truth.test.ts 整包 fail）。
+* text=auto eol=lf
+
+# Windows 批次檔維持 CRLF，避免 cmd.exe 解析異常
+*.bat text eol=crlf
+*.cmd text eol=crlf
