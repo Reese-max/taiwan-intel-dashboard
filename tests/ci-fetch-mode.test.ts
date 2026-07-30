@@ -158,20 +158,20 @@ describe("resolveFetchMode", () => {
   });
 
   it("runs Taiwan news contribution audit as a CI warning step when twnews is fetched", () => {
-    const workflow = readFileSync(".github/workflows/pipeline.yml", "utf8");
+    const workflow = readFileSync(".github/workflows/pipeline-fetch.yml", "utf8");
     expect(workflow).toContain("if: contains(steps.mode.outputs.args, 'twnews')");
     expect(workflow).toContain("npm run audit:news-source-contribution");
   });
 
   it("wires the existing NVIDIA credentials into the primary LLM fallback", () => {
-    const workflow = readFileSync(".github/workflows/pipeline.yml", "utf8");
+    const workflow = readFileSync(".github/workflows/pipeline-fetch.yml", "utf8");
     expect(workflow).toContain("LLM_FALLBACK_API_KEY: ${{ secrets.NVIDIA_API_KEY }}");
     expect(workflow).toContain("LLM_FALLBACK_BASE_URL: ${{ secrets.NVIDIA_BASE_URL }}");
     expect(workflow).toContain("LLM_FALLBACK_MODEL: ${{ secrets.NVIDIA_MODEL }}");
   });
 
   it("gates source freshness and the generated coverage matrix before deploy", () => {
-    const workflow = readFileSync(".github/workflows/pipeline.yml", "utf8");
+    const workflow = readFileSync(".github/workflows/pipeline-audit.yml", "utf8");
     expect(workflow).toContain("npm run audit:source-freshness");
     expect(workflow).toContain("npm run audit:coverage");
   });
@@ -183,10 +183,10 @@ describe("resolveFetchMode", () => {
     expect(workflow).not.toMatch(/^  (?:schedule|push|pull_request):/m);
     expect(workflow).toContain("contents: read");
     expect(workflow).not.toContain("contents: write");
-    expect(workflow).toContain("uses: ./.github/workflows/pipeline.yml");
+    expect(workflow).toContain("uses: ./.github/workflows/pipeline-fetch.yml");
+    expect(workflow).toContain("uses: ./.github/workflows/pipeline-audit.yml");
     expect(workflow).toContain("mode: refresh");
-    expect(workflow).toContain("save_state: false");
-    expect(workflow).toContain("deploy: false");
+    expect(workflow).toContain("publish_dist: false");
 
     for (const deployCommand of [
       "peaceiris/actions-gh-pages",
@@ -200,21 +200,25 @@ describe("resolveFetchMode", () => {
   });
 
   it("separates fetch, state persistence, audit, and deploy", () => {
-    const workflow = readFileSync(".github/workflows/pipeline.yml", "utf8");
+    const workflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
+    const fetchWorkflow = readFileSync(".github/workflows/pipeline-fetch.yml", "utf8");
+    const auditWorkflow = readFileSync(".github/workflows/pipeline-audit.yml", "utf8");
     const state = workflow.match(/^  save-state:\r?\n[\s\S]*?(?=^  audit:)/m)?.[0] ?? "";
     const audit = workflow.match(/^  audit:\r?\n[\s\S]*?(?=^  deploy:)/m)?.[0] ?? "";
-    const deploy = workflow.match(/^  deploy:\r?\n[\s\S]*$/m)?.[0] ?? "";
+    const deploy = workflow.match(/^  deploy:\r?\n[\s\S]*?(?=^  notify:)/m)?.[0] ?? "";
 
-    expect(workflow).toMatch(/^  fetch:/m);
+    expect(workflow).toContain("uses: ./.github/workflows/pipeline-fetch.yml");
     expect(state).toContain("needs: fetch");
     expect(state).toContain("contents: write");
     expect(state).toContain("publish_branch: pipeline-state");
     expect(audit).toContain("needs: fetch");
     expect(audit).toContain("contents: read");
+    expect(audit).toContain("uses: ./.github/workflows/pipeline-audit.yml");
     expect(deploy).toContain("needs: [fetch, save-state, audit]");
-    expect(deploy).toContain("inputs.deploy");
     expect(deploy).toContain("needs.save-state.result == 'success'");
     expect(deploy).toContain("needs.audit.result == 'success'");
+    expect(fetchWorkflow).not.toContain("contents: write");
+    expect(auditWorkflow).not.toContain("contents: write");
   });
 
   it("writes GitHub output for label, fetch args, and assertion args", () => {

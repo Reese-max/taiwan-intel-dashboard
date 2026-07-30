@@ -16,12 +16,16 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  pipeline:
-    uses: ./.github/workflows/pipeline.yml
+  fetch:
+    uses: ./.github/workflows/pipeline-fetch.yml
     with:
       mode: refresh
       schedule: ""
       renorm_intl: ${{ inputs.renorm_intl || false }}
-      save_state: false
-      deploy: false
     secrets: inherit
+
+  audit:
+    needs: fetch
+    uses: ./.github/workflows/pipeline-audit.yml
+    with:
+      publish_dist: false

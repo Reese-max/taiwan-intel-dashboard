@@ -1,4 +1,4 @@
-name: 共用資料管線
+name: 共用資料抓取
 
 on:
   workflow_call:
@@ -12,12 +12,10 @@ on:
       renorm_intl:
         type: boolean
         default: false
-      save_state:
-        type: boolean
-        default: false
-      deploy:
-        type: boolean
-        default: false
+    outputs:
+      fetch_args:
+        description: 本輪抓取參數
+        value: ${{ jobs.fetch.outputs.fetch_args }}
 
 jobs:
   fetch:
@@ -128,120 +126,7 @@ jobs:
       - name: 保存候選資料 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pipeline-data-${{ github.run_id }}
+          name: pipeline-data-${{ github.run_id }}-${{ github.run_attempt }}
           path: public/data
           retention-days: 7
           if-no-files-found: error
-
-  save-state:
-    needs: fetch
-    if: ${{ inputs.save_state }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout 原始碼
-        uses: actions/checkout@v4
-
-      - name: 下載候選資料
-        uses: actions/download-artifact@v4
-        with:
-          name: pipeline-data-${{ github.run_id }}
-          path: state/data
-
-      - name: 更新獨立狀態庫
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./state
-          publish_branch: pipeline-state
-          force_orphan: true
-          commit_message: "auto: 更新資料管線狀態"
-
-  audit:
-    needs: fetch
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout 原始碼
-        uses: actions/checkout@v4
-
-      - name: 安裝 Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: 安裝相依
-        run: npm ci
-
-      - name: 下載同一份候選資料
-        uses: actions/download-artifact@v4
-        with:
-          name: pipeline-data-${{ github.run_id }}
-          path: public/data
-
-      - name: 檢查結構化來源新鮮度
-        run: npm run audit:source-freshness
-
-      - name: 檢查 coverage 每日矩陣
-        run: npm run audit:coverage
-
-      - name: 執行測試
-        run: npm test
-
-      - name: 建置靜態網站
-        run: npm run build
-
-      - name: 檢查來源可追溯性
-        run: npm run audit:source-provenance
-
-      - name: 檢查情報網品質
-        run: npm run audit:network-quality
-
-      - name: 檢查國際風險分布
-        continue-on-error: true
-        run: npm run audit:intl-risk
-
-      - name: 檢查資料檔尺寸
-        run: npm run audit:data-size -- --max-mb=24
-
-      - name: 保存已稽核網站 artifact
-        if: ${{ inputs.deploy }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: pipeline-dist-${{ github.run_id }}
-          path: dist
-          retention-days: 1
-          if-no-files-found: error
-
-  deploy:
-    needs: [fetch, save-state, audit]
-    if: ${{ always() && inputs.deploy && needs.save-state.result == 'success' && needs.audit.result == 'success' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout 原始碼
-        uses: actions/checkout@v4
-
-      - name: 下載已稽核網站
-        uses: actions/download-artifact@v4
-        with:
-          name: pipeline-dist-${{ github.run_id }}
-          path: dist
-
-      - name: 部署到 Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: "03d40efd3c60181edea80af8d927ddc1"
-          command: pages deploy dist --project-name=taiwan-intel-dashboard --branch=main
-
-      - name: 部署後線上 smoke
-        env:
-          DEPLOY_BASE_URL: https://taiwan-intel-dashboard.pages.dev
-          DEPLOY_FETCH_ARGS: ${{ needs.fetch.outputs.fetch_args }}
-        run: node scripts/smoke-deployed.mjs

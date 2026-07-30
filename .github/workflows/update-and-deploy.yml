@@ -16,30 +16,87 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: write
-
 concurrency:
   group: pipeline-live-fetch
   cancel-in-progress: false
 
 jobs:
-  pipeline:
-    uses: ./.github/workflows/pipeline.yml
+  fetch:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/pipeline-fetch.yml
     with:
       mode: ${{ inputs.mode || '' }}
       schedule: ${{ github.event.schedule || '' }}
       renorm_intl: ${{ inputs.renorm_intl || false }}
-      save_state: true
-      deploy: true
     secrets: inherit
 
-  notify:
-    needs: pipeline
-    if: ${{ failure() || cancelled() }}
+  save-state:
+    needs: fetch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 下載候選資料
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-data-${{ github.run_id }}-${{ github.run_attempt }}
+          path: state/data
+
+      - name: 更新獨立狀態庫
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./state
+          publish_branch: pipeline-state
+          force_orphan: true
+          commit_message: "auto: 更新資料管線狀態"
+
+  audit:
+    needs: fetch
+    permissions:
+      contents: read
+    uses: ./.github/workflows/pipeline-audit.yml
+    with:
+      publish_dist: true
+
+  deploy:
+    needs: [fetch, save-state, audit]
+    if: ${{ always() && needs.fetch.result == 'success' && needs.save-state.result == 'success' && needs.audit.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 下載已稽核網站
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist
+
+      - name: 部署到 Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: "03d40efd3c60181edea80af8d927ddc1"
+          command: pages deploy dist --project-name=taiwan-intel-dashboard --branch=main
+
+      - name: 部署後線上 smoke
+        env:
+          DEPLOY_BASE_URL: https://taiwan-intel-dashboard.pages.dev
+          DEPLOY_FETCH_ARGS: ${{ needs.fetch.outputs.fetch_args }}
+        run: node scripts/smoke-deployed.mjs
+
+  notify:
+    needs: [fetch, save-state, audit, deploy]
+    if: ${{ always() && (failure() || cancelled()) }}
+    runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: 失敗／取消通知（Telegram；未設 secrets 靜默跳過）
         env:
@@ -49,7 +106,7 @@ jobs:
           if [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ]; then
             curl -s -m 15 -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
               -d chat_id="$TG_CHAT" \
-              --data-urlencode text="⚠️ taiwan-intel-dashboard run ${{ github.run_id }} 狀態 ${{ needs.pipeline.result }}（觸發：${{ github.event_name }}）— https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" || true
+              --data-urlencode text="⚠️ taiwan-intel-dashboard run ${{ github.run_id }}（fetch=${{ needs.fetch.result }}、state=${{ needs.save-state.result }}、audit=${{ needs.audit.result }}、deploy=${{ needs.deploy.result }}）— https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" || true
           else
             echo "TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID 未設定，跳過通知"
           fi

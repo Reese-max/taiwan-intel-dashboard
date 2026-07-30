@@ -44,13 +44,13 @@ curl.exe -I https://reese-max.github.io/taiwan-intel-dashboard/
 
 這是舊版 police-only dry-run 的歷史證據；新架構推送後，同名 workflow 會改跑下節所述的全來源驗證。
 
-## P0／P1 部署架構（本機待推送）
+## P0／P1 部署架構
 
-- `.github/workflows/pipeline.yml` 是正式與 dry-run 共用的唯一管線。
-- `fetch` 產生候選資料 artifact；`save-state` 只更新獨立的 `pipeline-state` 分支；`audit` 對同一份 artifact 執行測試、建置與稽核；`deploy` 僅在狀態保存及稽核都成功後執行。
-- `.github/workflows/pipeline-dry-run.yml` 固定使用 `refresh` 全來源模式，權限為 `contents: read`，且傳入 `save_state: false`、`deploy: false`。
+- `.github/workflows/pipeline-fetch.yml` 與 `.github/workflows/pipeline-audit.yml` 是正式與 dry-run 共用的唯讀階段。
+- `fetch` 產生候選資料 artifact；正式 workflow 的 `save-state` 只更新獨立的 `pipeline-state` 分支；`audit` 對同一份 artifact 執行測試、建置與稽核；`deploy` 僅在狀態保存及稽核都成功後執行。
+- `.github/workflows/pipeline-dry-run.yml` 固定使用 `refresh` 全來源模式，只呼叫唯讀的抓取與稽核 workflow，權限為 `contents: read`，不包含狀態寫入或部署 job。
 - `pipeline-state` 尚未建立時，第一輪會從既有 `gh-pages/data` 遷移狀態；dry-run 不會建立或修改該分支。
-- 本節目前只有本機修改，尚未 commit、push 或執行雲端全來源 dry-run；線上正式 workflow 仍維持停用。
+- 線上正式 workflow 在全來源 dry-run 驗證期間仍維持停用。
 
 ## 復原順序
 

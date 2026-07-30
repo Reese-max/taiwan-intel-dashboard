@@ -1,0 +1,67 @@
+name: 共用資料稽核
+
+on:
+  workflow_call:
+    inputs:
+      publish_dist:
+        type: boolean
+        default: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 安裝 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: 安裝相依
+        run: npm ci
+
+      - name: 下載同一份候選資料
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-data-${{ github.run_id }}-${{ github.run_attempt }}
+          path: public/data
+
+      - name: 檢查結構化來源新鮮度
+        run: npm run audit:source-freshness
+
+      - name: 檢查 coverage 每日矩陣
+        run: npm run audit:coverage
+
+      - name: 執行測試
+        run: npm test
+
+      - name: 建置靜態網站
+        run: npm run build
+
+      - name: 檢查來源可追溯性
+        run: npm run audit:source-provenance
+
+      - name: 檢查情報網品質
+        run: npm run audit:network-quality
+
+      - name: 檢查國際風險分布
+        continue-on-error: true
+        run: npm run audit:intl-risk
+
+      - name: 檢查資料檔尺寸
+        run: npm run audit:data-size -- --max-mb=24
+
+      - name: 保存已稽核網站 artifact
+        if: ${{ inputs.publish_dist }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist
+          retention-days: 1
+          if-no-files-found: error

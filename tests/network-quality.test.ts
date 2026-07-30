@@ -36,7 +36,7 @@ describe("networkQualityWarnings", () => {
 
   it("exposes package and CI hooks for network quality audit", () => {
     const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
-    const workflow = readFileSync(new URL("../.github/workflows/pipeline.yml", import.meta.url), "utf8");
+    const workflow = readFileSync(new URL("../.github/workflows/pipeline-audit.yml", import.meta.url), "utf8");
 
     expect(pkg.scripts["audit:network-quality"]).toBe("node scripts/audit-network-quality.mjs");
     expect(workflow).toContain("npm run audit:network-quality");
