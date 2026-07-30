@@ -2,7 +2,9 @@
 
 聚合台灣國內外多源公開資料，以 LLM 正規化、風險評級、關聯分析，呈現為互動式情報視覺化網站。
 
-- 線上：<https://taiwan-intel-dashboard.pages.dev>
+- 狀態：**已暫停**（canonical 回應 HTTP 503；自動更新 workflow 已停用）
+- 網址：<https://taiwan-intel-dashboard.pages.dev>
+- 復原程序：[`docs/operations/pause-and-restore.md`](docs/operations/pause-and-restore.md)
 - 技術棧：Vite + Vanilla TypeScript + Leaflet（唯一 runtime 依賴）｜資料層 Node.js ESM 腳本｜LLM 走 OpenAI 相容端點（現用 MiniMax-M2）｜部署 Cloudflare Pages｜CI GitHub Actions
 
 ## 資料管線（`scripts/fetch-live.mjs` 主控，`--sources=` 選擇）
@@ -45,6 +47,8 @@
 完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件；`query.html` 另提供全台 5 萬+ 開放資料集搜尋與預覽。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」；教育、人口、觀光、國會、金融與勞動目前已納入誠實的參考層，不冒充全國即時事件。現階段仍需補全台道路即時路況、消防即時案件、文化／體育專門來源，以及穩定授權的電信／網路服務來源。
 
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
+
+> 目前 workflow 為手動停用狀態。完成資料膨脹修正的受控上線驗證前，不要重新啟用。
 
 - 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+gdelt+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver+moenvAir+parkingHsinchu+parkingTaoyuan+economy 增量
 - 每日 18:30 UTC（台北 02:30）：全來源 exclusive 重建（另含 pcc/judicial/cdc/tfda、農業價格、健保院所、國會、觀光、人口、教育、金融與勞動參考層）
@@ -89,6 +93,7 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 
 ## 文件索引
 
+- `docs/operations/` — 線上暫停、驗證與復原程序
 - `docs/specs/` — 設計/規格（含 2026-07-03 強化與可持續性計畫）
 - `docs/plans/` — 實作計畫
 - `docs/reports/` — 診斷報告（含新聞來源漏斗診斷）

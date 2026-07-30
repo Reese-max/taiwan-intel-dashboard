@@ -1,5 +1,8 @@
+import { Buffer } from "node:buffer";
+
 const TAIWAN_OFFSET_MS = 8 * 60 * 60 * 1000;
 const NEWS_DATASET_IDS = new Set(["tw-news", "7505"]);
+const DEFAULT_LEDGER_MAX_BYTES = 8 * 1024 * 1024;
 
 export function taiwanLocalHour(isoLike) {
   const time = Date.parse(isoLike);
@@ -76,11 +79,10 @@ function categoriesFromRecords(records) {
     cat.count += 1;
     const sourceKey = `${sourceName}\u0000${datasetId || ""}`;
     if (!cat.sourceMap.has(sourceKey)) {
-      cat.sourceMap.set(sourceKey, { name: sourceName, datasetId, count: 0, records: [] });
+      cat.sourceMap.set(sourceKey, { name: sourceName, datasetId, count: 0 });
     }
     const source = cat.sourceMap.get(sourceKey);
     source.count += 1;
-    source.records.push(record);
   }
 
   return [...categoryMap.values()]
@@ -90,6 +92,11 @@ function categoriesFromRecords(records) {
       sources: [...cat.sourceMap.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
     }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+function compactRun(run) {
+  const newRecords = Array.isArray(run?.newRecords) ? run.newRecords : [];
+  return { ...run, newRecords, categories: categoriesFromRecords(newRecords) };
 }
 
 function seenFromInputs(previousHistory, previousLedger) {
@@ -133,6 +140,34 @@ function mergeRun(existing, incoming, minimumNewPerHour) {
   };
 }
 
+function boundedLedgerSeen({ generatedAt, seen, retainedRuns, maxBytes }) {
+  const ordered = new Set();
+  const touch = (fingerprint) => {
+    if (!fingerprint) return;
+    ordered.delete(fingerprint);
+    ordered.add(fingerprint);
+  };
+
+  for (const fingerprint of seen) touch(fingerprint);
+  for (const run of [...retainedRuns].reverse()) {
+    for (const record of run.newRecords || []) touch(record.fingerprint);
+  }
+
+  const fingerprints = [...ordered.keys()];
+  if (!Number.isFinite(maxBytes)) return fingerprints;
+
+  let usedBytes = Buffer.byteLength(JSON.stringify({ generatedAt, seen: [] }, null, 2)) + 1;
+  const kept = [];
+  for (let index = fingerprints.length - 1; index >= 0; index -= 1) {
+    const fingerprint = fingerprints[index];
+    const entryBytes = Buffer.byteLength(JSON.stringify(fingerprint)) + 8;
+    if (usedBytes + entryBytes > maxBytes) continue;
+    usedBytes += entryBytes;
+    kept.push(fingerprint);
+  }
+  return kept.reverse();
+}
+
 export function applyPoliceHourlyRun({
   generatedAt,
   events,
@@ -141,9 +176,10 @@ export function applyPoliceHourlyRun({
   minimumNewPerHour = 200,
   maxNewPerRun = Number.POSITIVE_INFINITY,
   retentionDays = Number.POSITIVE_INFINITY,
+  maxLedgerBytes = DEFAULT_LEDGER_MAX_BYTES,
 }) {
   const hourLocal = taiwanLocalHour(generatedAt);
-  const previousRuns = Array.isArray(previousHistory?.runs) ? previousHistory.runs : [];
+  const previousRuns = Array.isArray(previousHistory?.runs) ? previousHistory.runs.map(compactRun) : [];
   const existing = previousRuns.find((run) => run.hourLocal === hourLocal);
   const existingNewCount = existing?.newRecords?.length || 0;
   const remainingNewSlots = Number.isFinite(maxNewPerRun)
@@ -205,7 +241,7 @@ export function applyPoliceHourlyRun({
     },
     ledger: {
       generatedAt,
-      seen: [...seen].sort(),
+      seen: boundedLedgerSeen({ generatedAt, seen, retainedRuns, maxBytes: maxLedgerBytes }),
     },
   };
 }

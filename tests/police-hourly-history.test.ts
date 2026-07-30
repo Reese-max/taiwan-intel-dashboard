@@ -179,6 +179,49 @@ describe("police hourly new-record history", () => {
     expect(second.ledger.seen).toHaveLength(2);
   });
 
+  it("分類摘要不重複保存完整 records，並清理舊格式", () => {
+    const first = applyPoliceHourlyRun({
+      generatedAt: "2026-06-16T00:05:00.000Z",
+      events: [event("legacy")],
+      previousHistory: { runs: [] },
+      previousLedger: { seen: [] },
+    });
+    const legacyHistory = structuredClone(first.history);
+    legacyHistory.runs[0].categories[0].sources[0].records = first.run.newRecords;
+
+    const result = applyPoliceHourlyRun({
+      generatedAt: "2026-06-17T00:05:00.000Z",
+      events: [event("current", "交通")],
+      previousHistory: legacyHistory,
+      previousLedger: first.ledger,
+    });
+
+    expect(JSON.stringify(result.history)).not.toContain('"records"');
+    expect(result.run.categories).toEqual([
+      {
+        name: "交通",
+        count: 1,
+        sources: [{ name: "警政署 114年傷亡道路交通事故資料", datasetId: "177136", count: 1 }],
+      },
+    ]);
+  });
+
+  it("ledger 依序保留近期指紋且不超過位元組上限", () => {
+    const maxLedgerBytes = 400;
+    const result = applyPoliceHourlyRun({
+      generatedAt: "2026-06-17T00:05:00.000Z",
+      events: [event("current")],
+      previousHistory: { runs: [] },
+      previousLedger: {
+        seen: Array.from({ length: 20 }, (_, index) => `legacy:${index}:${"x".repeat(80)}`),
+      },
+      maxLedgerBytes,
+    });
+
+    expect(Buffer.byteLength(JSON.stringify(result.ledger, null, 2))).toBeLessThanOrEqual(maxLedgerBytes);
+    expect(result.ledger.seen).toContain(eventFingerprint(event("current")));
+  });
+
   it("保留窗裁掉超齡 runs", () => {
     const generatedAt = "2026-06-17T00:05:00.000Z";
     const old20d = new Date(Date.parse(generatedAt) - 20 * 86400000).toISOString();
