@@ -176,6 +176,26 @@ describe("resolveFetchMode", () => {
     expect(workflow).toContain("npm run audit:coverage");
   });
 
+  it("keeps the pipeline dry run manual, read-only, police-only, and deployment-free", () => {
+    const workflow = readFileSync(".github/workflows/pipeline-dry-run.yml", "utf8");
+
+    expect(workflow).toMatch(/on:\r?\n  workflow_dispatch:/);
+    expect(workflow).not.toMatch(/^  (?:schedule|push|pull_request):/m);
+    expect(workflow).toContain("contents: read");
+    expect(workflow).not.toContain("contents: write");
+    expect(workflow).toContain("node scripts/fetch-live.mjs --sources=police");
+
+    for (const deployCommand of [
+      "peaceiris/actions-gh-pages",
+      "cloudflare/wrangler-action",
+      "pages deploy",
+      "git push",
+      "smoke-deployed.mjs",
+    ]) {
+      expect(workflow).not.toContain(deployCommand);
+    }
+  });
+
   it("writes GitHub output for label, fetch args, and assertion args", () => {
     const dir = mkdtempSync(join(tmpdir(), "ci-fetch-mode-"));
     const out = join(dir, "output");

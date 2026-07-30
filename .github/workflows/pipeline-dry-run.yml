@@ -1,0 +1,67 @@
+name: 資料管線 Dry Run（不部署）
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pipeline-dry-run
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 取回 gh-pages 既有資料
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: prev-site
+
+      - name: 還原上一輪狀態
+        run: |
+          mkdir -p public/data
+          cp -f prev-site/data/*.json public/data/
+
+      - name: 安裝 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: 安裝相依
+        run: npm ci
+
+      - name: 抓取警政資料
+        env:
+          TWINKLE_MCP_URL: ${{ secrets.TWINKLE_MCP_URL }}
+          TWINKLE_MCP_TOKEN: ${{ secrets.TWINKLE_MCP_TOKEN }}
+          NODE_OPTIONS: --use-system-ca
+        run: node scripts/fetch-live.mjs --sources=police
+
+      - name: 驗證警政來源已更新
+        run: node scripts/assert-pipeline-sources.mjs --require=police
+
+      - name: 執行測試
+        run: npm test
+
+      - name: 建置靜態網站
+        run: npm run build
+
+      - name: 稽核 coverage 矩陣
+        run: npm run audit:coverage
+
+      - name: 稽核來源可追溯性
+        run: npm run audit:source-provenance
+
+      - name: 稽核情報網品質
+        run: npm run audit:network-quality
+
+      - name: 稽核資料檔尺寸
+        run: npm run audit:data-size -- --max-mb=24
