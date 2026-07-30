@@ -1,0 +1,247 @@
+name: 共用資料管線
+
+on:
+  workflow_call:
+    inputs:
+      mode:
+        type: string
+        default: hourly
+      schedule:
+        type: string
+        default: ""
+      renorm_intl:
+        type: boolean
+        default: false
+      save_state:
+        type: boolean
+        default: false
+      deploy:
+        type: boolean
+        default: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    permissions:
+      contents: read
+    outputs:
+      fetch_args: ${{ steps.mode.outputs.args }}
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 取回獨立狀態庫
+        id: state
+        uses: actions/checkout@v4
+        with:
+          ref: pipeline-state
+          path: prev-state
+        continue-on-error: true
+
+      - name: 首次轉換時取回舊 gh-pages 狀態
+        if: steps.state.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: legacy-state
+        continue-on-error: true
+
+      - name: 還原上一輪狀態
+        run: |
+          mkdir -p public/data
+          if [ -d prev-state/data ]; then
+            cp -f prev-state/data/*.json public/data/ 2>/dev/null || true
+            echo "已從 pipeline-state 還原 $(find public/data -maxdepth 1 -type f | wc -l) 個狀態檔"
+          elif [ -d legacy-state/data ]; then
+            cp -f legacy-state/data/*.json public/data/ 2>/dev/null || true
+            echo "已從 gh-pages 還原 $(find public/data -maxdepth 1 -type f | wc -l) 個舊狀態檔"
+          else
+            echo "尚無舊狀態，本輪從零開始"
+          fi
+
+      - name: 安裝 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: 安裝相依
+        run: npm ci
+
+      - name: 決定抓取模式
+        id: mode
+        run: |
+          node scripts/ci-fetch-mode.mjs \
+            --schedule="${{ inputs.schedule }}" \
+            --mode="${{ inputs.mode }}" \
+            --github-output="$GITHUB_OUTPUT"
+
+      - name: 抓取即時資料
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_BASE_URL: ${{ secrets.NVIDIA_BASE_URL }}
+          NVIDIA_MODEL: ${{ secrets.NVIDIA_MODEL }}
+          LLM_FALLBACK_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          LLM_FALLBACK_BASE_URL: ${{ secrets.NVIDIA_BASE_URL }}
+          LLM_FALLBACK_MODEL: ${{ secrets.NVIDIA_MODEL }}
+          SUMMARY_LLM: ${{ secrets.SUMMARY_LLM }}
+          SUMMARY_API_KEY: ${{ secrets.SUMMARY_API_KEY }}
+          SUMMARY_BASE_URL: ${{ secrets.SUMMARY_BASE_URL }}
+          SUMMARY_MODEL: ${{ secrets.SUMMARY_MODEL }}
+          SUMMARY_MAX_CONCURRENCY: ${{ secrets.SUMMARY_MAX_CONCURRENCY }}
+          SUMMARY_TIMEOUT_MS: ${{ secrets.SUMMARY_TIMEOUT_MS }}
+          SUMMARY_MAX_RETRIES: ${{ secrets.SUMMARY_MAX_RETRIES }}
+          TWINKLE_MCP_URL: ${{ secrets.TWINKLE_MCP_URL }}
+          TWINKLE_MCP_TOKEN: ${{ secrets.TWINKLE_MCP_TOKEN }}
+          CWA_API_KEY: ${{ secrets.CWA_API_KEY }}
+          INTERNATIONAL_FEED_TIER: ${{ steps.mode.outputs.international_feed_tier }}
+          INTERNATIONAL_FEED_TOPIC: ${{ steps.mode.outputs.international_feed_topic }}
+          INTL_RENORM_ALL: ${{ inputs.renorm_intl }}
+          NODE_OPTIONS: --use-system-ca
+        run: node scripts/fetch-live.mjs ${{ steps.mode.outputs.args }}
+
+      - name: 驗證必要來源已更新
+        env:
+          ALLOW_STALE_CWA: ${{ vars.ALLOW_STALE_CWA }}
+        run: node scripts/assert-pipeline-sources.mjs ${{ steps.mode.outputs.assert_args }}
+
+      - name: 驗證國際正規化結果門檻
+        if: contains(steps.mode.outputs.args, 'rss') && steps.mode.outputs.international_feed_tier == 'expanded'
+        run: >-
+          node scripts/assert-pipeline-sources.mjs
+          ${{ steps.mode.outputs.assert_args }}
+          --international-output=public/data/international.json
+          --international-topic="${{ steps.mode.outputs.international_feed_topic }}"
+          --min-official-police-events=20
+          --min-official-police-sources=7
+          --min-general-events=50
+          --min-general-sources=10
+
+      - name: 檢查新聞來源實際貢獻
+        if: contains(steps.mode.outputs.args, 'twnews')
+        run: npm run audit:news-source-contribution
+
+      - name: 保存候選資料 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-data-${{ github.run_id }}
+          path: public/data
+          retention-days: 7
+          if-no-files-found: error
+
+  save-state:
+    needs: fetch
+    if: ${{ inputs.save_state }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 下載候選資料
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-data-${{ github.run_id }}
+          path: state/data
+
+      - name: 更新獨立狀態庫
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./state
+          publish_branch: pipeline-state
+          force_orphan: true
+          commit_message: "auto: 更新資料管線狀態"
+
+  audit:
+    needs: fetch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 安裝 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: 安裝相依
+        run: npm ci
+
+      - name: 下載同一份候選資料
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-data-${{ github.run_id }}
+          path: public/data
+
+      - name: 檢查結構化來源新鮮度
+        run: npm run audit:source-freshness
+
+      - name: 檢查 coverage 每日矩陣
+        run: npm run audit:coverage
+
+      - name: 執行測試
+        run: npm test
+
+      - name: 建置靜態網站
+        run: npm run build
+
+      - name: 檢查來源可追溯性
+        run: npm run audit:source-provenance
+
+      - name: 檢查情報網品質
+        run: npm run audit:network-quality
+
+      - name: 檢查國際風險分布
+        continue-on-error: true
+        run: npm run audit:intl-risk
+
+      - name: 檢查資料檔尺寸
+        run: npm run audit:data-size -- --max-mb=24
+
+      - name: 保存已稽核網站 artifact
+        if: ${{ inputs.deploy }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-dist-${{ github.run_id }}
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy:
+    needs: [fetch, save-state, audit]
+    if: ${{ always() && inputs.deploy && needs.save-state.result == 'success' && needs.audit.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 下載已稽核網站
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-dist-${{ github.run_id }}
+          path: dist
+
+      - name: 部署到 Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: "03d40efd3c60181edea80af8d927ddc1"
+          command: pages deploy dist --project-name=taiwan-intel-dashboard --branch=main
+
+      - name: 部署後線上 smoke
+        env:
+          DEPLOY_BASE_URL: https://taiwan-intel-dashboard.pages.dev
+          DEPLOY_FETCH_ARGS: ${{ needs.fetch.outputs.fetch_args }}
+        run: node scripts/smoke-deployed.mjs
