@@ -32,6 +32,9 @@ jobs:
           name: pipeline-data-${{ github.run_id }}-${{ github.run_attempt }}
           path: public/data
 
+      - name: 驗收情報網產物契約
+        run: npm run check:network-contract
+
       - name: 檢查結構化來源新鮮度
         run: npm run audit:source-freshness
 

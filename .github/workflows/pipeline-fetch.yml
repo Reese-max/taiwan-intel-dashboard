@@ -123,6 +123,9 @@ jobs:
         if: contains(steps.mode.outputs.args, 'twnews')
         run: npm run audit:news-source-contribution
 
+      - name: 驗收情報網產物契約
+        run: npm run check:network-contract
+
       - name: 保存候選資料 artifact
         uses: actions/upload-artifact@v4
         with:

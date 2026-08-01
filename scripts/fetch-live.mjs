@@ -74,6 +74,11 @@ import {
 } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import {
+  formatNetworkContractErrors,
+  NETWORK_FILE,
+  validateNetworkContract,
+} from "./lib/network-contract.mjs";
+import {
   applyPoliceHourlyRun,
   calibratePoliceHourlyMinimum,
   eventFingerprint,
@@ -885,6 +890,10 @@ export async function run() {
         international: intlEvents.length - intlNews.length,
       },
     };
+    const contractErrors = validateNetworkContract(network);
+    if (contractErrors.length) {
+      throw new Error(`產物契約驗收失敗：\n${formatNetworkContractErrors(NETWORK_FILE, contractErrors)}`);
+    }
     writeJson("network.json", network);
     domesticClusters = network.domestic.clusters || [];
     status.network = { ok: true, edges: network.domestic.stats.edges, clusters: network.domestic.stats.clusters };

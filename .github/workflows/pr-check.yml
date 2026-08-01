@@ -33,7 +33,6 @@ jobs:
       - name: 單元測試
         run: npm test
 
-      # public/data 不進版控；build-network 會自建目錄並在缺資料時回空陣列，
-      # build-static 因此仍有 public/data 可讀 —— 全新 checkout 下可獨立跑完。
-      - name: Build（tsc + network + static）
-        run: npm run build
+      # public/data 不進版控；需要候選資料的 build 由 pipeline-audit 在下載 artifact 後執行。
+      - name: TypeScript 型別檢查
+        run: npx tsc --noEmit

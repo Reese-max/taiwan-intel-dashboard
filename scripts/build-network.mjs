@@ -4,6 +4,11 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
+import {
+  formatNetworkContractErrors,
+  NETWORK_FILE,
+  validateNetworkContract,
+} from "./lib/network-contract.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // 與 fetch-live 一致：實際服務／部署的資料在 public/data，dist/data 為已 build 副本。
@@ -12,12 +17,16 @@ const DIST_DATA_DIR = join(ROOT, "dist", "data");
 
 function readEvents(name) {
   const p = join(DATA_DIR, name);
-  if (!existsSync(p)) return [];
+  const fileName = `public/data/${name}`;
+  if (!existsSync(p)) {
+    throw new Error(`${fileName}：檔案不存在，無法建立 ${NETWORK_FILE}`);
+  }
   try {
-    return JSON.parse(readFileSync(p, "utf8"));
+    const events = JSON.parse(readFileSync(p, "utf8"));
+    if (!Array.isArray(events)) throw new Error("根值必須是陣列");
+    return events;
   } catch (e) {
-    console.error(`讀取 ${name} 失敗：${e.message}`);
-    return [];
+    throw new Error(`${fileName}：JSON 無法解析或不是事件陣列：${e.message}`);
   }
 }
 
@@ -40,6 +49,10 @@ function main() {
   const domestic = readEvents("domestic.json");
   const international = readEvents("international.json");
   const net = buildNetwork(domestic, international, new Date().toISOString());
+  const contractErrors = validateNetworkContract(net);
+  if (contractErrors.length) {
+    throw new Error(`產物契約驗收失敗：\n${formatNetworkContractErrors(NETWORK_FILE, contractErrors)}`);
+  }
 
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
   const json = JSON.stringify(net, null, 2) + "\n";
@@ -56,4 +69,11 @@ function main() {
 }
 
 // 僅在直接執行時跑 main（被 import 時不跑）。
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  try {
+    main();
+  } catch (error) {
+    console.error(`network build 失敗：${error.message}`);
+    process.exitCode = 1;
+  }
+}
