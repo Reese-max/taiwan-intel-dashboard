@@ -17,6 +17,7 @@
     "audit:intl-risk": "node scripts/audit-intl-risk-distribution.mjs",
     "audit:domestic-risk": "node scripts/audit-domestic-risk-distribution.mjs",
     "audit:source-freshness": "node scripts/audit-source-freshness.mjs",
+    "audit:source-health": "node scripts/audit-source-health.mjs",
     "audit:coverage": "node scripts/audit-coverage.mjs",
     "audit:data-size": "node scripts/audit-data-size.mjs",
     "audit:source-provenance": "node scripts/audit-source-provenance.mjs",

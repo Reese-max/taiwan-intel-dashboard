@@ -38,6 +38,9 @@ jobs:
       - name: 檢查 coverage 每日矩陣
         run: npm run audit:coverage
 
+      - name: 檢查來源失敗、過期與覆蓋量告警
+        run: npm run audit:source-health
+
       - name: 執行測試
         run: npm test
 

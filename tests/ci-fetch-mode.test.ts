@@ -174,6 +174,7 @@ describe("resolveFetchMode", () => {
     const workflow = readFileSync(".github/workflows/pipeline-audit.yml", "utf8");
     expect(workflow).toContain("npm run audit:source-freshness");
     expect(workflow).toContain("npm run audit:coverage");
+    expect(workflow).toContain("npm run audit:source-health");
   });
 
   it("keeps the pipeline dry run manual, read-only, full-source, and deployment-free", () => {
