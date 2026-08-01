@@ -1,0 +1,67 @@
+name: 資料來源健康度純檢查
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-health-check
+  cancel-in-progress: true
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 讀取最新狀態快照
+        uses: actions/checkout@v4
+        with:
+          ref: pipeline-state
+          path: state
+
+      - name: 安裝 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: 安裝相依
+        run: npm ci
+
+      - name: 執行健康度測試與唯讀稽核
+        shell: bash
+        run: |
+          set -o pipefail
+          report_dir="$RUNNER_TEMP/source-health-reports"
+          mkdir -p "$report_dir"
+          status=0
+          npm test -- tests/source-health.test.ts tests/source-freshness.test.ts tests/source-health-check-workflow.test.ts 2>&1 | tee "$report_dir/tests.txt" || status=1
+          node scripts/audit-source-freshness.mjs --file=state/data/provenance.json 2>&1 | tee "$report_dir/source-freshness.txt" || status=1
+          node scripts/audit-source-health.mjs --provenance=state/data/provenance.json --domain-coverage=state/data/domain-coverage.json 2>&1 | tee "$report_dir/source-health.txt" || status=1
+          exit "$status"
+
+      - name: 驗證未產生資料或網站輸出
+        if: always()
+        shell: bash
+        run: |
+          git diff --exit-code
+          test ! -d public/data || test -z "$(find public/data -type f -print -quit)"
+          test ! -d dist || test -z "$(find dist -type f -print -quit)"
+
+      - name: 保存健康度報告與測試結果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-health-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/source-health-reports/
+          retention-days: 7
+          if-no-files-found: warn
