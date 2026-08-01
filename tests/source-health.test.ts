@@ -135,6 +135,39 @@ describe("auditSourceHealth（來源失敗非靜默判定）", () => {
     expect(result).toMatchObject({ ok: true, status: "pass", failures: [], warnings: [] });
   });
 
+  it("混合來源時健康、失敗、過期與低覆蓋量判定彼此獨立", () => {
+    const result = auditSourceHealth({
+      provenance: provenance([
+        { name: "健康來源", type: "gov-open-data", lastSuccessAt: generatedAt },
+        { name: "過期來源", type: "gov-open-data", lastSuccessAt: "2026-06-30T00:00:00.000Z" },
+        { name: "低覆蓋來源", type: "news-rss", count: 1, minCount: 3 },
+      ], {
+        failedSource: { ok: false, error: "HTTP 503" },
+      }),
+      now,
+    });
+
+    expect(result.status).toBe("fail");
+    expect(result.failures).toEqual([
+      expect.objectContaining({ code: "data-stale", source: "過期來源" }),
+    ]);
+    expect(result.warnings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: "request-failed",
+        source: "failedSource",
+        reason: "來源請求失敗：HTTP 503",
+      }),
+      expect.objectContaining({
+        code: "coverage-low",
+        source: "低覆蓋來源",
+        reason: "來源覆蓋量低於門檻：1/3 筆",
+      }),
+    ]));
+    expect([...result.failures, ...result.warnings]).not.toContainEqual(
+      expect.objectContaining({ source: "健康來源" }),
+    );
+  });
+
   it("CLI 會輸出 CI annotation、JSON 結果並以 fail 結束", () => {
     const dir = mkdtempSync(join(tmpdir(), "source-health-"));
     const provenancePath = join(dir, "provenance.json");
@@ -154,6 +187,36 @@ describe("auditSourceHealth（來源失敗非靜默判定）", () => {
       expect(result.status).toBe(1);
       expect(result.stdout).toContain("::error title=來源健康::過期來源：資料過期：age=120h > 48h");
       expect(result.stdout).toContain("SOURCE_HEALTH_RESULT=");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("CLI 會對混合來源逐一輸出失敗、過期與低覆蓋量告警", () => {
+    const dir = mkdtempSync(join(tmpdir(), "source-health-mixed-"));
+    const provenancePath = join(dir, "provenance.json");
+    const domainCoveragePath = join(dir, "domain-coverage.json");
+    const scriptPath = fileURLToPath(new URL("../scripts/audit-source-health.mjs", import.meta.url));
+    try {
+      writeFileSync(provenancePath, JSON.stringify(provenance([
+        { name: "健康來源", type: "gov-open-data", lastSuccessAt: generatedAt },
+        { name: "過期來源", type: "gov-open-data", lastSuccessAt: "2026-06-30T00:00:00.000Z" },
+        { name: "低覆蓋來源", type: "news-rss", count: 1, minCount: 3 },
+      ], {
+        failedSource: { ok: false, error: "HTTP 503" },
+      })), "utf8");
+      writeFileSync(domainCoveragePath, JSON.stringify({ rows: [] }), "utf8");
+      const result = spawnSync(process.execPath, [
+        scriptPath,
+        `--provenance=${provenancePath}`,
+        `--domain-coverage=${domainCoveragePath}`,
+      ], { encoding: "utf8" });
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toContain("::warning title=來源健康::failedSource：來源請求失敗：HTTP 503");
+      expect(result.stdout).toContain("::error title=來源健康::過期來源：資料過期：age=120h > 48h");
+      expect(result.stdout).toContain("::warning title=來源健康::低覆蓋來源：來源覆蓋量低於門檻：1/3 筆");
+      expect(result.stdout).not.toContain("健康來源：");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
