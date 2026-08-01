@@ -1,0 +1,25 @@
+name: 暫停期依賴與建置健康檢查
+
+# 僅手動執行；不抓取資料、不更新狀態、不上傳 artifact、不部署。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    name: Lockfile、乾淨安裝與建置
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 安裝 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 執行健康檢查並輸出固定 JSON 證據
+        run: node scripts/dependency-build-health.mjs
