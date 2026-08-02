@@ -45,35 +45,38 @@ function sortedObject(value) {
   return Object.fromEntries(Object.entries(value || {}).sort(([a], [b]) => a.localeCompare(b)));
 }
 
-function inspectLockfile() {
-  const packageJson = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
-  const lockfile = JSON.parse(readFileSync(join(ROOT, "package-lock.json"), "utf8"));
+export function inspectLockfile(packageJson, lockfile) {
   const root = lockfile.packages?.[""];
   const failures = [];
+  const isV1 = lockfile.lockfileVersion === 1;
 
-  if (!root) failures.push("package-lock.json 缺少根套件資料");
-  if (lockfile.lockfileVersion !== 3) failures.push(`不支援的 lockfileVersion：${lockfile.lockfileVersion}`);
-  if (root?.name !== packageJson.name) failures.push("package.json 與 package-lock.json 的套件名稱不一致");
+  // npm ci 可讀取 v1，但 v1 沒有 packages[""]；其一致性由後續 npm ci 驗證。
+  if (!isV1 && !root) failures.push("package-lock.json 缺少根套件資料");
+  if (!isV1 && root?.name !== packageJson.name) failures.push("package.json 與 package-lock.json 的套件名稱不一致");
 
-  for (const section of ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"]) {
-    if (JSON.stringify(sortedObject(packageJson[section])) !== JSON.stringify(sortedObject(root?.[section]))) {
-      failures.push(`${section} 與 package-lock.json 根套件資料不一致`);
+  if (!isV1) {
+    for (const section of ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"]) {
+      if (JSON.stringify(sortedObject(packageJson[section])) !== JSON.stringify(sortedObject(root?.[section]))) {
+        failures.push(`${section} 與 package-lock.json 根套件資料不一致`);
+      }
     }
   }
 
-  const entries = Object.entries(lockfile.packages || {}).filter(([name, entry]) =>
-    name && !entry.link && !String(entry.resolved || "").startsWith("file:"),
-  );
-  const missingIntegrity = entries.filter(([, entry]) => !entry.integrity).length;
-  const missingResolved = entries.filter(([, entry]) => !entry.resolved).length;
-  if (missingIntegrity) failures.push(`有 ${missingIntegrity} 個套件缺少 integrity`);
-  if (missingResolved) failures.push(`有 ${missingResolved} 個套件缺少 resolved`);
+  const entries = isV1
+    ? Object.entries(lockfile.dependencies || {})
+    : Object.entries(lockfile.packages || {}).filter(([name, entry]) =>
+        name && !entry.link && !String(entry.resolved || "").startsWith("file:"),
+      );
+  const missingIntegrity = isV1 ? 0 : entries.filter(([, entry]) => !entry.integrity).length;
+  const missingResolved = isV1 ? 0 : entries.filter(([, entry]) => !entry.resolved).length;
+  if (!isV1 && missingIntegrity) failures.push(`有 ${missingIntegrity} 個套件缺少 integrity`);
+  if (!isV1 && missingResolved) failures.push(`有 ${missingResolved} 個套件缺少 resolved`);
 
   return {
     status: failures.length ? "failed" : "passed",
     file: "package-lock.json",
     lockfileVersion: lockfile.lockfileVersion ?? null,
-    rootManifestMatch: failures.every((failure) => !failure.includes("不一致")),
+    rootManifestMatch: isV1 ? null : failures.every((failure) => !failure.includes("不一致")),
     packageEntries: entries.length,
     missingIntegrity,
     missingResolved,
@@ -104,7 +107,10 @@ function main() {
   }
 
   try {
-    report.lockfile = inspectLockfile();
+    report.lockfile = inspectLockfile(
+      JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")),
+      JSON.parse(readFileSync(join(ROOT, "package-lock.json"), "utf8")),
+    );
   } catch (error) {
     report.lockfile = {
       status: "failed",
@@ -150,4 +156,4 @@ function main() {
   process.exitCode = failures.length ? 1 : 0;
 }
 
-main();
+if (fileURLToPath(import.meta.url) === process.argv[1]) main();
