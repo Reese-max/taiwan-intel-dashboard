@@ -2,7 +2,6 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseDocument } from "yaml";
 
 const REPO_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 
@@ -38,6 +37,56 @@ export const FORBIDDEN_OPERATIONS = Object.freeze([
 ]);
 
 export const OPTIONAL_CHECK_IDS = Object.freeze(["data-endpoints"]);
+
+function declaredDependencies(manifest) {
+  return ["dependencies", "devDependencies"].flatMap((section) =>
+    Object.keys(manifest?.[section] && typeof manifest[section] === "object" ? manifest[section] : {}),
+  );
+}
+
+export function checkDependencyIntegrity({ rootDir = REPO_ROOT, exists = existsSync, readFile = readFileSync } = {}) {
+  const packageJsonPath = join(rootDir, "package.json");
+  let manifest;
+  try {
+    manifest = JSON.parse(readFile(packageJsonPath, "utf8"));
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return {
+      id: "dependency-integrity",
+      name: "宣告依賴完整性",
+      status: "fail",
+      detail: `無法讀取 package.json：${reason}`,
+      metadata: { packageJson: packageJsonPath, declaredDependencies: [], missingDependencies: [], error: reason },
+    };
+  }
+
+  const dependencies = [...new Set(declaredDependencies(manifest))];
+  const missingDependencies = dependencies.filter((name) => {
+    const packageJson = join(rootDir, "node_modules", name, "package.json");
+    if (!exists(packageJson)) return true;
+    try {
+      readFile(packageJson, "utf8");
+      return false;
+    } catch {
+      return true;
+    }
+  });
+
+  return {
+    id: "dependency-integrity",
+    name: "宣告依賴完整性",
+    status: missingDependencies.length ? "fail" : "pass",
+    detail: missingDependencies.length
+      ? `node_modules 缺少或無法讀取：${missingDependencies.join("、")}`
+      : `已確認 ${dependencies.length} 個 dependencies/devDependencies 的 package.json 存在且可讀（未安裝或載入套件）`,
+    metadata: {
+      packageJson: packageJsonPath,
+      declaredDependencies: dependencies,
+      missingDependencies,
+      checkedDependencies: dependencies.filter((name) => !missingDependencies.includes(name)),
+    },
+  };
+}
 
 function reportFileName(timestamp) {
   return `recovery-prerequisites-${String(timestamp).replace(/[:.]/g, "-")}.json`;
@@ -143,12 +192,25 @@ export async function checkCiWorkflows({
   exists = existsSync,
   readFile = readFileSync,
   readDir = readdirSync,
-  parseYaml = parseDocument,
+  parseYaml,
 } = {}) {
   const workflowDir = join(rootDir, ".github", "workflows");
   const checkedFiles = [];
   const missingFiles = [];
   const invalidYaml = [];
+  let parse;
+  try {
+    parse = parseYaml || (await import("yaml")).parseDocument;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return {
+      id: "ci-workflows",
+      name: "CI workflow 檔完整性",
+      status: "fail",
+      detail: `無法載入 YAML 解析器：${reason}`,
+      metadata: { checkedFiles, missingFiles, invalidYaml, parserError: reason },
+    };
+  }
   let workflowNames;
   try {
     workflowNames = readDir(workflowDir).filter((name) => /\.ya?ml$/i.test(name)).sort();
@@ -174,7 +236,7 @@ export async function checkCiWorkflows({
       continue;
     }
     try {
-      const document = parseYaml(content, { prettyErrors: false });
+      const document = parse(content, { prettyErrors: false });
       if (document.errors.length) {
         invalidYaml.push({ name, reason: document.errors.map((error) => error.message).join("；") });
       } else {
@@ -276,6 +338,11 @@ export function createReadOnlyRecoveryExecutor({
           detail: "演練只暴露 exists、readFile、readDir；HTTP、部署、生產寫入、workflow 啟用與 Cloudflare 設定變更均不可用",
           metadata: { exposed: READ_ONLY_OPERATIONS, blocked: FORBIDDEN_OPERATIONS },
         },
+        checkDependencyIntegrity({
+          rootDir,
+          exists: readOnlyOperations.exists,
+          readFile: readOnlyOperations.readFile,
+        }),
         await checkEnvSecrets({ secretNames, listSecrets }),
         await checkDataEndpoints({ endpoints, endpointEvidence }),
         await checkCiWorkflows({

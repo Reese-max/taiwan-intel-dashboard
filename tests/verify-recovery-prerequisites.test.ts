@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { join } from "node:path";
 import {
   checkBuildArtifacts,
   checkCiWorkflows,
   checkCloudflarePages,
+  checkDependencyIntegrity,
   checkDataEndpoints,
   checkEnvSecrets,
   createReadOnlyRecoveryExecutor,
@@ -13,6 +15,44 @@ import {
 } from "../scripts/verify-recovery-prerequisites.mjs";
 
 describe("唯讀復原前提演練", () => {
+  it("所有宣告依賴的 node_modules package.json 齊備時通過", () => {
+    const rootDir = "dependency-fixture";
+    const manifest = { dependencies: { leaflet: "^1.9.4" }, devDependencies: { "@scope/esm-only": "^1.0.0" } };
+    const files = new Map([
+      [join(rootDir, "package.json"), JSON.stringify(manifest)],
+      [join(rootDir, "node_modules", "leaflet", "package.json"), "{}"],
+      [join(rootDir, "node_modules", "@scope", "esm-only", "package.json"), "{}"],
+    ]);
+    const result = checkDependencyIntegrity({
+      rootDir,
+      exists: (path) => files.has(path),
+      readFile: (path) => files.get(path),
+    });
+
+    expect(result.status).toBe("pass");
+    expect(result.metadata.missingDependencies).toEqual([]);
+  });
+
+  it("刻意移除一個依賴時失敗並指出套件名", () => {
+    const rootDir = "dependency-fixture";
+    const missing = "@scope/esm-only";
+    const packageJson = join(rootDir, "package.json");
+    const installedPackage = join(rootDir, "node_modules", "leaflet", "package.json");
+    const files = new Map([
+      [packageJson, JSON.stringify({ dependencies: { leaflet: "^1.9.4" }, devDependencies: { [missing]: "^1.0.0" } })],
+      [installedPackage, "{}"],
+    ]);
+    const result = checkDependencyIntegrity({
+      rootDir,
+      exists: (path) => files.has(path),
+      readFile: (path) => files.get(path),
+    });
+
+    expect(result.status).toBe("fail");
+    expect(result.detail).toContain(missing);
+    expect(result.metadata.missingDependencies).toEqual([missing]);
+  });
+
   it("所有 GitHub Actions secrets 已設定時 env-secrets 通過", async () => {
     const result = await checkEnvSecrets({ secretNames: REQUIRED_ENV_VARS });
 

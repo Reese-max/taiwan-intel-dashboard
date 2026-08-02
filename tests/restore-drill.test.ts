@@ -10,7 +10,21 @@ import {
 
 const ROOT = "restore-drill-test-root";
 const ENDPOINTS = ["https://dashboard.test", "https://data.test"];
+const PACKAGE_MANIFEST = {
+  dependencies: { leaflet: "^1.9.4", "opencc-js": "^1.4.1" },
+  devDependencies: {
+    "@playwright/test": "^1.61.1",
+    "@types/leaflet": "^1.9.12",
+    typescript: "^5.6.0",
+    vite: "^6.0.0",
+    vitest: "^2.1.0",
+    yaml: "^2.8.1",
+  },
+};
+const DECLARED_DEPENDENCIES = [...Object.keys(PACKAGE_MANIFEST.dependencies), ...Object.keys(PACKAGE_MANIFEST.devDependencies)];
 const REQUIRED_FILES = [
+  "package.json",
+  ...DECLARED_DEPENDENCIES.map((name) => join("node_modules", name, "package.json")),
   ...REQUIRED_WORKFLOW_FILES.map((name) => `.github/workflows/${name}`),
   "scripts/build-network.mjs",
   "scripts/build-static.mjs",
@@ -24,8 +38,10 @@ const CHECK_KEYS = ["detail", "id", "metadata", "name", "status"];
 function createHarness() {
   const files = new Map(
     REQUIRED_FILES.map((relativePath) => [
-      `${ROOT}/${relativePath}`,
-      relativePath.endsWith("update-and-deploy.yml")
+      `${ROOT}/${relativePath}`.replaceAll("\\", "/"),
+      relativePath === "package.json"
+        ? JSON.stringify(PACKAGE_MANIFEST)
+        : relativePath.endsWith("update-and-deploy.yml")
         ? 'name: test\nproject: "project-name=taiwan-intel-dashboard"\nbranch: "branch=main"\naccountId: "test-account"'
         : "name: test",
     ]),
@@ -63,6 +79,7 @@ function expectReportSchema(result: Awaited<ReturnType<typeof runRecoveryPrerequ
   expect(Object.keys(result.summary).sort()).toEqual(SUMMARY_KEYS.sort());
   expect(result.checks.map((check: { id: string }) => check.id)).toEqual([
     "read-only-capabilities",
+    "dependency-integrity",
     "env-secrets",
     "data-endpoints",
     "ci-workflows",
@@ -84,11 +101,11 @@ describe("復原演練注入式判定", () => {
 
     expect(result.ok).toBe(true);
     expect(result.summary).toEqual({
-      total: 6,
-      pass: 6,
+      total: 7,
+      pass: 7,
       fail: 0,
       skip: 0,
-      required: { total: 5, pass: 5, fail: 0, skip: 0 },
+      required: { total: 6, pass: 6, fail: 0, skip: 0 },
       optional: { total: 1, pass: 1, fail: 0, skip: 0 },
     });
     expectReportSchema(result);
@@ -105,6 +122,7 @@ describe("復原演練注入式判定", () => {
 
     expect(statuses(result)).toEqual({
       "read-only-capabilities": "pass",
+      "dependency-integrity": "pass",
       "env-secrets": "fail",
       "data-endpoints": "pass",
       "ci-workflows": "pass",
@@ -144,12 +162,25 @@ describe("復原演練注入式判定", () => {
     expect(harness.readFile).toHaveBeenCalled();
   });
 
+  it("node_modules 缺少宣告依賴時使依賴完整性與整體演練失敗", async () => {
+    const harness = createHarness();
+    const missing = "yaml";
+    harness.files.delete(`${ROOT}/node_modules/${missing}/package.json`);
+    const result = await runRecoveryPrerequisitesDrill(harness.options);
+    const dependency = result.checks.find((check: { id: string }) => check.id === "dependency-integrity");
+
+    expect(dependency.status).toBe("fail");
+    expect(dependency.detail).toContain(missing);
+    expect(result.ok).toBe(false);
+  });
+
   it("檔案系統缺少一個 workflow 只影響檔案判定", async () => {
     const harness = createHarness();
     harness.files.delete(`${ROOT}/.github/workflows/pipeline-audit.yml`);
     const result = await runRecoveryPrerequisitesDrill(harness.options);
 
     expect(statuses(result)).toMatchObject({
+      "dependency-integrity": "pass",
       "env-secrets": "pass",
       "data-endpoints": "pass",
       "ci-workflows": "fail",
