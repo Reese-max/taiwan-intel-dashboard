@@ -30,7 +30,8 @@ function createHarness() {
   );
   const exists = vi.fn((filePath: string) => files.has(filePath.replaceAll("\\", "/")));
   const readFile = vi.fn((filePath: string) => files.get(filePath.replaceAll("\\", "/")) ?? "");
-  const endpointProbe = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+  const readDir = vi.fn(() => [...REQUIRED_WORKFLOW_FILES]);
+  const endpointEvidence = ENDPOINTS.map((url) => ({ url, status: 200, ok: true }));
   const commandExecutor = Object.fromEntries(FORBIDDEN_OPERATIONS.map((name) => [name, vi.fn()]));
   const env = Object.fromEntries(REQUIRED_ENV_VARS.map((name) => [name, `test-${name}`]));
 
@@ -38,7 +39,7 @@ function createHarness() {
     files,
     exists,
     readFile,
-    endpointProbe,
+    readDir,
     commandExecutor,
     options: {
       dryRun: true,
@@ -46,7 +47,8 @@ function createHarness() {
       rootDir: ROOT,
       endpoints: ENDPOINTS,
       env,
-      operations: { ...commandExecutor, fetch: endpointProbe, exists, readFile },
+      endpointEvidence,
+      operations: { ...commandExecutor, exists, readFile, readDir },
     },
   };
 }
@@ -82,9 +84,9 @@ describe("復原演練注入式判定", () => {
     expect(result.ok).toBe(true);
     expect(result.summary).toEqual({ total: 6, pass: 6, fail: 0, skip: 0 });
     expectReportSchema(result);
-    expect(harness.endpointProbe).toHaveBeenCalledTimes(ENDPOINTS.length);
     expect(harness.exists).toHaveBeenCalled();
     expect(harness.readFile).toHaveBeenCalled();
+    expect(harness.readDir).toHaveBeenCalledOnce();
     for (const command of Object.values(harness.commandExecutor)) expect(command).not.toHaveBeenCalled();
   });
 
@@ -102,7 +104,6 @@ describe("復原演練注入式判定", () => {
       "build-artifacts": "pass",
     });
     expect(result.ok).toBe(false);
-    expect(harness.endpointProbe).toHaveBeenCalledTimes(ENDPOINTS.length);
     expect(harness.readFile).toHaveBeenCalled();
   });
 
@@ -118,10 +119,7 @@ describe("復原演練注入式判定", () => {
 
   it("端點不可達只使端點檢查失敗，仍完成檔案前提檢查", async () => {
     const harness = createHarness();
-    harness.endpointProbe.mockImplementation(async (url: string) => {
-      if (url === ENDPOINTS[1]) throw new Error("endpoint unreachable");
-      return { ok: true, status: 200 };
-    });
+    harness.options.endpointEvidence = [{ url: ENDPOINTS[0], status: 200, ok: true }];
     const result = await runRecoveryPrerequisitesDrill(harness.options);
 
     expect(statuses(result)["env-secrets"]).toBe("pass");
@@ -133,7 +131,7 @@ describe("復原演練注入式判定", () => {
       url: ENDPOINTS[1],
       status: 0,
       ok: false,
-      error: "endpoint unreachable",
+      error: "純 dry-run 禁止對外 HTTP 端點探測；未提供本機端點證據",
     });
     expect(harness.readFile).toHaveBeenCalled();
   });
@@ -154,5 +152,35 @@ describe("復原演練注入式判定", () => {
     expect(result.checks.find((check: { id: string }) => check.id === "ci-workflows").metadata.missingFiles).toEqual([
       "pipeline-audit.yml",
     ]);
+  });
+
+  it("逐一解析所有 YAML workflow，縮排錯誤保留檔名與原因並使前提失敗", async () => {
+    const harness = createHarness();
+    harness.files.set(
+      `${ROOT}/.github/workflows/indent-error.yaml`,
+      "jobs:\n  lint:\n    runs-on: ubuntu-latest\n     steps: []\n",
+    );
+    harness.readDir.mockReturnValue([...REQUIRED_WORKFLOW_FILES, "indent-error.yaml"]);
+
+    const result = await runRecoveryPrerequisitesDrill(harness.options);
+    const workflows = result.checks.find((check: { id: string }) => check.id === "ci-workflows");
+
+    expect(workflows.status).toBe("fail");
+    expect(workflows.detail).toContain("indent-error.yaml");
+    expect(workflows.metadata.invalidYaml).toEqual([
+      expect.objectContaining({ name: "indent-error.yaml", reason: expect.stringContaining("mapping") }),
+    ]);
+  });
+
+  it("預設 dry-run 不會呼叫全域 fetch", async () => {
+    const harness = createHarness();
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    try {
+      await runRecoveryPrerequisitesDrill(harness.options);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

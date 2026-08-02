@@ -1,6 +1,7 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseDocument } from "yaml";
 
 const REPO_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 
@@ -25,13 +26,14 @@ export const DEFAULT_ENDPOINTS = [
 ];
 
 export const FORBIDDEN_OPERATIONS = Object.freeze([
+  "fetch",
   "deploy",
   "writeProductionData",
   "enableWorkflow",
   "changeCloudflareSettings",
 ]);
 
-const READ_ONLY_OPERATIONS = Object.freeze(["fetch", "exists", "readFile"]);
+const READ_ONLY_OPERATIONS = Object.freeze(["exists", "readFile", "readDir"]);
 
 export async function checkEnvSecrets({ env = process.env, strict = false } = {}) {
   const presentRequired = REQUIRED_ENV_VARS.filter((name) => Boolean(env[name]));
@@ -47,31 +49,17 @@ export async function checkEnvSecrets({ env = process.env, strict = false } = {}
   };
 }
 
-export async function checkDataEndpoints({
-  endpoints = DEFAULT_ENDPOINTS,
-  fetchImpl = globalThis.fetch,
-  timeoutMs = 5000,
-} = {}) {
-  const results = [];
-  for (const url of endpoints) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const response = await fetchImpl(url, {
-        method: "HEAD",
-        signal: controller.signal,
-        headers: { "cache-control": "no-cache" },
-      });
-      results.push({ url, status: response.status, ok: response.ok || [301, 302, 403, 503].includes(response.status) });
-    } catch (error) {
-      results.push({ url, status: 0, ok: false, error: error instanceof Error ? error.message : String(error) });
-    } finally {
-      clearTimeout(timer);
-    }
-  }
+export async function checkDataEndpoints({ endpoints = DEFAULT_ENDPOINTS, endpointEvidence = [] } = {}) {
+  const evidenceByUrl = new Map(endpointEvidence.map((evidence) => [evidence.url, evidence]));
+  const results = endpoints.map((url) => {
+    const evidence = evidenceByUrl.get(url);
+    return evidence
+      ? { url, status: evidence.status, ok: Boolean(evidence.ok), ...(evidence.error ? { error: evidence.error } : {}) }
+      : { url, status: 0, ok: false, error: "純 dry-run 禁止對外 HTTP 端點探測；未提供本機端點證據" };
+  });
   return {
     id: "data-endpoints",
-    name: "資料端點可達性",
+    name: "資料端點證據檢視",
     status: results.every((result) => result.ok) ? "pass" : "fail",
     detail: results
       .map((result) => `${result.url}：${result.ok ? `HTTP ${result.status}` : result.error || `HTTP ${result.status}`}`)
@@ -80,24 +68,62 @@ export async function checkDataEndpoints({
   };
 }
 
-export async function checkCiWorkflows({ rootDir = REPO_ROOT, exists = existsSync, readFile = readFileSync } = {}) {
+export async function checkCiWorkflows({
+  rootDir = REPO_ROOT,
+  exists = existsSync,
+  readFile = readFileSync,
+  readDir = readdirSync,
+  parseYaml = parseDocument,
+} = {}) {
+  const workflowDir = join(rootDir, ".github", "workflows");
   const checkedFiles = [];
   const missingFiles = [];
-  for (const name of REQUIRED_WORKFLOW_FILES) {
-    const path = join(rootDir, ".github", "workflows", name);
+  const invalidYaml = [];
+  let workflowNames;
+  try {
+    workflowNames = readDir(workflowDir).filter((name) => /\.ya?ml$/i.test(name)).sort();
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return {
+      id: "ci-workflows",
+      name: "CI workflow 檔完整性",
+      status: "fail",
+      detail: `無法讀取 workflow 目錄：${reason}`,
+      metadata: { checkedFiles, missingFiles, invalidYaml, workflowDirectoryError: reason },
+    };
+  }
+  for (const name of [...new Set([...REQUIRED_WORKFLOW_FILES, ...workflowNames])]) {
+    const path = join(workflowDir, name);
     if (!exists(path)) {
       missingFiles.push(name);
       continue;
     }
-    if (!readFile(path, "utf8").trim()) missingFiles.push(`${name}（空白）`);
-    else checkedFiles.push(name);
+    const content = readFile(path, "utf8");
+    if (!content.trim()) {
+      missingFiles.push(`${name}（空白）`);
+      continue;
+    }
+    try {
+      const document = parseYaml(content, { prettyErrors: false });
+      if (document.errors.length) {
+        invalidYaml.push({ name, reason: document.errors.map((error) => error.message).join("；") });
+      } else {
+        checkedFiles.push(name);
+      }
+    } catch (error) {
+      invalidYaml.push({ name, reason: error instanceof Error ? error.message : String(error) });
+    }
   }
+  const failures = [
+    missingFiles.length ? `缺少或空白：${missingFiles.join("、")}` : "",
+    invalidYaml.length ? `YAML 解析失敗：${invalidYaml.map(({ name, reason }) => `${name}：${reason}`).join("；")}` : "",
+  ].filter(Boolean);
   return {
     id: "ci-workflows",
     name: "CI workflow 檔完整性",
-    status: missingFiles.length ? "fail" : "pass",
-    detail: missingFiles.length ? `缺少或空白：${missingFiles.join("、")}` : `已確認 ${checkedFiles.length} 個 workflow 檔案`,
-    metadata: { checkedFiles, missingFiles },
+    status: failures.length ? "fail" : "pass",
+    detail: failures.length ? failures.join("；") : `已確認並解析 ${checkedFiles.length} 個 workflow 檔案`,
+    metadata: { checkedFiles, missingFiles, invalidYaml },
   };
 }
 
@@ -144,9 +170,9 @@ export async function checkBuildArtifacts({ rootDir = REPO_ROOT, exists = exists
 
 function createReadOnlyOperations(operations = {}) {
   const safe = Object.freeze({
-    fetch: typeof operations.fetch === "function" ? operations.fetch : globalThis.fetch,
     exists: typeof operations.exists === "function" ? operations.exists : existsSync,
     readFile: typeof operations.readFile === "function" ? operations.readFile : readFileSync,
+    readDir: typeof operations.readDir === "function" ? operations.readDir : readdirSync,
   });
   return new Proxy(safe, {
     get(target, property, receiver) {
@@ -162,7 +188,7 @@ export function createReadOnlyRecoveryExecutor({
   rootDir = REPO_ROOT,
   endpoints = DEFAULT_ENDPOINTS,
   env = process.env,
-  timeoutMs = 5000,
+  endpointEvidence = [],
   operations = {},
   runDryBuild = false,
 } = {}) {
@@ -175,12 +201,17 @@ export function createReadOnlyRecoveryExecutor({
           id: "read-only-capabilities",
           name: "唯讀能力封鎖",
           status: "pass",
-          detail: "演練只暴露 fetch、exists、readFile；部署、生產寫入、workflow 啟用與 Cloudflare 設定變更均不可用",
+          detail: "演練只暴露 exists、readFile、readDir；HTTP、部署、生產寫入、workflow 啟用與 Cloudflare 設定變更均不可用",
           metadata: { exposed: READ_ONLY_OPERATIONS, blocked: FORBIDDEN_OPERATIONS },
         },
         await checkEnvSecrets({ env, strict: true }),
-        await checkDataEndpoints({ endpoints, fetchImpl: readOnlyOperations.fetch, timeoutMs }),
-        await checkCiWorkflows({ rootDir, exists: readOnlyOperations.exists, readFile: readOnlyOperations.readFile }),
+        await checkDataEndpoints({ endpoints, endpointEvidence }),
+        await checkCiWorkflows({
+          rootDir,
+          exists: readOnlyOperations.exists,
+          readFile: readOnlyOperations.readFile,
+          readDir: readOnlyOperations.readDir,
+        }),
         await checkCloudflarePages({ rootDir, exists: readOnlyOperations.exists, readFile: readOnlyOperations.readFile }),
         await checkBuildArtifacts({ rootDir, exists: readOnlyOperations.exists, runDryBuild }),
       ];

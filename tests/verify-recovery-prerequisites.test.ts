@@ -23,23 +23,23 @@ describe("唯讀復原前提演練", () => {
     expect((await checkCloudflarePages()).status).toBe("pass");
   });
 
-  it("以注入的唯讀 fetch 實際執行端點檢查", async () => {
-    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 200 });
-    const result = await checkDataEndpoints({ endpoints: ["https://example.test"], fetchImpl: fetch });
+  it("以注入的本機端點證據檢查資料端點，不執行 HTTP", async () => {
+    const result = await checkDataEndpoints({
+      endpoints: ["https://example.test"],
+      endpointEvidence: [{ url: "https://example.test", status: 200, ok: true }],
+    });
     expect(result.status).toBe("pass");
-    expect(fetch).toHaveBeenCalledOnce();
   });
 
   it("把禁止操作 mock 注入真正演練執行器後，所有操作仍為零呼叫", async () => {
-    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 200 });
     const forbidden = Object.fromEntries(FORBIDDEN_OPERATIONS.map((name) => [name, vi.fn()]));
     const result = await runRecoveryPrerequisitesDrill({
       endpoints: ["https://example.test"],
-      operations: { ...forbidden, fetch },
+      endpointEvidence: [{ url: "https://example.test", status: 200, ok: true }],
+      operations: forbidden,
     });
 
     expect(result.dryRun).toBe(true);
-    expect(fetch).toHaveBeenCalledOnce();
     for (const name of FORBIDDEN_OPERATIONS) {
       expect(forbidden[name]).not.toHaveBeenCalled();
     }
@@ -47,7 +47,7 @@ describe("唯讀復原前提演練", () => {
 
   it("公開的執行器能力物件不包含禁止操作", () => {
     const executor = createReadOnlyRecoveryExecutor();
-    expect(Object.keys(executor.operations)).toEqual(["fetch", "exists", "readFile"]);
+    expect(Object.keys(executor.operations)).toEqual(["exists", "readFile", "readDir"]);
     for (const name of FORBIDDEN_OPERATIONS) expect(name in executor.operations).toBe(false);
   });
 
