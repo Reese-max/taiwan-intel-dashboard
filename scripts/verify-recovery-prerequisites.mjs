@@ -162,7 +162,6 @@ export function createReadOnlyRecoveryExecutor({
   rootDir = REPO_ROOT,
   endpoints = DEFAULT_ENDPOINTS,
   env = process.env,
-  strict = false,
   timeoutMs = 5000,
   operations = {},
   runDryBuild = false,
@@ -179,7 +178,7 @@ export function createReadOnlyRecoveryExecutor({
           detail: "演練只暴露 fetch、exists、readFile；部署、生產寫入、workflow 啟用與 Cloudflare 設定變更均不可用",
           metadata: { exposed: READ_ONLY_OPERATIONS, blocked: FORBIDDEN_OPERATIONS },
         },
-        await checkEnvSecrets({ env, strict }),
+        await checkEnvSecrets({ env, strict: true }),
         await checkDataEndpoints({ endpoints, fetchImpl: readOnlyOperations.fetch, timeoutMs }),
         await checkCiWorkflows({ rootDir, exists: readOnlyOperations.exists, readFile: readOnlyOperations.readFile }),
         await checkCloudflarePages({ rootDir, exists: readOnlyOperations.exists, readFile: readOnlyOperations.readFile }),
@@ -206,14 +205,14 @@ export async function runRecoveryPrerequisitesDrill(options = {}) {
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const args = new Set(process.argv.slice(2));
   if (args.has("--help")) {
-    console.log("用法：node scripts/verify-recovery-prerequisites.mjs --dry-run [--json] [--strict]");
+    console.log("用法：node scripts/verify-recovery-prerequisites.mjs --dry-run [--json]");
     process.exit(0);
   }
   if (args.has("--live") || args.has("--write") || args.has("--deploy")) {
     console.error("錯誤：復原演練只允許唯讀 dry-run，拒絕 live、write、deploy 路徑。");
     process.exit(1);
   }
-  runRecoveryPrerequisitesDrill({ dryRun: true, strict: args.has("--strict") })
+  runRecoveryPrerequisitesDrill({ dryRun: true })
     .then((result) => {
       console.log(args.has("--json") ? JSON.stringify(result, null, 2) : `復原演練：${result.ok ? "PASS" : "FAIL"}`);
       if (!result.ok) process.exitCode = 1;

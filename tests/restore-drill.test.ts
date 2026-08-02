@@ -106,6 +106,16 @@ describe("復原演練注入式判定", () => {
     expect(harness.readFile).toHaveBeenCalled();
   });
 
+  it("演練執行器固定要求必要 secret，不能以 strict=false 產生假通過", async () => {
+    const harness = createHarness();
+    harness.options.env = {};
+    harness.options.strict = false;
+    const result = await runRecoveryPrerequisitesDrill(harness.options);
+
+    expect(statuses(result)["env-secrets"]).toBe("fail");
+    expect(result.ok).toBe(false);
+  });
+
   it("端點不可達只使端點檢查失敗，仍完成檔案前提檢查", async () => {
     const harness = createHarness();
     harness.endpointProbe.mockImplementation(async (url: string) => {
