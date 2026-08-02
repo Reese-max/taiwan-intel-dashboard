@@ -12,10 +12,14 @@ import {
   existsSync,
   statSync,
 } from "node:fs";
+import { resolve } from "node:path";
 import { emptyDirContents } from "./lib/fs-safe.mjs";
 import { minifyOrCopyJson } from "./lib/minify-json.mjs";
 
 const OUT = "dist";
+if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
+  throw new Error("BUILD_STATIC_OUT 只能指定專用產物目錄 dist");
+}
 if (existsSync(OUT)) emptyDirContents(OUT);
 mkdirSync(`${OUT}/assets`, { recursive: true });
 
