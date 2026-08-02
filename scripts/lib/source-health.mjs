@@ -10,6 +10,8 @@ export const DEFAULT_DOMAIN_COVERAGE = Object.freeze({
   reference: 1,
 });
 
+export const SOURCE_HEALTH_REPORT_SCHEMA_VERSION = 1;
+
 const DERIVED_PIPELINE_STAGES = new Set(["network", "summary"]);
 
 function text(value, fallback = "") {
@@ -19,6 +21,11 @@ function text(value, fallback = "") {
 function numberOr(value, fallback = NaN) {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
+}
+
+function timestamp(value) {
+  const parsed = Date.parse(String(value || ""));
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function coverageIssue({ severity, code, source, reason, ...detail }) {
@@ -178,6 +185,104 @@ function coverageFindings(
   return warnings;
 }
 
+function sourceReportRow(source, index, staleNames) {
+  const attemptedAt = timestamp(source?.lastAttemptAt);
+  const succeededAt = timestamp(source?.lastSuccessAt);
+  const attempted = attemptedAt !== null;
+  // 成功必須有本輪（或更晚）的成功時間戳；未標 stale 不是成功證據。
+  const successful = attempted
+    && source?.stale !== true
+    && succeededAt !== null
+    && succeededAt >= attemptedAt;
+  const name = text(source?.name, source?.datasetId || source?.key || `來源 ${index + 1}`);
+  const freshness = source?.stale === true || staleNames.has(name)
+    ? "stale"
+    : succeededAt === null
+      ? "unknown"
+      : "fresh";
+  return {
+    id: text(source?.datasetId, source?.key || name),
+    name,
+    attempted,
+    successful,
+    freshness,
+    coverageCount: numberOr(source?.count, 0),
+    lastAttemptAt: attemptedAt === null ? null : String(source.lastAttemptAt),
+    lastSuccessAt: succeededAt === null ? null : String(source.lastSuccessAt),
+  };
+}
+
+function staleSourceNames(freshness) {
+  return new Set([
+    ...freshness.staleStructured,
+    ...freshness.staleFetchFailures,
+    ...freshness.staleSkippedThisRun,
+  ].map((row) => row.name));
+}
+
+function sourceHealthReport({ provenance, freshness, status, ok, failures, warnings }) {
+  const staleNames = staleSourceNames(freshness);
+  const sources = (Array.isArray(provenance?.sources) ? provenance.sources : [])
+    .map((source, index) => sourceReportRow(source, index, staleNames));
+  const attemptedSources = sources.filter((source) => source.attempted);
+  const successfulSources = attemptedSources.filter((source) => source.successful);
+  return {
+    schemaVersion: SOURCE_HEALTH_REPORT_SCHEMA_VERSION,
+    generatedAt: typeof provenance?.generatedAt === "string" ? provenance.generatedAt : null,
+    ok,
+    status,
+    summary: {
+      sourceCount: sources.length,
+      attemptedSourceCount: attemptedSources.length,
+      successfulSourceCount: successfulSources.length,
+      successRate: attemptedSources.length
+        ? Math.round((successfulSources.length / attemptedSources.length) * 10_000) / 100
+        : null,
+      freshSourceCount: sources.filter((source) => source.freshness === "fresh").length,
+      staleSourceCount: sources.filter((source) => source.freshness === "stale").length,
+      coverageCount: sources.reduce((total, source) => total + source.coverageCount, 0),
+    },
+    sources,
+    failures,
+    warnings,
+  };
+}
+
+function reportDifference(actual, expected, path = "report") {
+  if (Object.is(actual, expected)) return null;
+  if (Array.isArray(expected)) {
+    if (!Array.isArray(actual)) return `${path} 預期為陣列`;
+    if (actual.length !== expected.length) return `${path}.length 預期 ${expected.length}，實際 ${actual.length}`;
+    for (let index = 0; index < expected.length; index++) {
+      const difference = reportDifference(actual[index], expected[index], `${path}[${index}]`);
+      if (difference) return difference;
+    }
+    return null;
+  }
+  if (expected && typeof expected === "object") {
+    if (!actual || typeof actual !== "object" || Array.isArray(actual)) return `${path} 預期為物件`;
+    const actualKeys = Object.keys(actual).sort();
+    const expectedKeys = Object.keys(expected).sort();
+    if (actualKeys.join("\u0000") !== expectedKeys.join("\u0000")) return `${path} 欄位不符合固定 schema`;
+    for (const key of expectedKeys) {
+      const difference = reportDifference(actual[key], expected[key], `${path}.${key}`);
+      if (difference) return difference;
+    }
+    return null;
+  }
+  return `${path} 預期 ${JSON.stringify(expected)}，實際 ${JSON.stringify(actual)}`;
+}
+
+export function validateSourceHealthReport(report, expectedReport) {
+  const difference = reportDifference(report, expectedReport);
+  return difference ? [coverageIssue({
+    severity: "fail",
+    code: "report-invalid",
+    source: "source-health-report",
+    reason: `固定健康報告與實際來源不一致：${difference}`,
+  })] : [];
+}
+
 export function auditSourceHealth({ provenance = {}, domainCoverage = {}, ...options } = {}) {
   const freshness = auditSourceFreshness(provenance, options);
   const requests = requestFindings(provenance.pipeline, options.requiredSources);
@@ -194,11 +299,35 @@ export function auditSourceHealth({ provenance = {}, domainCoverage = {}, ...opt
     ...stale.warnings,
     ...coverage.filter((finding) => finding.severity === "warning"),
   ];
-  return {
-    ok: failures.length === 0,
-    status: failures.length ? "fail" : warnings.length ? "warning" : "pass",
+  const healthOk = failures.length === 0;
+  const healthStatus = failures.length ? "fail" : warnings.length ? "warning" : "pass";
+  const expectedReport = sourceHealthReport({
+    provenance,
+    freshness,
+    status: healthStatus,
+    ok: healthOk,
     failures,
     warnings,
+  });
+  const reportFailures = options.report === undefined
+    ? []
+    : validateSourceHealthReport(options.report, expectedReport);
+  const allFailures = [...failures, ...reportFailures];
+  const ok = allFailures.length === 0;
+  const status = !ok ? "fail" : healthStatus;
+  return {
+    ok,
+    status,
+    failures: allFailures,
+    warnings,
     freshness,
+    report: sourceHealthReport({
+      provenance,
+      freshness,
+      status,
+      ok,
+      failures: allFailures,
+      warnings,
+    }),
   };
 }

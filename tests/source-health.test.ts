@@ -135,6 +135,38 @@ describe("auditSourceHealth（來源失敗非靜默判定）", () => {
     expect(result).toMatchObject({ ok: true, status: "pass", failures: [], warnings: [] });
   });
 
+  it("已嘗試但無成功時間戳的來源不能被報成 100% 成功率", () => {
+    const input = provenance([
+      { name: "無成功證據來源", type: "news-rss", stale: false, lastAttemptAt: generatedAt },
+    ]);
+    const expected = auditSourceHealth({ provenance: input, now });
+    const forged = {
+      ...expected.report,
+      summary: { ...expected.report.summary, successRate: 100 },
+    };
+    const result = auditSourceHealth({ provenance: input, now, report: forged });
+
+    expect(expected.report.summary).toMatchObject({
+      attemptedSourceCount: 1,
+      successfulSourceCount: 0,
+      successRate: 0,
+    });
+    expect(expected.report).toMatchObject({ ok: true, status: "pass", failures: [] });
+    expect(result).toMatchObject({ ok: false, status: "fail" });
+    expect(result.failures).toContainEqual(expect.objectContaining({
+      code: "report-invalid",
+      source: "source-health-report",
+      reason: expect.stringContaining("report.summary.successRate 預期 0，實際 100"),
+    }));
+    expect(result.report).toMatchObject({
+      ok: false,
+      status: "fail",
+      failures: expect.arrayContaining([
+        expect.objectContaining({ code: "report-invalid", source: "source-health-report" }),
+      ]),
+    });
+  });
+
   it("混合來源時健康、失敗、過期與低覆蓋量判定彼此獨立", () => {
     const result = auditSourceHealth({
       provenance: provenance([
@@ -217,6 +249,46 @@ describe("auditSourceHealth（來源失敗非靜默判定）", () => {
       expect(result.stdout).toContain("::error title=來源健康::過期來源：資料過期：age=120h > 48h");
       expect(result.stdout).toContain("::warning title=來源健康::低覆蓋來源：來源覆蓋量低於門檻：1/3 筆");
       expect(result.stdout).not.toContain("健康來源：");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("CLI 驗證報告失敗時，SOURCE_HEALTH_RESULT 同步輸出 fail 與錯誤", () => {
+    const dir = mkdtempSync(join(tmpdir(), "source-health-report-"));
+    const provenancePath = join(dir, "provenance.json");
+    const domainCoveragePath = join(dir, "domain-coverage.json");
+    const reportPath = join(dir, "source-health-report.json");
+    const scriptPath = fileURLToPath(new URL("../scripts/audit-source-health.mjs", import.meta.url));
+    const input = provenance([
+      { name: "無成功證據來源", type: "news-rss", stale: false, lastAttemptAt: generatedAt },
+    ]);
+    try {
+      const expected = auditSourceHealth({ provenance: input, now });
+      writeFileSync(provenancePath, JSON.stringify(input), "utf8");
+      writeFileSync(domainCoveragePath, JSON.stringify({ rows: [] }), "utf8");
+      writeFileSync(reportPath, JSON.stringify({
+        ...expected.report,
+        summary: { ...expected.report.summary, successRate: 100 },
+      }), "utf8");
+      const result = spawnSync(process.execPath, [
+        scriptPath,
+        `--provenance=${provenancePath}`,
+        `--domain-coverage=${domainCoveragePath}`,
+        `--report=${reportPath}`,
+      ], { encoding: "utf8" });
+      const line = result.stdout.split(/\r?\n/).find((value) => value.startsWith("SOURCE_HEALTH_RESULT="));
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toContain("::error title=來源健康::source-health-report：固定健康報告與實際來源不一致：report.summary.successRate 預期 0，實際 100");
+      expect(line).toBeDefined();
+      expect(JSON.parse(line!.slice("SOURCE_HEALTH_RESULT=".length))).toMatchObject({
+        ok: false,
+        status: "fail",
+        failures: expect.arrayContaining([
+          expect.objectContaining({ code: "report-invalid", source: "source-health-report" }),
+        ]),
+      });
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

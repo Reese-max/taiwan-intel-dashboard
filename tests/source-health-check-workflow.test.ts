@@ -43,6 +43,8 @@ describe("source-health-check.yml（純檢查資料來源健康度 workflow）",
     expect(violations(content)).toEqual([]);
     expect(content).toContain("tests/source-health.test.ts tests/source-freshness.test.ts tests/source-health-check-workflow.test.ts");
     expect(content).toContain("--file=state/data/provenance.json");
+    expect(content).toContain("--json --provenance=state/data/provenance.json --domain-coverage=state/data/domain-coverage.json > \"$report_dir/source-health-report.json\"");
+    expect(content).toContain("--report=\"$report_dir/source-health-report.json\"");
     expect(content).toContain("--provenance=state/data/provenance.json --domain-coverage=state/data/domain-coverage.json");
   });
 

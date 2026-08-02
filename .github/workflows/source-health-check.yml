@@ -46,7 +46,8 @@ jobs:
           status=0
           npm test -- tests/source-health.test.ts tests/source-freshness.test.ts tests/source-health-check-workflow.test.ts 2>&1 | tee "$report_dir/tests.txt" || status=1
           node scripts/audit-source-freshness.mjs --file=state/data/provenance.json 2>&1 | tee "$report_dir/source-freshness.txt" || status=1
-          node scripts/audit-source-health.mjs --provenance=state/data/provenance.json --domain-coverage=state/data/domain-coverage.json 2>&1 | tee "$report_dir/source-health.txt" || status=1
+          node scripts/audit-source-health.mjs --json --provenance=state/data/provenance.json --domain-coverage=state/data/domain-coverage.json > "$report_dir/source-health-report.json" || status=1
+          node scripts/audit-source-health.mjs --report="$report_dir/source-health-report.json" --provenance=state/data/provenance.json --domain-coverage=state/data/domain-coverage.json 2>&1 | tee "$report_dir/source-health.txt" || status=1
           exit "$status"
 
       - name: 驗證未產生資料或網站輸出

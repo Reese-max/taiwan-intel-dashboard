@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { auditSourceHealth } from "./lib/source-health.mjs";
+import { auditSourceHealth, SOURCE_HEALTH_REPORT_SCHEMA_VERSION } from "./lib/source-health.mjs";
 
 export { auditSourceHealth };
 
@@ -36,6 +36,32 @@ function printFinding(finding) {
   console.log(`::${command} title=來源健康::${annotationValue(`${finding.source}：${finding.reason}`)}`);
 }
 
+function failedReport(error) {
+  return {
+    schemaVersion: SOURCE_HEALTH_REPORT_SCHEMA_VERSION,
+    generatedAt: null,
+    ok: false,
+    status: "fail",
+    summary: {
+      sourceCount: 0,
+      attemptedSourceCount: 0,
+      successfulSourceCount: 0,
+      successRate: null,
+      freshSourceCount: 0,
+      staleSourceCount: 0,
+      coverageCount: 0,
+    },
+    sources: [],
+    failures: [{
+      severity: "fail",
+      code: "report-invalid",
+      source: "source-health-report",
+      reason: `來源健康稽核失敗：${error.message}`,
+    }],
+    warnings: [],
+  };
+}
+
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   try {
     const provenance = readJson(argValue("provenance") || join(ROOT, "public", "data", "provenance.json"), "provenance");
@@ -43,9 +69,11 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
       argValue("domain-coverage") || join(ROOT, "public", "data", "domain-coverage.json"),
       "domain coverage",
     );
+    const reportFile = argValue("report");
     const result = auditSourceHealth({
       provenance,
       domainCoverage,
+      ...(reportFile ? { report: readJson(reportFile, "source health report") } : {}),
       requiredSources: argValue("require").split(",").map((value) => value.trim()).filter(Boolean),
       minInternationalFeeds: numberOr(
         argValue("min-international-feeds") || process.env.SOURCE_HEALTH_MIN_INTL_FEEDS,
@@ -58,17 +86,17 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
       coverageSeverity: process.argv.includes("--strict-coverage") ? "fail" : "warning",
     });
 
-    for (const finding of [...result.failures, ...result.warnings]) printFinding(finding);
-    console.log(`來源健康稽核：${result.status}（fail=${result.failures.length}, warning=${result.warnings.length}）`);
-    console.log(`SOURCE_HEALTH_RESULT=${JSON.stringify({
-      status: result.status,
-      ok: result.ok,
-      failures: result.failures,
-      warnings: result.warnings,
-    })}`);
+    if (process.argv.includes("--json")) console.log(JSON.stringify(result.report));
+    else {
+      for (const finding of [...result.failures, ...result.warnings]) printFinding(finding);
+      console.log(`來源健康稽核：${result.status}（fail=${result.failures.length}, warning=${result.warnings.length}）`);
+      console.log(`SOURCE_HEALTH_RESULT=${JSON.stringify(result.report)}`);
+    }
     if (!result.ok) process.exitCode = 1;
   } catch (error) {
     console.error(`來源健康稽核失敗：${error.message}`);
+    const report = failedReport(error);
+    console.log(process.argv.includes("--json") ? JSON.stringify(report) : `SOURCE_HEALTH_RESULT=${JSON.stringify(report)}`);
     process.exitCode = 1;
   }
 }
