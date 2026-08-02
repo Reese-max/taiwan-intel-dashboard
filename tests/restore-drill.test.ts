@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
+import { join } from "node:path";
 import {
   FORBIDDEN_OPERATIONS,
   REQUIRED_ENV_VARS,
   REQUIRED_WORKFLOW_FILES,
   runRecoveryPrerequisitesDrill,
+  writeRecoveryPrerequisitesReport,
 } from "../scripts/verify-recovery-prerequisites.mjs";
 
 const ROOT = "restore-drill-test-root";
@@ -182,5 +184,21 @@ describe("復原演練注入式判定", () => {
       vi.unstubAllGlobals();
     }
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("以跨平台路徑與時間戳檔名寫入 JSON 報告", async () => {
+    const harness = createHarness();
+    const result = await runRecoveryPrerequisitesDrill(harness.options);
+    const mkdir = vi.fn();
+    const writeFile = vi.fn();
+    const reportDir = join(ROOT, "docs", "operations", "reports", "recovery-prerequisites");
+
+    const reportPath = writeRecoveryPrerequisitesReport(result, { reportDir, mkdir, writeFile });
+
+    expect(mkdir).toHaveBeenCalledWith(reportDir, { recursive: true });
+    expect(reportPath).toBe(
+      join(reportDir, `recovery-prerequisites-${result.timestamp.replace(/[:.]/g, "-")}.json`),
+    );
+    expect(writeFile).toHaveBeenCalledWith(reportPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
   });
 });

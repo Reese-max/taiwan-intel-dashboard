@@ -1,9 +1,11 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseDocument } from "yaml";
 
 const REPO_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
+
+export const RECOVERY_DRILL_REPORT_DIR = join(REPO_ROOT, "docs", "operations", "reports", "recovery-prerequisites");
 
 export const REQUIRED_ENV_VARS = [
   "CLOUDFLARE_API_TOKEN",
@@ -32,6 +34,20 @@ export const FORBIDDEN_OPERATIONS = Object.freeze([
   "enableWorkflow",
   "changeCloudflareSettings",
 ]);
+
+function reportFileName(timestamp) {
+  return `recovery-prerequisites-${String(timestamp).replace(/[:.]/g, "-")}.json`;
+}
+
+export function writeRecoveryPrerequisitesReport(
+  result,
+  { reportDir = RECOVERY_DRILL_REPORT_DIR, mkdir = mkdirSync, writeFile = writeFileSync } = {},
+) {
+  const reportPath = join(reportDir, reportFileName(result.timestamp));
+  mkdir(reportDir, { recursive: true });
+  writeFile(reportPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
+  return reportPath;
+}
 
 const READ_ONLY_OPERATIONS = Object.freeze(["exists", "readFile", "readDir"]);
 
@@ -221,7 +237,7 @@ export function createReadOnlyRecoveryExecutor({
         fail: checks.filter((check) => check.status === "fail").length,
         skip: checks.filter((check) => check.status === "skip").length,
       };
-      return { timestamp: new Date().toISOString(), dryRun: true, ok: summary.fail === 0, summary, checks };
+      return { timestamp: new Date().toISOString(), dryRun: true, ok: summary.fail === 0 && summary.skip === 0, summary, checks };
     },
   });
 }
@@ -236,7 +252,9 @@ export async function runRecoveryPrerequisitesDrill(options = {}) {
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const args = new Set(process.argv.slice(2));
   if (args.has("--help")) {
-    console.log("用法：node scripts/verify-recovery-prerequisites.mjs --dry-run [--json]");
+    console.log(
+      "用法：node scripts/verify-recovery-prerequisites.mjs --dry-run [--json]；JSON 會寫入 docs/operations/reports/recovery-prerequisites/",
+    );
     process.exit(0);
   }
   if (args.has("--live") || args.has("--write") || args.has("--deploy")) {
@@ -245,7 +263,14 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
   }
   runRecoveryPrerequisitesDrill({ dryRun: true })
     .then((result) => {
-      console.log(args.has("--json") ? JSON.stringify(result, null, 2) : `復原演練：${result.ok ? "PASS" : "FAIL"}`);
+      const reportPath = writeRecoveryPrerequisitesReport(result);
+      const reportLocation = relative(REPO_ROOT, reportPath).replaceAll("\\", "/");
+      if (args.has("--json")) {
+        console.log(JSON.stringify(result, null, 2));
+        console.error(`演練報告：${reportLocation}`);
+      } else {
+        console.log(`復原演練：${result.ok ? "PASS" : "FAIL"}（報告：${reportLocation}）`);
+      }
       if (!result.ok) process.exitCode = 1;
     })
     .catch((error) => {

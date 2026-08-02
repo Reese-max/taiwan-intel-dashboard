@@ -25,6 +25,38 @@ curl.exe -I https://reese-max.github.io/taiwan-intel-dashboard/
 
 預期：workflow 為 `disabled_manually`、兩個 run 清單為空、Cloudflare 為 503、GitHub Pages 為 404。
 
+## 唯讀復原前提 Dry Run
+
+每次執行本機復原前提演練都會產生一份 JSON，並寫入固定路徑：
+`docs/operations/reports/recovery-prerequisites/`。檔名格式為
+`recovery-prerequisites-YYYY-MM-DDTHH-mm-ss-sssZ.json`；報告內的 `timestamp` 是本輪演練完成判定時的 ISO 時間戳。
+
+執行指令：
+
+```powershell
+node scripts/verify-recovery-prerequisites.mjs --dry-run --json
+# 或
+npm run verify:recovery-prerequisites -- --json
+```
+
+`--json` 的 JSON 仍輸出至 stdout；落盤位置會另外輸出至 stderr，避免破壞管線對 stdout 的 JSON 解析。演練只讀取 repo 檔案與設定，不會抓取外部 HTTP、寫入生產資料、部署、啟用 workflow 或變更 Cloudflare 設定。
+
+### 所需非機密設定
+
+- 在 repo 根目錄執行，Node.js、npm 及 `node_modules` 已可用；workflow、建置腳本與 `tsconfig.json` 必須存在。
+- `DEPLOY_BASE_URL` 只需填入 canonical 網址；其餘 `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`TWINKLE_MCP_TOKEN` 由演練只檢查是否存在，不會讀取、輸出或寫入值，機密值應留在本機環境或 CI secrets，不得提交。
+- 資料端點檢查不接受即時探測；沒有注入的本機 endpoint evidence 時，該檢查會如實標為 `fail`，不可用網路可達性推測取代證據。
+
+### 判讀與後續處置
+
+| 狀態 | 判讀 | 後續處置 |
+| --- | --- | --- |
+| `pass` | 該檢查的必要證據齊全且符合條件。 | 所有必要檢查皆為 `pass` 後，才可進入復原順序。 |
+| `fail` | 有明確缺失、錯誤或不符合條件；整體 `ok` 必為 `false`。 | 修正根因、補齊證據後重新執行；在此之前不得啟用排程、部署或切回正式流量。 |
+| `skip` | 該檢查未執行，不能視為通過；若出現在必要檢查，整體不可接受。 | 找出未執行原因，補上設定或證據後重新執行；不得以 `skip` 取代 `pass`。 |
+
+`summary` 會統計 `total`、`pass`、`fail`、`skip`；只有 `fail=0` 且 `skip=0` 時 `ok` 才為 `true`。每份落盤報告都應保留並隨本次變更提交，供復原決策追溯。
+
 ## 資料膨脹修正（已推送、未部署）
 
 最近排程在 `npm run audit:data-size -- --max-mb=24` 失敗。根因已在本機共用寫入點修正：分類／來源摘要不再複製完整 `records`，載入舊 history 時會一併壓平；ledger 改為最多 8 MiB 的近期去重快取，並優先保留 history 保留窗內的指紋。

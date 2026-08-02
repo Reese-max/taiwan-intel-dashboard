@@ -1,0 +1,110 @@
+{
+  "timestamp": "2026-08-02T06:52:07.346Z",
+  "dryRun": true,
+  "ok": false,
+  "summary": {
+    "total": 6,
+    "pass": 5,
+    "fail": 1,
+    "skip": 0
+  },
+  "checks": [
+    {
+      "id": "read-only-capabilities",
+      "name": "唯讀能力封鎖",
+      "status": "pass",
+      "detail": "演練只暴露 exists、readFile、readDir；HTTP、部署、生產寫入、workflow 啟用與 Cloudflare 設定變更均不可用",
+      "metadata": {
+        "exposed": [
+          "exists",
+          "readFile",
+          "readDir"
+        ],
+        "blocked": [
+          "fetch",
+          "deploy",
+          "writeProductionData",
+          "enableWorkflow",
+          "changeCloudflareSettings"
+        ]
+      }
+    },
+    {
+      "id": "env-secrets",
+      "name": "必要環境變數／secrets 存在性",
+      "status": "pass",
+      "detail": "已檢查環境變數（必要：4/4 存在）",
+      "metadata": {
+        "presentRequired": [
+          "CLOUDFLARE_API_TOKEN",
+          "CLOUDFLARE_ACCOUNT_ID",
+          "TWINKLE_MCP_TOKEN",
+          "DEPLOY_BASE_URL"
+        ],
+        "missingRequired": []
+      }
+    },
+    {
+      "id": "data-endpoints",
+      "name": "資料端點證據檢視",
+      "status": "fail",
+      "detail": "https://taiwan-intel-dashboard.pages.dev：純 dry-run 禁止對外 HTTP 端點探測；未提供本機端點證據；https://opendata.cwa.gov.tw：純 dry-run 禁止對外 HTTP 端點探測；未提供本機端點證據",
+      "metadata": {
+        "endpoints": [
+          {
+            "url": "https://taiwan-intel-dashboard.pages.dev",
+            "status": 0,
+            "ok": false,
+            "error": "純 dry-run 禁止對外 HTTP 端點探測；未提供本機端點證據"
+          },
+          {
+            "url": "https://opendata.cwa.gov.tw",
+            "status": 0,
+            "ok": false,
+            "error": "純 dry-run 禁止對外 HTTP 端點探測；未提供本機端點證據"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ci-workflows",
+      "name": "CI workflow 檔完整性",
+      "status": "pass",
+      "detail": "已確認並解析 7 個 workflow 檔案",
+      "metadata": {
+        "checkedFiles": [
+          "pipeline-fetch.yml",
+          "pipeline-audit.yml",
+          "pipeline-dry-run.yml",
+          "update-and-deploy.yml",
+          "pr-check.yml",
+          "dependency-build-health.yml",
+          "source-health-check.yml"
+        ],
+        "missingFiles": [],
+        "invalidYaml": []
+      }
+    },
+    {
+      "id": "cloudflare-pages",
+      "name": "Cloudflare Pages 設定檢視",
+      "status": "pass",
+      "detail": "已唯讀檢視 Cloudflare Pages 專案、分支與 accountId",
+      "metadata": {
+        "hasProject": true,
+        "hasBranch": true,
+        "hasAccountId": true
+      }
+    },
+    {
+      "id": "build-artifacts",
+      "name": "建置產物檔案檢視",
+      "status": "pass",
+      "detail": "建置腳本與設定檔均存在（未執行建置）",
+      "metadata": {
+        "missing": [],
+        "dryBuildExecuted": false
+      }
+    }
+  ]
+}
