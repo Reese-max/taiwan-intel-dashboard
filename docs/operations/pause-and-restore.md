@@ -44,18 +44,18 @@ npm run verify:recovery-prerequisites -- --json
 ### 所需非機密設定
 
 - 在 repo 根目錄執行，Node.js、npm 及 `node_modules` 已可用；workflow、建置腳本與 `tsconfig.json` 必須存在。
-- `DEPLOY_BASE_URL` 只需填入 canonical 網址；其餘 `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`TWINKLE_MCP_TOKEN` 由演練只檢查是否存在，不會讀取、輸出或寫入值，機密值應留在本機環境或 CI secrets，不得提交。
-- 資料端點檢查不接受即時探測；沒有注入的本機 endpoint evidence 時，該檢查會如實標為 `fail`，不可用網路可達性推測取代證據。
+- `env-secrets` 會以 `gh secret list --json name` 只檢查 GitHub Actions secrets 名稱，不讀取、輸出或寫入值；必要名稱為 `CLOUDFLARE_API_TOKEN`、`TWINKLE_MCP_TOKEN`、`DEPLOY_BASE_URL`。`CLOUDFLARE_ACCOUNT_ID` 不是 secret，演練會改檢查 `update-and-deploy.yml` 內硬編的 `accountId` 是否非空。
+- 資料端點檢查不接受即時探測；沒有證據時會標為選用 `skip`，並顯示「需以 `--endpoint-evidence` 注入」。需要檢查時可注入 JSON 陣列或 JSON 檔案路徑，例如 `--endpoint-evidence .\endpoint-evidence.json`。
 
 ### 判讀與後續處置
 
 | 狀態 | 判讀 | 後續處置 |
 | --- | --- | --- |
 | `pass` | 該檢查的必要證據齊全且符合條件。 | 所有必要檢查皆為 `pass` 後，才可進入復原順序。 |
-| `fail` | 有明確缺失、錯誤或不符合條件；整體 `ok` 必為 `false`。 | 修正根因、補齊證據後重新執行；在此之前不得啟用排程、部署或切回正式流量。 |
-| `skip` | 該檢查未執行，不能視為通過；若出現在必要檢查，整體不可接受。 | 找出未執行原因，補上設定或證據後重新執行；不得以 `skip` 取代 `pass`。 |
+| `fail` | 有明確缺失、錯誤或不符合條件；必要檢查 `fail` 時整體 `ok` 必為 `false`。 | 修正必要檢查根因、補齊證據後重新執行；在此之前不得啟用排程、部署或切回正式流量。 |
+| `skip` | 該檢查未執行；資料端點是選用檢查，無證據時可預期為 `skip`。 | 必要檢查的 `skip` 仍不可接受；端點檢查則可用 `--endpoint-evidence` 補上證據。 |
 
-`summary` 會統計 `total`、`pass`、`fail`、`skip`；只有 `fail=0` 且 `skip=0` 時 `ok` 才為 `true`。每份落盤報告都應保留並隨本次變更提交，供復原決策追溯。
+`summary` 除總計外會分別列出 `required` 與 `optional`。`ok` 只看必要檢查，必要項沒有 `fail` 或 `skip` 即可為 `true`；選用端點的 `skip` 或 `fail` 仍會保留在報告供人工判讀。每份落盤報告都應保留並隨本次變更提交，供復原決策追溯。
 
 ## 資料膨脹修正（已推送、未部署）
 

@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,12 +8,13 @@ const REPO_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 
 export const RECOVERY_DRILL_REPORT_DIR = join(REPO_ROOT, "docs", "operations", "reports", "recovery-prerequisites");
 
-export const REQUIRED_ENV_VARS = [
+export const REQUIRED_GITHUB_SECRETS = Object.freeze([
   "CLOUDFLARE_API_TOKEN",
-  "CLOUDFLARE_ACCOUNT_ID",
   "TWINKLE_MCP_TOKEN",
   "DEPLOY_BASE_URL",
-];
+]);
+
+export const REQUIRED_ENV_VARS = REQUIRED_GITHUB_SECRETS;
 
 export const REQUIRED_WORKFLOW_FILES = [
   "pipeline-fetch.yml",
@@ -35,6 +37,8 @@ export const FORBIDDEN_OPERATIONS = Object.freeze([
   "changeCloudflareSettings",
 ]);
 
+export const OPTIONAL_CHECK_IDS = Object.freeze(["data-endpoints"]);
+
 function reportFileName(timestamp) {
   return `recovery-prerequisites-${String(timestamp).replace(/[:.]/g, "-")}.json`;
 }
@@ -51,27 +55,77 @@ export function writeRecoveryPrerequisitesReport(
 
 const READ_ONLY_OPERATIONS = Object.freeze(["exists", "readFile", "readDir"]);
 
-export async function checkEnvSecrets({ env = process.env, strict = false } = {}) {
-  const presentRequired = REQUIRED_ENV_VARS.filter((name) => Boolean(env[name]));
-  const missingRequired = REQUIRED_ENV_VARS.filter((name) => !env[name]);
+export function listGithubSecretNames({ execFile = execFileSync } = {}) {
+  try {
+    const output = execFile("gh", ["secret", "list", "--json", "name"], {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const entries = JSON.parse(String(output));
+    return {
+      names: Array.isArray(entries) ? entries.map((entry) => entry?.name).filter(Boolean) : [],
+    };
+  } catch (error) {
+    return { names: [], error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export async function checkEnvSecrets({ secretNames, listSecrets = listGithubSecretNames } = {}) {
+  let availableSecrets = secretNames;
+  let source = "注入的 GitHub Actions secrets 名稱清單";
+  let listError;
+  if (!Array.isArray(availableSecrets)) {
+    try {
+      const listed = await listSecrets();
+      availableSecrets = Array.isArray(listed) ? listed : listed?.names;
+      listError = Array.isArray(listed) ? undefined : listed?.error;
+      source = "gh secret list";
+    } catch (error) {
+      availableSecrets = [];
+      listError = error instanceof Error ? error.message : String(error);
+      source = "gh secret list";
+    }
+  }
+  const names = new Set(Array.isArray(availableSecrets) ? availableSecrets : []);
+  const presentRequired = REQUIRED_GITHUB_SECRETS.filter((name) => names.has(name));
+  const missingRequired = REQUIRED_GITHUB_SECRETS.filter((name) => !names.has(name));
+  const detail = listError
+    ? `無法讀取 GitHub Actions secrets 名稱清單：${listError}`
+    : `已檢查 GitHub Actions secrets 名稱（必要：${presentRequired.length}/${REQUIRED_GITHUB_SECRETS.length} 存在${
+        missingRequired.length ? `，缺：${missingRequired.join("、")}` : ""
+      }）`;
   return {
     id: "env-secrets",
-    name: "必要環境變數／secrets 存在性",
-    status: strict && missingRequired.length ? "fail" : "pass",
-    detail: `已檢查環境變數（必要：${presentRequired.length}/${REQUIRED_ENV_VARS.length} 存在${
-      missingRequired.length ? `，缺：${missingRequired.join("、")}` : ""
-    }）`,
-    metadata: { presentRequired, missingRequired },
+    name: "必要 GitHub Actions secrets 存在性",
+    status: listError || missingRequired.length ? "fail" : "pass",
+    detail,
+    metadata: {
+      source,
+      requiredSecrets: [...REQUIRED_GITHUB_SECRETS],
+      presentRequired,
+      missingRequired,
+      ...(listError ? { error: listError } : {}),
+    },
   };
 }
 
 export async function checkDataEndpoints({ endpoints = DEFAULT_ENDPOINTS, endpointEvidence = [] } = {}) {
+  if (!endpointEvidence.length) {
+    return {
+      id: "data-endpoints",
+      name: "資料端點證據檢視",
+      status: "skip",
+      detail: "未提供端點證據，需以 --endpoint-evidence 注入；純 dry-run 禁止對外 HTTP 端點探測",
+      metadata: { endpoints: [], evidenceProvided: false },
+    };
+  }
   const evidenceByUrl = new Map(endpointEvidence.map((evidence) => [evidence.url, evidence]));
   const results = endpoints.map((url) => {
     const evidence = evidenceByUrl.get(url);
     return evidence
       ? { url, status: evidence.status, ok: Boolean(evidence.ok), ...(evidence.error ? { error: evidence.error } : {}) }
-      : { url, status: 0, ok: false, error: "純 dry-run 禁止對外 HTTP 端點探測；未提供本機端點證據" };
+      : { url, status: 0, ok: false, error: "未提供端點證據，需以 --endpoint-evidence 注入；純 dry-run 禁止對外 HTTP 端點探測" };
   });
   return {
     id: "data-endpoints",
@@ -149,10 +203,11 @@ export async function checkCloudflarePages({ rootDir = REPO_ROOT, exists = exist
     return { id: "cloudflare-pages", name: "Cloudflare Pages 設定檢視", status: "fail", detail: "找不到 update-and-deploy.yml" };
   }
   const content = readFile(path, "utf8");
+  const accountId = content.match(/^\s*accountId\s*:\s*["']?([^"'\s#]+)["']?\s*$/m)?.[1] || "";
   const metadata = {
     hasProject: content.includes("project-name=taiwan-intel-dashboard"),
     hasBranch: content.includes("branch=main"),
-    hasAccountId: content.includes("accountId"),
+    hasAccountId: Boolean(accountId && !accountId.includes("${")),
   };
   const ok = Object.values(metadata).every(Boolean);
   return {
@@ -203,7 +258,8 @@ function createReadOnlyOperations(operations = {}) {
 export function createReadOnlyRecoveryExecutor({
   rootDir = REPO_ROOT,
   endpoints = DEFAULT_ENDPOINTS,
-  env = process.env,
+  secretNames,
+  listSecrets = listGithubSecretNames,
   endpointEvidence = [],
   operations = {},
   runDryBuild = false,
@@ -220,7 +276,7 @@ export function createReadOnlyRecoveryExecutor({
           detail: "演練只暴露 exists、readFile、readDir；HTTP、部署、生產寫入、workflow 啟用與 Cloudflare 設定變更均不可用",
           metadata: { exposed: READ_ONLY_OPERATIONS, blocked: FORBIDDEN_OPERATIONS },
         },
-        await checkEnvSecrets({ env, strict: true }),
+        await checkEnvSecrets({ secretNames, listSecrets }),
         await checkDataEndpoints({ endpoints, endpointEvidence }),
         await checkCiWorkflows({
           rootDir,
@@ -231,13 +287,29 @@ export function createReadOnlyRecoveryExecutor({
         await checkCloudflarePages({ rootDir, exists: readOnlyOperations.exists, readFile: readOnlyOperations.readFile }),
         await checkBuildArtifacts({ rootDir, exists: readOnlyOperations.exists, runDryBuild }),
       ];
+      const count = (items) => ({
+        total: items.length,
+        pass: items.filter((check) => check.status === "pass").length,
+        fail: items.filter((check) => check.status === "fail").length,
+        skip: items.filter((check) => check.status === "skip").length,
+      });
+      const requiredChecks = checks.filter((check) => !OPTIONAL_CHECK_IDS.includes(check.id));
+      const optionalChecks = checks.filter((check) => OPTIONAL_CHECK_IDS.includes(check.id));
       const summary = {
         total: checks.length,
         pass: checks.filter((check) => check.status === "pass").length,
         fail: checks.filter((check) => check.status === "fail").length,
         skip: checks.filter((check) => check.status === "skip").length,
+        required: count(requiredChecks),
+        optional: count(optionalChecks),
       };
-      return { timestamp: new Date().toISOString(), dryRun: true, ok: summary.fail === 0 && summary.skip === 0, summary, checks };
+      return {
+        timestamp: new Date().toISOString(),
+        dryRun: true,
+        ok: summary.required.fail === 0 && summary.required.skip === 0,
+        summary,
+        checks,
+      };
     },
   });
 }
@@ -253,7 +325,7 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const args = new Set(process.argv.slice(2));
   if (args.has("--help")) {
     console.log(
-      "用法：node scripts/verify-recovery-prerequisites.mjs --dry-run [--json]；JSON 會寫入 docs/operations/reports/recovery-prerequisites/",
+      "用法：node scripts/verify-recovery-prerequisites.mjs --dry-run [--json] [--endpoint-evidence <JSON 或檔案路徑>]；JSON 會寫入 docs/operations/reports/recovery-prerequisites/",
     );
     process.exit(0);
   }
@@ -261,7 +333,22 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
     console.error("錯誤：復原演練只允許唯讀 dry-run，拒絕 live、write、deploy 路徑。");
     process.exit(1);
   }
-  runRecoveryPrerequisitesDrill({ dryRun: true })
+  const endpointEvidenceIndex = process.argv.indexOf("--endpoint-evidence");
+  const endpointEvidenceValue = endpointEvidenceIndex === -1 ? undefined : process.argv[endpointEvidenceIndex + 1];
+  let endpointEvidence = [];
+  if (endpointEvidenceValue) {
+    try {
+      const source = endpointEvidenceValue.trimStart().startsWith("[")
+        ? endpointEvidenceValue
+        : readFileSync(resolve(endpointEvidenceValue), "utf8");
+      endpointEvidence = JSON.parse(source);
+      if (!Array.isArray(endpointEvidence)) throw new Error("端點證據必須是 JSON 陣列");
+    } catch (error) {
+      console.error(`錯誤：無法解析 --endpoint-evidence：${error.message}`);
+      process.exit(1);
+    }
+  }
+  runRecoveryPrerequisitesDrill({ dryRun: true, endpointEvidence })
     .then((result) => {
       const reportPath = writeRecoveryPrerequisitesReport(result);
       const reportLocation = relative(REPO_ROOT, reportPath).replaceAll("\\", "/");

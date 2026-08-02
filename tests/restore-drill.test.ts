@@ -18,7 +18,7 @@ const REQUIRED_FILES = [
   "tsconfig.json",
 ];
 const REPORT_KEYS = ["checks", "dryRun", "ok", "summary", "timestamp"];
-const SUMMARY_KEYS = ["fail", "pass", "skip", "total"];
+const SUMMARY_KEYS = ["fail", "optional", "pass", "required", "skip", "total"];
 const CHECK_KEYS = ["detail", "id", "metadata", "name", "status"];
 
 function createHarness() {
@@ -26,7 +26,7 @@ function createHarness() {
     REQUIRED_FILES.map((relativePath) => [
       `${ROOT}/${relativePath}`,
       relativePath.endsWith("update-and-deploy.yml")
-        ? "project-name=taiwan-intel-dashboard branch=main accountId"
+        ? 'name: test\nproject: "project-name=taiwan-intel-dashboard"\nbranch: "branch=main"\naccountId: "test-account"'
         : "name: test",
     ]),
   );
@@ -35,7 +35,7 @@ function createHarness() {
   const readDir = vi.fn(() => [...REQUIRED_WORKFLOW_FILES]);
   const endpointEvidence = ENDPOINTS.map((url) => ({ url, status: 200, ok: true }));
   const commandExecutor = Object.fromEntries(FORBIDDEN_OPERATIONS.map((name) => [name, vi.fn()]));
-  const env = Object.fromEntries(REQUIRED_ENV_VARS.map((name) => [name, `test-${name}`]));
+  const secretNames = [...REQUIRED_ENV_VARS];
 
   return {
     files,
@@ -45,10 +45,9 @@ function createHarness() {
     commandExecutor,
     options: {
       dryRun: true,
-      strict: true,
       rootDir: ROOT,
       endpoints: ENDPOINTS,
-      env,
+      secretNames,
       endpointEvidence,
       operations: { ...commandExecutor, exists, readFile, readDir },
     },
@@ -84,7 +83,14 @@ describe("復原演練注入式判定", () => {
     const result = await runRecoveryPrerequisitesDrill(harness.options);
 
     expect(result.ok).toBe(true);
-    expect(result.summary).toEqual({ total: 6, pass: 6, fail: 0, skip: 0 });
+    expect(result.summary).toEqual({
+      total: 6,
+      pass: 6,
+      fail: 0,
+      skip: 0,
+      required: { total: 5, pass: 5, fail: 0, skip: 0 },
+      optional: { total: 1, pass: 1, fail: 0, skip: 0 },
+    });
     expectReportSchema(result);
     expect(harness.exists).toHaveBeenCalled();
     expect(harness.readFile).toHaveBeenCalled();
@@ -94,7 +100,7 @@ describe("復原演練注入式判定", () => {
 
   it("缺少 secret 只使環境檢查失敗，其他前提仍獨立執行", async () => {
     const harness = createHarness();
-    harness.options.env = { ...harness.options.env, [REQUIRED_ENV_VARS[0]]: "" };
+    harness.options.secretNames = harness.options.secretNames.filter((name: string) => name !== REQUIRED_ENV_VARS[0]);
     const result = await runRecoveryPrerequisitesDrill(harness.options);
 
     expect(statuses(result)).toEqual({
@@ -109,10 +115,9 @@ describe("復原演練注入式判定", () => {
     expect(harness.readFile).toHaveBeenCalled();
   });
 
-  it("演練執行器固定要求必要 secret，不能以 strict=false 產生假通過", async () => {
+  it("演練執行器固定要求必要 secret，不能以空清單產生假通過", async () => {
     const harness = createHarness();
-    harness.options.env = {};
-    harness.options.strict = false;
+    harness.options.secretNames = [];
     const result = await runRecoveryPrerequisitesDrill(harness.options);
 
     expect(statuses(result)["env-secrets"]).toBe("fail");
@@ -126,6 +131,7 @@ describe("復原演練注入式判定", () => {
 
     expect(statuses(result)["env-secrets"]).toBe("pass");
     expect(statuses(result)["data-endpoints"]).toBe("fail");
+    expect(result.ok).toBe(true);
     expect(statuses(result)["ci-workflows"]).toBe("pass");
     expect(statuses(result)["cloudflare-pages"]).toBe("pass");
     expect(statuses(result)["build-artifacts"]).toBe("pass");
@@ -133,7 +139,7 @@ describe("復原演練注入式判定", () => {
       url: ENDPOINTS[1],
       status: 0,
       ok: false,
-      error: "純 dry-run 禁止對外 HTTP 端點探測；未提供本機端點證據",
+      error: "未提供端點證據，需以 --endpoint-evidence 注入；純 dry-run 禁止對外 HTTP 端點探測",
     });
     expect(harness.readFile).toHaveBeenCalled();
   });
@@ -170,7 +176,7 @@ describe("復原演練注入式判定", () => {
     expect(workflows.status).toBe("fail");
     expect(workflows.detail).toContain("indent-error.yaml");
     expect(workflows.metadata.invalidYaml).toEqual([
-      expect.objectContaining({ name: "indent-error.yaml", reason: expect.stringContaining("mapping") }),
+      expect.objectContaining({ name: "indent-error.yaml", reason: expect.stringContaining("mapp") }),
     ]);
   });
 

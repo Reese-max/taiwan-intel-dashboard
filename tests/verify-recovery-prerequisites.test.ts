@@ -13,17 +13,53 @@ import {
 } from "../scripts/verify-recovery-prerequisites.mjs";
 
 describe("唯讀復原前提演練", () => {
+  it("所有 GitHub Actions secrets 已設定時 env-secrets 通過", async () => {
+    const result = await checkEnvSecrets({ secretNames: REQUIRED_ENV_VARS });
+
+    expect(result.status).toBe("pass");
+    expect(REQUIRED_ENV_VARS).toHaveLength(3);
+    expect(REQUIRED_ENV_VARS).not.toContain("CLOUDFLARE_ACCOUNT_ID");
+  });
+
+  it("缺少 GitHub Actions secret 時失敗並指出名稱", async () => {
+    const missing = REQUIRED_ENV_VARS[1];
+    const result = await checkEnvSecrets({ secretNames: REQUIRED_ENV_VARS.filter((name) => name !== missing) });
+
+    expect(result.status).toBe("fail");
+    expect(result.detail).toContain(missing);
+  });
+
   it("保留前提檢查的基本契約", async () => {
-    expect((await checkEnvSecrets({ env: {}, strict: false })).status).toBe("pass");
-    expect((await checkEnvSecrets({ env: {}, strict: true })).status).toBe("fail");
-    expect(REQUIRED_ENV_VARS).toHaveLength(4);
     expect(REQUIRED_WORKFLOW_FILES).toHaveLength(5);
     expect((await checkBuildArtifacts({ runDryBuild: false })).status).toBe("pass");
     expect((await checkCiWorkflows()).status).toBe("pass");
     expect((await checkCloudflarePages()).status).toBe("pass");
   });
 
-  it("以注入的本機端點證據檢查資料端點，不執行 HTTP", async () => {
+  it("Cloudflare workflow 的 accountId 不可為空", async () => {
+    const result = await checkCloudflarePages({
+      rootDir: "fixture",
+      exists: () => true,
+      readFile: () => 'project-name=taiwan-intel-dashboard\nbranch=main\naccountId: ""',
+    });
+
+    expect(result.status).toBe("fail");
+    expect(result.metadata.hasAccountId).toBe(false);
+  });
+
+  it("無端點證據時標為選用 skip，且不使整體 ok 失敗", async () => {
+    const result = await runRecoveryPrerequisitesDrill({ secretNames: REQUIRED_ENV_VARS });
+
+    const check = await checkDataEndpoints();
+    expect(check.status).toBe("skip");
+    expect(check.detail).toContain("需以 --endpoint-evidence 注入");
+    expect(result.checks.find((check) => check.id === "data-endpoints").status).toBe("skip");
+    expect(result.summary.required.fail).toBe(0);
+    expect(result.summary.optional.skip).toBe(1);
+    expect(result.ok).toBe(true);
+  });
+
+  it("注入正常端點證據時資料端點通過", async () => {
     const result = await checkDataEndpoints({
       endpoints: ["https://example.test"],
       endpointEvidence: [{ url: "https://example.test", status: 200, ok: true }],
