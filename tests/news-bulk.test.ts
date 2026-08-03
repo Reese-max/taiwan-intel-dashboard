@@ -488,6 +488,31 @@ describe("EN 來源支援（Focus Taiwan / Taipei Times）", () => {
 });
 
 describe("riskFromTitle 主題感知", () => {
+  it("驗收基線：正常、剛好升級門檻與急迫公共安全事件維持固定評級", () => {
+    const cases = [
+      { title: "警方公告夜間巡邏勤務正常", hint: "治安", expectedRisk: "low" },
+      // 兩位數死亡的既有 critical 升級門檻，10 是最小邊界值。
+      { title: "花蓮地震造成10人死亡", hint: "災防", expectedRisk: "critical" },
+      { title: "捷運站發生爆炸，警消緊急疏散乘客", hint: "災防", expectedRisk: "high" },
+    ];
+
+    const events = mapBulkNews(
+      cases.map(({ title, hint }, index) => ({
+        title,
+        hint,
+        link: `https://example.test/risk-${index}`,
+        description: "驗收事件",
+        source: "驗收來源",
+        sourceUrl: "https://example.test",
+        pubDate: "2026-08-03T00:00:00.000Z",
+      })),
+      { fetchedAt: FETCHED_AT },
+    );
+
+    expect(events).toHaveLength(cases.length);
+    expect(events.map((event) => event.riskLevel)).toEqual(cases.map((testCase) => testCase.expectedRisk));
+  });
+
   it("重大傷亡與大規模事件升為 critical，但一般重案不灌水", () => {
     expect(riskFromTitle("台中隨機殺人釀3死", "治安")).toBe("critical");
     expect(riskFromTitle("新北氣爆釀2死 多人送醫", "災防")).toBe("critical");
