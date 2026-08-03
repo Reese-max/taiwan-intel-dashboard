@@ -1,5 +1,6 @@
 // 情報網關聯引擎（純函式、零依賴）。
 // 輸入：已正規化的 IntelEvent[]（警政/判決/新聞/天氣/採購/國際…）。
+import { clusterSignals } from "./cluster-signals.mjs";
 // 輸出：事件之間的「關聯圖」——把散落各源的孤立事件串成情報網。
 //   · same-incident：同縣市 + 案類關鍵詞/實體重疊 + 時間相近 + 不同來源（跨源佐證，情報網骨幹）
 //   · same-entity ：跨地共享同一具名實體（分局/地檢署/路名/行政區…）
@@ -369,6 +370,9 @@ export function correlateEvents(events, opts = {}) {
     const temporalSpanDays = timestamps.length >= 2 ? (Math.max(...timestamps) - Math.min(...timestamps)) / DAY : 0;
     const highEntropyMultiTopic =
       categoryEntropy >= CLUSTER_INCOHERENT_CATEGORY_ENTROPY && distinctTopicRatio >= CLUSTER_INCOHERENT_TOPIC_RATIO;
+    // 時序演變與地理聚集訊號（缺失時間/座標的成員記入 degraded，不做錯誤合併；
+    // 全員時間缺失時省略 firstSeenTs/lastSeenTs，不輸出空字串）。
+    const signals = clusterSignals(items);
     return {
       id,
       members,
@@ -382,6 +386,11 @@ export function correlateEvents(events, opts = {}) {
       categoryEntropy,
       distinctTopicRatio,
       temporalSpanDays,
+      temporalSeries: signals.temporalSeries,
+      ...(signals.firstSeenTs ? { firstSeenTs: signals.firstSeenTs } : {}),
+      ...(signals.lastSeenTs ? { lastSeenTs: signals.lastSeenTs } : {}),
+      geoClusters: signals.geoClusters,
+      degraded: signals.degraded,
       incoherent: dominantCategoryShare < CLUSTER_INCOHERENT_DOMINANT_SHARE || highEntropyMultiTopic,
     };
   };

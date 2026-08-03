@@ -12,6 +12,31 @@ export interface NetEdge {
   why: string;
 }
 
+export interface ClusterTemporalBucket {
+  ts: string; // UTC 日桶起點（YYYY-MM-DDT00:00:00.000Z）
+  reports: number;
+  sources: number;
+}
+
+export interface ClusterGeoMember {
+  id: string;
+  lat: number;
+  lng: number;
+}
+
+export interface ClusterGeo {
+  id: string;
+  size: number;
+  centroidLat: number;
+  centroidLng: number;
+  members: ClusterGeoMember[]; // 成員座標佐證
+}
+
+export interface ClusterDegradation {
+  missingTimestamp: { count: number; ids: string[] };
+  missingCoordinates: { count: number; ids: string[] };
+}
+
 export interface NetCluster {
   id: string;
   members: string[];
@@ -25,6 +50,12 @@ export interface NetCluster {
   categoryEntropy?: number;
   distinctTopicRatio?: number;
   temporalSpanDays?: number;
+  // 時序演變與地理聚集訊號（build-time 由 correlate 產出；全員時間缺失時省略 firstSeenTs/lastSeenTs）。
+  temporalSeries?: ClusterTemporalBucket[];
+  firstSeenTs?: string;
+  lastSeenTs?: string;
+  geoClusters?: ClusterGeo[];
+  degraded?: ClusterDegradation;
   incoherent?: boolean;
 }
 

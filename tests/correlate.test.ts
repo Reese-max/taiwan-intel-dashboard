@@ -445,6 +445,58 @@ describe("correlateEvents — 結構保證", () => {
   });
 });
 
+describe("correlateEvents — 時序演變與地理聚集訊號", () => {
+  it("cluster 帶逐日來源/報導數序列、首末觀測時間與地理座標群集", () => {
+    const events = [
+      ev({ id: "ta", region: "臺北市", title: "信義分局破毒品案", timestamp: "2026-06-20T10:00:00+08:00", lat: 25.03, lng: 121.56, source: { name: "來源A", type: "news-rss", fetchedAt: "" } }),
+      ev({ id: "tb", region: "臺北市", title: "信義分局緝毒後續", timestamp: "2026-06-21T09:00:00+08:00", lat: 25.04, lng: 121.57, source: { name: "來源B", type: "news-rss", fetchedAt: "" } }),
+      ev({ id: "tc", region: "臺北市", title: "信義分局移送報導", timestamp: undefined, lat: undefined, lng: undefined, source: { name: "來源C", type: "news-rss", fetchedAt: "" } }),
+    ];
+    const cluster = correlateEvents(events).clusters[0] as any;
+
+    expect(cluster).toBeTruthy();
+    expect(cluster.size).toBe(3);
+    expect(cluster.temporalSeries).toEqual([
+      { ts: "2026-06-20T00:00:00.000Z", reports: 1, sources: 1 },
+      { ts: "2026-06-21T00:00:00.000Z", reports: 1, sources: 1 },
+    ]);
+    expect(cluster.firstSeenTs).toBe("2026-06-20T10:00:00+08:00");
+    expect(cluster.lastSeenTs).toBe("2026-06-21T09:00:00+08:00");
+    expect(cluster.geoClusters).toHaveLength(1);
+    expect(cluster.geoClusters[0].members.map((m: any) => m.id).sort()).toEqual(["ta", "tb"]);
+  });
+
+  it("缺失時間或座標的成員被降級記錄，不進序列也不被地理合併", () => {
+    const events = [
+      ev({ id: "ta", region: "臺北市", title: "信義分局破毒品案", timestamp: "2026-06-20T10:00:00+08:00", lat: 25.03, lng: 121.56, source: { name: "來源A", type: "news-rss", fetchedAt: "" } }),
+      ev({ id: "tb", region: "臺北市", title: "信義分局緝毒後續", timestamp: "2026-06-21T09:00:00+08:00", lat: 25.04, lng: 121.57, source: { name: "來源B", type: "news-rss", fetchedAt: "" } }),
+      ev({ id: "tc", region: "臺北市", title: "信義分局移送報導", timestamp: undefined, lat: undefined, lng: undefined, source: { name: "來源C", type: "news-rss", fetchedAt: "" } }),
+    ];
+    const cluster = correlateEvents(events).clusters[0] as any;
+
+    expect(cluster.temporalSeries.reduce((sum: number, b: any) => sum + b.reports, 0)).toBe(2);
+    expect(cluster.geoClusters[0].members.map((m: any) => m.id)).not.toContain("tc");
+    expect(cluster.degraded).toEqual({
+      missingTimestamp: { count: 1, ids: ["tc"] },
+      missingCoordinates: { count: 1, ids: ["tc"] },
+    });
+  });
+
+  it("全員時間缺失的 cluster 省略 firstSeenTs/lastSeenTs 欄位（不以空字串輸出）", () => {
+    const events = [
+      ev({ id: "no-t-a", region: "臺北市", title: "信義分局共享實體案甲", timestamp: undefined, lat: 25.03, lng: 121.56, source: { name: "來源A", type: "news-rss", fetchedAt: "" } }),
+      ev({ id: "no-t-b", region: "臺北市", title: "信義分局共享實體案乙", timestamp: undefined, lat: 25.04, lng: 121.57, source: { name: "來源B", type: "news-rss", fetchedAt: "" } }),
+    ];
+    const cluster = correlateEvents(events).clusters[0] as any;
+
+    expect(cluster).toBeTruthy();
+    expect("firstSeenTs" in cluster).toBe(false);
+    expect("lastSeenTs" in cluster).toBe(false);
+    expect(cluster.temporalSeries).toEqual([]);
+    expect(cluster.degraded.missingTimestamp).toEqual({ count: 2, ids: ["no-t-a", "no-t-b"] });
+  });
+});
+
 describe("relatedIds", () => {
   it("回傳某事件的相連事件，依權重排序", () => {
     const events = [

@@ -88,6 +88,80 @@ function validateScope(scope, value, errors) {
       } else if (Array.isArray(cluster.members) && cluster.size !== cluster.members.length) {
         errors.push(`${path}.size：必須等於 members.length（目前 ${cluster.size}／${cluster.members.length}）`);
       }
+
+      // 時序演變與地理聚集訊號（選用欄位；舊產物相容，存在時必須符合結構）。
+      // firstSeenTs/lastSeenTs 為可省略欄位（全員時間缺失時省略），但存在時必須是非空字串。
+      if (cluster.firstSeenTs !== undefined && !isNonEmptyString(cluster.firstSeenTs)) {
+        errors.push(`${path}.firstSeenTs：必須是非空字串`);
+      }
+      if (cluster.lastSeenTs !== undefined && !isNonEmptyString(cluster.lastSeenTs)) {
+        errors.push(`${path}.lastSeenTs：必須是非空字串`);
+      }
+      if (cluster.temporalSeries !== undefined) {
+        if (!Array.isArray(cluster.temporalSeries)) {
+          errors.push(`${path}.temporalSeries：必須是陣列`);
+        } else {
+          cluster.temporalSeries.forEach((bucket, bucketIndex) => {
+            const bp = `${path}.temporalSeries[${bucketIndex}]`;
+            if (!isRecord(bucket)) {
+              errors.push(`${bp}：必須是 JSON 物件`);
+              return;
+            }
+            if (!isNonEmptyString(bucket.ts)) errors.push(`${bp}.ts：必須是非空字串`);
+            if (!isNonNegativeInteger(bucket.reports)) errors.push(`${bp}.reports：必須是非負整數`);
+            if (!isNonNegativeInteger(bucket.sources)) errors.push(`${bp}.sources：必須是非負整數`);
+          });
+        }
+      }
+      if (cluster.geoClusters !== undefined) {
+        if (!Array.isArray(cluster.geoClusters)) {
+          errors.push(`${path}.geoClusters：必須是陣列`);
+        } else {
+          cluster.geoClusters.forEach((geo, geoIndex) => {
+            const gp = `${path}.geoClusters[${geoIndex}]`;
+            if (!isRecord(geo)) {
+              errors.push(`${gp}：必須是 JSON 物件`);
+              return;
+            }
+            if (!isNonEmptyString(geo.id)) errors.push(`${gp}.id：必須是非空字串`);
+            if (!Number.isInteger(geo.size) || geo.size < 1) errors.push(`${gp}.size：必須是至少 1 的整數`);
+            if (!isFiniteNumber(geo.centroidLat)) errors.push(`${gp}.centroidLat：必須是有限數值`);
+            if (!isFiniteNumber(geo.centroidLng)) errors.push(`${gp}.centroidLng：必須是有限數值`);
+            if (!Array.isArray(geo.members)) {
+              errors.push(`${gp}.members：必須是陣列`);
+            } else {
+              geo.members.forEach((member, memberIndex) => {
+                const mp = `${gp}.members[${memberIndex}]`;
+                if (!isRecord(member)) {
+                  errors.push(`${mp}：必須是 JSON 物件`);
+                  return;
+                }
+                if (!isNonEmptyString(member.id)) errors.push(`${mp}.id：必須是非空字串`);
+                if (!isFiniteNumber(member.lat)) errors.push(`${mp}.lat：必須是有限數值`);
+                if (!isFiniteNumber(member.lng)) errors.push(`${mp}.lng：必須是有限數值`);
+              });
+            }
+          });
+        }
+      }
+      if (cluster.degraded !== undefined) {
+        if (!isRecord(cluster.degraded)) {
+          errors.push(`${path}.degraded：必須是 JSON 物件`);
+        } else {
+          for (const kind of ["missingTimestamp", "missingCoordinates"]) {
+            const dp = `${path}.degraded.${kind}`;
+            const degraded = cluster.degraded[kind];
+            if (!isRecord(degraded)) {
+              errors.push(`${dp}：必須是 JSON 物件`);
+              continue;
+            }
+            if (!isNonNegativeInteger(degraded.count)) errors.push(`${dp}.count：必須是非負整數`);
+            if (!Array.isArray(degraded.ids) || degraded.ids.some((id) => !isNonEmptyString(id))) {
+              errors.push(`${dp}.ids：必須是非空字串陣列`);
+            }
+          }
+        }
+      }
     });
   }
 
