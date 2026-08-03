@@ -325,6 +325,19 @@ export function correlateEvents(events, opts = {}) {
     degree.set(e.b, degree.get(e.b) + 1);
   }
   const eventsById = new Map(list.map((e) => [e.id, e]));
+  const directEvidenceSourcesById = new Map(list.map((e) => [e.id, new Set()]));
+  for (const edge of edgeList) {
+    if (edge.type !== "same-incident") continue;
+    const a = eventsById.get(edge.a);
+    const b = eventsById.get(edge.b);
+    const aSource = a?.source?.name;
+    const bSource = b?.source?.name;
+    if (aSource && bSource && aSource !== bSource) {
+      directEvidenceSourcesById.get(edge.a)?.add(bSource);
+      directEvidenceSourcesById.get(edge.b)?.add(aSource);
+    }
+  }
+  const sortedSources = (sources) => [...sources].sort();
   const tsValue = (e) => {
     const t = Date.parse(e?.timestamp || "");
     return Number.isFinite(t) ? t : 0;
@@ -345,11 +358,22 @@ export function correlateEvents(events, opts = {}) {
   };
   const describeCluster = (members, id) => {
     const items = members.map((memberId) => eventsById.get(memberId)).filter(Boolean);
+    const memberIds = new Set(members);
+    const clusterDirectEvidenceIds = new Set();
+    const evidenceSources = new Set();
+    for (const edge of edgeList) {
+      if (edge.type !== "same-incident" || !memberIds.has(edge.a) || !memberIds.has(edge.b)) continue;
+      clusterDirectEvidenceIds.add(edge.a);
+      clusterDirectEvidenceIds.add(edge.b);
+      const aSource = eventsById.get(edge.a)?.source?.name;
+      const bSource = eventsById.get(edge.b)?.source?.name;
+      if (aSource) evidenceSources.add(aSource);
+      if (bSource) evidenceSources.add(bSource);
+    }
     const representative = items
       .slice()
       .sort((a, b) => (degree.get(b.id) || 0) - (degree.get(a.id) || 0) || tsValue(b) - tsValue(a))[0];
     const latest = items.slice().sort((a, b) => tsValue(b) - tsValue(a))[0];
-    const sources = new Set(items.map((e) => e?.source?.name).filter(Boolean));
     const categoryCounts = new Map();
     const topics = new Set();
     const timestamps = [];
@@ -372,7 +396,7 @@ export function correlateEvents(events, opts = {}) {
       categoryEntropy >= CLUSTER_INCOHERENT_CATEGORY_ENTROPY && distinctTopicRatio >= CLUSTER_INCOHERENT_TOPIC_RATIO;
     // 時序演變與地理聚集訊號（缺失時間/座標的成員記入 degraded，不做錯誤合併；
     // 全員時間缺失時省略 firstSeenTs/lastSeenTs，不輸出空字串）。
-    const signals = clusterSignals(items);
+    const signals = clusterSignals(items, { directEvidenceIds: clusterDirectEvidenceIds });
     return {
       id,
       members,
@@ -381,7 +405,8 @@ export function correlateEvents(events, opts = {}) {
       topCategory: topValues(items, (e) => e.category, 1)[0] || "",
       regions: topValues(items, (e) => e.region, 2),
       latestTs: latest?.timestamp || "",
-      sourceCount: sources.size,
+      sourceCount: evidenceSources.size,
+      evidenceSources: sortedSources(evidenceSources),
       dominantCategoryShare,
       categoryEntropy,
       distinctTopicRatio,
@@ -434,11 +459,15 @@ export function correlateEvents(events, opts = {}) {
   // ── 節點（含 degree）──
   const nodes = list.map((e) => ({
     id: e.id,
+    title: e.title || "",
+    summary: e.summary || "",
     region: e.region,
     category: e.category,
     riskLevel: e.riskLevel,
     scope: e.scope,
     degree: degree.get(e.id) || 0,
+    sourceCount: directEvidenceSourcesById.get(e.id)?.size || 0,
+    evidenceSources: sortedSources(directEvidenceSourcesById.get(e.id) || []),
   }));
 
   const byType = { "same-incident": 0, "same-entity": 0, "same-topic": 0 };

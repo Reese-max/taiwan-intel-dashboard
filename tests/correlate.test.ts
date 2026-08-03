@@ -368,6 +368,59 @@ describe("correlateEvents — 結構保證", () => {
     expect(net.stats.events).toBe(2);
   });
 
+  it("輸出事件資料且佐證來源只取 same-incident，不計同實體／同題", () => {
+    const events = [
+      ev({
+        id: "event-a",
+        title: "信義分局破獲詐騙水房",
+        summary: "事件甲摘要",
+        source: { name: "來源A", type: "news-rss", fetchedAt: "" },
+      }),
+      ev({
+        id: "event-b",
+        title: "信義分局查緝詐騙水房",
+        summary: "事件乙摘要",
+        source: { name: "來源B", type: "news-rss", fetchedAt: "" },
+      }),
+      ev({
+        id: "event-entity",
+        title: "信義分局發布交通事故",
+        category: "交通",
+        summary: "共享實體但非同案",
+        source: { name: "來源C", type: "news-rss", fetchedAt: "" },
+      }),
+      ev({
+        id: "event-topic",
+        title: "臺北毒品新聞後續",
+        summary: "同題弱關聯但非直接佐證",
+        timestamp: "2026-06-21T10:00:00+08:00",
+        source: { name: "來源A", type: "news-rss", fetchedAt: "" },
+      }),
+      ev({
+        id: "event-topic-sibling",
+        title: "臺北毒品新聞快訊",
+        summary: "同題弱關聯配對",
+        timestamp: "2026-06-21T11:00:00+08:00",
+        source: { name: "來源A", type: "news-rss", fetchedAt: "" },
+      }),
+    ];
+    const net = correlateEvents(events);
+    const node = (id: string): any => net.nodes.find((item: any) => item.id === id);
+
+    expect(net.edges.some((edge: any) => edge.type === "same-topic")).toBe(true);
+    expect(node("event-a")).toMatchObject({
+      id: "event-a",
+      title: "信義分局破獲詐騙水房",
+      summary: "事件甲摘要",
+      sourceCount: 1,
+      evidenceSources: ["來源B"],
+    });
+    expect(node("event-a").evidenceSources).not.toContain("來源C");
+    expect(node("event-a").evidenceSources).not.toContain("來源A");
+    expect(node("event-entity")).toMatchObject({ sourceCount: 0, evidenceSources: [] });
+    expect(node("event-topic")).toMatchObject({ sourceCount: 0, evidenceSources: [] });
+  });
+
   it("cluster 帶代表標題、主類別、主要地區、最新時間與來源數", () => {
     const events = [
       ev({ id: "a", region: "高雄市", category: "治安", title: "鳳山分局破詐騙水房", timestamp: "2026-06-20T08:00:00+08:00", source: { name: "來源A", type: "news-rss", fetchedAt: "" } }),
@@ -382,8 +435,10 @@ describe("correlateEvents — 結構保證", () => {
       topCategory: "治安",
       regions: ["高雄市", "臺南市"],
       latestTs: "2026-06-21T10:00:00+08:00",
-      sourceCount: 3,
+      sourceCount: 0,
+      evidenceSources: [],
     });
+    expect(cluster.temporalSeries.every((bucket: any) => bucket.sources === 0)).toBe(true);
   });
 
   it("單一 category 群標記為高純度且非雜燴", () => {

@@ -12,6 +12,21 @@ export interface NetEdge {
   why: string;
 }
 
+export interface NetNode {
+  id: string;
+  title?: string;
+  summary?: string;
+  region: string;
+  category: string;
+  riskLevel: string;
+  scope: Scope;
+  degree: number;
+  // 只計 same-incident 直接佐證鄰居的來源，不含 same-entity／same-topic。
+  // 只計群內 same-incident 直接佐證來源；同實體／同題關聯不計入。
+  sourceCount?: number;
+  evidenceSources?: string[];
+}
+
 export interface ClusterTemporalBucket {
   ts: string; // UTC 日桶起點（YYYY-MM-DDT00:00:00.000Z）
   reports: number;
@@ -46,6 +61,7 @@ export interface NetCluster {
   regions?: string[];
   latestTs?: string;
   sourceCount?: number;
+  evidenceSources?: string[];
   dominantCategoryShare?: number;
   categoryEntropy?: number;
   distinctTopicRatio?: number;
@@ -60,8 +76,8 @@ export interface NetCluster {
 }
 
 export interface ScopeNetwork {
-  // nodes 由 build-static 自部署檔剝除（前端只用 edges/clusters；count() 由 edges 算）→ optional。
-  nodes?: { id: string; degree: number }[];
+  // 舊產物可省略；新產物保留事件摘要與直接佐證來源。
+  nodes?: NetNode[];
   edges: NetEdge[];
   clusters: NetCluster[];
   stats: Record<string, unknown>;

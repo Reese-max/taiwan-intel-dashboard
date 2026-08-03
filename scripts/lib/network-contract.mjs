@@ -47,7 +47,19 @@ function validateScope(scope, value, errors) {
         return;
       }
       if (!isNonEmptyString(node.id)) errors.push(`${path}.id：必須是非空字串`);
+      if (node.title !== undefined && !isNonEmptyString(node.title)) errors.push(`${path}.title：存在時必須是非空字串`);
+      if (node.summary !== undefined && typeof node.summary !== "string") errors.push(`${path}.summary：存在時必須是字串`);
       if (!isNonNegativeInteger(node.degree)) errors.push(`${path}.degree：必須是非負整數`);
+      if (node.sourceCount !== undefined && !isNonNegativeInteger(node.sourceCount)) {
+        errors.push(`${path}.sourceCount：存在時必須是非負整數`);
+      }
+      if (node.evidenceSources !== undefined) {
+        if (!Array.isArray(node.evidenceSources) || node.evidenceSources.some((source) => !isNonEmptyString(source))) {
+          errors.push(`${path}.evidenceSources：存在時必須是非空字串陣列`);
+        } else if (isNonNegativeInteger(node.sourceCount) && node.sourceCount !== node.evidenceSources.length) {
+          errors.push(`${path}.sourceCount：必須等於 evidenceSources.length（目前 ${node.sourceCount}／${node.evidenceSources.length}）`);
+        }
+      }
     });
   }
 
@@ -87,6 +99,16 @@ function validateScope(scope, value, errors) {
         errors.push(`${path}.size：必須是至少 2 的整數`);
       } else if (Array.isArray(cluster.members) && cluster.size !== cluster.members.length) {
         errors.push(`${path}.size：必須等於 members.length（目前 ${cluster.size}／${cluster.members.length}）`);
+      }
+      if (cluster.sourceCount !== undefined && !isNonNegativeInteger(cluster.sourceCount)) {
+        errors.push(`${path}.sourceCount：存在時必須是非負整數`);
+      }
+      if (cluster.evidenceSources !== undefined) {
+        if (!Array.isArray(cluster.evidenceSources) || cluster.evidenceSources.some((source) => !isNonEmptyString(source))) {
+          errors.push(`${path}.evidenceSources：存在時必須是非空字串陣列`);
+        } else if (isNonNegativeInteger(cluster.sourceCount) && cluster.sourceCount !== cluster.evidenceSources.length) {
+          errors.push(`${path}.sourceCount：必須等於 evidenceSources.length（目前 ${cluster.sourceCount}／${cluster.evidenceSources.length}）`);
+        }
       }
 
       // 時序演變與地理聚集訊號（選用欄位；舊產物相容，存在時必須符合結構）。

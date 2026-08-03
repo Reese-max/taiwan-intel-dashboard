@@ -92,15 +92,10 @@ function mapTrim(e) {
     },
   };
 }
-// network.json 的 nodes 陣列（佔 ~23%）前端與 globe 皆未使用：NetworkIndex 只讀 edges/clusters，
-// count() 由 edges 建鄰接表算（非 node.degree），globe 不引用 nodes → 整段丟棄。
+// network.json 的 nodes 現在承載儀表板事件摘要與直接佐證來源，保留既有節點欄位，
+// 讓 build-time 關聯結果可直接供資料消費端使用；edges/clusters 仍維持原有結構。
 function trimNetwork(net) {
-  const dropNodes = (sec) => {
-    if (!sec || typeof sec !== "object" || Array.isArray(sec)) return sec;
-    const { nodes, ...rest } = sec;
-    return rest;
-  };
-  return { ...net, domestic: dropNodes(net.domestic), international: dropNodes(net.international) };
+  return net;
 }
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
 for (const f of readdirSync("public/data")) {

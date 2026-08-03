@@ -40,6 +40,28 @@ describe("network artifact contract", () => {
     expect(validateNetworkContract(makeNetwork())).toEqual([]);
   });
 
+  it("接受事件摘要與直接佐證來源欄位，且來源數須與清單一致", () => {
+    const network = makeNetwork();
+    network.domestic.nodes[0] = {
+      id: "d-0",
+      title: "事件標題",
+      summary: "事件摘要",
+      region: "臺北市",
+      category: "治安",
+      riskLevel: "medium",
+      scope: "domestic",
+      degree: 1,
+      sourceCount: 1,
+      evidenceSources: ["來源B"],
+    };
+    expect(validateNetworkContract(network)).toEqual([]);
+
+    network.domestic.nodes[0].sourceCount = 2;
+    expect(validateNetworkContract(network)).toContain(
+      "scope domestic.nodes[0].sourceCount：必須等於 evidenceSources.length（目前 2／1）",
+    );
+  });
+
   it("拒絕空覆蓋量並指出統計路徑與門檻", () => {
     const errors = validateNetworkContract(makeNetwork(0, 0));
 

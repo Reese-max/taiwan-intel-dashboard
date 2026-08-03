@@ -80,6 +80,16 @@ describe("temporalSeriesOf — 按時間排序的來源／報導數序列", () =
     expect(result.lastSeenTs).toBeUndefined();
     expect(result.degraded.missingTimestamp).toEqual({ count: 0, ids: [] });
   });
+
+  it("指定直接佐證成員時，reports 保留全群但 sources 排除非直接關聯", () => {
+    const members = [
+      ev("direct", { source: { name: "來源A", type: "news-rss", fetchedAt: "" } }),
+      ev("related-entity", { source: { name: "來源B", type: "news-rss", fetchedAt: "" } }),
+    ];
+    const result = temporalSeriesOf(members, { directEvidenceIds: new Set(["direct"]) });
+
+    expect(result.series).toEqual([{ ts: "2026-06-20T00:00:00.000Z", reports: 2, sources: 1 }]);
+  });
 });
 
 describe("geoClustersOf — 地理座標群集與成員佐證", () => {

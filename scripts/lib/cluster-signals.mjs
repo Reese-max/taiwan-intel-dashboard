@@ -35,7 +35,8 @@ function dayKey(ms) {
 
 // 逐日（UTC）分桶的「來源數／報導數」序列。回傳的 degraded 含缺失時間的成員 id 清單。
 // 無任何有效時間時，firstSeenTs/lastSeenTs 為 undefined（呼叫端省略欄位），不輸出空字串。
-export function temporalSeriesOf(members) {
+export function temporalSeriesOf(members, { directEvidenceIds } = {}) {
+  const directIds = directEvidenceIds ? new Set(directEvidenceIds) : null;
   const valid = [];
   const missingTimestamp = [];
   for (const event of members || []) {
@@ -53,7 +54,7 @@ export function temporalSeriesOf(members) {
       buckets.set(key, bucket);
     }
     bucket.reports += 1;
-    if (event.source?.name) bucket.sources.add(event.source.name);
+    if (event.source?.name && (!directIds || directIds.has(event.id))) bucket.sources.add(event.source.name);
   }
 
   return {
@@ -130,8 +131,8 @@ export function geoClustersOf(members) {
 
 // 單一入口：一次算出群集的時序與地理訊號（含降級紀錄）。
 // 全員時間缺失時省略 firstSeenTs/lastSeenTs（undefined），絕不輸出空字串。
-export function clusterSignals(members) {
-  const temporal = temporalSeriesOf(members);
+export function clusterSignals(members, options = {}) {
+  const temporal = temporalSeriesOf(members, options);
   const geo = geoClustersOf(members);
   return {
     temporalSeries: temporal.series,
