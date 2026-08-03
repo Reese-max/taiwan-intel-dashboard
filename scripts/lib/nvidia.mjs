@@ -528,6 +528,13 @@ export async function normalizeInternational(
       const deadline = Date.now() + budgetMs;
       // 每批挑 top（總候選量約 max 的 2 倍，最後再全域排序取 max）。
       const perBatch = Math.max(4, Math.ceil((max * 2) / batches.length));
+      // 優先批（general topic，位於 queue 前段）配額拉高：136 批時 perBatch=4，
+      // 純 general 批也只回 4 筆 → 10 批恰好 40，永遠到不了門檻 50（2026-08-03 run
+      // 30784600316 實證）。保底挑選需要 ≥門檻的候選池，優先批至少回 8 筆。
+      const priorityBatchCount = priorityFeedLabels?.size
+        ? Math.ceil(queue.filter(isPriorityItem).length / batchSize)
+        : 0;
+      const perBatchFor = (i) => (i < priorityBatchCount ? Math.max(perBatch, 8) : perBatch);
       // 推理模型偶發截斷／解析失敗 → 單批重試一次，仍失敗才放棄該批（不拖垮整體）。
       // 放棄時必留痕（批次序號＋錯誤頭）——靜默吞錯曾造成「正規化 0 筆、log 零錯誤」的啞死。
       const runBatch = (b, i) => {
@@ -535,8 +542,8 @@ export async function normalizeInternational(
           skipped++;
           return [];
         }
-        return normalizeInternationalBatch(b, { max: perBatch }).catch(() =>
-          normalizeInternationalBatch(b, { max: perBatch }).catch((e) => {
+        return normalizeInternationalBatch(b, { max: perBatchFor(i) }).catch(() =>
+          normalizeInternationalBatch(b, { max: perBatchFor(i) }).catch((e) => {
             console.warn(`國際正規化批次 ${i + 1}/${batches.length} 重試仍失敗，放棄該批：${String(e?.message || e).slice(0, 200)}`);
             return [];
           }),
