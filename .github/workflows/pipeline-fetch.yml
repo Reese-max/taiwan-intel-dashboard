@@ -20,7 +20,7 @@ on:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 120
     permissions:
       contents: read
     outputs:
@@ -99,6 +99,10 @@ jobs:
           INTERNATIONAL_FEED_TIER: ${{ steps.mode.outputs.international_feed_tier }}
           INTERNATIONAL_FEED_TOPIC: ${{ steps.mode.outputs.international_feed_topic }}
           INTL_RENORM_ALL: ${{ inputs.renorm_intl }}
+          # 冷啟動（快取空白）時 15 分鐘預設預算跑不完全量正規化（2026-08-02 實證：
+          # normalizeSkippedBatches=60、general 40/50 不達門檻），停擺 6 週後復原首跑必中。
+          INTL_NORMALIZE_BUDGET_MS: "2700000"
+          DOMESTIC_NORMALIZE_BUDGET_MS: "1800000"
           NODE_OPTIONS: --use-system-ca
         run: node scripts/fetch-live.mjs ${{ steps.mode.outputs.args }}
 
