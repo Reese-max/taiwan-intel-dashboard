@@ -243,7 +243,17 @@ function coerceOfficialPoliceEvent(event, item) {
   };
 }
 
-function selectInternationalWithOfficialPoliceFloor(events, officialItems, max) {
+// 一般國際新聞（general topic）每輪保底名額，對齊 assert-pipeline-sources 的 min-general-events=50。
+// 背景：feed 名冊擴至 465 個後，純分類多元挑選會把 general 稀釋到門檻之下
+//（2026-08-03 復原實證：45 分鐘預算跑滿、250 筆產出中 general 僅 34/50）。
+const GENERAL_FLOOR = 50;
+
+function eventFeedLabelOf(event) {
+  return String(event?.source?.feedLabel || event?.source?.name || "").trim();
+}
+
+export function selectInternationalWithOfficialPoliceFloor(events, officialItems, max, opts = {}) {
+  const { generalFeedLabels = null, minGeneral = GENERAL_FLOOR } = opts;
   const byId = new Map((events || []).filter((event) => event?.id).map((event) => [event.id, event]));
   const floor = [];
   const floorIds = new Set();
@@ -262,11 +272,36 @@ function selectInternationalWithOfficialPoliceFloor(events, officialItems, max) 
     perFeed.set(feed, (perFeed.get(feed) || 0) + 1);
   }
 
-  const selected = selectDiverseByCategory([...byId.values()], max);
   const required = floor.slice(0, max);
-  if (required.length >= max) return required;
   const requiredIds = new Set(required.map((event) => event.id));
-  return [...required, ...selected.filter((event) => !requiredIds.has(event.id)).slice(0, Math.max(0, max - required.length))];
+  const picked = [...required];
+
+  // general 保底：與警政 floor 同理，門檻主題不得被分類多元挑選稀釋掉。
+  if (generalFeedLabels?.size && picked.length < max) {
+    const wantGeneral = Math.min(minGeneral, max - picked.length);
+    const haveGeneral = picked.filter((event) => generalFeedLabels.has(eventFeedLabelOf(event))).length;
+    if (haveGeneral < wantGeneral) {
+      const generalPool = selectDiverseByCategory(
+        [...byId.values()].filter(
+          (event) => !requiredIds.has(event.id) && generalFeedLabels.has(eventFeedLabelOf(event)),
+        ),
+        wantGeneral - haveGeneral,
+      );
+      for (const event of generalPool) {
+        picked.push(event);
+        requiredIds.add(event.id);
+      }
+    }
+  }
+
+  const selected = selectDiverseByCategory([...byId.values()], max);
+  for (const event of selected) {
+    if (picked.length >= max) break;
+    if (requiredIds.has(event.id)) continue;
+    picked.push(event);
+    requiredIds.add(event.id);
+  }
+  return picked.slice(0, max);
 }
 
 // 單批國際正規化（≤ batchSize 則）。idx 對應到傳入的 batchItems。
@@ -446,6 +481,7 @@ export async function normalizeInternational(
     concurrency = Math.max(1, Number(process.env.INTL_NORMALIZE_CONCURRENCY) || 4),
     priorById = null,
     budgetMs = Math.max(60e3, Number(process.env.INTL_NORMALIZE_BUDGET_MS) || 15 * 60e3),
+    priorityFeedLabels = null,
   } = {}
 ) {
   lastIntlNormalizeFailed = false;
@@ -474,14 +510,21 @@ export async function normalizeInternational(
   const maxAgeMs = recalDays > 0 ? recalDays * 86400000 : null;
   const { reused, fresh } = partitionByCache(deduped, "international", priorById, { maxAgeMs });
 
+  // 門檻主題（general）優先進 LLM：預算耗盡時被跳過的是長尾主題批次，
+  // 而非 assert 門檻所驗的主題；同時讓 general 批內同質競爭，避免被高風險長尾洗掉。
+  const isPriorityItem = (it) => priorityFeedLabels?.has(String(it.source || "").trim());
+  const queue = priorityFeedLabels?.size
+    ? [...fresh.filter(isPriorityItem), ...fresh.filter((it) => !isPriorityItem(it))]
+    : fresh;
+
   let llmEvents = [];
   let skipped = 0;
   if (fresh.length) {
     if (fresh.length <= batchSize) {
-      llmEvents = await normalizeInternationalBatch(fresh, { max });
+      llmEvents = await normalizeInternationalBatch(queue, { max });
     } else {
       const batches = [];
-      for (let i = 0; i < fresh.length; i += batchSize) batches.push(fresh.slice(i, i + batchSize));
+      for (let i = 0; i < queue.length; i += batchSize) batches.push(queue.slice(i, i + batchSize));
       const deadline = Date.now() + budgetMs;
       // 每批挑 top（總候選量約 max 的 2 倍，最後再全域排序取 max）。
       const perBatch = Math.max(4, Math.ceil((max * 2) / batches.length));
@@ -528,7 +571,11 @@ export async function normalizeInternational(
     merged.push(ev);
   }
   // 高風險事件二次深度分析（補 implications；env INTL_DEEP_ANALYSIS=0 可關，失敗 graceful）。
-  return await deepAnalyzeHighRisk(selectInternationalWithOfficialPoliceFloor(merged, officialPoliceItems, max));
+  return await deepAnalyzeHighRisk(
+    selectInternationalWithOfficialPoliceFloor(merged, officialPoliceItems, max, {
+      generalFeedLabels: priorityFeedLabels,
+    }),
+  );
 }
 
 // 台灣社會/犯罪新聞分類（domestic）

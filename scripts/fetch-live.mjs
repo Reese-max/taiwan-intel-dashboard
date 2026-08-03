@@ -421,7 +421,15 @@ export async function run() {
         process.env.INTL_RENORM_ALL === "true"
           ? new Map()
           : new Map(readOld("international.json").map((e) => [e.id, e]));
-      intl = await normalizeInternational(rawItems, { max: intlCfg.maxEvents, priorById: priorIntl });
+      // general topic feed 集合＝assert 門檻驗的主題；正規化優先啃、挑選時保底（見 nvidia.mjs GENERAL_FLOOR）。
+      const generalFeedLabels = new Set(
+        selectInternationalFeeds({ tier: "expanded", topic: "general" }).map((feed) => feed.label),
+      );
+      intl = await normalizeInternational(rawItems, {
+        max: intlCfg.maxEvents,
+        priorById: priorIntl,
+        priorityFeedLabels: generalFeedLabels,
+      });
       const normalizedByFeed = new Map();
       for (const event of intl) {
         const label = event.source?.feedLabel || event.source?.name;
