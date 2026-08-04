@@ -83,4 +83,18 @@ describe("coverage 每日矩陣", () => {
       events: 1,
     }));
   });
+
+  it("領域覆蓋驗證失敗時納入 coverage audit 的可追溯原因", () => {
+    const matrix = buildCoverageMatrix({ generatedAt: "2026-07-16T02:00:00.000Z" });
+    const result = auditCoverageMatrix(matrix, {
+      domainCoverage: {
+        validation: {
+          failures: [{ code: "core-domain-no-enabled-source", reason: "核心領域沒有啟用來源：資安" }],
+        },
+      },
+    });
+
+    expect(result).toMatchObject({ ok: false });
+    expect(result.errors).toContain("domain coverage core-domain-no-enabled-source: 核心領域沒有啟用來源：資安");
+  });
 });

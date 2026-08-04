@@ -1,7 +1,72 @@
 import { describe, expect, it } from "vitest";
-import { buildDomainCoverage } from "../scripts/domain-coverage.mjs";
+import {
+  buildDomainCoverage,
+  validateDomainCoverageConfig,
+} from "../scripts/domain-coverage.mjs";
 
 describe("領域完整性清單", () => {
+  it("依啟用設定計算核心領域來源覆蓋數", () => {
+    const report = buildDomainCoverage();
+
+    expect(report.validation).toMatchObject({ ok: true, failures: [] });
+    expect(report.rows.filter((row) => row.configuredSourceCount > 0)).toHaveLength(9);
+    expect(report.rows.find((row) => row.key === "治安／警政")).toMatchObject({
+      configuredSourceCount: 3,
+      enabledSourceCount: 3,
+      coverageCount: 3,
+      sourceCount: 0,
+    });
+  });
+
+  it("報告核心領域沒有啟用來源、無效標籤與未歸類來源的原因", () => {
+    const result = validateDomainCoverageConfig({
+      sourceConfig: [
+        {
+          sourceId: "disabled",
+          sourceKey: "disabled",
+          domain: "治安／警政",
+          enabled: false,
+          publisherName: "測試機構",
+          publisherUrl: "https://example.com/disabled",
+        },
+        {
+          sourceId: "invalid-tag",
+          sourceKey: "invalid-tag",
+          domain: "不存在領域",
+          publisherName: "測試機構",
+          publisherUrl: "https://example.com/invalid",
+        },
+        {
+          sourceId: "unclassified",
+          sourceKey: "unclassified",
+          publisherName: "測試機構",
+          publisherUrl: "https://example.com/unclassified",
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.failures).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "core-domain-no-enabled-source", domain: "治安／警政", path: "sourceConfig.治安／警政" }),
+      expect.objectContaining({ code: "invalid-domain-tag", source: "invalid-tag", reason: expect.stringContaining("不存在領域") }),
+      expect.objectContaining({ code: "source-unclassified", source: "unclassified", reason: expect.stringContaining("沒有領域標籤") }),
+    ]));
+  });
+
+  it("拒絕已知來源的無效標籤與未知官方來源未歸類", () => {
+    const report = buildDomainCoverage({
+      sources: [
+        { scope: "domestic", type: "gov-open-data", datasetId: "taipower-supply-demand", category: "錯誤標籤", name: "台電" },
+        { scope: "domestic", type: "gov-open-data", datasetId: "unknown-dataset", category: "未知標籤", name: "未知來源" },
+      ],
+    });
+
+    expect(report.validation.failures).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "invalid-source-tag", source: "taipower-supply-demand" }),
+      expect.objectContaining({ code: "source-unclassified", source: "unknown-dataset" }),
+    ]));
+  });
+
   it("區分已整合、參考層、僅查詢與缺口", () => {
     const report = buildDomainCoverage({
       generatedAt: "2026-07-25T00:00:00.000Z",

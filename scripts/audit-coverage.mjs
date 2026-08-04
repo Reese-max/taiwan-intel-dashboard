@@ -2,6 +2,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { COUNTY_CENTER, countyCoordFromAddr } from "./lib/coords.mjs";
+import { auditDomainCoverage } from "./domain-coverage.mjs";
 
 const OFFICIAL_TYPES = new Set(["gov-open-data", "cwa"]);
 const SOURCE_KINDS = ["official", "news"];
@@ -208,7 +209,7 @@ export function buildCoverageMatrix({ generatedAt = new Date().toISOString(), ev
   };
 }
 
-export function auditCoverageMatrix(matrix) {
+export function auditCoverageMatrix(matrix, options = {}) {
   const errors = [];
   if (!matrix || typeof matrix !== "object") errors.push("matrix must be an object");
   if (!matrix?.generatedAt || !Number.isFinite(Date.parse(matrix.generatedAt))) errors.push("generatedAt is invalid");
@@ -278,22 +279,39 @@ export function auditCoverageMatrix(matrix) {
       errors.push("matrix7d blind spot summary does not match zero rows");
     }
   }
+  const domainCoverage = options?.domainCoverage || (options?.validation ? options : null);
+  if (domainCoverage) {
+    const domainAudit = auditDomainCoverage(domainCoverage);
+    for (const failure of domainAudit.failures) {
+      errors.push(`domain coverage ${failure.code}: ${failure.reason}`);
+    }
+  }
   return { ok: errors.length === 0, errors };
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const fileArg = process.argv.find((arg) => arg.startsWith("--file="));
   const file = fileArg?.slice("--file=".length) || "public/data/coverage.json";
+  const domainFileArg = process.argv.find((arg) => arg.startsWith("--domain-file="));
+  const domainFile = domainFileArg?.slice("--domain-file=".length) || "public/data/domain-coverage.json";
   let matrix;
+  let domainCoverage;
   try {
     matrix = JSON.parse(readFileSync(file, "utf8"));
   } catch (error) {
     console.error(`無法讀取 coverage 矩陣 ${file}：${error.message}`);
     process.exit(1);
   }
-  const result = auditCoverageMatrix(matrix);
+  try {
+    domainCoverage = JSON.parse(readFileSync(domainFile, "utf8"));
+  } catch (error) {
+    console.error(`無法讀取領域覆蓋驗證 ${domainFile}：${error.message}`);
+    process.exit(1);
+  }
+  const result = auditCoverageMatrix(matrix, { domainCoverage });
   console.log(`Coverage 矩陣 ${matrix.day || "未知日期"}：${matrix.totals?.events || 0} 事件／${matrix.totals?.sourceRows || 0} 來源列`);
   console.log(`  7 日縣市矩陣：${matrix.matrix7d?.summary?.coveredRows || 0}/${matrix.matrix7d?.summary?.rows || 0} 組有覆蓋；觀測盲點 ${matrix.matrix7d?.summary?.blindSpots || 0}；僅 stale ${matrix.matrix7d?.summary?.staleOnly || 0}；全國 ${matrix.matrix7d?.summary?.nationalEvents || 0}；未定位 ${matrix.matrix7d?.summary?.unmappedEvents || 0}`);
+  console.log(`  核心領域來源覆蓋：${domainCoverage.rows?.filter((row) => row.configuredSourceCount > 0 && row.enabledSourceCount > 0).length || 0}/${domainCoverage.rows?.filter((row) => row.configuredSourceCount > 0).length || 0}；驗證 ${domainCoverage.validation?.ok === true ? "通過" : "失敗"}`);
   for (const row of matrix.rows || []) {
     console.log(`  ${row.scope}/${row.category}: events=${row.events} sources=${row.healthySources}/${row.sourceRows} official=${row.officialEvents}`);
   }
