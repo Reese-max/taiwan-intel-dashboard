@@ -1,5 +1,5 @@
 // 全量新聞輕量收錄（免 LLM）：把抓回來的 RSS 原文全部轉成 IntelEvent。
-// 分類用來源主題(hint)、風險用標題關鍵字、座標用標題短名縣市偵測。
+// 分類用來源主題(hint)、風險用標題與摘要關鍵字、座標用標題短名縣市偵測。
 // 與 LLM 精修層(nvidia.normalizeDomesticNews)互補：LLM 精修最近一批，其餘走這裡，達成「全量下載」。
 import { COUNTY_CENTER } from "./coords.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
@@ -89,12 +89,13 @@ export const TOPIC_RISK = {
   },
 };
 
-export function riskFromTitle(title, hint) {
-  const s = String(title || "");
+export function riskFromTitle(title, hint, description = "") {
+  const titleText = String(title || "");
+  const s = `${titleText} ${String(description || "")}`;
   if (CRITICAL.test(s) && !NO_CRITICAL_CASUALTY.test(s)) return "critical";
   if (HIGH_FLOOR.test(s)) return "high";
-  const isRoutine = ROUTINE.test(s);
-  const isCyberRoutine = isRoutine || CYBER_ROUTINE.test(s);
+  const isRoutine = ROUTINE.test(titleText);
+  const isCyberRoutine = isRoutine || CYBER_ROUTINE.test(titleText);
   if (!isCyberRoutine) {
     if (CYBER_HIGH.test(s)) return "high";
     if (CYBER_DATA_BREACH.test(s)) return CYBER_DATA_BREACH_SCALE.test(s) ? "high" : "medium";
@@ -309,7 +310,7 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
       category: categoryResult.category,
       categoryBasis: categoryResult.basis,
       scope: "domestic",
-      riskLevel: riskFromTitle(it.title, it.hint),
+      riskLevel: riskFromTitle(it.title, it.hint, it.description),
       summary: (it.description || "").slice(0, 200),
       locationPrecision: loc.lat != null && loc.lng != null ? "city" : "unknown",
       locationNote: loc.lat != null && loc.lng != null ? "依新聞地區推論，非精準事發地址" : undefined,

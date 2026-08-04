@@ -218,7 +218,7 @@ function fallbackOfficialPoliceEvent(item) {
     category,
     categoryBasis: "official-feed-hint",
     scope: "international",
-    riskLevel: riskFromTitle(title, category),
+    riskLevel: riskFromTitle(title, category, summary),
     summary,
     twRelevance: 0,
     sentiment: "neutral",

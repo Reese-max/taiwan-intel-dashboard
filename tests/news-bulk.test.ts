@@ -488,6 +488,20 @@ describe("EN 來源支援（Focus Taiwan / Taipei Times）", () => {
 });
 
 describe("riskFromTitle 主題感知", () => {
+  it("正式入口使用摘要補足標題省略的嚴重風險證據", () => {
+    const [event] = mapBulkNews([{
+      title: "新埔工廠事故持續調查",
+      link: "https://example.test/event",
+      description: "工廠氣爆造成2死19傷，檢警持續調查。",
+      source: "測試媒體",
+      sourceUrl: "https://example.test/feed",
+      hint: "災防",
+      pubDate: "2026-06-20T00:00:00.000Z",
+    }], { fetchedAt: FETCHED_AT });
+
+    expect(event?.riskLevel).toBe("critical");
+  });
+
   it("驗收基線：正常、剛好升級門檻與急迫公共安全事件維持固定評級", () => {
     const cases = [
       { title: "警方公告夜間巡邏勤務正常", hint: "治安", expectedRisk: "low" },
