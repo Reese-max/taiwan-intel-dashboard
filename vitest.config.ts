@@ -5,7 +5,10 @@ export default defineConfig({
   test: {
     environment: "node",
     exclude: [...configDefaults.exclude, "e2e/**"],
-    // 長時整合測試與 89 個 test files 同時啟動預設 CPU 數 worker 會觸發 Tinypool worker 非正常退出。
-    poolOptions: { threads: { minThreads: 1, maxThreads: 4 } },
+    // 長時整合測試含同步子進程與大量 timer，threads pool 偶發觸發 Tinypool worker 非正常退出。
+    // forks 將 worker lifecycle 隔離到 child process，singleFork 保證整批測試只回收一個可控的執行器。
+    pool: "forks",
+    poolOptions: { forks: { singleFork: true } },
+    teardownTimeout: 30_000,
   },
 });
