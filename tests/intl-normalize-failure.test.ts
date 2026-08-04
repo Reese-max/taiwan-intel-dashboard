@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
 import {
@@ -22,10 +22,16 @@ const okDomesticCompletion = (content: string) =>
     headers: { "Content-Type": "application/json" },
   });
 
+const originalLlmBaseUrl = process.env.LLM_BASE_URL;
+
+afterAll(() => {
+  expect(process.env.LLM_BASE_URL).toBe(originalLlmBaseUrl);
+});
+
 describe("normalizeInternational 全批失敗可見性（A3）", () => {
   const saved: Record<string, string | undefined> = {};
   beforeEach(() => {
-    for (const k of ["LLM_API_KEY", "NVIDIA_API_KEY", "LLM_MAX_RETRIES"]) saved[k] = process.env[k];
+    for (const k of ["LLM_API_KEY", "NVIDIA_API_KEY", "LLM_BASE_URL", "LLM_MAX_RETRIES"]) saved[k] = process.env[k];
     delete process.env.LLM_API_KEY;
     delete process.env.NVIDIA_API_KEY;
     process.env.LLM_MAX_RETRIES = "0"; // 無 key 必 throw，關重試讓測試快速
