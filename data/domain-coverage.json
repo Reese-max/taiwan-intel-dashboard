@@ -1,0 +1,2904 @@
+{
+  "generatedAt": "2026-08-04T06:12:48.525Z",
+  "policy": {
+    "integrated": "已進入事件管線並受來源新鮮度稽核",
+    "reference": "官方參考快照，保留在事件檔但排除每日事件統計",
+    "query-only": "可由開放資料查詢，但未承諾事件層新鮮度或完整性",
+    "gap": "目前沒有符合本專案契約的整合來源"
+  },
+  "counts": {
+    "integrated": 10,
+    "reference": 9,
+    "query-only": 2,
+    "gap": 1
+  },
+  "rows": [
+    {
+      "key": "治安／警政",
+      "scope": "domestic",
+      "status": "integrated",
+      "categories": [
+        "治安",
+        "反詐",
+        "協尋"
+      ],
+      "note": "警政、失蹤人口與台灣新聞事件",
+      "sourceCount": 194,
+      "healthySourceCount": 194,
+      "observedSources": [
+        {
+          "name": "165反詐騙 涉詐網站停解析",
+          "datasetId": "176455",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:58.606Z"
+        },
+        {
+          "name": "165反詐騙 詐騙闢謠專區",
+          "datasetId": "38262",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:59.847Z"
+        },
+        {
+          "name": "警政署 打詐儀表板執行成效",
+          "datasetId": "172159",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.333Z"
+        },
+        {
+          "name": "臺北市政府警察局 犯罪點位",
+          "datasetId": "taipei-crime",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:51.823Z"
+        },
+        {
+          "name": "警政署 犯罪資料統計週報",
+          "datasetId": "13166",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:51.827Z"
+        },
+        {
+          "name": "桃園市政府警察局 竊盜點位",
+          "datasetId": "167673",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.608Z"
+        },
+        {
+          "name": "臺南市政府警察局 婦幼犯罪警示",
+          "datasetId": "100208",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.879Z"
+        },
+        {
+          "name": "新北市政府警察局 婦幼犯罪警示",
+          "datasetId": "125645",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.255Z"
+        },
+        {
+          "name": "165反詐騙 假投資(博弈)網站",
+          "datasetId": "160055",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:59.639Z"
+        },
+        {
+          "name": "警政署 各警察機關新聞發布",
+          "datasetId": "7505",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.572Z"
+        },
+        {
+          "name": "警政署 毒品犯罪資料",
+          "datasetId": "57268",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.363Z"
+        },
+        {
+          "name": "警政署 集會遊行資訊",
+          "datasetId": "11307",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.230Z"
+        },
+        {
+          "name": "嘉義縣警察局 住宅竊盜點位",
+          "datasetId": "133922",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:57.451Z"
+        },
+        {
+          "name": "嘉義縣警察局 汽車竊盜點位",
+          "datasetId": "133923",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:57.451Z"
+        },
+        {
+          "name": "嘉義縣警察局 自行車竊盜點位",
+          "datasetId": "133924",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:57.451Z"
+        },
+        {
+          "name": "宜蘭縣政府警察局 治安交通監錄系統",
+          "datasetId": "143467",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.259Z"
+        },
+        {
+          "name": "苗栗縣警察勤務指揮中心 報案統計",
+          "datasetId": "171164",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.367Z"
+        },
+        {
+          "name": "苗栗縣警察勤務指揮中心 治安交通案件",
+          "datasetId": "171167",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:58.316Z"
+        },
+        {
+          "name": "屏東縣政府警察局 路口錄監系統",
+          "datasetId": "155895",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.350Z"
+        },
+        {
+          "name": "連江縣警察局 為民服務成果",
+          "datasetId": "146936",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.152Z"
+        },
+        {
+          "name": "警政署統計處 刑案發生率／破獲率（按機關別）",
+          "datasetId": "103351",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:57.456Z"
+        },
+        {
+          "name": "臺北市 家暴通報案件數統計",
+          "datasetId": "145744",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:57.456Z"
+        },
+        {
+          "name": "警政署 失蹤人口查尋",
+          "datasetId": "14420",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:06.116Z"
+        },
+        {
+          "name": "台灣新聞：GN 收押通緝",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:23.535Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 社會",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:13.416Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 社會",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:13.416Z"
+        },
+        {
+          "name": "台灣新聞：GN 跨境詐騙人販",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:13.416Z"
+        },
+        {
+          "name": "台灣新聞：GN 命案兇殺",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:13.416Z"
+        },
+        {
+          "name": "台灣新聞：GN 妨害自由恐嚇",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:13.416Z"
+        },
+        {
+          "name": "台灣新聞：GN 人頭帳戶虛幣",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T22:53:29.322Z"
+        },
+        {
+          "name": "台灣新聞：GN 偷拍性影像",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:18.960Z"
+        },
+        {
+          "name": "台灣新聞：鏡週刊",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:13:45.925Z"
+        },
+        {
+          "name": "台灣新聞：GN AI深偽詐騙",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:13:45.925Z"
+        },
+        {
+          "name": "台灣新聞：GN CTWANT 綜合治安",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:23.535Z"
+        },
+        {
+          "name": "台灣新聞：GN 失智走失",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:23.535Z"
+        },
+        {
+          "name": "台灣新聞：Taiwan News EN 治安",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:37.063Z"
+        },
+        {
+          "name": "台灣新聞：央廣 RTI 治安",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:37.063Z"
+        },
+        {
+          "name": "台灣新聞：GN 傷害鬥毆",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:37.063Z"
+        },
+        {
+          "name": "台灣新聞：GN UDN 綜合治安",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:37.063Z"
+        },
+        {
+          "name": "台灣新聞：GN 竊盜搶奪",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:46.249Z"
+        },
+        {
+          "name": "台灣新聞：GN 食安黑心",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:46.249Z"
+        },
+        {
+          "name": "台灣新聞：GN 跟蹤騷擾",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:02.219Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 社會",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:02.219Z"
+        },
+        {
+          "name": "台灣新聞：鏡週刊",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:09.296Z"
+        },
+        {
+          "name": "台灣新聞：GN 警匪槍戰",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:09.296Z"
+        },
+        {
+          "name": "台灣新聞：GN UDN 綜合治安",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:27.923Z"
+        },
+        {
+          "name": "台灣新聞：GN 刑事局偵破",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:27.923Z"
+        },
+        {
+          "name": "台灣新聞：GN 銀髮長者詐騙",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:27.923Z"
+        },
+        {
+          "name": "台灣新聞：newtalk 社會",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:18.170Z"
+        },
+        {
+          "name": "台灣新聞：GN ETtoday 綜合治安",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:18.170Z"
+        },
+        {
+          "name": "台灣新聞：GN 毒品查獲",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:32.503Z"
+        },
+        {
+          "name": "台灣新聞：GN 走私動物",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:32.140Z"
+        },
+        {
+          "name": "台灣新聞：GN 性侵性騷",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:32.140Z"
+        },
+        {
+          "name": "台灣新聞：GN 警政人事績效",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:32.140Z"
+        },
+        {
+          "name": "台灣新聞：GN 妨害秘密跟監",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:57.241Z"
+        },
+        {
+          "name": "台灣新聞：GN 詐騙逮捕",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:16:08.878Z"
+        },
+        {
+          "name": "台灣新聞：GN 擄人勒贖",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T00:03:41.758Z"
+        },
+        {
+          "name": "台灣新聞：GN 投資飆股群組",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:57.241Z"
+        },
+        {
+          "name": "台灣新聞：GN 假網拍一頁式",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:57.241Z"
+        },
+        {
+          "name": "台灣新聞：GN 詐騙水房機房",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:57.241Z"
+        },
+        {
+          "name": "台灣新聞：GN 貪污收賄",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:56.675Z"
+        },
+        {
+          "name": "台灣新聞：GN 殺人分屍",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T22:53:35.601Z"
+        },
+        {
+          "name": "台灣新聞：GN 165打詐",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T10:52:37.132Z"
+        },
+        {
+          "name": "台灣新聞：GN 海巡走私",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T22:53:29.322Z"
+        },
+        {
+          "name": "台灣新聞：GN 失蹤協尋",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:41:32.905Z"
+        },
+        {
+          "name": "台灣新聞：臺中市警局官網",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T00:03:34.553Z"
+        },
+        {
+          "name": "台灣新聞：GN 三立綜合治安",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:33:49.440Z"
+        },
+        {
+          "name": "台灣新聞：GN 假冒銀行檢警",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:33:53.611Z"
+        },
+        {
+          "name": "台灣新聞：中央社 社會",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:33:48.112Z"
+        },
+        {
+          "name": "台灣新聞：GN 妨害自由恐嚇",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:33:48.112Z"
+        },
+        {
+          "name": "台灣新聞：GN 槍械",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T18:20:04.541Z"
+        },
+        {
+          "name": "台灣新聞：GN 假投資假交友",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T18:20:04.541Z"
+        },
+        {
+          "name": "台灣新聞：GN 上報綜合治安",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:16:00.515Z"
+        },
+        {
+          "name": "台灣新聞：GN 收押通緝",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:33:48.112Z"
+        },
+        {
+          "name": "台灣新聞：GN 家暴兒虐",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:33:54.446Z"
+        },
+        {
+          "name": "台灣新聞：GN 八大臨檢",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:33:54.446Z"
+        },
+        {
+          "name": "台灣新聞：GN 刑事局偵破",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:33:54.446Z"
+        },
+        {
+          "name": "台灣新聞：警政署官網",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:34:09.202Z"
+        },
+        {
+          "name": "台灣新聞：警政署官網",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:34:09.202Z"
+        },
+        {
+          "name": "台灣新聞：GN 三立綜合治安",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T22:53:18.926Z"
+        },
+        {
+          "name": "台灣新聞：臺中市警局官網",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T00:03:58.054Z"
+        },
+        {
+          "name": "台灣新聞：GN 新興毒品",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:34:34.106Z"
+        },
+        {
+          "name": "台灣新聞：GN 詐騙簡訊釣魚",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:34:34.106Z"
+        },
+        {
+          "name": "台灣新聞：海巡署官網",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:34:34.106Z"
+        },
+        {
+          "name": "台灣新聞：Newtalk 社會",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:54:17.199Z"
+        },
+        {
+          "name": "台灣新聞：GN 人口販運",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:54:19.689Z"
+        },
+        {
+          "name": "台灣新聞：法務部 新聞發布",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:54:19.689Z"
+        },
+        {
+          "name": "台灣新聞：GN 假檢警監管帳戶",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:54:39.472Z"
+        },
+        {
+          "name": "台灣新聞：GN 拒捕拒檢",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:55:27.411Z"
+        },
+        {
+          "name": "台灣新聞：Newtalk 社會",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:55:27.411Z"
+        },
+        {
+          "name": "台灣新聞：GN 偷拍性影像",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:55:45.666Z"
+        },
+        {
+          "name": "台灣新聞：GN 跨境詐騙人販",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:13.624Z"
+        },
+        {
+          "name": "台灣新聞：GN 經濟日報詐騙金融",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:27.549Z"
+        },
+        {
+          "name": "台灣新聞：GN 風傳媒綜合治安",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:27.549Z"
+        },
+        {
+          "name": "台灣新聞：GN ETtoday 綜合治安",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:27.549Z"
+        },
+        {
+          "name": "台灣新聞：GN 租屋詐騙",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:42.331Z"
+        },
+        {
+          "name": "台灣新聞：GN 山難海難",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:51.676Z"
+        },
+        {
+          "name": "台灣新聞：GN ETtoday 綜合治安",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:33.435Z"
+        },
+        {
+          "name": "台灣新聞：GN 情殺仇殺",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:30.004Z"
+        },
+        {
+          "name": "台灣新聞：GN 掏空內線",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:38.728Z"
+        },
+        {
+          "name": "台灣新聞：newtalk 社會",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:38.728Z"
+        },
+        {
+          "name": "台灣新聞：Yahoo奇摩 社會",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:58:17.640Z"
+        },
+        {
+          "name": "台灣新聞：Yahoo奇摩 社會",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:58:17.640Z"
+        },
+        {
+          "name": "台灣新聞：GN 洗錢",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:58:34.223Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 地方",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：衛福部 焦點新聞",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：Taipei Times (EN)",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：臺中市警局官網",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 虐待動物",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 兒虐托嬰",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：公視新聞",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 偽造文書偽鈔",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 詐領補助",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 妨害自由恐嚇",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 檢調起訴",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 金屬竊盜",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：台視 社會",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 校園安全",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 員警風紀殉職",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：中央社 社會",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：彰化縣警局官網",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 跨境詐騙人販",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 網軍假訊息",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 共諜反滲透",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 今周刊詐騙資安",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：Taiwan News EN 治安",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 今周刊詐騙資安",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：臺北市警局官網",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：臺南市警局官網",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 網軍假訊息",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 陳屍遺體",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 臨檢攔查",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 校園毒品",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 公共場所性騷",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 長照虐待",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 車手取款面交",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 洗錢",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 臨檢攔查",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 失智走失",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 風傳媒綜合治安",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN iThome 資安",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 失蹤協尋",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 工安職災",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 職棒簽賭打假球",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 走私動物",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 襲警妨害公務",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 幫派掃黑",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 賭博博弈",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 海關緝私",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 溺水戲水",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：Focus Taiwan (EN)",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：台視 社會",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 刀械爆裂物",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 上報綜合治安",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 登山山域事故",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 共諜反滲透",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 上報綜合治安",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 臨檢攔查",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：Newtalk 社會",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 毒品查獲",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 移民署偷渡",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 陳屍遺體",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 八大臨檢",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 擄人勒贖",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 假冒客服公務員",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 銀髮長者詐騙",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：內政部官網",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 密醫違法醫美",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：臺北市警局官網",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 隨機攻擊",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 虛擬資產交易所",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 殺人分屍",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：中央廣播電臺 RSS",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：央廣 RTI 治安",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 認知作戰統戰",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：調查局官網",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 酒駕毒駕",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN TVBS 綜合治安",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 性侵性騷",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：移民署 新聞",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：移民署 新聞",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：移民署 新聞",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T23:42:33.911Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 地方",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T22:53:35.601Z"
+        },
+        {
+          "name": "台灣新聞：Yahoo奇摩 社會",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:16:06.088Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 地方",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T10:52:37.132Z"
+        },
+        {
+          "name": "台灣新聞：中央社 地方",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T03:29:08.790Z"
+        },
+        {
+          "name": "台灣新聞：鏡週刊",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T07:11:00.304Z"
+        },
+        {
+          "name": "台灣新聞：GN 詐領補助",
+          "datasetId": "tw-news",
+          "category": "治安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T07:14:53.351Z"
+        },
+        {
+          "name": "台灣新聞：iThome Security RSS",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T03:29:08.790Z"
+        },
+        {
+          "name": "台灣新聞：公視新聞",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T06:18:41.775Z"
+        },
+        {
+          "name": "台灣新聞：中央社 社會",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T06:18:41.775Z"
+        },
+        {
+          "name": "台灣新聞：GN 傷害鬥毆",
+          "datasetId": "tw-news",
+          "category": "反詐",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T10:25:39.785Z"
+        },
+        {
+          "name": "台灣新聞：GN 傷害鬥毆",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T23:42:33.911Z"
+        },
+        {
+          "name": "台灣新聞：newtalk 社會",
+          "datasetId": "tw-news",
+          "category": "協尋",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T06:18:41.775Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-04T06:58:34.223Z"
+    },
+    {
+      "key": "災防／氣象",
+      "scope": "domestic",
+      "status": "integrated",
+      "categories": [
+        "災防"
+      ],
+      "note": "地震、警特報、NCDR 示警與災防新聞",
+      "sourceCount": 53,
+      "healthySourceCount": 53,
+      "observedSources": [
+        {
+          "name": "中央氣象署 顯著有感地震報告",
+          "datasetId": "E-A0015-001",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:51.633Z"
+        },
+        {
+          "name": "中央氣象署 天氣警特報",
+          "datasetId": "W-C0033-001",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:51.818Z"
+        },
+        {
+          "name": "NCDR 災防示警 CAP",
+          "datasetId": "ncdr-cap-alert",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:53:41.301Z"
+        },
+        {
+          "name": "臺東縣警察局 防空避難設施",
+          "datasetId": "173142",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:02.512Z"
+        },
+        {
+          "name": "金門縣警察局 防空避難設施",
+          "datasetId": "151006",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.242Z"
+        },
+        {
+          "name": "台灣新聞：GN 火警氣爆",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:13:45.925Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 社會",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:23.535Z"
+        },
+        {
+          "name": "台灣新聞：newtalk 社會",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:37.063Z"
+        },
+        {
+          "name": "台灣新聞：GN 工安職災",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:55.720Z"
+        },
+        {
+          "name": "台灣新聞：GN 命案兇殺",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:09.296Z"
+        },
+        {
+          "name": "台灣新聞：台視 社會",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:16:08.878Z"
+        },
+        {
+          "name": "台灣新聞：鏡週刊",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T00:03:41.758Z"
+        },
+        {
+          "name": "台灣新聞：海巡署官網",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T21:32:35.947Z"
+        },
+        {
+          "name": "台灣新聞：GN 消防員傷亡",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:41:48.725Z"
+        },
+        {
+          "name": "台灣新聞：臺北市警局官網",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:16:00.515Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 地方",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:54:17.199Z"
+        },
+        {
+          "name": "台灣新聞：GN 傷害鬥毆",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:54:19.689Z"
+        },
+        {
+          "name": "台灣新聞：公視新聞",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:17.347Z"
+        },
+        {
+          "name": "台灣新聞：GN 登山山域事故",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:55:27.411Z"
+        },
+        {
+          "name": "台灣新聞：中央社 社會",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:42.331Z"
+        },
+        {
+          "name": "台灣新聞：Newtalk 社會",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:10.004Z"
+        },
+        {
+          "name": "台灣新聞：中央社 地方",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:29.838Z"
+        },
+        {
+          "name": "台灣新聞：Taipei Times (EN)",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:58:21.526Z"
+        },
+        {
+          "name": "台灣新聞：Yahoo奇摩 社會",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:58:21.526Z"
+        },
+        {
+          "name": "台灣新聞：GN 隨機攻擊",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 土石流坍方",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 租屋詐騙",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 山難海難",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：新北市消防局官網",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 失蹤協尋",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 溺水戲水",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 虐待動物",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 家暴兒虐",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：消防署官網",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：彰化縣消防局官網",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：中央廣播電臺 RSS",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 廢棄物污染",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 陳屍遺體",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：央廣 RTI 治安",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN CTWANT 綜合治安",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 一氧化碳中毒",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 偽造文書偽鈔",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 警政人事績效",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：臺中市警局官網",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 檢調起訴",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 員警風紀殉職",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：TechNews 科技新報 RSS",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T23:42:33.911Z"
+        },
+        {
+          "name": "台灣新聞：GN 臨檢攔查",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T07:11:57.437Z"
+        },
+        {
+          "name": "台灣新聞：GN 情殺仇殺",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T23:42:33.911Z"
+        },
+        {
+          "name": "台灣新聞：GN 縱火死傷",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T06:18:41.775Z"
+        },
+        {
+          "name": "台灣新聞：GN 三立綜合治安",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T03:29:08.790Z"
+        },
+        {
+          "name": "台灣新聞：GN ETtoday 綜合治安",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T03:29:08.790Z"
+        },
+        {
+          "name": "台灣新聞：GN 今周刊詐騙資安",
+          "datasetId": "tw-news",
+          "category": "災防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T06:18:41.775Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-04T06:58:21.526Z"
+    },
+    {
+      "key": "交通／停車",
+      "scope": "domestic",
+      "status": "integrated",
+      "categories": [
+        "交通"
+      ],
+      "note": "警政交通、採購脈絡與新竹／桃園停車供給；全台道路即時路況仍是缺口",
+      "sourceCount": 65,
+      "healthySourceCount": 63,
+      "observedSources": [
+        {
+          "name": "警政署 114年傷亡道路交通事故",
+          "datasetId": "177136",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.252Z"
+        },
+        {
+          "name": "警政署 測速執法點取締件數",
+          "datasetId": "13908",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.197Z"
+        },
+        {
+          "name": "臺中市政府警察局 114年10月交通事故",
+          "datasetId": "176086",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.177Z"
+        },
+        {
+          "name": "臺中市政府警察局 十大高肇事路口",
+          "datasetId": "176610",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.241Z"
+        },
+        {
+          "name": "警政署 歷史交通事故資料",
+          "datasetId": "12197",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.380Z"
+        },
+        {
+          "name": "臺北市政府警察局 道路交通事故斑點圖",
+          "datasetId": "136123",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:02.166Z"
+        },
+        {
+          "name": "臺北市政府警察局 交通違規舉發",
+          "datasetId": "173625",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.366Z"
+        },
+        {
+          "name": "高雄市政府警察局 小港區 A3 交通事故",
+          "datasetId": "168403",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.161Z"
+        },
+        {
+          "name": "高雄市政府警察局 固定式違規照相設備",
+          "datasetId": "169080",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.320Z"
+        },
+        {
+          "name": "高雄市政府警察局 區間平均速率執法設備",
+          "datasetId": "146885",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:02.181Z"
+        },
+        {
+          "name": "新竹市警察局 每月交通事故統計",
+          "datasetId": "167814",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.153Z"
+        },
+        {
+          "name": "新竹縣政府警察局 區間平均速率裝置",
+          "datasetId": "172950",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.376Z"
+        },
+        {
+          "name": "南投縣政府警察局 固定式科技執法",
+          "datasetId": "176021",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.231Z"
+        },
+        {
+          "name": "南投縣政府警察局 違規車輛保管場",
+          "datasetId": "78638",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.372Z"
+        },
+        {
+          "name": "屏東縣政府警察局 交通肇事案件",
+          "datasetId": "90589",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.368Z"
+        },
+        {
+          "name": "屏東縣政府警察局 科技執法路段",
+          "datasetId": "159972",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:02.898Z"
+        },
+        {
+          "name": "花蓮縣警察局 區間測速執法地點",
+          "datasetId": "171349",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.229Z"
+        },
+        {
+          "name": "澎湖縣 科學儀器執法與測速照相",
+          "datasetId": "172940",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:01.418Z"
+        },
+        {
+          "name": "澎湖縣政府警察局 交通秩序成果",
+          "datasetId": "157949",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:00.239Z"
+        },
+        {
+          "name": "臺中市政府警察局 取締酒駕情形",
+          "datasetId": "88170",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:57.456Z"
+        },
+        {
+          "name": "台灣新聞：GN 酒駕毒駕",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:13.416Z"
+        },
+        {
+          "name": "台灣新聞：GN 警匪槍戰",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:18.960Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 社會",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:13:45.925Z"
+        },
+        {
+          "name": "台灣新聞：鏡週刊",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:37.063Z"
+        },
+        {
+          "name": "台灣新聞：GN UDN 綜合治安",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:02.219Z"
+        },
+        {
+          "name": "台灣新聞：GN ETtoday 綜合治安",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:55.720Z"
+        },
+        {
+          "name": "台灣新聞：GN 食安黑心",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T22:53:35.601Z"
+        },
+        {
+          "name": "台灣新聞：GN 拒捕拒檢",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:33:54.446Z"
+        },
+        {
+          "name": "台灣新聞：警政署官網",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:33:54.446Z"
+        },
+        {
+          "name": "台灣新聞：臺中市警局官網",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:16:00.515Z"
+        },
+        {
+          "name": "台灣新聞：公視新聞",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:41:57.822Z"
+        },
+        {
+          "name": "台灣新聞：Newtalk 社會",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:54:17.199Z"
+        },
+        {
+          "name": "台灣新聞：中央社 社會",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:55:07.225Z"
+        },
+        {
+          "name": "台灣新聞：GN 毒品查獲",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:55:27.411Z"
+        },
+        {
+          "name": "台灣新聞：GN 車禍肇逃",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:29.838Z"
+        },
+        {
+          "name": "台灣新聞：GN 新興毒品",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:30.004Z"
+        },
+        {
+          "name": "台灣新聞：Yahoo奇摩 社會",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:58:17.640Z"
+        },
+        {
+          "name": "台灣新聞：GN 家暴兒虐",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 收押通緝",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 竊盜搶奪",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 命案兇殺",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 風傳媒綜合治安",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 三立綜合治安",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 毒品種類",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 工安職災",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 臨檢攔查",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 校園毒品",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN CTWANT 綜合治安",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 詐領補助",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 陳屍遺體",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 溺水戲水",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 員警風紀殉職",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 火警氣爆",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 海關緝私",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 校園安全",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 警政人事績效",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 偷拍性影像",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 妨害自由恐嚇",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T10:52:02.914Z"
+        },
+        {
+          "name": "台灣新聞：消防署官網",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T07:14:53.832Z"
+        },
+        {
+          "name": "台灣新聞：中央社 地方",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T07:16:43.328Z"
+        },
+        {
+          "name": "台灣新聞：GN 跟蹤騷擾",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:04:42.437Z"
+        },
+        {
+          "name": "台灣新聞：臺北市警局官網",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T10:25:39.785Z"
+        },
+        {
+          "name": "台灣新聞：GN 失智走失",
+          "datasetId": "tw-news",
+          "category": "交通",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:04:42.437Z"
+        },
+        {
+          "name": "新竹市即時停車場剩餘車位",
+          "datasetId": "129136",
+          "category": "交通",
+          "stale": true,
+          "lastSuccessAt": "2026-08-04T00:03:00.758Z"
+        },
+        {
+          "name": "桃園市路外停車資訊",
+          "datasetId": "25940",
+          "category": "交通",
+          "stale": true,
+          "lastSuccessAt": "2026-08-04T04:13:24.124Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-04T06:58:17.640Z"
+    },
+    {
+      "key": "水情／環境",
+      "scope": "domestic",
+      "status": "integrated",
+      "categories": [
+        "水情",
+        "環境"
+      ],
+      "note": "水庫、河川水位與空品測站小時值",
+      "sourceCount": 10,
+      "healthySourceCount": 9,
+      "observedSources": [
+        {
+          "name": "台灣新聞：中央社 社會",
+          "datasetId": "tw-news",
+          "category": "環境",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:17.347Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 社會",
+          "datasetId": "tw-news",
+          "category": "環境",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:55:37.725Z"
+        },
+        {
+          "name": "台灣新聞：GN ETtoday 綜合治安",
+          "datasetId": "tw-news",
+          "category": "環境",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:50.567Z"
+        },
+        {
+          "name": "台灣新聞：GN 廢棄物污染",
+          "datasetId": "tw-news",
+          "category": "環境",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:50.567Z"
+        },
+        {
+          "name": "台灣新聞：GN 環境污染偷排",
+          "datasetId": "tw-news",
+          "category": "環境",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：公視新聞",
+          "datasetId": "tw-news",
+          "category": "環境",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T10:54:48.800Z"
+        },
+        {
+          "name": "台灣新聞：GN 詐領補助",
+          "datasetId": "tw-news",
+          "category": "環境",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T10:55:07.876Z"
+        },
+        {
+          "name": "經濟部水利署 水庫水情一覽表",
+          "datasetId": "wra-reservoir-levels",
+          "category": "水情",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:53:44.307Z"
+        },
+        {
+          "name": "經濟部水利署 即時河川水位",
+          "datasetId": "wra-river-levels",
+          "category": "水情",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:53:44.308Z"
+        },
+        {
+          "name": "環境部 空氣品質監測小時值",
+          "datasetId": "28178",
+          "category": "環境",
+          "stale": true,
+          "lastSuccessAt": "2026-08-04T00:02:57.646Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-04T06:57:50.567Z"
+    },
+    {
+      "key": "能源／電力",
+      "scope": "domestic",
+      "status": "integrated",
+      "categories": [
+        "能源"
+      ],
+      "note": "台電系統供需",
+      "sourceCount": 1,
+      "healthySourceCount": 1,
+      "observedSources": [
+        {
+          "name": "台灣電力公司 今日系統供需狀況",
+          "datasetId": "taipower-supply-demand",
+          "category": "能源",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:53:44.306Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-04T06:53:44.306Z"
+    },
+    {
+      "key": "衛生／食安",
+      "scope": "domestic",
+      "status": "integrated",
+      "categories": [
+        "衛生",
+        "食安"
+      ],
+      "note": "CDC、TFDA 與健保居家醫療院所參考快照",
+      "sourceCount": 13,
+      "healthySourceCount": 13,
+      "observedSources": [
+        {
+          "name": "台灣新聞：GN 傷害鬥毆",
+          "datasetId": "tw-news",
+          "category": "衛生",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:37.063Z"
+        },
+        {
+          "name": "台灣新聞：newtalk 社會",
+          "datasetId": "tw-news",
+          "category": "食安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:46.249Z"
+        },
+        {
+          "name": "台灣新聞：GN 食安黑心",
+          "datasetId": "tw-news",
+          "category": "食安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:09.296Z"
+        },
+        {
+          "name": "台灣新聞：GN 收押通緝",
+          "datasetId": "tw-news",
+          "category": "食安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:41:32.905Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 地方",
+          "datasetId": "tw-news",
+          "category": "食安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:54:39.472Z"
+        },
+        {
+          "name": "台灣新聞：疾管署官網",
+          "datasetId": "tw-news",
+          "category": "衛生",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:55:07.225Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 社會",
+          "datasetId": "tw-news",
+          "category": "食安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:56:27.549Z"
+        },
+        {
+          "name": "台灣新聞：Yahoo奇摩 社會",
+          "datasetId": "tw-news",
+          "category": "食安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:57.662Z"
+        },
+        {
+          "name": "台灣新聞：農業部官網",
+          "datasetId": "tw-news",
+          "category": "食安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 詐領補助",
+          "datasetId": "tw-news",
+          "category": "食安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T07:14:53.351Z"
+        },
+        {
+          "name": "衛生福利部疾病管制署 例行疫情監測週報",
+          "datasetId": "cdc-weekly-surveillance-report",
+          "category": "衛生",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.876Z"
+        },
+        {
+          "name": "衛生福利部食品藥物管理署 邊境查驗不符合食品資訊",
+          "datasetId": "tfda-noncompliant-food",
+          "category": "食安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.877Z"
+        },
+        {
+          "name": "健保署 居家醫療整合計畫參與院所",
+          "datasetId": "39331",
+          "category": "衛生",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.883Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-04T06:57:57.662Z"
+    },
+    {
+      "key": "資安",
+      "scope": "domestic",
+      "status": "integrated",
+      "categories": [
+        "資安"
+      ],
+      "note": "TWCERT/CC TVN 與資安新聞",
+      "sourceCount": 18,
+      "healthySourceCount": 18,
+      "observedSources": [
+        {
+          "name": "台灣新聞：iThome Security RSS",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:13.416Z"
+        },
+        {
+          "name": "台灣新聞：GN iThome 資安",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:13:54.391Z"
+        },
+        {
+          "name": "台灣新聞：GN 個資駭客",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:14:23.535Z"
+        },
+        {
+          "name": "台灣新聞：GN 收押通緝",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T04:15:09.296Z"
+        },
+        {
+          "name": "台灣新聞：GN 妨害秘密跟監",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T18:20:18.869Z"
+        },
+        {
+          "name": "台灣新聞：GN 妨害自由恐嚇",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T16:34:09.202Z"
+        },
+        {
+          "name": "台灣新聞：GN AI深偽詐騙",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:57:50.567Z"
+        },
+        {
+          "name": "台灣新聞：INSIDE RSS",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：TechNews 科技新報 RSS",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN TechNews 資安",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：GN 數位時代資安",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:12:48.525Z"
+        },
+        {
+          "name": "台灣新聞：公視新聞",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T18:20:20.880Z"
+        },
+        {
+          "name": "台灣新聞：自由時報 社會",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T07:10:16.141Z"
+        },
+        {
+          "name": "台灣新聞：鏡週刊",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T07:15:54.129Z"
+        },
+        {
+          "name": "台灣新聞：Yahoo奇摩 社會",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T07:15:54.129Z"
+        },
+        {
+          "name": "台灣新聞：iThome News RSS",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T23:42:33.911Z"
+        },
+        {
+          "name": "台灣新聞：TWCERT/CC 資安新聞",
+          "datasetId": "tw-news",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T23:42:33.911Z"
+        },
+        {
+          "name": "TWCERT/CC 台灣漏洞揭露平台 TVN",
+          "datasetId": "twcert-tvn-rss",
+          "category": "資安",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:53:44.305Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-04T06:57:50.567Z"
+    },
+    {
+      "key": "國防／海事／外交",
+      "scope": "domestic",
+      "status": "integrated",
+      "categories": [
+        "國防",
+        "海事"
+      ],
+      "note": "國防部、海巡署；外交旅遊警示在國際層",
+      "sourceCount": 2,
+      "healthySourceCount": 2,
+      "observedSources": [
+        {
+          "name": "國防部空軍 臺海周邊海空域動態",
+          "datasetId": "mnd-pla-activity",
+          "category": "國防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:53:44.303Z"
+        },
+        {
+          "name": "海洋委員會海巡署 海巡新聞",
+          "datasetId": "cga-maritime-news",
+          "category": "海事",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:53:44.304Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-04T06:53:44.304Z"
+    },
+    {
+      "key": "採購／經濟",
+      "scope": "domestic",
+      "status": "integrated",
+      "categories": [
+        "採購",
+        "經濟"
+      ],
+      "note": "政府電子採購網與主計總處月指標",
+      "sourceCount": 3,
+      "healthySourceCount": 2,
+      "observedSources": [
+        {
+          "name": "政府電子採購網 決標公告",
+          "datasetId": "pcc-tender",
+          "category": "採購",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:14:46.070Z"
+        },
+        {
+          "name": "政府電子採購網 警政決標公告",
+          "datasetId": "pcc-tender",
+          "category": "採購",
+          "stale": false,
+          "lastSuccessAt": "2026-08-04T06:13:03.224Z"
+        },
+        {
+          "name": "主計總處 重要經濟指標月資料",
+          "datasetId": "13228",
+          "category": "經濟",
+          "stale": true,
+          "lastSuccessAt": "2026-08-04T00:02:57.647Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-04T06:13:03.224Z"
+    },
+    {
+      "key": "農業",
+      "scope": "domestic",
+      "status": "reference",
+      "categories": [
+        "農業"
+      ],
+      "datasetIds": [
+        "70930"
+      ],
+      "note": "農業部產地價格參考快照；不是價格預測或交易建議",
+      "sourceCount": 1,
+      "healthySourceCount": 1,
+      "observedSources": [
+        {
+          "name": "農業部 農產品產地價格",
+          "datasetId": "70930",
+          "category": "農業",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.883Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-03T20:40:23.883Z"
+    },
+    {
+      "key": "司法／法務",
+      "scope": "domestic",
+      "status": "integrated",
+      "datasetIds": [
+        "judicial"
+      ],
+      "note": "司法院裁判書摘要併入警政事件流",
+      "sourceCount": 1,
+      "healthySourceCount": 0,
+      "observedSources": [
+        {
+          "name": "司法院 裁判書開放資料",
+          "datasetId": "judicial",
+          "category": "司法判決",
+          "stale": true,
+          "lastSuccessAt": "2026-08-03T20:14:42.195Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-03T20:14:42.195Z"
+    },
+    {
+      "key": "消防",
+      "scope": "domestic",
+      "status": "reference",
+      "datasetIds": [
+        "134922",
+        "176522"
+      ],
+      "note": "已整合臺北市期間統計參考；全台消防即時案件仍是缺口",
+      "sourceCount": 1,
+      "healthySourceCount": 1,
+      "observedSources": [
+        {
+          "name": "臺北市消防局 119 受理案件統計",
+          "datasetId": "134922",
+          "category": "消防",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.883Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-03T20:40:23.883Z"
+    },
+    {
+      "key": "國會／立法",
+      "scope": "domestic",
+      "status": "reference",
+      "datasetIds": [
+        "ly-bills"
+      ],
+      "note": "立法院議案進度參考快照；不將政策內容自動判為風險",
+      "sourceCount": 1,
+      "healthySourceCount": 1,
+      "observedSources": [
+        {
+          "name": "立法院 議案進度",
+          "datasetId": "ly-bills",
+          "category": "國會",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.883Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-03T20:40:23.883Z"
+    },
+    {
+      "key": "勞動／職災",
+      "scope": "domestic",
+      "status": "reference",
+      "datasetIds": [
+        "123349",
+        "126835"
+      ],
+      "note": "已補新北市失業率年度參考；尚非全國即時勞動／職災事件層",
+      "sourceCount": 1,
+      "healthySourceCount": 1,
+      "observedSources": [
+        {
+          "name": "新北市政府 失業率婚姻狀況統計",
+          "datasetId": "123349",
+          "category": "勞動",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+    },
+    {
+      "key": "金融市場",
+      "scope": "domestic",
+      "status": "reference",
+      "datasetIds": [
+        "11598"
+      ],
+      "note": "已補期貨三大法人每日統計參考；不產生買賣訊號",
+      "sourceCount": 1,
+      "healthySourceCount": 1,
+      "observedSources": [
+        {
+          "name": "臺灣期貨交易所 三大法人選擇權",
+          "datasetId": "11598",
+          "category": "金融",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+    },
+    {
+      "key": "教育／科研",
+      "scope": "domestic",
+      "status": "reference",
+      "datasetIds": [
+        "124173"
+      ],
+      "note": "新北市高級中等學校年度統計參考；尚非全國即時教育事件層",
+      "sourceCount": 1,
+      "healthySourceCount": 1,
+      "observedSources": [
+        {
+          "name": "新北市政府 境內高級中等學校教育概況",
+          "datasetId": "124173",
+          "category": "教育",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+    },
+    {
+      "key": "社福／人口",
+      "scope": "domestic",
+      "status": "reference",
+      "datasetIds": [
+        "84049"
+      ],
+      "note": "臺中市人口結構參考快照；尚非全國一致社福事件層",
+      "sourceCount": 1,
+      "healthySourceCount": 1,
+      "observedSources": [
+        {
+          "name": "臺中市民政局 各區人口結構",
+          "datasetId": "84049",
+          "category": "社福",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+    },
+    {
+      "key": "文化／觀光／體育",
+      "scope": "domestic",
+      "status": "reference",
+      "datasetIds": [
+        "tad-index-inbound-lastmonth"
+      ],
+      "note": "已補觀光統計參考；文化與體育仍待專門來源",
+      "sourceCount": 1,
+      "healthySourceCount": 1,
+      "observedSources": [
+        {
+          "name": "交通部觀光署 來臺旅客上月概況",
+          "datasetId": "tad-index-inbound-lastmonth",
+          "category": "觀光",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+    },
+    {
+      "key": "觀光統計",
+      "scope": "domestic",
+      "status": "reference",
+      "datasetIds": [
+        "tad-index-inbound-lastmonth"
+      ],
+      "note": "觀光署五大客源群上月概況；來源為研究用途鏡像",
+      "sourceCount": 1,
+      "healthySourceCount": 1,
+      "observedSources": [
+        {
+          "name": "交通部觀光署 來臺旅客上月概況",
+          "datasetId": "tad-index-inbound-lastmonth",
+          "category": "觀光",
+          "stale": false,
+          "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+        }
+      ],
+      "lastSuccessAt": "2026-08-03T20:40:23.884Z"
+    },
+    {
+      "key": "不動產／地政",
+      "scope": "domestic",
+      "status": "query-only",
+      "note": "資料集可查詢，但交易量不應直接當成安全事件",
+      "sourceCount": 0,
+      "healthySourceCount": 0,
+      "observedSources": []
+    },
+    {
+      "key": "民航／無人機",
+      "scope": "domestic",
+      "status": "query-only",
+      "note": "圖資可查詢；尚未建立事件與有效期間同步層",
+      "sourceCount": 0,
+      "healthySourceCount": 0,
+      "observedSources": []
+    },
+    {
+      "key": "電信／網路服務",
+      "scope": "domestic",
+      "status": "gap",
+      "note": "尚未有公開、穩定且可授權的即時服務中斷來源",
+      "sourceCount": 0,
+      "healthySourceCount": 0,
+      "observedSources": []
+    }
+  ]
+}

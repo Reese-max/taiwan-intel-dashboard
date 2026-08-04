@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-08-04T06:12:48.525Z",
+  "windowHours": 24,
+  "windowStart": "2026-08-03T06:12:48.525Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 1630,
+    "accepted": 799,
+    "rejected": 831
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "毒油四月就蓋牌／無良中聯早知出包還隱匿陳其邁震怒：就該讓它倒| 政治 - 三立新聞網SETN.com",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE5sREg3MDZhNGdrTGxKTHJ5Ny1GTjl6ajRYSVEyUlQ2aklMQ0pKbV9Yb283T0pOTlk3blRFQ1RlZUZvTU4tVmc5Rg?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 06:12:00 GMT",
+        "source": "GN 三立綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "毒油四月就蓋牌／無良中聯早知出包還隱匿陳其邁震怒：就該讓它倒| 政治 三立新聞網SETN.com"
+      },
+      {
+        "title": "20年解說員驚呆！龜山島海域罕見百隻偽虎鯨開趴",
+        "link": "https://news.ltn.com.tw/news/Yilan/breakingnews/5528060",
+        "pubDate": "Tue, 04 Aug 2026 14:11:20 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "龜山島外海盛夏傳捷報！昨傍晚5點，一艘賞鯨船自宜蘭烏石港啟航，往龜山島以南海域前行，未料周邊海域突湧現嬌客，逾百隻「偽虎鯨」無預警集體現身，黑色背鰭相當醒目，這群海上精靈在湛藍...…"
+      },
+      {
+        "title": "太空站開發商 Voyager 訂單史高、調高財測 盤後飆",
+        "link": "https://finance.technews.tw/2026/08/04/voyager-hits-record-order-backlog-raises-outlook/",
+        "pubDate": "Tue, 04 Aug 2026 06:10:36 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "民間商用太空站技術開發商 Voyager Technologies 最新公布的第二季（4-6 月）財報擊敗華爾 [&#8230;]"
+      },
+      {
+        "title": "晶相光7月營收1.72 億元",
+        "link": "https://finance.technews.tw/2026/08/04/soi-3530-202607-financial-report/",
+        "pubDate": "Tue, 04 Aug 2026 06:10:13 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "晶相光（3530）今（4）日公布 7 月營收，達 1.72 億元，較 6 月成長 2.8%，較去年同期成長 3 [&#8230;]"
+      },
+      {
+        "title": "盧秀燕搞烏龍指稱台糖食用油在台南 黃偉哲親視察怒嗆：汽油不能喝啦！",
+        "link": "https://newtalk.tw/news/view/2026-08-04/1051249",
+        "pubDate": "Tue, 04 Aug 2026 14:10:07 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 中聯油質所聲風暴持續延燒，而台糖公司遭揭發，早於今年5月就得知原料驗出致癌物苯駢芘超標，但卻未向主管機關通報。台中市長盧秀燕昨日開轟，稱台糖油品事業位於台南，但未按台南市自治條例通報，怒轟中央護航。不過，事後發現，台糖位於台南之台糖廠區係處理汽油，非處理食用油。這讓台南市長黃偉哲今（4）日親自視察台 延伸閱讀： 盧秀燕怒批台糖發現致癌油未通報 律師搬法條：其實他們沒通報義務… "
+      },
+      {
+        "title": "信邦7月營收月增2.4%",
+        "link": "https://finance.technews.tw/2026/08/04/sinbon-3023-202607-financial-report/",
+        "pubDate": "Tue, 04 Aug 2026 06:10:05 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "信邦（3023）公布 7 月合併營收 31.67 億元，較上（6）月成長 2.4%，與去年同期相比為年增 29 [&#8230;]"
+      },
+      {
+        "title": "聯電(2303)股價破底翻、漲了2成玩完？118元可以買？展望大好為何外資3天賣超14.6萬張，可能原因曝光 - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPRlVRbFZtQ01yMGJ1bkd5b01sX0NlZDRVTFhxXzlJRnlkZEc5MWZVa0VPQV8xaFgwQXFlUEpPZktkdWJlM1ExUEJEaVlMS2U2Z21xY1J3RzJSa1lLRGxTUWVuRmJRR3JoS2NuZThEbTZEb0o3RkJzU1VyTFB4RWVGaA?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 06:08:29 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "聯電(2303)股價破底翻、漲了2成玩完？118元可以買？展望大好為何外資3天賣超14.6萬張，可能原因曝光 今周刊"
+      },
+      {
+        "title": "游盈隆：多公投案印同一張選票 製造的問題恐比解決的還多 - udn",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5jN1dSSTlqcDZHR0RrTDZoaWxVR2o1cm5TT0E2LXZwazRRUUQzSW5GVEo1MmdqeUJMSGEtdWg4MG1tTWxraVlYNHVXTXdzTlkw0gFWQVVfeXFMUEE1ZEJDdlB0NDcwTGZLNjVmT1ZfM09tVmpKb1gwbUJNZ3lKVjV6bDVXdzl4S09PMEpUM0NCdWtXMHRPUC1RWnN1NVN4V3NnS3RjUmxKT1E?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 06:08:05 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "游盈隆：多公投案印同一張選票 製造的問題恐比解決的還多 udn"
+      },
+      {
+        "title": "柯文哲明電子腳鐶改換手鐶 高院訂首次二審開庭9月8日下午3時",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5528057",
+        "pubDate": "Tue, 04 Aug 2026 14:06:45 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "前台北市長、民眾黨前主席柯文哲涉京華城、政治獻金等案，一審被判應執行17年。柯文哲日前聲請撤銷或變更科技設備監控，高院認為仍有接受科技監控的必要，不同意全面撤銷，但為了減少監管...…"
+      },
+      {
+        "title": "南投縣府25年大樓擬砸22億重建 議員要求專案報告",
+        "link": "https://news.ltn.com.tw/news/Nantou/breakingnews/5528048",
+        "pubDate": "Tue, 04 Aug 2026 14:06:42 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "南投縣政府綜合大樓屋齡僅25年，未達公共建物使用年限，惟縣府規劃斥資逾22億元欲拆除重建，引發浪費公帑爭議，民進黨團議員今（4日）在議會臨時會連署提案，要求縣府在9月舉行的定期...…"
+      },
+      {
+        "title": "桃市府宣布敬老愛心卡明年升級 黃陣營：急著跟進還只做半套",
+        "link": "https://news.ltn.com.tw/news/Taoyuan/breakingnews/5528019",
+        "pubDate": "Tue, 04 Aug 2026 14:04:50 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "桃園市政府今天宣布，敬老愛心卡將於2027年1月1日起推出全新升級方案，包括每月開放200點折抵農會消費、100點折抵醫療補助、將愛心計程車補助提升到每趟90點、新增銀髮肌力課...…"
+      },
+      {
+        "title": "任陳瑩競選總部主委 蔡英文：台東需要提出好政策、團結更多力量",
+        "link": "https://newtalk.tw/news/view/2026-08-04/1051254",
+        "pubDate": "Tue, 04 Aug 2026 14:03:32 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 前總統蔡英文今（4）日表示，她擔任民進黨台東縣長參選人陳瑩競選總部的主任委員，而前立委劉櫂豪則是擔任競選總部的總幹事。她說，台東需要更多合作，會和陳、劉兩人提出好的政策、團結更多力量，讓台東有更好的未來。蔡英文今透過臉書發文表示，台東縣，是她第一個宣布擔任競選總部主委的地方。這一次，她願意擔任陳瑩競 延伸閱讀： 台糖沒義務通報毒油？高檢署主任：行政機關法律解釋不能無限上綱 花敬"
+      },
+      {
+        "title": "新竹竹東狂飆38度！13縣市高溫警示 新北、竹縣慎防極端高溫",
+        "link": "https://www.mirrormedia.mg/story/20260804edi048",
+        "pubDate": "Tue, 04 Aug 2026 14:03:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "國家卓越建設獎 中市文化局提8案全獲獎",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5528043",
+        "pubDate": "Tue, 04 Aug 2026 14:02:47 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「2026國家卓越建設獎」本週在台北君悅酒店舉辦頒獎典禮，台中市文化局報名8案全數獲獎，文化局長陳佳君說，外埔圖書館有「外埔小白宮」美譽，2021年啟用成為網紅景點，此次獲得最...…"
+      },
+      {
+        "title": "Supermicro 擴展 DCBBS，推出精密工程 AI 機架系列，加速部署並縮短上線時間",
+        "link": "https://ccc.technews.tw/2026/08/04/supermicro-expands-dcbbs-introduces-precision-engineered-ai-rack-series-accelerating-deployment-time-to-market/",
+        "pubDate": "Tue, 04 Aug 2026 06:00:58 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "Super Micro Computer, Inc.，一家專注於 AI、企業、儲存及 5G／邊緣運算的全方位 [&#8230;]"
+      },
+      {
+        "title": "傳三星縮減陸手機市場布局 關閉銷售未達標門市",
+        "link": "https://technews.tw/2026/08/04/samsung-scales-back-its-smartphone-business-in-china/",
+        "pubDate": "Tue, 04 Aug 2026 06:00:31 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "綜合中媒及港媒報導，三星電子繼退出中國家電市場後，據傳正縮減中國手機市場的布局，將逐步清退旗下每月銷售額未達 [&#8230;]"
+      },
+      {
+        "title": "快訊／新莊好市多屋頂驚魂！男員工持刀打電話嚇壞民眾 警消苦勸半小時驅離送醫 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMi7wNBVV95cUxQQ0NmRG02OTZ6cTVOTVUzakdxaTF2azBiNzdfR2hQOFExNnlJUktLQUpJejFJenIzOEhJVE5sTFV6Rkx5eG5LbDFGalNsTG0ycklQczVSWU5PZ0xaVVk2NTRsM08ybjRvZFRoTE5fNlp6WkRsbFNsUUZqTTdwLXpwS2RUV3I4a3l0WTNmQXllMERoSXZtajRKZm9HVV9kV211UFVVNXpsaXIzLS1sY0VNOTd0Y0lkbUFiTWxyUk1SWmE0ZU40VTY0dEtCRDVqb1ROdUNIWWRwUnpmWlJFT0xzd3FEbjVQS0hwUHNxT2t3bEZINXZRSDdoMVg0azgyMVVOZkJiRjZIZHlPOGFYclc3LVdmX2pWQmM0OEhXdDFIZDJjZHYwQnRIcTRjbmIwaHBTS1dnTk1DY1pUVnRQeTA2ZFZocDNCamhhQ0ZXd1dHMnlqWFBGTnllQWtqNnVuUTRVM1htSzRLbGJaZ3F3U0NqeHlqVTA4aXpNT2N2bmlVTUNSVWRmdU02VXgwZWd1OWRRR3B2R1NPNVNuenhjUHdGbVo5TFZjV0twb3JRQWlfcE01eHJPSVFPaEpmN1RTVzRLd2kzQ1JfeEp1NFA1aTFXd21YbHpHdWI4QkZGanRvWXN2Y25Oa3NTMFltT0pVM1k?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 06:00:13 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "快訊／新莊好市多屋頂驚魂！男員工持刀打電話嚇壞民眾 警消苦勸半小時驅離送醫 Yahoo新聞"
+      },
+      {
+        "title": "「我曾祖父是蔣中正欸！」蔣友青無情吐不信基督教原因 爆沒跟蔣萬安驗過DNA",
+        "link": "https://www.mirrormedia.mg/story/20260804edi055",
+        "pubDate": "Tue, 04 Aug 2026 14:00:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "兆基百億財務危機！包租教母4年前收到房東私訊看出「包租代管龍頭岌岌可危」：為何租約越多，風險越高？ - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQNWVhdHIwUjJwWGtfSUFsclEySDVIcFB4QXJJYjh3dHBidVV2NzcwSkJHdGczUEgwdmVKbHNsTzBpdmRGSUoyRWMyWk54T0JKQkV2Ri1PSUhPZ3hZeGpXWW1NdTlxSmREelVqNDJINVlSc3lIRFFLS1VlbERybE1LQg?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 06:00:00 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "兆基百億財務危機！包租教母4年前收到房東私訊看出「包租代管龍頭岌岌可危」：為何租約越多，風險越高？ 今周刊"
+      },
+      {
+        "title": "高雄親子遊樂園8/8開張 陳其邁：迎全台遊客、規劃雨天備案",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5528037",
+        "pubDate": "Tue, 04 Aug 2026 13:59:54 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台鐵高雄機廠改造、全台最大室內全齡樂園的高雄親子遊樂園區8月8日開張，市長陳其邁今在市政會議要求相關單位準備迎接全台遊客，且要規劃雨天備案。 陳其邁今主持市政會議，針...…"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "iCloud 成保密漏洞？蘋果工作政策恐成 OpenAI 訴訟變數",
+        "link": "https://finance.technews.tw/2026/08/04/icloud-openai-suit/",
+        "pubDate": "Tue, 04 Aug 2026 06:11:47 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "就在上個月，蘋果才對兩名前員工、OpenAI 以及 Jony Ive 創辦的新創 io Products 提起 [&#8230;]"
+      },
+      {
+        "title": "社宅龍頭爆雷／民眾黨質疑國家住都中心圖利兆基屋管 花敬群出面澄清",
+        "link": "https://www.mirrormedia.mg/story/20260804-179fin-140958",
+        "pubDate": "Tue, 04 Aug 2026 14:11:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "反詐騙專題｜先談錢讓你有防備？遭拒後改口「幫我不花錢的小忙就好」專業手法讓你自願上當｜豐雲學堂2026 年 08 月 - sinotrade.com.tw",
+        "link": "https://news.google.com/rss/articles/CBMiyARBVV95cUxOOW9yMmVPbGZMZ3ZkTjdWdWZOSWkxWjB2Wmh5U3hET1dmTm1ybkZGaXRVbE1XMV9PN1FhU1Z1WldRU0hBb09PTzhKQzAwVkZTSXNMRWFPNnJGdjNDV2cyV0RjSkYzVkFCdHZfbi0xZ0l2SF9BWlpkaVcwV0lkMVhpUFQ3aHlYclo0MkNwc0dpLTBScmhwQUJheGEtTjZKLXlwaXN4VnpxVWFXaFpMSFBvQzhCQ1lSZFQ1ZDJsZnFBRDNQTFJ5X21yWjEzYWRBTjZEOFlNeUJvU2JKTWRvX2h1aE1oSEsyc1BVa0NEd1J3ZXBqcjZ0MG41WUFIRWxUR3hWX084cUIyNnYwOS1yWUhMRUhGbW4xYzFpa2pxdHdLV3dBZ2dRRFhEYXE5NzJaZUhpeUpnRG50TXdzSWI1RlFDWGtLNHhPOXhHUUxYblJqd2hxRURpOFpVM0tYcVl0a2RSb0pKN3RQdlNHYXZjTlE5dF92eVFKVjZ0MDg4NXR2SUNZTzlJQ0ZCTWdlY1NDXzNrbGhzdXJDek9MTWdTbm1OazFQb1FkN0ZvNDlHZVhScV9lN2luNTlUYTNmRTVLakNicC10NjNRQ3VGNG8wVElzV1o3ZUlBTUFVR1JUTjI1YTJPc1pYUDNaNnFSRmFjeGEtbm5YSDB0NHhsZXFJSkR1b2tHR0hzemZ3LWFscTN3Q2t3NF9HRGZNNFFtRDFxX09NaUFsQ0I0OHBTSE1TT0tiUG05RFVMRnFxSnBSS2NuN0J6M1ZOa00ybg?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 06:09:49 GMT",
+        "source": "GN 165打詐",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "反詐騙專題｜先談錢讓你有防備？遭拒後改口「幫我不花錢的小忙就好」專業手法讓你自願上當｜豐雲學堂2026 年 08 月 sinotrade.com.tw"
+      },
+      {
+        "title": "美華盛頓州野火肆虐撤離6.5萬人 37歲縱火嫌犯落網 - 民視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1DOEUtU2M4M0VYbS1ONG9HYnc3VFplYlVrV0NNZGJSaDNHVm43enF3akprOVdPWmFtV1piSjNhQ2ktel9xdlJNSnRjbU5SODJHeDVTTkRuTDB1aXh5VTlCZQ?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 06:06:09 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "美華盛頓州野火肆虐撤離6.5萬人 37歲縱火嫌犯落網 民視新聞網"
+      },
+      {
+        "title": "柯文哲涉京華城案等 二審9/8首開庭",
+        "link": "https://www.cna.com.tw/news/asoc/202608040126.aspx",
+        "pubDate": "Tue, 04 Aug 2026 14:04:30 +0800",
+        "source": "中央社 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "（中央社記者劉世怡台北4日電）前台北市長柯文哲涉京華城案等，一審判刑17年，現由二審台灣高等法院審理，合議庭決定9月8日下午3時首次開庭，將傳喚柯文哲等進行準備程序。"
+      },
+      {
+        "title": "國內新冠疫情上升且處流行期呼籲尚未接種疫苗的民眾儘快接種並落實勤洗手、戴口罩等自我防護措施 - cdc.gov.tw",
+        "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOSnJGU2dBVkZKdlR4NXhLZTNlakRrOXhJZjZoMDJhM1p1cVAyRHhYRmk5NGJyLWQ2a01lNnBvNHdBY3F6T0FtTkhOamJPb3k5czh4SElaM2pLbkdka291TzFqWm4tTDVqMi1uQk9RTm9XTkFiY0QxcHVtT1RTVlpKMWRyWFN2dHlFQ0ZOWjgyV2MxaHpFdHBUMzZR?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 06:03:20 GMT",
+        "source": "疾管署官網",
+        "hint": "衛生",
+        "authority": "official",
+        "description": "國內新冠疫情上升且處流行期呼籲尚未接種疫苗的民眾儘快接種並落實勤洗手、戴口罩等自我防護措施 cdc.gov.tw"
+      },
+      {
+        "title": "嘉義製油廠食安風暴擴大！雲林急查2業者 違規苦茶油全面下架 - 元丰傳媒",
+        "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5pSTNQVTR3ZjM0SG5oRXFQN2NDU0JFeEVVQmUzVXJ0NUdwMzMycnNzelE4V2cxS1hYeHZDSE9mUE1lQ2Jlb2ZnZWNUN3ZPSlc2UzlRUzFEMDgyMFBfWFg5SmozTU9sTWNG?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 06:00:03 GMT",
+        "source": "GN 食安黑心",
+        "hint": "食安",
+        "authority": "media",
+        "description": "嘉義製油廠食安風暴擴大！雲林急查2業者 違規苦茶油全面下架 元丰傳媒"
+      },
+      {
+        "title": "高雄變電箱突爆炸冒煙 消防灑水降溫、警方管制交通",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5528046",
+        "pubDate": "Tue, 04 Aug 2026 13:58:42 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "今（4）日中午12點多，高雄市左營區華夏路與大中路口的變電箱突然爆炸冒煙，消防隊到場灑水降溫，警方一度管制外側車道，變電箱故障原因及停電狀況，有待台電說明。 目擊民眾以「...…"
+      },
+      {
+        "title": "台中食安稽查人力不足?每人負責2380家業者，市議員陳俞融指盧秀燕市長甩鍋台南大翻車 - 新華報導",
+        "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE1GcVRCUk93T3RscnZKYlhRRzlOajFIU1hibWcyWW1mZ3ZhcDBHbERaV2tsdmprdmFlaWZTLVU5VFpuTlA5NzVCNEJlOUZaVHlXU1FWUWp0dzY5dUE?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 05:57:00 GMT",
+        "source": "GN 食安黑心",
+        "hint": "食安",
+        "authority": "media",
+        "description": "台中食安稽查人力不足?每人負責2380家業者，市議員陳俞融指盧秀燕市長甩鍋台南大翻車 新華報導"
+      },
+      {
+        "title": "台64丟包案11/4下午現場勘驗 路段西向車道全封閉",
+        "link": "https://www.cna.com.tw/news/asoc/202608040121.aspx",
+        "pubDate": "Tue, 04 Aug 2026 13:56:19 +0800",
+        "source": "中央社 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "（中央社記者曹亞沿新北4日電）温姓男子今年1月被計程車司機林男丟包在台64線快速道路後遭輾斃，林男依遺棄致死罪嫌起訴。法院開庭決定11月4日下午約2時許將重回現場勘驗，屆時該路段西向車道全封閉。"
+      },
+      {
+        "title": "屏東貴金屬董事長命案突破！前員工台中落網 供稱行竊遭撞見才行凶 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMisgNBVV95cUxQV2tTTlN5M01xb2Zsck5Sc25FdEcwTW1zSVIxNEtMbXZOelpMYTBEc3VDQ1RpR01LVjcwU2pzYnJTLUxPTlFDNVU5SE5DSlBhVUx6eDBoTmVBc3VtMzlVb29NeDNIWmE3ZTI1akNUMUd2OVY1T0V3VzZWNTNGT1NJbFhfSWNjejdUV09Gb3JDdlV6TGxwZXlLLWp3Y3NkUHZab1dyX2hEM3FmS0owbEVIa3F6NW42X0ZnOFRMVGJ3SC1oMmMwdEFfVGlfYUhlSUxsMks5Q0ZDZjktYXN1TFBYQ3QzUnNKcnZ5aFdzQU11TzBhOTdVOHhUNURTTEtFMWcxam9XVTBtUDBqYS1rODN5Z0ZyWW9MZ2tfeXBmbGlvRXdtNVVzT0dtSmNHZmpUSEhUajd1eEhvUnVkYkF2U1BGWEZDZnNlWVpGcGppM0p1dlhkaGhtTF9FaTdqclRhMXBTMGxqcDViVlg2UVZQQk85bGR0TkJSbG5kdjEyZGlGX2FTZ0g5dWJUS3RPNXRVUDNzaXhhbzQya05adzU2ODYtNW50MDR3Z1V1bmhjRmdpWkdYdw?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 05:55:35 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "屏東貴金屬董事長命案突破！前員工台中落網 供稱行竊遭撞見才行凶 Yahoo新聞"
+      },
+      {
+        "title": "搭機睡著遭猥褻！泰國媽媽「褲留白色液體」 噁男當場下跪痛哭",
+        "link": "https://news.ltn.com.tw/news/Penghu/breakingnews/5527918",
+        "pubDate": "Tue, 04 Aug 2026 13:52:29 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "泰國一位帶著4歲女兒的母親近日搭乘杜拜飛往曼谷的班機時，被鄰座的巴基斯坦男乘客性騷擾甚至猥褻，對方當場下跪認錯。更誇張的是，空服人員發現女子的臀部上竟留下疑似精液的白色不明物體。...…"
+      },
+      {
+        "title": "食安快訊》比利時南瓜籽油也驗出苯駢芘超標 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMiuAJBVV95cUxORzNHWDFiSUJyV1B3Y0ZPWGtUam9VaGRNT0lOOTQtVnNaa3V2c28wU0xIZDNEbGlwY3Fwem9BdU5UN0tabVZLY24yTnNSUC1CeklTYmVYeHV0VnlPLUl1TTdoN1lMRENrVnZiUmJmTjRtcWxTZmdjLUJPbDE0VGhOY0NFNnU5UWFwdkl0Y0lyVllJZzhkNm9ndGJwNnd5VGozbWFSOUY1aHFqSlRQQmhUQ0Y4NHBqVzdyZUs4UHVnUWZhWUtBYkJFWkVBQ3F1U3VjQ0RDRm1uYUZDYldZVkQ0RmZJRVRoMWx1enBvd1ljbHdBVElSS1I3bGdDR3VZUEVaSl9EcnhEendVR3huRi1DeEhYX3VTaUpNMWV3RGdvaEVfTGoycmQ4aE4zWmItWS1lQ1VMZkVnOGc?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 05:51:04 GMT",
+        "source": "GN 食安黑心",
+        "hint": "食安",
+        "authority": "media",
+        "description": "食安快訊》比利時南瓜籽油也驗出苯駢芘超標 Yahoo新聞"
+      },
+      {
+        "title": "EZ WAY爭議難滅火 羅廷瑋發聲：政府早知道問題仍選擇上路",
+        "link": "https://newtalk.tw/news/view/2026-08-04/1051248",
+        "pubDate": "Tue, 04 Aug 2026 13:50:32 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 實名認證App「EZ WAY易利委」因民進黨立委林岱樺質詢關切，使得營運模式及個資安全等問題引發爭議後。財政部關務署昨召開記者會後仍無法滅火，國民黨立委羅廷瑋今（4日）也質疑，該系統要求民眾配合時，是政府政策；談到收費時，變成私人交易；被追問責任時，又說沒有委託契約；分配股利時，財政部卻是最大股東， 延伸閱讀： 6大公投案綁年底大選 立法院預計21、25日通過 台糖沒義務通報毒"
+      },
+      {
+        "title": "「支持誰當台北市長？」《壹蘋網》最新網路投票曝 蔣萬安竟被「這樣」輾壓",
+        "link": "https://newtalk.tw/news/view/2026-08-04/1051235",
+        "pubDate": "Tue, 04 Aug 2026 13:49:47 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 2026 年台北市長選戰逐漸升溫，國民黨現任台北市長蔣萬安積極爭取連任，民進黨參選人沈伯洋則持續強化市政監督聲量，雙方競逐日益受到關注。《壹蘋新聞網》7 月 29 日以「蔣萬安與沈伯洋都積極爭取聲量，你支持誰當台北市長？」為題發起公開網路投票，截至今（4）日上午，累計已有約 2 萬名網友參與。根據最 延伸閱讀： 250公里外鎖定殲-20戰機? 印軍列裝「這國」雷達可防中? 恐有"
+      },
+      {
+        "title": "戀綜男神翻車！前女友公開對話控「嫖妓又家暴」 本人反應曝| 影視 - 太報 TaiSounds",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5TZ0owU1QyMzRRSEpQVE5feXdYNGR4cmxpT0FFUWw4Rmx3RGJYU190U0xfaG9PbGkxdGFzM2Z6WGJHdWllTlN0LTQxU25jTDltWFE0US1ORV9WZGJYb3c?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 05:47:02 GMT",
+        "source": "GN 家暴兒虐",
+        "hint": "治安",
+        "authority": "media",
+        "description": "戀綜男神翻車！前女友公開對話控「嫖妓又家暴」 本人反應曝| 影視 太報 TaiSounds"
+      },
+      {
+        "title": "湖口火車站「偷拍狼」現蹤 被害人當場抓包、男心虛竄逃 - 壹電視",
+        "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9BMXZEdTFnNE9BaF91NVRSZ2p5X05BRkx5cGJWSHNrWDRYaFd1d2FUOThSeExHZTdZTDg4RnVPQ2hidkVKUnJmWF9Ld3pGbUVvSndzUnRvVXVYNHY5Z25MQllPSWVHX0RmQjduZ0VvTExVUldlS1VlSzYxZXBGLWc?oc=5",
+        "pubDate": "Tue, 04 Aug 2026 05:46:00 GMT",
+        "source": "GN 偷拍性影像",
+        "hint": "治安",
+        "authority": "media",
+        "description": "湖口火車站「偷拍狼」現蹤 被害人當場抓包、男心虛竄逃 壹電視"
+      },
+      {
+        "title": "英國證實警方資料庫被駭，可能外洩10萬員警、公務員個資",
+        "link": "https://www.ithome.com.tw/news/177858",
+        "pubDate": "2026-08-04T13:46+08:00",
+        "source": "iThome Security RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "英國警方資料庫PNLD證實遭到駭侵，逾10萬名警務及司法人員的個資外洩，另有約2.1萬名曾使用便民服務的民眾受到波及"
+      },
+      {
+        "title": "計程車凌晨停在馬路中 運匠到案稱太累睡著吃上罰單",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5528017",
+        "pubDate": "Tue, 04 Aug 2026 13:45:10 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "有民眾日前凌晨時刻行經台北市光華商場附近道路時，發現路上有1輛計程車，在綠燈狀態下居然停止在內側車道，民眾擔心司機發生意外報警，但警方到場時該計程車已經不見蹤影。警方事後根據車...…"
+      },
+      {
+        "title": "彰化早餐店深夜氣爆波及鄰居 警消初判疑桶裝瓦斯洩漏釀災",
+        "link": "https://news.pts.org.tw/article/820751",
+        "pubDate": "2026-08-04T13:43:38+08:00",
+        "source": "公視新聞",
+        "hint": "治安",
+        "authority": "media",
+        "description": "昨（3）日深夜，彰化旭光路一家連鎖早餐店傳出氣爆火警，地點鄰近彰化基督教醫院，所幸事發在深夜，沒造成人員傷亡，但早餐店旁的2家店及1間民宅仍受到氣爆波及，部分設備因此毀損。火調人員今日上午回現場勘查，初判是桶裝瓦斯洩漏而發生氣爆，但詳細事故原因仍有待調查釐清。"
+      }
+    ]
+  }
+}
