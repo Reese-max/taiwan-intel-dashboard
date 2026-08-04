@@ -10,6 +10,8 @@ import { deriveNewsProvenance } from "./fetch-rss.mjs";
 import { selectDiverseByCategory } from "./intl-accumulate.mjs";
 import { categoryFromItem, riskFromTitle } from "./news-bulk.mjs";
 import { titleKey } from "./title-key.mjs";
+import { eventIdFor, slug } from "./event-id.mjs";
+export { eventIdFor } from "./event-id.mjs";
 
 import { chat, extractJson, llmModel, respondedModel } from "./llm-client.mjs";
 export { llmModel, respondedModel } from "./llm-client.mjs";
@@ -404,8 +406,6 @@ ${listing}
 // 動機：擴增到數百個 feed 後，單一 prompt 會塞入數千則（~數十萬 token）→ 爆 context／成本暴增／被截斷。
 // 批次化把規模問題拆開，與 normalizeDomesticNews 同模式。max/batchSize/concurrency 皆 env 可調。
 // 事件 id 由連結決定（與各 normalize 函式一致）→ 用於跨輪快取比對。
-export const eventIdFor = (scope, link) => (link ? `${scope === "domestic" ? "twnews" : "intl"}-${slug(link)}` : null);
-
 // 跨輪快取分流：依「連結決定的 id」把輸入拆成「已正規化可重用（priorById 命中）」與「需送 LLM 的新項」。
 // 同一篇（同連結）重用前一輪事件、跳過 LLM；priorById 未提供時全部視為新項（向後相容）。
 // maxAgeMs：評級生命週期 — 命中但正規化時間（source.fetchedAt）超齡者改判 fresh 重送 LLM，
@@ -926,14 +926,6 @@ export async function summarizeClusters(clusters, domestic, topN = Number(proces
     })
   );
   return Object.fromEntries(results.filter(([, t]) => t));
-}
-
-function slug(link, idx) {
-  // 以連結內容 hash 確保唯一，避免不同文章因路徑片段相同而撞 id
-  const s = link || `n${idx}`;
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
-  return h.toString(36);
 }
 
 function toIso(pubDate) {

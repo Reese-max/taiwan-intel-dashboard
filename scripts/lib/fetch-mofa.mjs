@@ -1,7 +1,7 @@
 // 外交部領事事務局「國外旅遊警示」RSS → 結構化 IntelEvent[]。
 // 來源已是官方結構化燈號，僅做 RSS 解析與欄位映射，不送 LLM 正規化。
 import { fetchRssItems } from "./fetch-rss.mjs";
-import { eventIdFor } from "./nvidia.mjs";
+import { eventIdFor } from "./event-id.mjs";
 
 export const MOFA_TRAVEL_WARNING_FEED = {
   label: "外交部領事事務局 旅遊警示",
