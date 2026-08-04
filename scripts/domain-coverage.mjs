@@ -143,6 +143,17 @@ function isEnabled(item, selectedKeys) {
   return item.enabled && (!selectedKeys || selectedKeys.has(item.sourceKey));
 }
 
+function hasVerifiableSourceMetadata(item) {
+  return Boolean(
+    sourceIdentity(item) &&
+    item.sourceKey &&
+    item.publisherName &&
+    /^https:\/\//.test(text(item.publisherUrl)) &&
+    item.domainTags.length &&
+    item.domainTags.every((tag) => CORE_DOMAIN_KEYS.has(tag)),
+  );
+}
+
 function assertUniqueSourceIdentities(items, label) {
   const seen = new Set();
   for (const item of items) {
@@ -274,7 +285,15 @@ export function buildDomainCoverage({ generatedAt = new Date().toISOString(), so
     const matched = (Array.isArray(sources) ? sources : []).filter((sourceItem) => sourceMatches(domain, sourceItem));
     assertUniqueSourceIdentities(matched, `領域 ${domain.key} 實際來源`);
     const configured = configAudit.configured.filter((item) => item.domainTags.includes(domain.key));
-    const enabled = configured.filter((item) => isEnabled(item, configAudit.selectedKeys));
+    const seenEnabledIdentities = new Set();
+    const enabled = configured.filter((item) => {
+      const identity = sourceIdentity(item);
+      if (!isEnabled(item, configAudit.selectedKeys) || !hasVerifiableSourceMetadata(item) || seenEnabledIdentities.has(identity)) {
+        return false;
+      }
+      seenEnabledIdentities.add(identity);
+      return true;
+    });
     const observedIds = new Set(matched.map(sourceIdentity).filter(Boolean));
     const lastSuccessAt = matched
       .map((sourceItem) => sourceItem.lastSuccessAt || sourceItem.fetchedAt)
@@ -318,7 +337,7 @@ export function buildDomainCoverage({ generatedAt = new Date().toISOString(), so
   return {
     generatedAt,
     policy: {
-      integrated: "已進入事件管線並受來源新鮮度稽核；coverageCount 依 enabled 來源設定計算",
+      integrated: "已進入事件管線並受來源新鮮度稽核；coverageCount 依已掛接管線且可追溯的啟用來源計算",
       reference: "官方參考快照，保留在事件檔但排除每日事件統計",
       "query-only": "可由開放資料查詢，但未承諾事件層新鮮度或完整性",
       gap: "目前沒有符合本專案契約的整合來源",

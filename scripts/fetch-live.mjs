@@ -1245,7 +1245,7 @@ export async function run() {
     events: [...domesticEvents, ...intlEvents],
     sources,
   }));
-  writeJson("domain-coverage.json", buildDomainCoverage({ generatedAt: nowIso, sources }));
+  writeJson("domain-coverage.json", buildDomainCoverage({ generatedAt: nowIso, sources, enabledSourceKeys: SOURCES }));
 
   writeJson("provenance.json", {
     generatedAt: nowIso,
