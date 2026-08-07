@@ -115,6 +115,7 @@ header.app .badge {
 
 .cards { display: grid; gap: 0.8rem; }
 .card {
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-left: 3px solid var(--accent);
