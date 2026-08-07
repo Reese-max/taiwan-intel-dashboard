@@ -1,9 +1,17 @@
 import type { IntelEvent } from "../types/event";
 import { RISK_ORDER } from "../types/event";
+import { filterEvents } from "../data/loader";
+import type { NetworkIndex } from "../data/network";
+import { applySearchSubnet } from "../search";
+import type { AppState } from "../store";
 
 export const TRIAGE_ACKED_KEY = "taiwan-intel-triage-acked";
 
 export type TriageEvent = IntelEvent & { unread: boolean };
+
+export function filterTriageEvents(events: IntelEvent[], state: AppState, net: NetworkIndex): IntelEvent[] {
+  return applySearchSubnet(filterEvents(events, state), net, state.query);
+}
 
 export interface TriageResult {
   items: TriageEvent[];

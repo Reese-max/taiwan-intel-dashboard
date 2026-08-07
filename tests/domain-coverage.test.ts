@@ -95,4 +95,15 @@ describe("領域完整性清單", () => {
     expect(report.rows.find((row) => row.key === "教育／科研")).toMatchObject({ status: "reference", sourceCount: 1, healthySourceCount: 1 });
     expect(report.rows.find((row) => row.key === "金融市場")).toMatchObject({ status: "reference", sourceCount: 1, healthySourceCount: 1 });
   });
+
+  it("允許同一資料集下以 key 區分邏輯子來源", () => {
+    const report = buildDomainCoverage({
+      sources: [
+        { scope: "domestic", category: "採購", datasetId: "pcc-tender", name: "政府電子採購網 決標公告" },
+        { scope: "domestic", category: "採購", datasetId: "pcc-tender", key: "policePcc", name: "政府電子採購網 警政決標公告" },
+      ],
+    });
+
+    expect(report.rows.find((row) => row.key === "採購／經濟")).toMatchObject({ sourceCount: 2 });
+  });
 });

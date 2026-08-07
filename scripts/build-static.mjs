@@ -98,11 +98,19 @@ function trimNetwork(net) {
   return net;
 }
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
+const FRAUD_QUERY_DATASETS = new Set(["176455", "160055", "38262"]);
 for (const f of readdirSync("public/data")) {
   if (TRIM_FIELDS.has(f)) {
     const arr = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
     const trimmed = Array.isArray(arr) ? arr.map(trimEvent) : arr;
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimmed));
+    if (f === "domestic.json" && Array.isArray(trimmed)) {
+      const provenance = JSON.parse(readFileSync("public/data/provenance.json", "utf8"));
+      writeFileSync(`${OUT}/data/query-snapshot.json`, JSON.stringify({
+        generatedAt: provenance.generatedAt || null,
+        fraud: trimmed.filter((event) => FRAUD_QUERY_DATASETS.has(String(event.source?.datasetId || ""))),
+      }));
+    }
     // 同時輸出地圖 first-paint 精簡檔 <scope>.map.json（僅可定位事件 + 精簡欄位）。
     if (Array.isArray(arr)) {
       const scope = f.replace(/\.json$/, "");
@@ -203,6 +211,7 @@ writeFileSync(
   Cache-Control: public, max-age=600, stale-while-revalidate=86400
 `,
 );
+writeFileSync(`${OUT}/_routes.json`, `${JSON.stringify({ version: 1, include: ["/api/*"], exclude: [] })}\n`);
 
 for (const f of readdirSync(`${OUT}/assets`)) {
   const kb = (statSync(`${OUT}/assets/${f}`).size / 1024).toFixed(1);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { buildTriage } from "../src/utils/triage";
+import { buildTriage, filterTriageEvents } from "../src/utils/triage";
 import type { IntelEvent, RiskLevel } from "../src/types/event";
+import { NetworkIndex } from "../src/data/network";
 
 const event = (id: string, riskLevel: RiskLevel, timestamp: string): IntelEvent => ({
   id,
@@ -104,5 +105,16 @@ describe("buildTriage", () => {
     );
 
     expect(result.items.map((e) => e.id)).toEqual(["critical", "good", "bad"]);
+  });
+});
+
+describe("filterTriageEvents", () => {
+  it("沿用主列表的分類與關鍵字篩選", () => {
+    const events = [
+      { ...event("security", "high", "2026-07-05T03:00:00.000Z"), category: "資安", title: "GhostBlade" },
+      { ...event("crime", "critical", "2026-07-05T04:00:00.000Z"), category: "治安", title: "無關事件" },
+    ];
+
+    expect(filterTriageEvents(events, { scope: "domestic", category: "資安", query: "GhostBlade" }, new NetworkIndex(null)).map((item) => item.id)).toEqual(["security"]);
   });
 });

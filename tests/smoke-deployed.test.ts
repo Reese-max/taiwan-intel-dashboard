@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { requiredDatasetsFromArgs, validateDeploymentPayload } from "../scripts/smoke-deployed.mjs";
+import { requiredDatasetsFromArgs, validateDeploymentPayload, validateQueryRouteResponse } from "../scripts/smoke-deployed.mjs";
 
 const domains = [
   { key: "金融市場", status: "reference" },
@@ -10,6 +10,11 @@ const domains = [
 ];
 
 describe("部署後線上 smoke", () => {
+  it("只接受查詢路由的 400 JSON，不接受首頁 HTML", () => {
+    expect(validateQueryRouteResponse({ status: 400, contentType: "application/json; charset=utf-8", body: { error: "查詢字串不可為空" } })).toBe(true);
+    expect(validateQueryRouteResponse({ status: 200, contentType: "text/html", body: null })).toBe(false);
+  });
+
   it("只對 refresh 來源要求金融與勞動資料落地", () => {
     expect(requiredDatasetsFromArgs("--sources=cwa,financeDerivatives,laborStats --exclusive")).toEqual(["11598", "123349"]);
     expect(requiredDatasetsFromArgs("--sources=cwa,police,rss")).toEqual([]);

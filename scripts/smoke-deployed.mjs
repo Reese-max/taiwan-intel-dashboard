@@ -11,6 +11,7 @@ const SOURCE_DATASET_IDS = {
   financeDerivatives: "11598",
   laborStats: "123349",
 };
+const QUERY_ENDPOINTS = ["fraud", "judicial", "drug", "catalog"];
 
 function asObject(value) {
   return value && typeof value === "object" ? value : null;
@@ -49,6 +50,10 @@ export function validateDeploymentPayload({ provenance, domainCoverage, required
   return { ok: errors.length === 0, errors, sourceCount: sources.length, domainCount: rows.length };
 }
 
+export function validateQueryRouteResponse({ status, contentType, body } = {}) {
+  return status === 400 && /application\/json/i.test(String(contentType || "")) && typeof body?.error === "string";
+}
+
 async function fetchJson(url, attempts = 6) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -56,6 +61,25 @@ async function fetchJson(url, attempts = 6) {
       const response = await fetch(url, { headers: { "cache-control": "no-cache" } });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.json();
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) await delay(5000);
+    }
+  }
+  throw lastError;
+}
+
+async function fetchQueryRoute(url, endpoint, attempts = 6) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await fetch(url, { headers: { "cache-control": "no-cache" } });
+      const contentType = response.headers.get("content-type") || "";
+      const body = await response.json().catch(() => null);
+      if (!validateQueryRouteResponse({ status: response.status, contentType, body })) {
+        throw new Error(`${endpoint} 未回傳預期的 400 JSON`);
+      }
+      return true;
     } catch (error) {
       lastError = error;
       if (attempt < attempts) await delay(5000);
@@ -75,19 +99,22 @@ export async function smokeDeployed({
     fetchJson(`${base}/data/provenance.json${suffix}`),
     fetchJson(`${base}/data/domain-coverage.json${suffix}`),
   ]);
+  const queryRouteCount = (await Promise.all(QUERY_ENDPOINTS.map((endpoint) =>
+    fetchQueryRoute(`${base}/api/${endpoint}?q=&smoke=${encodeURIComponent(runId)}`, endpoint),
+  ))).length;
   const result = validateDeploymentPayload({
     provenance,
     domainCoverage,
     requiredDatasetIds: requiredDatasetsFromArgs(fetchArgs),
   });
   if (!result.ok) throw new Error(result.errors.join("；"));
-  return result;
+  return { ...result, queryRouteCount };
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   smokeDeployed()
     .then((result) => {
-      console.log(`部署後 smoke 通過：${result.sourceCount} 來源列／${result.domainCount} 領域列`);
+      console.log(`部署後 smoke 通過：${result.sourceCount} 來源列／${result.domainCount} 領域列／${result.queryRouteCount} 查詢路由`);
     })
     .catch((error) => {
       console.error(`部署後 smoke 失敗：${error.message}`);

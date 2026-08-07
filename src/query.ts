@@ -60,8 +60,8 @@ interface DatasetPreview { id: string; columns: string[]; rows: string[][]; rowC
 
 const TABS: { key: TabKey; label: string; placeholder: string; hint: string }[] = [
   { key: "fraud", label: "詐騙查驗", placeholder: "輸入網址、平台名稱或關鍵字（如 saxotader.top）", hint: "比對 165 涉詐網站停解析、假投資(博弈)網站、詐騙闢謠三份清單。" },
-  { key: "judicial", label: "判決檢索", placeholder: "輸入案情或罪名（如 假投資詐欺 提供帳戶）", hint: "對全國 124 萬筆判決做語意檢索，回傳爭點、刑度、關鍵理由。" },
-  { key: "drug", label: "毒品速查", placeholder: "輸入物質名稱（中/英，如 愷他命 / Ketamine）", hint: "查衛福部管制藥品許可庫的管制級別。查無不代表非毒品。" },
+  { key: "judicial", label: "判決檢索", placeholder: "輸入案情或罪名（如 假投資詐欺 提供帳戶）", hint: "即時查詢司法院裁判書，回傳最新相關判決與內容摘要。" },
+  { key: "drug", label: "毒品速查", placeholder: "輸入物質名稱（中/英，如 愷他命 / Ketamine）", hint: "查衛福部食藥署常見濫用管制藥品資料；查無不代表非毒品。" },
   { key: "catalog", label: "開放資料", placeholder: "輸入主題關鍵字（如 停車場、空氣品質、槍砲）", hint: "在全台 5 萬+ 政府開放資料集中搜尋；點資料集可預覽前 50 列。" },
 ];
 
@@ -82,7 +82,7 @@ function shell(): void {
       <header class="app">
         <h1>警政查詢助手</h1>
         <span class="sub">開放資料即時查詢 · 輔助勤務判斷</span>
-        <span class="badge">本機自用</span>
+        <span class="badge">公開服務</span>
       </header>
       <nav class="tabs" role="tablist">
         ${TABS.map((t) => `<button class="tab" role="tab" data-key="${t.key}" aria-selected="${t.key === current}">${t.label}</button>`).join("")}
@@ -180,7 +180,7 @@ function renderJudicial(d: JudicialResult): void {
       const sentence = c.sentence ? `<div class="meta"><span class="tag level">刑度：${esc(c.sentence)}</span></div>` : "";
       const issue = c.issue ? `<div class="body"><strong>爭點：</strong>${esc(c.issue)}</div>` : "";
       const reason = c.reasoning ? `<div class="body"><strong>理由：</strong>${esc(c.reasoning)}</div>` : "";
-      const pdf = c.pdf ? `<div class="body"><a href="${esc(c.pdf)}" target="_blank" rel="noopener">判決書全文 PDF →</a></div>` : "";
+      const pdf = c.pdf ? `<div class="body"><a href="${esc(c.pdf)}" target="_blank" rel="noopener">裁判書全文 →</a></div>` : "";
       return `<div class="card j"><div class="src">${esc(c.jid)}</div><div class="title">${esc(c.title)}</div><div class="meta">${meta}</div>${sentence}${issue}${reason}${pdf}</div>`;
     })
     .join("");

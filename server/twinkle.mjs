@@ -8,24 +8,25 @@ import { sqlEscape } from "./normalize.mjs";
 const FRAUD_LIMIT = 25;
 const JUDICIAL_LIMIT = 5;
 
-function getCreds() {
-  const url = process.env.TWINKLE_MCP_URL;
-  const token = process.env.TWINKLE_MCP_TOKEN;
+function getCreds(env) {
+  const runtimeEnv = env || (typeof process !== "undefined" ? process.env : {});
+  const url = runtimeEnv.TWINKLE_MCP_URL;
+  const token = runtimeEnv.TWINKLE_MCP_TOKEN || runtimeEnv.TWINKLE_HUB_TOKEN;
   if (!url || !token) throw new Error("TWINKLE_MCP_URL / TWINKLE_MCP_TOKEN 未設定");
   return { url, token };
 }
 
-async function callTool(name, args) {
-  const { url, token } = getCreds();
+async function callTool(name, args, env) {
+  const { url, token } = getCreds(env);
   const client = new McpClient(url, token);
   await client.init();
   return parseTwinkleRowsText(await client.callTool(name, args), name);
 }
 
 // 詐騙查驗：三份清單並行查（皆 ILIKE 子字串）。回 { stopped, gambling, debunk }。
-export async function fraudLookup(q) {
+export async function fraudLookup(q, env) {
   const safe = sqlEscape(q);
-  const { url, token } = getCreds();
+  const { url, token } = getCreds(env);
   const client = new McpClient(url, token);
   await client.init();
   const rows = async (dataset_id, where) =>
@@ -39,24 +40,24 @@ export async function fraudLookup(q) {
 }
 
 // 判決檢索：語意搜尋。回 search_judicial 原始解析物件（含 hits[]）。
-export async function judicialSearch(q, limit = JUDICIAL_LIMIT) {
-  return callTool("search_judicial", { query: q, limit });
+export async function judicialSearch(q, limit = JUDICIAL_LIMIT, env) {
+  return callTool("search_judicial", { query: q, limit }, env);
 }
 
 // 毒品/管制藥品速查：依名稱查管制藥品許可庫。回 search_drug 原始解析物件（含 hits[]）。
-export async function drugLookup(q) {
-  return callTool("search_drug", { name: q });
+export async function drugLookup(q, env) {
+  return callTool("search_drug", { name: q }, env);
 }
 
 const CATALOG_LIMIT = 20;
 const PREVIEW_LIMIT = 50;
 
 // 通用目錄查詢：依主題關鍵字找候選資料集。回 search_datasets 原始解析物件（含 hits[]）。
-export async function catalogSearch(q, limit = CATALOG_LIMIT) {
-  return callTool("search_datasets", { query: q, limit });
+export async function catalogSearch(q, limit = CATALOG_LIMIT, env) {
+  return callTool("search_datasets", { query: q, limit }, env);
 }
 
 // 資料集預覽：拉指定 dataset 的前數列（不接受使用者 WHERE，避免任意 SQL）。
-export async function datasetPreview(id, limit = PREVIEW_LIMIT) {
-  return callTool("query_rows", { dataset_id: id, limit });
+export async function datasetPreview(id, limit = PREVIEW_LIMIT, env) {
+  return callTool("query_rows", { dataset_id: id, limit }, env);
 }

@@ -86,7 +86,9 @@ function text(value) {
 }
 
 function sourceIdentity(sourceItem) {
-  return text(sourceItem?.sourceId || sourceItem?.datasetId || sourceItem?.name);
+  const key = text(sourceItem?.key);
+  const datasetId = text(sourceItem?.datasetId);
+  return text(sourceItem?.sourceId || (key && datasetId ? `${key}:${datasetId}` : key || datasetId || sourceItem?.name));
 }
 
 function finding(code, domain, sourceItem, reason, path) {

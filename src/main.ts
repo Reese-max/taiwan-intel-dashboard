@@ -20,7 +20,7 @@ import { MapView } from "./components/MapView";
 import type { IntelEvent, NewsAuthority, RiskLevel, Scope } from "./types/event";
 import { emptyListHint } from "./utils/emptyHint";
 import { applySearchSubnet } from "./search";
-import { loadTriageAcked, saveTriageAcked } from "./utils/triage";
+import { filterTriageEvents, loadTriageAcked, saveTriageAcked } from "./utils/triage";
 import { corroborationOf } from "./utils/corroboration";
 import { collapseSameIncident } from "./utils/collapse";
 import { stalenessNotice } from "./utils/staleness";
@@ -469,7 +469,7 @@ async function refresh(): Promise<void> {
   const net = netCache[s.scope]!;
   const byId = new Map(all.map((e) => [e.id, e] as const));
   renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, () => setState({ minRisk: "high" }));
-  const triageEvents = filterEvents(all, { scope: s.scope, sinceDays: s.sinceDays });
+  const triageEvents = filterTriageEvents(all, s, net);
   const renderInbox = (): void => {
     renderTriageInbox(document.getElementById("triageinbox")!, triageEvents, {
       acked: triageAcked,
