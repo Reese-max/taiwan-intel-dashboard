@@ -11,8 +11,7 @@ const source = (sourceId, publisherName, publisherUrl, datasetId = sourceId, sou
 
 export const CORE_DOMAIN_SOURCES = Object.freeze({
   "治安／警政": [
-    source("7505", "內政部警政署", "https://data.gov.tw/dataset/7505", "7505", "police"),
-    source("176455", "內政部警政署 165 全民防騙", "https://data.gov.tw/dataset/176455", "176455", "police"),
+    source("13166", "內政部警政署", "https://data.gov.tw/dataset/13166", "13166", "police"),
     source("14420", "內政部警政署", "https://data.gov.tw/dataset/14420", "14420", "police"),
   ],
   "災防／氣象": [
@@ -20,16 +19,9 @@ export const CORE_DOMAIN_SOURCES = Object.freeze({
     source("W-C0033-001", "交通部中央氣象署", "https://www.cwa.gov.tw/V8/C/W/warning_real.html", "W-C0033-001", "cwa"),
     source("ncdr-cap-alert", "國家災害防救科技中心", "https://alerts.ncdr.nat.gov.tw/JSONAtomFeed.ashx", "ncdr-cap-alert", "ncdr"),
   ],
-  "交通／停車": [
-    source("177136", "內政部警政署", "https://data.gov.tw/dataset/177136", "177136", "police"),
-    source("13908", "內政部警政署", "https://data.gov.tw/dataset/13908", "13908", "police"),
-    source("129136", "新竹市政府", "https://data.gov.tw/dataset/129136", "129136", "parkingHsinchu"),
-    source("25940", "桃園市政府", "https://data.gov.tw/dataset/25940", "25940", "parkingTaoyuan"),
-  ],
   "水情／環境": [
     source("wra-reservoir-levels", "經濟部水利署", "https://www.wra.gov.tw/ReservoirWarningTable.aspx?n=46046", "wra-reservoir-levels", "wra"),
     source("wra-river-levels", "經濟部水利署", "https://opendata.wra.gov.tw/api/v2/73c4c3de-4045-4765-abeb-89f9f9cd5ff0?format=JSON", "wra-river-levels", "wraRiver"),
-    source("28178", "環境部", "https://data.gov.tw/dataset/28178", "28178", "moenvAir"),
   ],
   "能源／電力": [
     source("taipower-supply-demand", "台灣電力公司", "https://service.taipower.com.tw/data/opendata/apply/file/d006020/001.json", "taipower-supply-demand", "taipower"),
@@ -37,7 +29,6 @@ export const CORE_DOMAIN_SOURCES = Object.freeze({
   "衛生／食安": [
     source("cdc-rods-influenza", "衛生福利部疾病管制署", "https://od.cdc.gov.tw/eic/RODS_Influenza_like_illness.json", "cdc-rods-influenza", "cdc"),
     source("tfda-noncompliant-food", "衛生福利部食品藥物管理署", "https://data.fda.gov.tw/data/opendata/export/52/json", "tfda-noncompliant-food", "tfda"),
-    source("39331", "衛生福利部中央健康保險署", "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-D2000H-001", "39331", "healthFacilities"),
   ],
   "資安": [
     source("twcert-tvn-rss", "國家資通安全研究院 TWCERT/CC", "https://www.twcert.org.tw/tw/rss-132-1.xml", "twcert-tvn-rss", "twcert"),
@@ -46,32 +37,28 @@ export const CORE_DOMAIN_SOURCES = Object.freeze({
     source("mnd-pla-activity", "國防部空軍司令部", "https://air.mnd.gov.tw/TW/News/News_List.aspx?CID=213", "mnd-pla-activity", "mnd"),
     source("cga-maritime-news", "海洋委員會海巡署", "https://www.cga.gov.tw/GipOpen/wSite/lp?ctNode=650&mp=999", "cga-maritime-news", "cga"),
   ],
-  "採購／經濟": [
-    source("pcc-tender", "行政院公共工程委員會", "https://web.pcc.gov.tw/pis/", "pcc-tender", "pcc"),
-    source("13228", "行政院主計總處", "https://data.gov.tw/dataset/13228", "13228", "economy"),
-  ],
 });
 
 export const DOMAIN_COVERAGE = [
-  { key: "治安／警政", scope: "domestic", status: "integrated", categories: ["治安", "反詐", "協尋"], note: "警政、失蹤人口與台灣新聞事件" },
+  { key: "治安／警政", scope: "domestic", status: "integrated", categories: ["治安", "反詐", "協尋"], note: "警政署犯罪週報、失蹤人口與台灣新聞事件" },
   { key: "災防／氣象", scope: "domestic", status: "integrated", categories: ["災防"], note: "地震、警特報、NCDR 示警與災防新聞" },
-  { key: "交通／停車", scope: "domestic", status: "integrated", categories: ["交通"], note: "警政交通、採購脈絡與新竹／桃園停車供給；全台道路即時路況仍是缺口" },
-  { key: "水情／環境", scope: "domestic", status: "integrated", categories: ["水情", "環境"], note: "水庫、河川水位與空品測站小時值" },
+  { key: "交通／停車", scope: "domestic", status: "integrated", categories: ["交通"], note: "交通新聞事件；官方事故點位、停車供給與全台即時路況仍是缺口" },
+  { key: "水情／環境", scope: "domestic", status: "integrated", categories: ["水情", "環境"], note: "水庫與河川水位；空品測站來源待改為官方直連" },
   { key: "能源／電力", scope: "domestic", status: "integrated", categories: ["能源"], note: "台電系統供需" },
-  { key: "衛生／食安", scope: "domestic", status: "integrated", categories: ["衛生", "食安"], note: "CDC、TFDA 與健保居家醫療院所參考快照" },
+  { key: "衛生／食安", scope: "domestic", status: "integrated", categories: ["衛生", "食安"], note: "CDC 與 TFDA 官方直連；健保院所來源暫停刷新" },
   { key: "資安", scope: "domestic", status: "integrated", categories: ["資安"], note: "TWCERT/CC TVN 與資安新聞" },
   { key: "國防／海事／外交", scope: "domestic", status: "integrated", categories: ["國防", "海事"], note: "國防部、海巡署；外交旅遊警示在國際層" },
-  { key: "採購／經濟", scope: "domestic", status: "integrated", categories: ["採購", "經濟"], note: "政府電子採購網與主計總處月指標" },
-  { key: "農業", scope: "domestic", status: "reference", categories: ["農業"], datasetIds: ["70930"], note: "農業部產地價格參考快照；不是價格預測或交易建議" },
-  { key: "司法／法務", scope: "domestic", status: "integrated", datasetIds: ["judicial"], note: "司法院裁判書摘要併入警政事件流" },
-  { key: "消防", scope: "domestic", status: "reference", datasetIds: ["134922", "176522"], note: "已整合臺北市期間統計參考；全台消防即時案件仍是缺口" },
-  { key: "國會／立法", scope: "domestic", status: "reference", datasetIds: ["ly-bills"], note: "立法院議案進度參考快照；不將政策內容自動判為風險" },
-  { key: "勞動／職災", scope: "domestic", status: "reference", datasetIds: ["123349", "126835"], note: "已補新北市失業率年度參考；尚非全國即時勞動／職災事件層" },
-  { key: "金融市場", scope: "domestic", status: "reference", datasetIds: ["11598"], note: "已補期貨三大法人每日統計參考；不產生買賣訊號" },
-  { key: "教育／科研", scope: "domestic", status: "reference", datasetIds: ["124173"], note: "新北市高級中等學校年度統計參考；尚非全國即時教育事件層" },
-  { key: "社福／人口", scope: "domestic", status: "reference", datasetIds: ["84049"], note: "臺中市人口結構參考快照；尚非全國一致社福事件層" },
-  { key: "文化／觀光／體育", scope: "domestic", status: "reference", datasetIds: ["tad-index-inbound-lastmonth"], note: "已補觀光統計參考；文化與體育仍待專門來源" },
-  { key: "觀光統計", scope: "domestic", status: "reference", datasetIds: ["tad-index-inbound-lastmonth"], note: "觀光署五大客源群上月概況；來源為研究用途鏡像" },
+  { key: "採購／經濟", scope: "domestic", status: "gap", categories: ["採購", "經濟"], note: "舊第三方來源已移除，待改為官方直連" },
+  { key: "農業", scope: "domestic", status: "reference", categories: ["農業"], datasetIds: ["70930"], note: "農業資料集參考；目前未自動刷新，也不是價格預測或交易建議" },
+  { key: "司法／法務", scope: "domestic", status: "gap", datasetIds: ["judicial"], note: "舊裁判書來源已移除，待改為司法院官方直連" },
+  { key: "消防", scope: "domestic", status: "reference", datasetIds: ["134922", "176522"], note: "消防資料集參考；目前未自動刷新，全台即時案件仍是缺口" },
+  { key: "國會／立法", scope: "domestic", status: "reference", datasetIds: ["ly-bills"], note: "立法院議案資料集參考；目前未自動刷新" },
+  { key: "勞動／職災", scope: "domestic", status: "reference", datasetIds: ["123349", "126835"], note: "勞動資料集參考；目前未自動刷新，尚非全國即時事件層" },
+  { key: "金融市場", scope: "domestic", status: "reference", datasetIds: ["11598"], note: "金融資料集參考；目前未自動刷新，也不產生買賣訊號" },
+  { key: "教育／科研", scope: "domestic", status: "reference", datasetIds: ["124173"], note: "教育資料集參考；目前未自動刷新" },
+  { key: "社福／人口", scope: "domestic", status: "reference", datasetIds: ["84049"], note: "人口資料集參考；目前未自動刷新" },
+  { key: "文化／觀光／體育", scope: "domestic", status: "reference", datasetIds: ["tad-index-inbound-lastmonth"], note: "觀光資料集參考；目前未自動刷新，文化與體育仍待專門來源" },
+  { key: "觀光統計", scope: "domestic", status: "reference", datasetIds: ["tad-index-inbound-lastmonth"], note: "觀光資料集參考；目前未自動刷新" },
   { key: "不動產／地政", scope: "domestic", status: "query-only", note: "資料集可查詢，但交易量不應直接當成安全事件" },
   { key: "民航／無人機", scope: "domestic", status: "query-only", note: "圖資可查詢；尚未建立事件與有效期間同步層" },
   { key: "電信／網路服務", scope: "domestic", status: "gap", note: "尚未有公開、穩定且可授權的即時服務中斷來源" },

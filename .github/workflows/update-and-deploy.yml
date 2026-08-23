@@ -89,7 +89,6 @@ jobs:
       - name: 部署後線上 smoke
         env:
           DEPLOY_BASE_URL: https://taiwan-intel-dashboard.pages.dev
-          DEPLOY_FETCH_ARGS: ${{ needs.fetch.outputs.fetch_args }}
         run: node scripts/smoke-deployed.mjs
 
   notify:

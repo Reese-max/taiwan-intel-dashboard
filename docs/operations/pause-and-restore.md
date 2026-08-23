@@ -44,7 +44,7 @@ npm run verify:recovery-prerequisites -- --json
 ### 所需非機密設定
 
 - 在 repo 根目錄執行，Node.js、npm 及 `node_modules` 已可用；workflow、建置腳本與 `tsconfig.json` 必須存在。
-- `env-secrets` 會以 `gh secret list --json name` 只檢查 GitHub Actions secrets 名稱，不讀取、輸出或寫入值；必要名稱為 `CLOUDFLARE_API_TOKEN`、`TWINKLE_MCP_TOKEN`、`DEPLOY_BASE_URL`。`CLOUDFLARE_ACCOUNT_ID` 不是 secret，演練會改檢查 `update-and-deploy.yml` 內硬編的 `accountId` 是否非空。
+- `env-secrets` 會以 `gh secret list --json name` 只檢查 GitHub Actions secrets 名稱，不讀取、輸出或寫入值；必要名稱為 `CLOUDFLARE_API_TOKEN`、`DEPLOY_BASE_URL`。`CLOUDFLARE_ACCOUNT_ID` 不是 secret，演練會改檢查 `update-and-deploy.yml` 內硬編的 `accountId` 是否非空。
 - 資料端點檢查不接受即時探測；沒有證據時會標為選用 `skip`，並顯示「需以 `--endpoint-evidence` 注入」。需要檢查時可注入 JSON 陣列或 JSON 檔案路徑，例如 `--endpoint-evidence .\endpoint-evidence.json`。
 
 ### 判讀與後續處置
