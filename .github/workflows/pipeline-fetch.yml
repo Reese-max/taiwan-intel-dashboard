@@ -93,8 +93,6 @@ jobs:
           SUMMARY_MAX_CONCURRENCY: ${{ secrets.SUMMARY_MAX_CONCURRENCY }}
           SUMMARY_TIMEOUT_MS: ${{ secrets.SUMMARY_TIMEOUT_MS }}
           SUMMARY_MAX_RETRIES: ${{ secrets.SUMMARY_MAX_RETRIES }}
-          TWINKLE_MCP_URL: ${{ secrets.TWINKLE_MCP_URL }}
-          TWINKLE_MCP_TOKEN: ${{ secrets.TWINKLE_MCP_TOKEN }}
           CWA_API_KEY: ${{ secrets.CWA_API_KEY }}
           INTERNATIONAL_FEED_TIER: ${{ steps.mode.outputs.international_feed_tier }}
           INTERNATIONAL_FEED_TOPIC: ${{ steps.mode.outputs.international_feed_topic }}
