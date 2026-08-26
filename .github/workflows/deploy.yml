@@ -32,7 +32,8 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npm run build      - name: Refresh Cloudflare Token
+      - run: npm run build
+      - name: Refresh Cloudflare Token
         id: cf_token
         run: |
           RESP=$(curl -s -X POST "https://dash.cloudflare.com/oauth2/token" \
@@ -73,7 +74,8 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npm run build      - name: Refresh Cloudflare Token
+      - run: npm run build
+      - name: Refresh Cloudflare Token
         id: cf_token
         run: |
           RESP=$(curl -s -X POST "https://dash.cloudflare.com/oauth2/token" \
@@ -88,5 +90,6 @@ jobs:
           apiToken: ${{ steps.cf_token.outputs.token }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name taiwan-intel-dashboard --branch production
+
 
 
