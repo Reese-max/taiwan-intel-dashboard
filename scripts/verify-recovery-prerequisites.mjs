@@ -9,7 +9,6 @@ export const RECOVERY_DRILL_REPORT_DIR = join(REPO_ROOT, "docs", "operations", "
 
 export const REQUIRED_GITHUB_SECRETS = Object.freeze([
   "CLOUDFLARE_API_TOKEN",
-  "TWINKLE_MCP_TOKEN",
   "DEPLOY_BASE_URL",
 ]);
 

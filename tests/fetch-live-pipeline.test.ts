@@ -7,8 +7,6 @@ import { tmpdir } from "node:os";
 import { validateEventContract } from "../scripts/lib/event-contract.mjs";
 
 type UnexpectedFetch = { url: string; status: number };
-type TwinkleRowsPayload = { columns: string[]; rows: unknown[][] };
-
 
 const ENV_KEYS = [
   "FETCH_LIVE_DATA_DIR",
@@ -25,8 +23,6 @@ const ENV_KEYS = [
   "SUMMARY_BASE_URL",
   "SUMMARY_MODEL",
   "SUMMARY_MAX_RETRIES",
-  "TWINKLE_MCP_URL",
-  "TWINKLE_MCP_TOKEN",
 ] as const;
 
 const originalEnv = new Map<string, string | undefined>();
@@ -44,6 +40,7 @@ function taiwanToday() {
   const get = (type: string) => parts.find((part) => part.type === type)?.value;
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
+
 
 function readJson(path: string) {
   return JSON.parse(readFileSync(path, "utf8"));
@@ -71,8 +68,6 @@ function setupEnv() {
   process.env.SUMMARY_BASE_URL = "https://summary.invalid/v1";
   process.env.SUMMARY_MODEL = "test-summary-model";
   process.env.SUMMARY_MAX_RETRIES = "0";
-  process.env.TWINKLE_MCP_URL = "https://twinkle.invalid/mcp";
-  process.env.TWINKLE_MCP_TOKEN = "test-twinkle-token";
 
   return dir;
 }
@@ -337,143 +332,6 @@ function missingPersonFixture(gender: "男" | "女") {
   };
 }
 
-function policeNewsRows() {
-  return {
-    "7505": {
-      columns: ["serialNo", "stitle", "deptName", "postDate", "content"],
-      rows: [
-        [
-          "PN-001",
-          "高雄警方破獲詐騙車手集團",
-          "高雄市政府警察局",
-          "2026-07-07 10:30:00",
-          "高雄警方查獲詐騙車手集團，逮捕嫌犯並查扣證物，提醒民眾提高警覺。",
-        ],
-      ],
-    },
-  };
-}
-
-function pccTenderRows(): TwinkleRowsPayload {
-  const day = taiwanToday();
-  return {
-    columns: [
-      "title",
-      "agency",
-      "job_number",
-      "companies",
-      "date",
-      "award_price",
-      "award_way",
-      "agency_addr",
-      "detail_url",
-    ],
-    rows: [
-      [
-        "臺北市智慧交通設備採購案",
-        "臺北市政府警察局",
-        "PCC-TEST-001",
-        "測試科技股份有限公司",
-        day,
-        "25000000",
-        "最低標",
-        "臺北市信義區市府路1號",
-        "https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pk=PCC-TEST-001",
-      ],
-      [
-        "高雄市防災通報系統維護案",
-        "高雄市政府消防局",
-        "PCC-TEST-002",
-        "南方系統整合有限公司",
-        day,
-        "1200000",
-        "準用最有利標",
-        "高雄市苓雅區四維三路2號",
-        "https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pk=PCC-TEST-002",
-      ],
-    ],
-  };
-}
-
-function judicialHits() {
-  return [
-    {
-      jid: "TYDM,115,桃交簡,382,20260331,1",
-      jtitle: "公共危險",
-      jdate: "20260331",
-      court_code: "TYDM",
-      issue: "酒後騎乘機車致不能安全駕駛之公共危險罪責",
-      outcome_type: "有罪",
-      sentence: "有期徒刑2月，併科罰金新臺幣8萬元",
-      key_reasoning: "吐氣酒精濃度達每公升0.70毫克，自撞路樹",
-      jpdf: "https://data.judicial.gov.tw/x.pdf",
-      similarity: 0.72,
-    },
-    {
-      jid: "KSDM,114,訴,55,20251101,1",
-      jtitle: "殺人",
-      jdate: "20251101",
-      court_code: "KSDM",
-      outcome_type: "有罪",
-      sentence: "無期徒刑",
-      jpdf: "https://data.judicial.gov.tw/y.pdf",
-      similarity: 0.81,
-    },
-  ];
-}
-
-function twinkleTextResponse(body: any, payload: unknown) {
-  return Response.json({
-    jsonrpc: "2.0",
-    id: body?.id,
-    result: {
-      content: [{ type: "text", text: JSON.stringify(payload) }],
-    },
-  });
-}
-
-function twinkleToolResponse(
-  body: any,
-  options: { rowsByDataset: Record<string, TwinkleRowsPayload>; judicialHits?: unknown[] },
-) {
-  const toolName = body?.params?.name;
-  if (toolName === "search_judicial") {
-    return twinkleTextResponse(body, { hits: options.judicialHits || [] });
-  }
-  if (toolName === "query_rows") {
-    const datasetId = body?.params?.arguments?.dataset_id;
-    const payload = options.rowsByDataset[datasetId] || { columns: [], rows: [] };
-    return twinkleTextResponse(body, payload);
-  }
-  return new Response(`unexpected twinkle tool ${toolName}`, { status: 500 });
-}
-
-function disableCrimeWeeklyFetch() {
-  vi.doMock("node:child_process", () => ({
-    spawnSync: () => ({
-      status: 1,
-      stdout: "",
-      stderr: "crime weekly disabled in fetch-live pipeline test",
-    }),
-  }));
-}
-
-function enableCrimeWeeklyFetch() {
-  vi.doMock("node:child_process", () => ({
-    spawnSync: () => ({
-      status: 0,
-      stdout: JSON.stringify({
-        period: "115年第28週",
-        periodEnd: new Date().toISOString(),
-        fileName: "crime-weekly.ods",
-        sourceUrl: "https://data.gov.tw/dataset/13166",
-        currentCounts: { 竊盜: 1 },
-        totalCurrent: 1,
-      }),
-      stderr: "",
-    }),
-  }));
-}
 
 function isNewsRssFetch(url: string) {
   if (url.includes("news.google.com")) return true;
@@ -489,10 +347,6 @@ function makeMockFetch(
     ncdrOk?: boolean;
     twnewsOk?: boolean;
     missingOk?: boolean;
-    policeRows?: Record<string, TwinkleRowsPayload>;
-    pccRows?: TwinkleRowsPayload;
-    judicialHits?: unknown[];
-    twinkleAll500?: boolean;
   } = {},
 ) {
   const unexpected: UnexpectedFetch[] = [];
@@ -502,22 +356,8 @@ function makeMockFetch(
   const ncdrOk = options.ncdrOk ?? true;
   const twnewsOk = options.twnewsOk ?? true;
   const missingOk = options.missingOk ?? true;
-  const twinkleRows = {
-    ...(options.policeRows || {}),
-    ...(options.pccRows ? { "pcc-tender": options.pccRows } : {}),
-  };
-  const mockFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+  const mockFetch = vi.fn(async (input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    if (url === process.env.TWINKLE_MCP_URL) {
-      const body = JSON.parse(String(init?.body || "{}"));
-      if (body.method === "initialize") return Response.json({ jsonrpc: "2.0", id: body.id, result: {} });
-      if (body.method === "notifications/initialized") return new Response("", { status: 202 });
-      if (body.method === "tools/call") {
-        if (options.twinkleAll500) return new Response("Twinkle failure", { status: 500 });
-        return twinkleToolResponse(body, { rowsByDataset: twinkleRows, judicialHits: options.judicialHits });
-      }
-      return new Response("unexpected twinkle method", { status: 500 });
-    }
     if (url === "https://eze8.npa.gov.tw/E82OpendataWebE/api/MissPerson/json/Male") {
       if (!missingOk) return new Response("missing male failure", { status: 500 });
       return Response.json([missingPersonFixture("男")]);
@@ -643,58 +483,8 @@ function makeCarryOverTwnews() {
   };
 }
 
-function makeCarryOverPolice() {
-  const now = new Date();
-  return {
-    id: "police-news-carry-over",
-    title: "警察機關新聞｜新北警方查獲詐欺機房",
-    region: "新北市",
-    lat: 25.0169826,
-    lng: 121.4627868,
-    timestamp: new Date(now.getTime() - 60 * 60 * 1000).toISOString(),
-    category: "治安",
-    scope: "domestic",
-    riskLevel: "medium",
-    summary: "預埋的上一輪 police 事件，用於驗證 last-good carry-over。",
-    source: {
-      name: "警政署 各警察機關新聞發布",
-      type: "gov-open-data",
-      datasetId: "7505",
-      recordRef: "carry-over-police-news",
-      url: "https://data.gov.tw/dataset/7505",
-      fetchedAt: new Date(now.getTime() - 55 * 60 * 1000).toISOString(),
-      query: "query_rows 7505 WHERE postDate LIKE '20%' ORDER BY postDate DESC",
-    },
-  };
-}
-
-function makeCarryOverPcc() {
-  const now = new Date();
-  return {
-    id: "pcc-carry-over",
-    title: "桃園市資安設備維護採購案",
-    region: "桃園市",
-    lat: 24.9937,
-    lng: 121.3009,
-    timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
-    category: "採購",
-    scope: "domestic",
-    riskLevel: "medium",
-    summary: "預埋的上一輪 pcc 採購事件，用於驗證 pcc-tender last-good carry-over。",
-    source: {
-      name: "政府電子採購網 決標公告",
-      type: "gov-open-data",
-      datasetId: "pcc-tender",
-      recordRef: "PCC-CARRY-OVER",
-      url: "https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pk=PCC-CARRY-OVER",
-      fetchedAt: new Date(now.getTime() - 115 * 60 * 1000).toISOString(),
-      query: "query_rows pcc-tender carry-over fixture",
-    },
-  };
-}
 
 afterEach(() => {
-  vi.doUnmock("node:child_process");
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   vi.resetModules();
@@ -732,7 +522,7 @@ describe("fetch-live pipeline integration (CWA)", () => {
       const provenance = readJson(join(dataDir, "provenance.json"));
       expect(provenance.pipeline.cwa.ok).toBe(true);
       expect(provenance.pipeline.cwaWarnings.ok).toBe(true);
-      for (const key of ["police", "twnews", "international", "mofa", "ncdr", "pcc"]) {
+      for (const key of ["police", "twnews", "international", "mofa", "ncdr"]) {
         expect(provenance.pipeline[key].skipped).toBe(true);
       }
 
@@ -959,216 +749,6 @@ describe("fetch-live pipeline integration (twnews)", () => {
   );
 });
 
-describe("fetch-live pipeline integration (police + missing)", () => {
-  it(
-    "merges missing-person API events into police domestic output with contract-safe provenance",
-    async () => {
-      const dataDir = setupEnv();
-      process.env.SOURCES = "police,missing";
-      disableCrimeWeeklyFetch();
-      const { unexpected } = makeMockFetch({ policeRows: policeNewsRows() });
-      const run = await importRun();
-
-      await expect(run()).resolves.toBeUndefined();
-
-      const domestic = readJson(join(dataDir, "domestic.json"));
-      const contract = validateEventContract(domestic);
-      expect(contract.invalid).toEqual([]);
-      expect(contract.valid).toHaveLength(domestic.length);
-      const missingEvents = domestic.filter((event: any) => event.source?.datasetId === "14420");
-      expect(missingEvents).toHaveLength(2);
-      expect(missingEvents.every((event: any) => event.category === "協尋")).toBe(true);
-      expect(missingEvents.every((event: any) => event.id.startsWith("missing-"))).toBe(true);
-
-      const provenance = readJson(join(dataDir, "provenance.json"));
-      expect(provenance.pipeline.police.ok).toBe(true);
-      expect(provenance.pipeline.police.policeNews).toMatchObject({ ok: true, count: 1 });
-      expect(provenance.pipeline.missing).toMatchObject({ ok: true, count: 2 });
-      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
-    },
-    60_000,
-  );
-
-  it(
-    "marks missing as failed when both missing-person endpoints return 500 without breaking other sources",
-    async () => {
-      const dataDir = setupEnv();
-      process.env.SOURCES = "cwa,police,missing";
-      disableCrimeWeeklyFetch();
-      const { unexpected } = makeMockFetch({ policeRows: policeNewsRows(), missingOk: false });
-      const run = await importRun();
-
-      await expect(run()).resolves.toBeUndefined();
-
-      const provenance = readJson(join(dataDir, "provenance.json"));
-      expect(provenance.pipeline.missing.ok).toBe(false);
-      expect(provenance.pipeline.missing.error).toContain("HTTP 500");
-      expect(provenance.pipeline.cwa.ok).toBe(true);
-      expect(provenance.pipeline.cwaWarnings.ok).toBe(true);
-      expect(provenance.pipeline.police.ok).toBe(true);
-
-      const domestic = readJson(join(dataDir, "domestic.json"));
-      expect(domestic.some((event: any) => event.source?.datasetId === "E-A0015-001")).toBe(true);
-      expect(domestic.some((event: any) => event.source?.datasetId === "14420")).toBe(false);
-      expect(validateEventContract(domestic).invalid).toEqual([]);
-      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
-    },
-    60_000,
-  );
-
-  it(
-    "writes a minimal police Tier1 event to domestic output and reports police ok",
-    async () => {
-      const dataDir = setupEnv();
-      process.env.SOURCES = "police";
-      disableCrimeWeeklyFetch();
-      const { unexpected } = makeMockFetch({ policeRows: policeNewsRows() });
-      const run = await importRun();
-
-      await expect(run()).resolves.toBeUndefined();
-
-      const domestic = readJson(join(dataDir, "domestic.json"));
-      const contract = validateEventContract(domestic);
-      expect(contract.invalid).toEqual([]);
-      expect(contract.valid).toHaveLength(domestic.length);
-      const policeEvent = domestic.find((event: any) => event.id === "police-news-PN-001");
-      expect(policeEvent).toMatchObject({
-        category: "治安",
-        scope: "domestic",
-        source: { datasetId: "7505", recordRef: "PN-001" },
-      });
-
-      const provenance = readJson(join(dataDir, "provenance.json"));
-      expect(provenance.pipeline.police.ok).toBe(true);
-      expect(provenance.pipeline.police.policeNews).toMatchObject({ ok: true, count: 1 });
-      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
-    },
-    60_000,
-  );
-
-  it(
-    "counts fresh police news instead of unrelated structured police rows",
-    async () => {
-      const dataDir = setupEnv();
-      process.env.SOURCES = "police,twnews";
-      disableCrimeWeeklyFetch();
-      const { unexpected } = makeMockFetch({ policeRows: policeNewsRows() });
-      const run = await importRun();
-
-      await expect(run()).resolves.toBeUndefined();
-
-      const history = readJson(join(dataDir, "police-hourly-history.json"));
-      const datasetIds = new Set(history.runs[0].newRecords.map((record: any) => record.datasetId));
-      expect(datasetIds).toEqual(new Set(["7505", "tw-news"]));
-
-      const provenance = readJson(join(dataDir, "provenance.json"));
-      expect(provenance.pipeline.police.newPoliceRelatedCount).toBeGreaterThan(1);
-      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
-    },
-    60_000,
-  );
-
-  it(
-    "does not let the direct crime weekly source hide a systemic MCP outage",
-    async () => {
-      const dataDir = setupEnv();
-      process.env.SOURCES = "police";
-      const carryOver = makeCarryOverPolice();
-      writeFileSync(join(dataDir, "domestic.json"), JSON.stringify([carryOver], null, 2), "utf8");
-      enableCrimeWeeklyFetch();
-      const { unexpected } = makeMockFetch({ twinkleAll500: true });
-      const run = await importRun();
-
-      await expect(run()).resolves.toBeUndefined();
-
-      const provenance = readJson(join(dataDir, "provenance.json"));
-      expect(provenance.pipeline.police.ok).toBe(false);
-      const domestic = readJson(join(dataDir, "domestic.json"));
-      expect(domestic.some((event: any) => event.id === carryOver.id)).toBe(true);
-      expect(domestic.find((event: any) => event.id === carryOver.id)?.source.datasetId).toBe("7505");
-      expect(validateEventContract(domestic).invalid).toEqual([]);
-      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
-    },
-    60_000,
-  );
-});
-
-describe("fetch-live pipeline integration (pcc + judicial MCP)", () => {
-  it(
-    "writes pcc tender events from Twinkle query_rows into domestic output",
-    async () => {
-      const dataDir = setupEnv();
-      process.env.SOURCES = "cwa,pcc";
-      const { unexpected } = makeMockFetch({ pccRows: pccTenderRows() });
-      const run = await importRun();
-
-      await expect(run()).resolves.toBeUndefined();
-
-      const provenance = readJson(join(dataDir, "provenance.json"));
-      expect(provenance.pipeline.pcc).toMatchObject({ ok: true, count: 2 });
-      const domestic = readJson(join(dataDir, "domestic.json"));
-      const contract = validateEventContract(domestic);
-      expect(contract.invalid).toEqual([]);
-      expect(contract.valid).toHaveLength(domestic.length);
-      const pccEvents = domestic.filter(
-        (event: any) => event.source?.datasetId === "pcc-tender" && event.category === "採購" && !event.id.startsWith("pcc-police-"),
-      );
-      expect(pccEvents).toHaveLength(2);
-      expect(pccEvents.map((event: any) => event.source.recordRef).sort()).toEqual(["PCC-TEST-001", "PCC-TEST-002"]);
-      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
-    },
-    60_000,
-  );
-
-  it(
-    "merges judicial search_judicial hits after police succeeds",
-    async () => {
-      const dataDir = setupEnv();
-      process.env.SOURCES = "police,judicial";
-      disableCrimeWeeklyFetch();
-      const { unexpected } = makeMockFetch({ policeRows: policeNewsRows(), judicialHits: judicialHits() });
-      const run = await importRun();
-
-      await expect(run()).resolves.toBeUndefined();
-
-      const provenance = readJson(join(dataDir, "provenance.json"));
-      expect(provenance.pipeline.police.ok).toBe(true);
-      expect(provenance.pipeline.judicial).toMatchObject({ ok: true, count: 2 });
-      const domestic = readJson(join(dataDir, "domestic.json"));
-      const contract = validateEventContract(domestic);
-      expect(contract.invalid).toEqual([]);
-      expect(contract.valid).toHaveLength(domestic.length);
-      const judicialEvents = domestic.filter((event: any) => event.source?.datasetId === "judicial");
-      expect(judicialEvents).toHaveLength(2);
-      expect(judicialEvents.some((event: any) => event.id.includes("TYDM") && event.category === "司法判決")).toBe(true);
-      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
-    },
-    60_000,
-  );
-
-  it(
-    "carries over previous pcc tender events when Twinkle query_rows returns 500",
-    async () => {
-      const dataDir = setupEnv();
-      process.env.SOURCES = "pcc";
-      const carryOver = makeCarryOverPcc();
-      writeFileSync(join(dataDir, "domestic.json"), JSON.stringify([carryOver], null, 2), "utf8");
-      const { unexpected } = makeMockFetch({ twinkleAll500: true });
-      const run = await importRun();
-
-      await expect(run()).resolves.toBeUndefined();
-
-      const provenance = readJson(join(dataDir, "provenance.json"));
-      expect(provenance.pipeline.pcc.ok).toBe(false);
-      const domestic = readJson(join(dataDir, "domestic.json"));
-      expect(domestic.some((event: any) => event.id === carryOver.id)).toBe(true);
-      expect(domestic.find((event: any) => event.id === carryOver.id)?.source.datasetId).toBe("pcc-tender");
-      expect(validateEventContract(domestic).invalid).toEqual([]);
-      expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
-    },
-    90_000,
-  );
-});
 
 describe("fetch-live pipeline — international 全滅語義（靜默全敗家族修正）", () => {
   it(

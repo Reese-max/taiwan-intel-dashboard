@@ -43,7 +43,6 @@ app.innerHTML = `
       <button type="button" data-scope="domestic" class="active" role="tab" aria-selected="true">${t.tabDomestic}</button>
       <button type="button" data-scope="international" role="tab" aria-selected="false">${t.tabInternational}</button>
     </nav>
-    <a class="catalog-link" href="./query.html">開放資料查詢</a>
     <button id="compact-layout-toggle" class="layout-toggle" type="button" aria-pressed="false" aria-label="切換簡潔版面">
       收合側欄
     </button>

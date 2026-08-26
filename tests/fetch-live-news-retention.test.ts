@@ -86,9 +86,10 @@ describe("twnews carry-over retention", () => {
     expect(result.map((e: { id: string }) => e.id)).toEqual(["enforcement"]);
   });
 
-  it("媒體 tw-news 不會因反詐分類混入官方警政 carry-over", () => {
+  it("媒體與已移除的舊資料集不會混入直接警政 carry-over", () => {
     expect(isPoliceDomesticEvent({ category: "反詐", source: { datasetId: "tw-news", query: "警政新聞" } })).toBe(false);
-    expect(isPoliceDomesticEvent({ category: "反詐", source: { datasetId: "176455" } })).toBe(true);
+    expect(isPoliceDomesticEvent({ category: "反詐", source: { datasetId: "176455" } })).toBe(false);
+    expect(isPoliceDomesticEvent({ category: "治安", source: { datasetId: "13166" } })).toBe(true);
   });
 
   it("依事件來源套 advisory 長保留窗，但一般新聞維持短窗", () => {

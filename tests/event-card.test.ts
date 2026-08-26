@@ -16,11 +16,11 @@ describe("eventCard", () => {
       source: {
         name: "165反詐騙 涉詐網站停解析",
         type: "gov-open-data",
-        datasetId: "176455",
+        datasetId: "13166",
         recordRef: "row-9",
-        url: "https://data.gov.tw/dataset/176455",
+        url: "https://data.gov.tw/dataset/13166",
         fetchedAt: "2026-06-20T23:00:00+08:00",
-        query: "query_rows 176455",
+        query: "data.gov.tw 13166 ZIP",
       },
     };
 
@@ -37,7 +37,7 @@ describe("eventCard", () => {
     expect(html).toContain("資料時間");
     expect(html).toContain("擷取時間");
     expect(html).toContain("開放資料");
-    expect(html).toContain("<b>資料集</b>176455");
+    expect(html).toContain("<b>資料集</b>13166");
     expect(html).toContain("<b>原始編號</b>row-9");
     // 標籤不應重複（修正前曾誤輸出「資料集 資料集」「原始編號 原始編號」）
     expect(html).not.toContain("資料集 資料集");

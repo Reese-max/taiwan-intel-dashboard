@@ -57,7 +57,7 @@ describe("唯讀復原前提演練", () => {
     const result = await checkEnvSecrets({ secretNames: REQUIRED_ENV_VARS });
 
     expect(result.status).toBe("pass");
-    expect(REQUIRED_ENV_VARS).toHaveLength(3);
+    expect(REQUIRED_ENV_VARS).toHaveLength(2);
     expect(REQUIRED_ENV_VARS).not.toContain("CLOUDFLARE_ACCOUNT_ID");
   });
 

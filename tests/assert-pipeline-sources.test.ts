@@ -81,23 +81,7 @@ describe("assertRequiredPipelineSources", () => {
     ).toThrow("Required pipeline source international failed: 缺少 API key");
   });
 
-  it("rejects an MCP auth failure hidden under an otherwise-ok police source", () => {
-    expect(() =>
-      assertRequiredPipelineSources(
-        {
-          police: {
-            ok: true,
-            count: 8,
-            crimeWeekly: { ok: true, count: 8 },
-            traffic: { ok: false, error: "MCP tools/call HTTP 401: Unauthorized" },
-          },
-        },
-        ["police"],
-      ),
-    ).toThrow("Required pipeline source police has an authentication failure at traffic");
-  });
-
-  it("does not mistake an optional RSS HTTP 403 for an MCP credential failure", () => {
+  it("allows an optional RSS feed failure when the aggregate source succeeded", () => {
     expect(() =>
       assertRequiredPipelineSources(
         {

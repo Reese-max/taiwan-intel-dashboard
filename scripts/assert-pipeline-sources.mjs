@@ -3,7 +3,6 @@ import { fileURLToPath } from "node:url";
 import { selectInternationalFeeds } from "./lib/international-feeds.mjs";
 
 const CWA_SOURCES = new Set(["cwa", "cwaWarnings"]);
-const AUTH_FAILURE = /(?:\b(?:401|403)\b|unauthori[sz]ed|forbidden)/i;
 const POLICE_CATEGORIES = new Set(["治安", "反詐", "協尋"]);
 
 export const INTERNATIONAL_POST_FETCH_MINIMUMS = Object.freeze({
@@ -23,20 +22,6 @@ function parseAllowStaleCwaValue(value) {
   return ["1", "true", "yes", "on", "y", "允許"].includes(String(value ?? "").trim().toLowerCase());
 }
 
-function findAuthFailure(value, path = []) {
-  if (!value || typeof value !== "object") return null;
-  const error = String(value.error || "");
-  if (value.ok === false && /\bMCP\b/i.test(error) && AUTH_FAILURE.test(error)) {
-    return { path: path.join(".") || "(root)", error: error || "authentication failed" };
-  }
-  for (const [key, child] of Object.entries(value)) {
-    if (!child || typeof child !== "object") continue;
-    const found = findAuthFailure(child, [...path, key]);
-    if (found) return found;
-  }
-  return null;
-}
-
 export function assertRequiredPipelineSources(pipeline, requiredSources, options = {}) {
   const allowStaleCwa = options.allowStaleCwa === true;
 
@@ -44,13 +29,6 @@ export function assertRequiredPipelineSources(pipeline, requiredSources, options
     const status = pipeline?.[name];
     if (!status) throw new Error(`Required pipeline source ${name} is missing`);
     if (status.skipped) throw new Error(`Required pipeline source ${name} was skipped`);
-
-    const authFailure = findAuthFailure(status);
-    if (authFailure) {
-      throw new Error(
-        `Required pipeline source ${name} has an authentication failure at ${authFailure.path}: ${authFailure.error}`,
-      );
-    }
 
     if (allowStaleCwa && CWA_SOURCES.has(name)) {
       continue;

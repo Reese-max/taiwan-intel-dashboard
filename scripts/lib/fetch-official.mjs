@@ -3,7 +3,11 @@
 import { createHash } from "node:crypto";
 import { countyCoordFromAddr } from "./coords.mjs";
 import { detectCounty } from "./news-bulk.mjs";
-import { queryTwinkleRows, rowVal } from "./twinkle-query.mjs";
+
+function rowVal(row, columns, name) {
+  const index = columns.indexOf(name);
+  return index >= 0 ? row[index] : undefined;
+}
 
 const MND_BASE = "https://air.mnd.gov.tw";
 const MND_LIST_URL = `${MND_BASE}/TW/News/News_List.aspx?CID=213`;
@@ -48,7 +52,7 @@ export const PARKING_SOURCE_PROFILES = {
     name: "新竹市即時停車場剩餘車位",
     datasetId: "129136",
     region: "新竹市",
-    query: "twinkle-hub query_rows dataset 129136（FREEQUANTITY/TOTALQUANTITY）",
+    query: "data.gov.tw dataset 129136（FREEQUANTITY/TOTALQUANTITY）",
     license: "政府資料開放授權條款-第1版 — 新竹市政府",
     cadence: "daily",
     maxAgeHours: 96,
@@ -62,7 +66,7 @@ export const PARKING_SOURCE_PROFILES = {
     name: "桃園市路外停車資訊",
     datasetId: "25940",
     region: "桃園市",
-    query: "twinkle-hub query_rows dataset 25940（surplusSpace/totalSpace）",
+    query: "data.gov.tw dataset 25940（surplusSpace/totalSpace）",
     license: "政府資料開放授權條款-第1版 — 桃園市政府",
     cadence: "daily",
     maxAgeHours: 72,
@@ -304,6 +308,17 @@ export const OFFICIAL_SOURCE_DATASET_IDS = Object.fromEntries(
     key === "cdc" ? [meta.datasetId, CDC_WEEKLY_DATASET_ID] : [meta.datasetId],
   ]),
 );
+
+export const DIRECT_OFFICIAL_SOURCE_KEYS = Object.freeze([
+  "mnd",
+  "cdc",
+  "tfda",
+  "cga",
+  "twcert",
+  "taipower",
+  "wra",
+  "wraRiver",
+]);
 
 function stableId(prefix, value) {
   return `${prefix}-${createHash("sha1").update(String(value)).digest("hex").slice(0, 16)}`;
@@ -1563,164 +1578,4 @@ export function mapLaborStatisticsEvent(payload, { fetchedAt = new Date().toISOS
       retentionPolicy: "reference",
     },
   };
-}
-
-async function fetchParkingSource(profile, { url, token } = {}) {
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: profile.datasetId,
-    limit: 500,
-  });
-  const events = mapParkingSummaryEvent(rowsAsObjects(payload), profile);
-  if (!events.length) throw new Error(`${profile.name} 沒有有效停車容量資料`);
-  return events;
-}
-
-export async function fetchMoenvAirQuality({ url, token, fetchImpl = fetch } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: MOENV_AIR_DATASET_ID,
-    where: "itemengname IN ('PM2.5','PM10','O3','NO2','SO2','CO')",
-    order_by: "monitordate DESC",
-    limit: 600,
-  });
-  let stations = [];
-  try {
-    const stationPayload = await fetchChecked(MOENV_AIR_STATION_URL, {
-      fetchImpl,
-      json: true,
-      timeoutMs: 60000,
-      attempts: 2,
-    });
-    stations = stationPayload?.features || [];
-  } catch (error) {
-    console.warn(`環境部空品測站位置圖失敗，改用全國／縣市層級：${error.message}`);
-  }
-  const events = mapMoenvAirQualityEvents(payload, stations, { fetchedAt });
-  if (!events.length) throw new Error("環境部空品監測資料沒有有效測站值");
-  return events;
-}
-
-export async function fetchParkingHsinchu({ url, token } = {}) {
-  return fetchParkingSource(PARKING_SOURCE_PROFILES.hsinchu, { url, token });
-}
-
-export async function fetchParkingTaoyuan({ url, token } = {}) {
-  return fetchParkingSource(PARKING_SOURCE_PROFILES.taoyuan, { url, token });
-}
-
-export async function fetchEconomicIndicators({ url, token } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: ECONOMIC_DATASET_ID,
-    order_by: '"日期（月別）" DESC',
-    limit: 24,
-  });
-  return [mapEconomicIndicatorEvent(payload, { fetchedAt })];
-}
-
-export async function fetchAgriculturePrices({ url, token } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: AGRICULTURE_DATASET_ID,
-    order_by: "YEAR DESC, MONTH DESC, PERIOD DESC",
-    limit: 500,
-  });
-  return [mapAgriculturePriceEvent(payload, { fetchedAt })];
-}
-
-export async function fetchHealthcareFacilities({ url, token } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: HEALTHCARE_DATASET_ID,
-    columns: ["COUNT(*) AS n"],
-    limit: 1,
-  });
-  return [mapHealthcareFacilityEvent(payload, { fetchedAt })];
-}
-
-export async function fetchFireStatistics({ url, token } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: FIRE_DATASET_ID,
-    limit: 100,
-  });
-  return [mapFireStatisticsEvent(payload, { fetchedAt })];
-}
-
-export async function fetchLegislatureBills({ url, token } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: LEGISLATURE_DATASET_ID,
-    limit: 100,
-  });
-  return [mapLegislatureBillsEvent(payload, { fetchedAt })];
-}
-
-export async function fetchTourismSnapshot({ url, token } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: TOURISM_DATASET_ID,
-    limit: 10,
-  });
-  return [mapTourismSnapshotEvent(payload, { fetchedAt })];
-}
-
-export async function fetchSocialPopulation({ url, token } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: SOCIAL_POPULATION_DATASET_ID,
-    limit: 2500,
-  });
-  return [mapSocialPopulationEvent(payload, { fetchedAt })];
-}
-
-export async function fetchEducationSnapshot({ url, token } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: EDUCATION_DATASET_ID,
-    limit: 500,
-  });
-  return [mapEducationSnapshotEvent(payload, { fetchedAt })];
-}
-
-export async function fetchFinanceDerivatives({ url, token } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: FINANCE_DATASET_ID,
-    limit: 100,
-  });
-  return [mapFinanceDerivativesEvent(payload, { fetchedAt })];
-}
-
-export async function fetchLaborStatistics({ url, token } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const payload = await queryTwinkleRows({
-    url,
-    token,
-    dataset_id: LABOR_DATASET_ID,
-    limit: 100,
-  });
-  return [mapLaborStatisticsEvent(payload, { fetchedAt })];
 }
