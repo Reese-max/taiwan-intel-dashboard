@@ -229,11 +229,10 @@ export class MapView {
     this.lib = lib;
     this.layer = lib.layerGroup();
     this.map = lib.map(el, { preferCanvas: true }).setView([23.7, 121], 7);
-    // 深色底圖（CartoDB dark_matter，免金鑰）以融入深色主題，風險色標點更突出。
+    // OpenStreetMap 官方標準圖磚不需 API key；瀏覽器快取與 Referer 行為符合其 tile policy。
     lib
-      .tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: "© OpenStreetMap © CARTO",
-        subdomains: "abcd",
+      .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
       })
       .addTo(this.map);

@@ -57,13 +57,14 @@ describe("唯讀復原前提演練", () => {
     const result = await checkEnvSecrets({ secretNames: REQUIRED_ENV_VARS });
 
     expect(result.status).toBe("pass");
-    expect(REQUIRED_ENV_VARS).toHaveLength(3);
+    expect(REQUIRED_ENV_VARS).toEqual(["CLOUDFLARE_API_TOKEN"]);
     expect(REQUIRED_ENV_VARS).not.toContain("CLOUDFLARE_ACCOUNT_ID");
+    expect(REQUIRED_ENV_VARS).not.toContain("DEPLOY_BASE_URL");
   });
 
   it("缺少 GitHub Actions secret 時失敗並指出名稱", async () => {
-    const missing = REQUIRED_ENV_VARS[1];
-    const result = await checkEnvSecrets({ secretNames: REQUIRED_ENV_VARS.filter((name) => name !== missing) });
+    const missing = REQUIRED_ENV_VARS[0];
+    const result = await checkEnvSecrets({ secretNames: [] });
 
     expect(result.status).toBe("fail");
     expect(result.detail).toContain(missing);
@@ -80,11 +81,28 @@ describe("唯讀復原前提演練", () => {
     const result = await checkCloudflarePages({
       rootDir: "fixture",
       exists: () => true,
-      readFile: () => 'project-name=taiwan-intel-dashboard\nbranch=main\naccountId: ""',
+      readFile: () => 'project-name=taiwan-intel-dashboard\nbranch=production\naccountId: ""',
     });
 
     expect(result.status).toBe("fail");
     expect(result.metadata.hasAccountId).toBe(false);
+  });
+
+  it("Cloudflare workflow 必須部署 production 分支", async () => {
+    const production = await checkCloudflarePages({
+      rootDir: "fixture",
+      exists: () => true,
+      readFile: () => 'project-name=taiwan-intel-dashboard\nbranch=production\naccountId: "account"',
+    });
+    const staleMain = await checkCloudflarePages({
+      rootDir: "fixture",
+      exists: () => true,
+      readFile: () => 'project-name=taiwan-intel-dashboard\nbranch=main\naccountId: "account"',
+    });
+
+    expect(production.status).toBe("pass");
+    expect(staleMain.status).toBe("fail");
+    expect(staleMain.metadata.hasBranch).toBe(false);
   });
 
   it("無端點證據時標為選用 skip，且不使整體 ok 失敗", async () => {
