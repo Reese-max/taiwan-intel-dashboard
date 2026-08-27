@@ -266,7 +266,7 @@ export async function checkCloudflarePages({ rootDir = REPO_ROOT, exists = exist
   const accountId = content.match(/^\s*accountId\s*:\s*["']?([^"'\s#]+)["']?\s*$/m)?.[1] || "";
   const metadata = {
     hasProject: content.includes("project-name=taiwan-intel-dashboard"),
-    hasBranch: content.includes("branch=production"),
+    hasBranch: content.includes("branch=main"),
     hasAccountId: Boolean(accountId && !accountId.includes("${")),
   };
   const ok = Object.values(metadata).every(Boolean);

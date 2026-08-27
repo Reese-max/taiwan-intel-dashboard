@@ -42,7 +42,7 @@ function createHarness() {
       relativePath === "package.json"
         ? JSON.stringify(PACKAGE_MANIFEST)
         : relativePath.endsWith("update-and-deploy.yml")
-        ? 'name: test\nproject: "project-name=taiwan-intel-dashboard"\nbranch: "branch=production"\naccountId: "test-account"'
+        ? 'name: test\nproject: "project-name=taiwan-intel-dashboard"\nbranch: "branch=main"\naccountId: "test-account"'
         : "name: test",
     ]),
   );
