@@ -8,44 +8,21 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { fetchPcc } from "./lib/fetch-pcc.mjs";
 import { fetchCwa, fetchCwaWarnings } from "./lib/fetch-cwa.mjs";
 import { fetchMofaTravelWarnings } from "./lib/fetch-mofa.mjs";
 import { fetchNcdrAlerts, NCDR_DATASET_ID } from "./lib/fetch-ncdr.mjs";
 import {
-  fetchCgaMaritime,
-  fetchCdcInfluenza,
-  fetchEducationSnapshot,
-  fetchEconomicIndicators,
-  fetchAgriculturePrices,
-  fetchFinanceDerivatives,
-  fetchFireStatistics,
-  fetchHealthcareFacilities,
-  fetchLegislatureBills,
-  fetchLaborStatistics,
-  fetchMoenvAirQuality,
-  fetchMndActivity,
-  fetchParkingHsinchu,
-  fetchParkingTaoyuan,
-  fetchSocialPopulation,
-  fetchTaipowerSupply,
-  fetchTfdaNoncompliant,
-  fetchTourismSnapshot,
-  fetchTwcertVulnerabilities,
-  fetchWraReservoirLevels,
-  fetchWraRiverLevels,
   OFFICIAL_SOURCE_META,
   OFFICIAL_SOURCE_DATASET_IDS,
 } from "./lib/fetch-official.mjs";
-import { fetchJudicialBulk } from "./lib/fetch-judicial.mjs";
+import { DIRECT_OFFICIAL_SOURCE_KEYS, fetchDirectOfficialSources } from "./lib/direct-official-sources.mjs";
+import { createSourcePlan } from "./lib/source-plan.mjs";
 import { fetchMissing } from "./lib/fetch-missing.mjs";
 import {
   fetchPolice,
-  isPoliceDomesticEvent,
   POLICE_HOURLY_MINIMUM,
   POLICE_NEW_PER_HOUR_FALLBACK,
   POLICE_TODAY_MINIMUM,
-  POLICE_TAIPEI_IDS,
 } from "./lib/fetch-police.mjs";
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
 import { fetchGdelt } from "./lib/fetch-gdelt.mjs";
@@ -107,7 +84,6 @@ function loadDotEnv() {
 }
 
 const byTimeDesc = (a, b) => new Date(b.timestamp) - new Date(a.timestamp);
-const todayTW = () => new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
 const DAY_MS = 864e5;
 
 const TW_NEWS_ADVISORY_LABELS = new Set(TW_NEWS_FEEDS.filter((feed) => feed.advisory).map((feed) => feed.label));
@@ -234,29 +210,16 @@ function readJson(name, fallback) {
 
 export async function run() {
   loadDotEnv();
-  const today = todayTW();
   const nowMs = Date.now();
   const nowIso = new Date(nowMs).toISOString();
   const status = {};
-  // 可用 SOURCES 環境變數選擇本次抓取的來源（n8n 分頻用），預設全部。
-  // 未選的來源會沿用上一版快照（carry-over）。
-  const sourcesArg = process.argv.find((a) => a.startsWith("--sources="))?.slice("--sources=".length);
-  const SOURCES = (sourcesArg || process.env.SOURCES || "cwa,pcc,police,rss,gdelt,mofa,judicial,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,legislature,tourismStat,socialPopulation,education,financeDerivatives,laborStats").split(",").map((s) => s.trim());
-  const want = (s) => SOURCES.includes(s);
-  // 本機既有工具使用 TWINKLE_HUB_TOKEN；CI 使用 TWINKLE_MCP_TOKEN。接受兩者可避免同一服務憑證漂移。
-  const twinkleToken = process.env.TWINKLE_HUB_TOKEN || process.env.TWINKLE_MCP_TOKEN;
-  // 標明 token 來源：本地 User env 的 TWINKLE_HUB_TOKEN 會蓋過 .env，曾造成「本地好好的、CI 全滅」假象
-  console.log(`TWINKLE token 來源：${process.env.TWINKLE_HUB_TOKEN ? "TWINKLE_HUB_TOKEN" : "TWINKLE_MCP_TOKEN"}`);
-  // EXCLUSIVE：只保留本次選取的來源；未選來源不沿用舊快照（一次性窄抓用）。
-  // 預設 off，故 n8n 分頻 carry-over 行為不變。
-  const EXCLUSIVE = process.argv.includes("--exclusive") || process.env.EXCLUSIVE === "1";
-  const dropStale = (st) => EXCLUSIVE && st?.skipped;
+  const { sourceKeys, exclusive, wants: want, dropStale } = createSourcePlan();
   const RETENTION_DAYS = Number(process.env.NEWS_RETENTION_DAYS) || 5;
   const ADVISORY_RETENTION_DAYS = Number(process.env.NEWS_ADVISORY_RETENTION_DAYS) || 30;
   const TEMPORAL_HISTORICAL_DAYS = finiteRetentionDays(process.env.TEMPORAL_HISTORICAL_DAYS, 180);
-  console.log(`本次來源：${SOURCES.join(", ")}${EXCLUSIVE ? "（EXCLUSIVE：未選來源不沿用舊快照）" : ""}`);
+  console.log(`本次來源：${sourceKeys.join(", ")}${exclusive ? "（EXCLUSIVE：未選來源不沿用舊快照）" : ""}`);
 
-  // --- 國內：地震 + 天氣警特報 + 採購（互不影響）---
+  // --- 國內：地震 + 天氣警特報（互不影響）---
   let quakes = [];
   let warnings = [];
   if (want("cwa")) {
@@ -281,80 +244,30 @@ export async function run() {
     status.cwaWarnings = { skipped: true };
   }
 
-  let tenders = [];
-  if (want("pcc")) {
-    try {
-      tenders = await fetchPcc({
-        url: process.env.TWINKLE_MCP_URL,
-        token: twinkleToken,
-        today,
-        limit: 15,
-      });
-      status.pcc = { ok: true, count: tenders.length };
-      console.log(`採購 pcc-tender：${tenders.length} 筆`);
-    } catch (e) {
-      status.pcc = { ok: false, error: e.message };
-      console.error(`採購 pcc-tender 失敗：${e.message}`);
-    }
-  } else status.pcc = { skipped: true };
-
   let policeResult = { events: [], substatus: {} };
   if (want("police")) {
     try {
-      policeResult = await fetchPolice({
-        url: process.env.TWINKLE_MCP_URL,
-        token: twinkleToken,
-        today,
-      });
+      policeResult = await fetchPolice();
       status.police = { ok: true, count: policeResult.events.length, ...policeResult.substatus };
-      console.log(
-        `警政：${policeResult.events.length} 筆（Tier1 事件 + Tier2 測速熱點/週統計/打詐儀表板）`,
-      );
+      console.log(`警政署犯罪週報：${policeResult.events.length} 筆`);
     } catch (e) {
       status.police = { ok: false, error: e.message };
       console.error(`警政失敗：${e.message}`);
     }
   } else status.police = { skipped: true };
 
-  // 司法院裁判書：高量真實刑案判決，併入警政事件 → 進每小時 ledger（達成新進量）。
-  if (status.police?.ok && want("judicial")) {
-    try {
-      const now = new Date();
-      const runSeed = now.getUTCHours() + now.getUTCDate() * 24;
-      const judicial = await fetchJudicialBulk({
-        url: process.env.TWINKLE_MCP_URL,
-        token: twinkleToken,
-        perQuery: 30,
-        queryCount: 12,
-        runSeed,
-      });
-      if (judicial.length) {
-        policeResult.events = [...policeResult.events, ...judicial];
-        status.police.count = policeResult.events.length;
-        status.judicial = { ok: true, count: judicial.length };
-        console.log(`司法院裁判書：${judicial.length} 筆`);
-      } else status.judicial = { ok: true, count: 0 };
-    } catch (e) {
-      status.judicial = { ok: false, error: e.message };
-      console.error(`司法院裁判書失敗：${e.message}`);
-    }
-  }
-
   // 失蹤人口查尋：警政署 live 協尋名單，併入警政事件 → 進每小時 ledger（真實新進、無座標只進列表）。
-  if (status.police?.ok && want("missing")) {
+  let missing = [];
+  if (want("missing")) {
     try {
-      const missing = await fetchMissing({});
-      if (missing.length) {
-        policeResult.events = [...policeResult.events, ...missing];
-        status.police.count = policeResult.events.length;
-        status.missing = { ok: true, count: missing.length };
-        console.log(`失蹤人口查尋：${missing.length} 筆`);
-      } else status.missing = { ok: true, count: 0 };
+      missing = await fetchMissing({});
+      status.missing = { ok: true, count: missing.length };
+      console.log(`失蹤人口查尋：${missing.length} 筆`);
     } catch (e) {
       status.missing = { ok: false, error: e.message };
       console.error(`失蹤人口查尋失敗：${e.message}`);
     }
-  }
+  } else status.missing = { skipped: true };
 
   // --- 國際：RSS → NVIDIA 正規化 ---
   let intl = [];
@@ -486,75 +399,13 @@ export async function run() {
     }
   } else status.ncdr = { skipped: true };
 
-  // --- 官方來源：第一波 + 海巡／資安／能源／水情（互相獨立、fail-soft）---
-  const officialFresh = Object.fromEntries(Object.keys(OFFICIAL_SOURCE_META).map((key) => [key, []]));
-  const officialFetchers = {
-    mnd: () => fetchMndActivity({}),
-    cdc: () => fetchCdcInfluenza({}),
-    tfda: () => fetchTfdaNoncompliant({}),
-    cga: () => fetchCgaMaritime({}),
-    twcert: () => fetchTwcertVulnerabilities({}),
-    taipower: () => fetchTaipowerSupply({}),
-    wra: () => fetchWraReservoirLevels({}),
-    wraRiver: () => fetchWraRiverLevels({}),
-    moenvAir: () => fetchMoenvAirQuality({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    parkingHsinchu: () => fetchParkingHsinchu({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    parkingTaoyuan: () => fetchParkingTaoyuan({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    economy: () => fetchEconomicIndicators({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    agriPrices: () => fetchAgriculturePrices({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    healthFacilities: () => fetchHealthcareFacilities({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    fireStats: () => fetchFireStatistics({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    legislature: () => fetchLegislatureBills({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    tourismStat: () => fetchTourismSnapshot({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    socialPopulation: () => fetchSocialPopulation({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    education: () => fetchEducationSnapshot({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    financeDerivatives: () => fetchFinanceDerivatives({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-    laborStats: () => fetchLaborStatistics({ url: process.env.TWINKLE_MCP_URL, token: twinkleToken }),
-  };
-  const officialLabels = {
-    mnd: "MND 臺海動態",
-    cdc: "CDC 官方監測",
-    tfda: "TFDA 邊境查驗",
-    cga: "海巡署海域事件",
-    twcert: "TWCERT/CC 漏洞公告",
-    taipower: "台電系統供需",
-    wra: "水利署水庫水情",
-    wraRiver: "水利署即時河川水位",
-    moenvAir: "環境部空氣品質",
-    parkingHsinchu: "新竹市停車供給",
-    parkingTaoyuan: "桃園市停車供給",
-    economy: "主計總處經濟指標",
-    agriPrices: "農業部農產品價格",
-    healthFacilities: "健保署居家醫療院所",
-    fireStats: "臺北市消防統計",
-    legislature: "立法院議案進度",
-    tourismStat: "觀光署來臺旅客概況",
-    socialPopulation: "臺中市人口結構",
-    education: "新北市教育概況",
-    financeDerivatives: "期貨三大法人統計",
-    laborStats: "新北市勞動統計",
-  };
-  await Promise.all(Object.keys(officialFetchers).map(async (key) => {
-    if (!want(key)) {
-      status[key] = { skipped: true };
-      return;
-    }
-    try {
-      officialFresh[key] = await officialFetchers[key]();
-      const source = officialFresh[key][0]?.source;
-      status[key] = {
-        ok: true,
-        configured: true,
-        count: officialFresh[key].length,
-        ...(source?.datasetId ? { datasetId: source.datasetId } : {}),
-        ...(source?.fallbackFrom ? { fallbackFrom: source.fallbackFrom } : {}),
-      };
-      console.log(`${officialLabels[key]}：${officialFresh[key].length} 筆${source?.fallbackFrom ? "（官方週報 fallback）" : ""}`);
-    } catch (e) {
-      status[key] = { ok: false, configured: true, error: e.message };
-      console.error(`${officialLabels[key]}失敗：${e.message}`);
-    }
-  }));
+  // --- 官方來源 registry：互相獨立、平行執行、fail-soft ---
+  const {
+    freshByKey: officialFresh,
+    statusByKey: officialStatus,
+    labelsByKey: officialLabels,
+  } = await fetchDirectOfficialSources({ wants: want });
+  Object.assign(status, officialStatus);
 
   // --- 台灣警政新聞：全量收錄（解耦）---
   //  抓取層 perFeed 拉滿、全量去重 → LLM 精修最近一批（地理定位上地球儀）＋其餘輕量收錄（免 LLM）。
@@ -659,25 +510,21 @@ export async function run() {
   const warningEvents = carryOver({ status: status.cwaWarnings, fresh: warnings, dropStale, oldEvents: oldDomestic, match: "W-C0033-001" });
   const ncdrEvents = carryOver({ status: status.ncdr, fresh: ncdr, dropStale, oldEvents: oldDomestic, match: NCDR_DATASET_ID });
   const officialEventsByKey = Object.fromEntries(
-    Object.entries(OFFICIAL_SOURCE_META).map(([key, meta]) => [
-      key,
-      carryOver({
-        status: status[key],
-        fresh: officialFresh[key],
-        dropStale,
-        oldEvents: oldDomestic,
-        match: (event) => (OFFICIAL_SOURCE_DATASET_IDS[key] || [meta.datasetId]).includes(event.source?.datasetId),
-      }),
-    ]),
+    DIRECT_OFFICIAL_SOURCE_KEYS.map((key) => {
+      const meta = OFFICIAL_SOURCE_META[key];
+      return [
+        key,
+        carryOver({
+          status: status[key],
+          fresh: officialFresh[key],
+          dropStale,
+          oldEvents: oldDomestic,
+          match: (event) => (OFFICIAL_SOURCE_DATASET_IDS[key] || [meta.datasetId]).includes(event.source?.datasetId),
+        }),
+      ];
+    }),
   );
   const officialEvents = Object.values(officialEventsByKey).flat();
-  const tenderEvents = carryOver({
-    status: status.pcc,
-    fresh: tenders,
-    dropStale,
-    oldEvents: oldDomestic,
-    match: (e) => e.category === "採購" && !isPoliceDomesticEvent(e),
-  });
   const why = (st) => (st?.skipped ? "本次未選" : "失敗");
   if (!status.cwa?.ok && quakeEvents.length) console.warn(`地震${why(status.cwa)}，沿用舊快照 ${quakeEvents.length} 筆`);
   if (!status.cwaWarnings?.ok && warningEvents.length)
@@ -688,7 +535,6 @@ export async function run() {
       console.warn(`${officialLabels[key]}失敗，沿用舊快照 ${events.length} 筆`);
     }
   }
-  if (!status.pcc?.ok && tenderEvents.length) console.warn(`採購${why(status.pcc)}，沿用舊快照 ${tenderEvents.length} 筆`);
   // 跨輪累積 + 保留窗：成功時 union 本輪與舊 tw-news（recordRef→標題去重，本輪優先以保留 LLM 精修版），
   // 再剪掉超過保留窗者 → 量隨時間複利成長到保留窗深度，每輪仍只 when:Nd 抓增量、LLM 成本不變。
   const oldNews = oldDomestic.filter((e) => e.source?.datasetId === "tw-news");
@@ -711,21 +557,23 @@ export async function run() {
   const oldNewsFingerprints = new Set(oldNews.map(eventFingerprint));
   const newNewsEvents = newsEvents.filter((event) => !oldNewsFingerprints.has(eventFingerprint(event)));
 
-  let policeEvents = [];
+  const corePoliceEvents = carryOver({
+    status: status.police,
+    fresh: policeResult.events,
+    dropStale,
+    oldEvents: oldDomestic,
+    match: (event) => event.source?.datasetId === "13166" || event.id?.startsWith("crime-week-"),
+  });
+  const missingEvents = carryOver({
+    status: status.missing,
+    fresh: missing,
+    dropStale,
+    oldEvents: oldDomestic,
+    match: (event) => event.source?.datasetId === "14420" || event.id?.startsWith("missing-"),
+  });
+  const policeEvents = [...corePoliceEvents, ...missingEvents];
   let policeHourly = null;
   if (status.police?.ok) {
-    const generalPccIds = new Set(tenderEvents.map((e) => e.id));
-    policeEvents = carryOver({
-      status: status.police,
-      fresh: policeResult.events.filter((e) => {
-        if (!e.id.startsWith("pcc-police-")) return true;
-        const altId = e.id.replace("pcc-police-", "pcc-");
-        return !generalPccIds.has(altId);
-      }),
-      dropStale: () => false,
-      oldEvents: oldDomestic,
-      match: isPoliceDomesticEvent,
-    });
     status.police.minimumPerHour = POLICE_HOURLY_MINIMUM;
     status.police.meetsHourlyMinimum = policeEvents.length >= POLICE_HOURLY_MINIMUM;
     status.police.todayMinimum = POLICE_TODAY_MINIMUM;
@@ -765,15 +613,8 @@ export async function run() {
         `警政新聞全新資料不足：${policeHourly.run.newPoliceRelatedCount}/${policeMinimum.minimumNewPerHour}（7 日 P${policeMinimum.percentile}，${policeMinimum.sampleSize} 個有效時段；重複 ${policeHourly.run.duplicateFromPriorCount} 筆）`,
       );
     }
-  } else {
-    policeEvents = carryOver({
-      status: status.police,
-      fresh: policeResult.events,
-      dropStale: () => false,
-      oldEvents: oldDomestic,
-      match: isPoliceDomesticEvent,
-    });
-    if (policeEvents.length) console.warn(`警政${why(status.police)}，沿用舊快照 ${policeEvents.length} 筆`);
+  } else if (corePoliceEvents.length) {
+    console.warn(`警政${why(status.police)}，沿用舊快照 ${corePoliceEvents.length} 筆`);
   }
 
   const domesticClamp = clampImplausibleTimestamps([
@@ -781,7 +622,6 @@ export async function run() {
     ...warningEvents,
     ...ncdrEvents,
     ...officialEvents,
-    ...tenderEvents,
     ...policeEvents,
     ...newsEvents,
   ]);
@@ -974,18 +814,6 @@ export async function run() {
       ...(sourceStatus?.error ? { error: sourceStatus.error } : {}),
     };
   };
-  if (tenderEvents.length || want("pcc"))
-    sources.push({
-      name: "政府電子採購網 決標公告",
-      type: "gov-open-data",
-      datasetId: "pcc-tender",
-      scope: "domestic",
-      category: "採購",
-      count: tenderEvents.length,
-      ...sourceHealthFields({ sourceStatus: status.pcc, events: tenderEvents, datasetId: "pcc-tender" }),
-      query: `announcement_type='決標公告' AND award_price != '' AND date <= '${today}' ORDER BY date DESC (twinkle-hub query_rows)`,
-      license: "政府網站資料開放宣告 — 行政院公共工程委員會 政府電子採購網 (https://web.pcc.gov.tw)",
-    });
   if (quakeEvents.length || want("cwa"))
     sources.push({
       name: "中央氣象署 顯著有感地震報告",
@@ -1025,66 +853,14 @@ export async function run() {
     });
   if (policeEvents.length || want("police")) {
     const policeSourceDefs = [
-      { key: "traffic", name: "警政署 114年傷亡道路交通事故", datasetId: "177136", category: "交通" },
-      { key: "speedHotspots", name: "警政署 測速執法點取締件數", datasetId: "13908", category: "交通" },
-      { key: "fraudDomains", name: "165反詐騙 涉詐網站停解析", datasetId: "176455", category: "反詐" },
-      { key: "fraudDebunk", name: "165反詐騙 詐騙闢謠專區", datasetId: "38262", category: "反詐" },
-      { key: "fraudDashboard", name: "警政署 打詐儀表板執行成效", datasetId: "172159", category: "反詐" },
-      { key: "taipeiCrime", name: "臺北市政府警察局 犯罪點位", datasetId: "taipei-crime", category: "治安" },
       { key: "crimeWeekly", name: "警政署 犯罪資料統計週報", datasetId: "13166", category: "治安" },
-      { key: "taichungTraffic", name: "臺中市政府警察局 114年10月交通事故", datasetId: "176086", category: "交通" },
-      { key: "taichungHotspots", name: "臺中市政府警察局 十大高肇事路口", datasetId: "176610", category: "交通" },
-      { key: "taoyuanTheft", name: "桃園市政府警察局 竊盜點位", datasetId: "167673", category: "治安" },
-      { key: "tainanAlerts", name: "臺南市政府警察局 婦幼犯罪警示", datasetId: "100208", category: "治安" },
-      { key: "ntpcAlerts", name: "新北市政府警察局 婦幼犯罪警示", datasetId: "125645", category: "治安" },
-      { key: "fraudInvest", name: "165反詐騙 假投資(博弈)網站", datasetId: "160055", category: "反詐" },
-      { key: "policeNews", name: "警政署 各警察機關新聞發布", datasetId: "7505", category: "治安" },
-      { key: "historicalTraffic", name: "警政署 歷史交通事故資料", datasetId: "12197", category: "交通" },
-      { key: "drugCrime", name: "警政署 毒品犯罪資料", datasetId: "57268", category: "治安" },
-      { key: "assemblies", name: "警政署 集會遊行資訊", datasetId: "11307", category: "治安" },
-      { key: "taipeiTrafficSpots", name: "臺北市政府警察局 道路交通事故斑點圖", datasetId: "136123", category: "交通" },
-      { key: "taipeiTrafficViolations", name: "臺北市政府警察局 交通違規舉發", datasetId: "173625", category: "交通" },
-      { key: "kaohsiungA3Traffic", name: "高雄市政府警察局 小港區 A3 交通事故", datasetId: "168403", category: "交通" },
-      { key: "kaohsiungFixedCameras", name: "高雄市政府警察局 固定式違規照相設備", datasetId: "169080", category: "交通" },
-      { key: "kaohsiungAvgSpeedCameras", name: "高雄市政府警察局 區間平均速率執法設備", datasetId: "146885", category: "交通" },
-      { key: "hsinchuCityTrafficStats", name: "新竹市警察局 每月交通事故統計", datasetId: "167814", category: "交通" },
-      { key: "hsinchuCountyAvgSpeed", name: "新竹縣政府警察局 區間平均速率裝置", datasetId: "172950", category: "交通" },
-      { key: "chiayiTheft", name: "嘉義縣警察局 住宅竊盜點位", datasetId: "133922", category: "治安" },
-      { key: "chiayiTheft", name: "嘉義縣警察局 汽車竊盜點位", datasetId: "133923", category: "治安" },
-      { key: "chiayiTheft", name: "嘉義縣警察局 自行車竊盜點位", datasetId: "133924", category: "治安" },
-      { key: "yilanCctv", name: "宜蘭縣政府警察局 治安交通監錄系統", datasetId: "143467", category: "治安" },
-      { key: "miaoliReportStats", name: "苗栗縣警察勤務指揮中心 報案統計", datasetId: "171164", category: "治安" },
-      { key: "miaoliCaseStats", name: "苗栗縣警察勤務指揮中心 治安交通案件", datasetId: "171167", category: "治安" },
-      { key: "nantouTechEnforcement", name: "南投縣政府警察局 固定式科技執法", datasetId: "176021", category: "交通" },
-      { key: "nantouImpoundLots", name: "南投縣政府警察局 違規車輛保管場", datasetId: "78638", category: "交通" },
-      { key: "pingtungCctv", name: "屏東縣政府警察局 路口錄監系統", datasetId: "155895", category: "治安" },
-      { key: "pingtungCrashHotspots", name: "屏東縣政府警察局 交通肇事案件", datasetId: "90589", category: "交通" },
-      { key: "pingtungTechEnforcement", name: "屏東縣政府警察局 科技執法路段", datasetId: "159972", category: "交通" },
-      { key: "hualienAvgSpeed", name: "花蓮縣警察局 區間測速執法地點", datasetId: "171349", category: "交通" },
-      { key: "taitungAirRaidShelters", name: "臺東縣警察局 防空避難設施", datasetId: "173142", category: "災防" },
-      { key: "penghuScienceEnforcement", name: "澎湖縣 科學儀器執法與測速照相", datasetId: "172940", category: "交通" },
-      { key: "penghuTrafficOrderStats", name: "澎湖縣政府警察局 交通秩序成果", datasetId: "157949", category: "交通" },
-      { key: "kinmenAirRaidShelters", name: "金門縣警察局 防空避難設施", datasetId: "151006", category: "災防" },
-      { key: "lienchiangServiceStats", name: "連江縣警察局 為民服務成果", datasetId: "146936", category: "治安" },
-      { key: "crimeRate", name: "警政署統計處 刑案發生率／破獲率（按機關別）", datasetId: "103351", category: "治安" },
-      { key: "duiTaichung", name: "臺中市政府警察局 取締酒駕情形", datasetId: "88170", category: "交通" },
-      { key: "dvTaipei", name: "臺北市 家暴通報案件數統計", datasetId: "145744", category: "治安" },
-      { key: "policePcc", name: "政府電子採購網 警政決標公告", datasetId: "pcc-tender", category: "採購" },
       { key: "missing", name: "警政署 失蹤人口查尋", datasetId: "14420", category: "協尋" },
     ];
     for (const def of policeSourceDefs) {
-      const currentEvents = policeEvents.filter((e) => {
-        if (def.datasetId === "taipei-crime") return POLICE_TAIPEI_IDS.has(e.source?.datasetId || "");
-        if (def.datasetId === "pcc-tender") return e.id.startsWith("pcc-police-");
-        return e.source?.datasetId === def.datasetId;
-      });
+      const currentEvents = policeEvents.filter((event) => event.source?.datasetId === def.datasetId);
       const count = currentEvents.length;
       const sub = status.police?.[def.key];
-      const previousEvents = oldDomestic.filter((e) => {
-        if (def.datasetId === "taipei-crime") return POLICE_TAIPEI_IDS.has(e.source?.datasetId || "");
-        if (def.datasetId === "pcc-tender") return e.id?.startsWith("pcc-police-");
-        return e.source?.datasetId === def.datasetId;
-      });
+      const previousEvents = oldDomestic.filter((event) => event.source?.datasetId === def.datasetId);
       if (!count && !sub && !previousEvents.length) continue;
       const defStatus = def.key === "missing"
         ? status.missing || status.police
@@ -1092,7 +868,7 @@ export async function run() {
       sources.push({
         key: def.key,
         name: def.name,
-        type: def.datasetId === "pcc-tender" ? "gov-open-data" : "gov-open-data",
+        type: "gov-open-data",
         datasetId: def.datasetId,
         scope: "domestic",
         category: def.category,
@@ -1104,30 +880,12 @@ export async function run() {
           key: def.key,
           name: def.name,
         }),
-        query: `twinkle-hub police/${def.key}`,
+        query: def.key === "crimeWeekly"
+          ? "data.gov.tw 13166 ZIP → latest ODS"
+          : "內政部警政署失蹤人口查尋公開頁面",
         license: "政府資料開放授權條款-第1版 — 內政部警政署／地方政府警察局",
       });
     }
-  }
-  // 司法裁判併入警政事件流，仍要保留獨立 provenance，讓領域完整性不被低估。
-  const judicialEvents = policeEvents.filter((event) => event.source?.datasetId === "judicial");
-  if (judicialEvents.length || want("judicial") || previousSourceFor({ datasetId: "judicial" })) {
-    sources.push({
-      name: "司法院 裁判書開放資料",
-      type: "judicial",
-      datasetId: "judicial",
-      scope: "domestic",
-      category: "司法判決",
-      count: judicialEvents.length,
-      ...sourceHealthFields({
-        sourceStatus: status.judicial || (judicialEvents.length ? { ok: true } : undefined),
-        events: judicialEvents,
-        datasetId: "judicial",
-        name: "司法院 裁判書開放資料",
-      }),
-      query: "search_judicial 多罪名語意檢索",
-      license: "政府資料開放授權條款 — 司法院裁判書開放資料",
-    });
   }
   if (newsEvents.length) {
     const newsByFeed = new Map();
@@ -1170,7 +928,8 @@ export async function run() {
       query: "外交部領事事務局 國外旅遊警示 RSS（結構化燈號映射，不經 LLM）",
       license: "政府網站資料開放宣告 — 外交部領事事務局",
     });
-  for (const [key, meta] of Object.entries(OFFICIAL_SOURCE_META)) {
+  for (const key of DIRECT_OFFICIAL_SOURCE_KEYS) {
+    const meta = OFFICIAL_SOURCE_META[key];
     const events = officialEventsByKey[key] || [];
     const datasetIds = OFFICIAL_SOURCE_DATASET_IDS[key] || [meta.datasetId];
     const previous = datasetIds.map((datasetId) => previousSourceFor({ datasetId })).find(Boolean);
@@ -1245,7 +1004,7 @@ export async function run() {
     events: [...domesticEvents, ...intlEvents],
     sources,
   }));
-  writeJson("domain-coverage.json", buildDomainCoverage({ generatedAt: nowIso, sources, enabledSourceKeys: SOURCES }));
+  writeJson("domain-coverage.json", buildDomainCoverage({ generatedAt: nowIso, sources, enabledSourceKeys: sourceKeys }));
 
   writeJson("provenance.json", {
     generatedAt: nowIso,

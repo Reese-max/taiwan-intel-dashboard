@@ -14,11 +14,9 @@
 | `rss` | 國際新聞 | 443 feeds → LLM 正規化＋風險評級 → 滾動窗口累積（5 天/250 筆）|
 | `gdelt` | GDELT 全球新聞索引 | GDELT DOC 近 24 小時補充訊號；失敗只告警，不覆蓋 RSS 主線|
 | `twnews` | 台灣社會新聞 | 警政關鍵字預篩（食安/衛生/環境/資安來源走各自主題關鍵字）→ LLM 精修＋輕量收錄，保留窗 5 天 |
-| `police` | 警政/治安 | 含 hourly 歷史、來源樹 |
-| `missing` | 失蹤人口 | |
+| `police` | 警政/治安 | 直連警政署犯罪資料統計週報；含 hourly 歷史、來源樹 |
+| `missing` | 失蹤人口 | 直連警政署公開協尋名單 |
 | `cwa` | 氣象（地震/警特報）| 需 `CWA_API_KEY` |
-| `pcc` | 政府採購 | twinkle-hub MCP |
-| `judicial` | 司法 | twinkle-hub MCP |
 | `mofa` | 外交部旅遊警示 | 官方 RSS；狀態型快照，不受 5 天新聞窗淘汰 |
 | `ncdr` | NCDR 災防示警 | 官方 Atom + CAP 1.2 |
 | `mnd` | 國防部臺海周邊海空域動態 | 官方每日動態 |
@@ -29,31 +27,21 @@
 | `taipower` | 台電系統供需 | 每 10 分鐘更新 |
 | `wra` | 水利署水庫水情 | 收錄蓄水率低於或等於 70% 的水庫 |
 | `wraRiver` | 水利署即時河川水位 | 測站警戒值彙整至縣市 |
-| `moenvAir` | 環境部空氣品質 | 28178 最新小時值，逐測站保留 PM2.5／O3 等讀值 |
-| `parkingHsinchu` / `parkingTaoyuan` | 停車供給 | 新竹市／桃園市公開停車場可用量彙整；不等同道路壅塞 |
-| `economy` | 主計總處重要經濟指標 | 13228 最新月份統計，保留資料月份與抓取時間 |
-| `agriPrices` | 農業部農產品產地價格 | 70930 最新資料日品項價格參考；不產生買賣訊號 |
-| `healthFacilities` | 健保署居家醫療整合院所 | 39331 官方院所總數參考快照；不代表即時可掛號量 |
-| `fireStats` | 臺北市消防局受理案件統計 | 134922 最新期間統計參考；不代表全台即時派遣量 |
-| `legislature` | 立法院議案進度 | `ly-bills` 最新進度參考快照；不自動推論政策風險 |
-| `tourismStat` | 交通部觀光署來臺旅客 | `tad-index-inbound-lastmonth` 五大客源群參考；研究用途鏡像 |
-| `socialPopulation` | 臺中市人口結構 | 84049 地方人口年齡／性別參考；不代表全國 |
-| `education` | 新北市高級中等學校教育概況 | 124173 年度教育參考；不代表全國即時狀態 |
-| `financeDerivatives` | 臺灣期貨交易所三大法人選擇權 | 11598 每日衍生性金融統計參考；不產生買賣訊號 |
-| `laborStats` | 新北市失業率婚姻狀況 | 123349 年度地方勞動統計參考；不代表全國即時就業／職災 |
 
 失敗容錯：單源失敗沿用上一版快照（carry-over），不以空資料覆蓋。
 
-完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件；`query.html` 另提供全台 5 萬+ 開放資料集搜尋與預覽。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」；教育、人口、觀光、國會、金融與勞動目前已納入誠實的參考層，不冒充全國即時事件。現階段仍需補全台道路即時路況、消防即時案件、文化／體育專門來源，以及穩定授權的電信／網路服務來源。
+管線分層：`source-plan.mjs` 管理來源選擇與 exclusive 規則；`direct-official-sources.mjs` 集中直連官方來源 registry 與 fail-soft 執行；各 `fetch-*.mjs` 只負責來源 adapter；`fetch-live.mjs` 僅組合事件、快照與 provenance。
+
+完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」。移除第三方 MCP 後，採購、司法、空品、停車、經濟等原 MCP 來源不再刷新，待改成官方直連後再恢復。
 
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
 > 目前 workflow 為手動停用狀態。完成資料膨脹修正的受控上線驗證前，不要重新啟用。
 
-- 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+gdelt+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver+moenvAir+parkingHsinchu+parkingTaoyuan+economy 增量
-- 每日 18:30 UTC（台北 02:30）：全來源 exclusive 重建（另含 pcc/judicial/cdc/tfda、農業價格、健保院所、國會、觀光、人口、教育、金融與勞動參考層）
+- 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+gdelt+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver 增量
+- 每日 18:30 UTC（台北 02:30）：上述來源加上 cdc、tfda 的 exclusive 重建
 - 手動 `workflow_dispatch`：`mode` 選來源組合；`renorm_intl=true` 忽略國際快取全量重評（緊急用；平時靠 `INTL_RECALIBRATE_DAYS` 3 天生命週期自然換血）
-- Cloudflare 發佈後會再讀取 canonical `provenance.json`／`domain-coverage.json`；refresh 模式另強制確認金融 `11598` 與勞動 `123349` 已落地，避免部署成功但資料仍是舊快照。
+- Cloudflare 發佈後會再讀取 canonical `provenance.json`／`domain-coverage.json`，並確認已移除的查詢頁與 API 路由回傳 404。
 
 ## 本地開發
 
@@ -63,6 +51,7 @@ cp .env.example .env   # 填 LLM_API_KEY 等
 npm run dev            # 前端 dev server
 npm test               # vitest 全套
 npm run build          # tsc + build-network + build-static → dist/
+npm run refresh        # 完整來源重建；使用 source-plan 預設清單
 npm run refresh:news   # 抓台灣新聞（吃 LLM 成本）
 node --env-file=.env scripts/fetch-live.mjs --sources=rss,gdelt   # 抓國際 RSS＋GDELT 補充
 ```
@@ -88,7 +77,6 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 | `INTL_RECALIBRATE_DAYS` | 國際快取評級生命週期（預設 3 天，0 停用）|
 | `GDELT_QUERY/TIMESPAN/MAX_RECORDS/TIMEOUT_MS` | GDELT DOC 補充查詢、時間窗、筆數上限與逾時（可選）|
 | `NEWS_RETENTION_DAYS` | 台灣新聞保留窗（預設 5 天）|
-| `TWINKLE_MCP_TOKEN` / `TWINKLE_HUB_TOKEN` | twinkle-hub MCP 憑證（本機優先使用 `TWINKLE_HUB_TOKEN`）|
 | `CWA_API_KEY` | 中央氣象署 API key |
 
 ## 文件索引

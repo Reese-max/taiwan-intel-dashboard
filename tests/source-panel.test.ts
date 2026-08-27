@@ -16,7 +16,7 @@ describe("renderSourcePanel", () => {
           count: 100,
           fetchedAt: "2026-06-20T23:00:00+08:00",
           lastSuccessAt: "2026-06-20T23:00:00+08:00",
-          query: "query_rows 123",
+          query: "data.gov.tw dataset 123",
           license: "政府資料開放授權條款-第1版",
         },
         {
@@ -137,7 +137,7 @@ describe("renderSourcePanel", () => {
           fetchedAt: "2026-07-16T09:00:00+08:00",
           lastSuccessAt: "2026-07-16T09:00:00+08:00",
           stale: true,
-          error: "MCP HTTP 500",
+          error: "官方來源 HTTP 500",
         },
         {
           name: "未設定官方來源",

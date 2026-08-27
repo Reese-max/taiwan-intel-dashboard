@@ -9,11 +9,11 @@ describe("領域完整性清單", () => {
     const report = buildDomainCoverage();
 
     expect(report.validation).toMatchObject({ ok: true, failures: [] });
-    expect(report.rows.filter((row) => row.configuredSourceCount > 0)).toHaveLength(9);
+    expect(report.rows.filter((row) => row.configuredSourceCount > 0)).toHaveLength(7);
     expect(report.rows.find((row) => row.key === "治安／警政")).toMatchObject({
-      configuredSourceCount: 3,
-      enabledSourceCount: 3,
-      coverageCount: 3,
+      configuredSourceCount: 2,
+      enabledSourceCount: 2,
+      coverageCount: 2,
       sourceCount: 0,
     });
   });
@@ -73,7 +73,6 @@ describe("領域完整性清單", () => {
       sources: [
         { scope: "domestic", category: "農業", datasetId: "70930", name: "農產品", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
         { scope: "domestic", category: "衛生", datasetId: "39331", name: "健保院所", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
-        { scope: "domestic", category: "司法判決", datasetId: "judicial", name: "司法院裁判書", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
         { scope: "domestic", category: "國會", datasetId: "ly-bills", name: "立法院議案", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
         { scope: "domestic", category: "觀光", datasetId: "tad-index-inbound-lastmonth", name: "觀光統計", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
         { scope: "domestic", category: "社福", datasetId: "84049", name: "人口結構", stale: false, lastSuccessAt: "2026-07-25T00:00:00.000Z" },
@@ -83,27 +82,17 @@ describe("領域完整性清單", () => {
       ],
     });
 
-    expect(report.counts).toMatchObject({ integrated: 10, reference: 9, "query-only": 2, gap: 1 });
+    expect(report.counts).toMatchObject({ integrated: 8, reference: 9, "query-only": 2, gap: 3 });
     expect(report.rows.find((row) => row.key === "農業")).toMatchObject({
       status: "reference",
       sourceCount: 1,
       healthySourceCount: 1,
     });
     expect(report.rows.find((row) => row.key === "勞動／職災")).toMatchObject({ status: "reference", sourceCount: 1, healthySourceCount: 1 });
-    expect(report.rows.find((row) => row.key === "司法／法務")).toMatchObject({ status: "integrated", sourceCount: 1, healthySourceCount: 1 });
+    expect(report.rows.find((row) => row.key === "司法／法務")).toMatchObject({ status: "gap", sourceCount: 0, healthySourceCount: 0 });
     expect(report.rows.find((row) => row.key === "國會／立法")).toMatchObject({ status: "reference", sourceCount: 1, healthySourceCount: 1 });
     expect(report.rows.find((row) => row.key === "教育／科研")).toMatchObject({ status: "reference", sourceCount: 1, healthySourceCount: 1 });
     expect(report.rows.find((row) => row.key === "金融市場")).toMatchObject({ status: "reference", sourceCount: 1, healthySourceCount: 1 });
   });
 
-  it("允許同一資料集下以 key 區分邏輯子來源", () => {
-    const report = buildDomainCoverage({
-      sources: [
-        { scope: "domestic", category: "採購", datasetId: "pcc-tender", name: "政府電子採購網 決標公告" },
-        { scope: "domestic", category: "採購", datasetId: "pcc-tender", key: "policePcc", name: "政府電子採購網 警政決標公告" },
-      ],
-    });
-
-    expect(report.rows.find((row) => row.key === "採購／經濟")).toMatchObject({ sourceCount: 2 });
-  });
 });

@@ -84,12 +84,11 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: "03d40efd3c60181edea80af8d927ddc1"
-          command: pages deploy dist --project-name=taiwan-intel-dashboard --branch=main
+          command: pages deploy dist --project-name=taiwan-intel-dashboard --branch=production
 
       - name: 部署後線上 smoke
         env:
           DEPLOY_BASE_URL: https://taiwan-intel-dashboard.pages.dev
-          DEPLOY_FETCH_ARGS: ${{ needs.fetch.outputs.fetch_args }}
         run: node scripts/smoke-deployed.mjs
 
   notify:

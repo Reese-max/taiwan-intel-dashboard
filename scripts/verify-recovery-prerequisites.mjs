@@ -9,8 +9,6 @@ export const RECOVERY_DRILL_REPORT_DIR = join(REPO_ROOT, "docs", "operations", "
 
 export const REQUIRED_GITHUB_SECRETS = Object.freeze([
   "CLOUDFLARE_API_TOKEN",
-  "TWINKLE_MCP_TOKEN",
-  "DEPLOY_BASE_URL",
 ]);
 
 export const REQUIRED_ENV_VARS = REQUIRED_GITHUB_SECRETS;
@@ -268,7 +266,7 @@ export async function checkCloudflarePages({ rootDir = REPO_ROOT, exists = exist
   const accountId = content.match(/^\s*accountId\s*:\s*["']?([^"'\s#]+)["']?\s*$/m)?.[1] || "";
   const metadata = {
     hasProject: content.includes("project-name=taiwan-intel-dashboard"),
-    hasBranch: content.includes("branch=main"),
+    hasBranch: content.includes("branch=production"),
     hasAccountId: Boolean(accountId && !accountId.includes("${")),
   };
   const ok = Object.values(metadata).every(Boolean);

@@ -2,21 +2,21 @@ import { appendFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 // 顯式 CI 清單必須同步列入所有預設來源，否則排程會把未列出的來源標為 skipped。
-export const HOURLY_ARGS = "--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy";
-export const REFRESH_ARGS = "--sources=cwa,pcc,police,missing,twnews,rss,gdelt,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,legislature,tourismStat,socialPopulation,education,financeDerivatives,laborStats --exclusive";
+export const HOURLY_ARGS = "--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver";
+export const REFRESH_ARGS = "--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver --exclusive";
 export const CWA_ARGS = "--sources=cwa";
 export const INTERNATIONAL_ARGS = "--sources=rss,gdelt";
 export const CWA_INTERNATIONAL_ARGS = "--sources=cwa,rss,gdelt";
-export const TWNEWS_ARGS = "--sources=twnews,missing";
+export const TWNEWS_ARGS = "--sources=police,twnews,missing";
 export const CWA_ASSERT_ARGS = "--require=cwa,cwaWarnings";
 export const INTERNATIONAL_ASSERT_ARGS = "--require=international --min-international-feeds=10 --min-international-raw=50";
 export const INTERNATIONAL_CORE_ASSERT_ARGS = "--require=international --min-international-feeds=3 --min-international-raw=10";
 export const CWA_INTERNATIONAL_ASSERT_ARGS =
   "--require=cwa,cwaWarnings,international --min-international-feeds=10 --min-international-raw=50";
-export const TWNEWS_ASSERT_ARGS = "--require=twnews";
-// 本輪硬閘門只擋核心與 MCP；可 carry-over 的官方來源由 audit-source-freshness 依各自 maxAgeHours 閘控。
-export const HOURLY_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,police,twnews --min-international-feeds=10 --min-international-raw=50";
-export const REFRESH_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,pcc,police,judicial,twnews --min-international-feeds=10 --min-international-raw=50";
+export const TWNEWS_ASSERT_ARGS = "--require=police,missing,twnews";
+// 本輪硬閘門只擋核心來源；可 carry-over 的官方來源由 audit-source-freshness 依各自 maxAgeHours 閘控。
+export const HOURLY_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,police,missing,twnews --min-international-feeds=10 --min-international-raw=50";
+export const REFRESH_ASSERT_ARGS = "--require=cwa,cwaWarnings,international,police,missing,twnews --min-international-feeds=10 --min-international-raw=50";
 export const FETCH_MODE_CHOICES = [
   "hourly",
   "cwa",
@@ -131,7 +131,7 @@ export function resolveFetchMode({ schedule = "", mode = "" } = {}) {
       assertArgs: REFRESH_ASSERT_ARGS,
       internationalFeedTier: "expanded",
       internationalFeedTopic: "all",
-      message: "選用 refresh（完整，含 CWA、國際 RSS、新聞、LLM、警政、失蹤人口、司法）",
+      message: "選用 refresh（完整，含 CWA、國際 RSS、新聞、LLM、警政週報與失蹤人口）",
     };
   }
 
@@ -141,7 +141,7 @@ export function resolveFetchMode({ schedule = "", mode = "" } = {}) {
     assertArgs: HOURLY_ASSERT_ARGS,
     internationalFeedTier: "expanded",
     internationalFeedTopic: "all",
-    message: "選用 hourly（每小時，含 CWA、國際 RSS、警政、台灣新聞、失蹤人口；非 exclusive 保留其他資料）",
+    message: "選用 hourly（每小時，含 CWA、國際 RSS、警政週報、台灣新聞、失蹤人口；非 exclusive 保留其他資料）",
   };
 }
 

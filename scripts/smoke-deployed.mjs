@@ -7,21 +7,10 @@ const REQUIRED_REFERENCE_DOMAINS = new Map([
   ["勞動／職災", "reference"],
   ["電信／網路服務", "gap"],
 ]);
-const SOURCE_DATASET_IDS = {
-  financeDerivatives: "11598",
-  laborStats: "123349",
-};
-const QUERY_ENDPOINTS = ["fraud", "judicial", "drug", "catalog"];
+const REMOVED_ROUTES = ["api/health", "query.html"];
 
 function asObject(value) {
   return value && typeof value === "object" ? value : null;
-}
-
-export function requiredDatasetsFromArgs(fetchArgs = "") {
-  const args = String(fetchArgs);
-  return Object.entries(SOURCE_DATASET_IDS)
-    .filter(([source]) => args.includes(source))
-    .map(([, datasetId]) => datasetId);
 }
 
 export function validateDeploymentPayload({ provenance, domainCoverage, requiredDatasetIds = [] } = {}) {
@@ -50,8 +39,8 @@ export function validateDeploymentPayload({ provenance, domainCoverage, required
   return { ok: errors.length === 0, errors, sourceCount: sources.length, domainCount: rows.length };
 }
 
-export function validateQueryRouteResponse({ status, contentType, body } = {}) {
-  return status === 400 && /application\/json/i.test(String(contentType || "")) && typeof body?.error === "string";
+export function validateRemovedRouteResponse(status) {
+  return status === 404;
 }
 
 async function fetchJson(url, attempts = 6) {
@@ -69,16 +58,12 @@ async function fetchJson(url, attempts = 6) {
   throw lastError;
 }
 
-async function fetchQueryRoute(url, endpoint, attempts = 6) {
+async function fetchRemovedRoute(url, route, attempts = 6) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       const response = await fetch(url, { headers: { "cache-control": "no-cache" } });
-      const contentType = response.headers.get("content-type") || "";
-      const body = await response.json().catch(() => null);
-      if (!validateQueryRouteResponse({ status: response.status, contentType, body })) {
-        throw new Error(`${endpoint} 未回傳預期的 400 JSON`);
-      }
+      if (!validateRemovedRouteResponse(response.status)) throw new Error(`${route} 未回傳預期的 404`);
       return true;
     } catch (error) {
       lastError = error;
@@ -90,7 +75,6 @@ async function fetchQueryRoute(url, endpoint, attempts = 6) {
 
 export async function smokeDeployed({
   baseUrl = process.env.DEPLOY_BASE_URL || DEFAULT_BASE_URL,
-  fetchArgs = process.env.DEPLOY_FETCH_ARGS || "",
   runId = process.env.GITHUB_RUN_ID || Date.now().toString(),
 } = {}) {
   const base = String(baseUrl).replace(/\/$/, "");
@@ -99,22 +83,21 @@ export async function smokeDeployed({
     fetchJson(`${base}/data/provenance.json${suffix}`),
     fetchJson(`${base}/data/domain-coverage.json${suffix}`),
   ]);
-  const queryRouteCount = (await Promise.all(QUERY_ENDPOINTS.map((endpoint) =>
-    fetchQueryRoute(`${base}/api/${endpoint}?q=&smoke=${encodeURIComponent(runId)}`, endpoint),
+  const removedRouteCount = (await Promise.all(REMOVED_ROUTES.map((route) =>
+    fetchRemovedRoute(`${base}/${route}?smoke=${encodeURIComponent(runId)}`, route),
   ))).length;
   const result = validateDeploymentPayload({
     provenance,
     domainCoverage,
-    requiredDatasetIds: requiredDatasetsFromArgs(fetchArgs),
   });
   if (!result.ok) throw new Error(result.errors.join("；"));
-  return { ...result, queryRouteCount };
+  return { ...result, removedRouteCount };
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   smokeDeployed()
     .then((result) => {
-      console.log(`部署後 smoke 通過：${result.sourceCount} 來源列／${result.domainCount} 領域列／${result.queryRouteCount} 查詢路由`);
+      console.log(`部署後 smoke 通過：${result.sourceCount} 來源列／${result.domainCount} 領域列／${result.removedRouteCount} 個舊路由已移除`);
     })
     .catch((error) => {
       console.error(`部署後 smoke 失敗：${error.message}`);
