@@ -112,15 +112,18 @@ export function assertInternationalPostFetchGates(
   return result;
 }
 
-// LLM 正規化全批失敗＝管線級故障但服務仍回舊快取（stale-but-valid），既有 gate 只看 ok/rawCount
-// 讀不到它。此處以觀測模式（console.warn，不擋部署）把該旗標讀出來，讓故障在 CI log 被看見。
+// LLM 正規化全批失敗仍需告警，但國際 bulk 可讓資料繼續更新；此旗標只觀測、不擋部署。
 export function warnOnNormalizeFailure(pipeline) {
   const failed = [];
   for (const scope of ["international", "twnews"]) {
-    if (pipeline?.[scope]?.normalizeFailed === true) {
+    const status = pipeline?.[scope];
+    if (status?.normalizeFailed === true) {
       failed.push(scope);
+      const detail = scope === "international" && Number(status.bulk || 0) > 0
+        ? `本輪仍以輕量收錄更新 ${status.bulk} 筆`
+        : "本輪只剩快取、資料未更新";
       console.warn(
-        `[LLM] ${scope} 正規化全批失敗：本輪只剩快取、資料未更新（provenance.pipeline.${scope}.normalizeFailed=true）`,
+        `[LLM] ${scope} 正規化全批失敗：${detail}（provenance.pipeline.${scope}.normalizeFailed=true）`,
       );
     }
   }

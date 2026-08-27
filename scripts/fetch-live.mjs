@@ -35,6 +35,7 @@ import {
   isPoliceNewsNoise,
   isRelevantNewsItem,
   buildNewsRelevanceAudit,
+  mapBulkInternationalNews,
   mapBulkNews,
   titleKey as bulkTitleKey,
 } from "./lib/news-bulk.mjs";
@@ -311,7 +312,10 @@ export async function run() {
         status.gdelt = { skipped: true, reason: want("gdelt") ? `topic=${intlCfg.topic}` : "未選取" };
       }
 
-      const rawItems = [...rss.items, ...(gdelt.ok ? gdelt.items : [])];
+      const rawItems = [...rss.items, ...(gdelt.ok ? gdelt.items : [])].map((item) => ({
+        ...item,
+        datasetId: item.datasetId || "international-news",
+      }));
       const gdeltFeedStatus = gdelt.ok || status.gdelt?.ok === false
         ? [{
             label: "GDELT Global News",
@@ -333,16 +337,37 @@ export async function run() {
       const priorIntl =
         process.env.INTL_RENORM_ALL === "true"
           ? new Map()
-          : new Map(readOld("international.json").map((e) => [e.id, e]));
+          : new Map(
+              readOld("international.json")
+                .filter((e) => e?.source?.normalizationMethod !== "bulk")
+                .map((e) => [
+                  e.id,
+                  e?.source?.datasetId === "tw-news"
+                    ? { ...e, source: { ...e.source, datasetId: "international-news" } }
+                    : e,
+                ]),
+            );
       // general topic feed 集合＝assert 門檻驗的主題；正規化優先啃、挑選時保底（見 nvidia.mjs GENERAL_FLOOR）。
       const generalFeedLabels = new Set(
         selectInternationalFeeds({ tier: "expanded", topic: "general" }).map((feed) => feed.label),
       );
-      intl = await normalizeInternational(rawItems, {
-        max: intlCfg.maxEvents,
-        priorById: priorIntl,
-        priorityFeedLabels: generalFeedLabels,
-      });
+      // LLM 僅精修有界候選池；全量原文由輕量 mapper 收錄，避免來源擴充後批次數線性爆增。
+      const enrichItems = rawItems.slice(0, intlCfg.maxEvents * 2);
+      let enriched = [];
+      let normalizeError;
+      try {
+        enriched = await normalizeInternational(enrichItems, {
+          max: intlCfg.maxEvents,
+          priorById: priorIntl,
+          priorityFeedLabels: generalFeedLabels,
+        });
+      } catch (e) {
+        normalizeError = e.message;
+        console.error(`國際 LLM 精修失敗（改全走輕量）：${e.message}`);
+      }
+      const enrichedIds = new Set(enriched.map((event) => event.id).filter(Boolean));
+      const bulk = mapBulkInternationalNews(rawItems, { fetchedAt: nowIso, excludeIds: enrichedIds });
+      intl = [...enriched, ...bulk];
       const normalizedByFeed = new Map();
       for (const event of intl) {
         const label = event.source?.feedLabel || event.source?.name;
@@ -350,10 +375,14 @@ export async function run() {
       }
       status.international = {
         ok: true,
-        // 全批失敗（有新項卻零 LLM 產出）＝管線級故障：本輪只剩快取重用，需告警追查。
-        normalizeFailed: intlNormalizeFailed(),
+        // LLM 故障仍誠實標記；bulk 可讓本輪資料繼續更新，不把供應端成功誤判成來源失敗。
+        normalizeFailed: Boolean(normalizeError) || intlNormalizeFailed(),
+        ...(normalizeError ? { normalizeError } : {}),
         ...(lastIntlNormalizeSkippedBatches > 0 ? { normalizeSkippedBatches: lastIntlNormalizeSkippedBatches } : {}),
         count: intl.length,
+        enriched: enriched.length,
+        bulk: bulk.length,
+        enrichInputCount: enrichItems.length,
         rawCount: rawItems.length,
         rssRawCount: rss.items.length,
         gdeltRawCount: gdelt.ok ? gdelt.items.length : 0,
@@ -365,7 +394,7 @@ export async function run() {
         maxEvents: intlCfg.maxEvents,
         feeds: feedStatus.map((feed) => ({ ...feed, normalizedCount: normalizedByFeed.get(feed.label) || 0 })),
       };
-      console.log(`國際正規化：${intl.length} 筆`);
+      console.log(`國際新聞：${intl.length} 筆（LLM 精修／快取 ${enriched.length}＋輕量 ${bulk.length}；LLM 輸入 ${enrichItems.length}／原文 ${rawItems.length}）`);
     } catch (e) {
       status.international = { ok: false, error: e.message, feeds: feedStatus };
       console.error(`國際失敗：${e.message}`);
@@ -674,13 +703,15 @@ export async function run() {
   const freshIntlEvents = [...(status.international?.ok ? intl : []), ...(status.mofa?.ok ? mofa : [])];
   const intlOk = freshIntlEvents.length > 0;
   const dropIntlStale = dropStale(status.international) && dropStale(status.mofa);
+  const intlAccumCap = Math.max(1, Number(process.env.INTL_ACCUM_CAP) || 3000);
+  if (status.international?.ok) status.international.accumCap = intlAccumCap;
   // 累積式滾動視窗：成功時合併本輪 + 舊快照（依 id 去重、保留近 INTL_RETENTION_DAYS 天、
   // 分主題輪詢挑選至 INTL_ACCUM_CAP），取代「每輪只留當輪 ≤maxEvents」，讓國際數量穩定更多、主題分布更廣。
   const intlEvents = intlOk
     ? accumulateInternational(freshIntlEvents, oldIntl, {
         retentionDays: Number(process.env.INTL_RETENTION_DAYS) || 5,
-        // 預設 rolling cap 提高，讓新增的一般國際／警政來源能在五日窗口內留下；可由 CI 以 INTL_ACCUM_CAP 覆蓋。
-        cap: Number(process.env.INTL_ACCUM_CAP) || 400,
+        // 約與台灣新聞快照同級；可由 CI 以 INTL_ACCUM_CAP 覆蓋。
+        cap: intlAccumCap,
       })
     : dropIntlStale
       ? []
@@ -962,16 +993,22 @@ export async function run() {
     internationalFeedLabels.add(name);
     const events = intlEvents.filter((e) => e.source?.feedLabel === f.label || e.source?.name === f.label);
     const sourceStatus = f.ok === true ? { ok: true } : { ok: false, error: f.error || "來源抓取失敗" };
+    const hasBulk = events.some((event) => event.source?.normalizationMethod === "bulk");
+    const hasEnriched = events.some((event) => event.source?.normalizationMethod !== "bulk");
+    const normalization = hasBulk
+      ? `${hasEnriched ? `LLM(${respondedModel()}) 精修＋` : ""}輕量收錄`
+      : `LLM(${respondedModel()}) 正規化`;
     sources.push({
       name,
       type: "news-rss",
+      datasetId: events[0]?.source?.datasetId || (f.method === "gdelt-doc" ? "gdelt-doc" : "international-news"),
       scope: "international",
       category: f.hint || (f.method === "gdelt-doc" ? "地緣政治" : undefined),
       count: events.length,
       authority: f.official === true ? "official" : undefined,
       query: f.method === "gdelt-doc"
-        ? `GDELT DOC ${status.gdelt?.query || ""} → LLM(${respondedModel()}) 正規化`
-        : `RSS ${f.label} → LLM(${respondedModel()}) 正規化`,
+        ? `GDELT DOC ${status.gdelt?.query || ""} → ${normalization}`
+        : `RSS ${f.label} → ${normalization}`,
       ...sourceHealthFields({ sourceStatus, events, name }),
     });
   }
@@ -989,12 +1026,13 @@ export async function run() {
       sources.push({
         name,
         type: "news-rss",
+        datasetId: event?.source?.datasetId || "international-news",
         scope: "international",
         count,
         fetchedAt: event?.source?.fetchedAt || nowIso,
         lastSuccessAt: event?.source?.fetchedAt || nowIso,
         stale: true,
-        query: `RSS ${name.slice("國際新聞：".length)} → LLM(${respondedModel()}) 正規化`,
+        query: `RSS ${name.slice("國際新聞：".length)} → ${event?.source?.normalizationMethod === "bulk" ? "輕量收錄" : `LLM(${respondedModel()}) 正規化`}`,
       });
     }
   }
@@ -1009,9 +1047,9 @@ export async function run() {
   writeJson("provenance.json", {
     generatedAt: nowIso,
     note:
-      "Live 抓取。座標：採購為依機關所在縣市/區中心推估、新聞事件為 LLM 依事件地點推估，皆非原始資料欄位；地震為真實震央。風險等級為衍生指標（採購依決標金額、地震依規模、新聞由 LLM 依嚴重度判定），非原始欄位。新聞摘要與分類由 LLM " +
+      "Live 抓取。座標：採購為依機關所在縣市/區中心推估、新聞精修事件由 LLM 依事件地點推估，輕量事件不填座標；地震為真實震央。風險等級為衍生指標（採購依決標金額、地震依規模、新聞由 LLM 或規則判定），非原始欄位。新聞摘要與分類由 LLM " +
       respondedModel() +
-      " 自 RSS 原文生成，原始連結保留可回溯。MND、CDC、TFDA、海巡署、TWCERT/CC、台電、水利署與 MOFA/NCDR 皆為官方資料的規則映射，不經 LLM。",
+      " 精修，未精修長尾則由來源主題與關鍵字輕量映射；原始連結保留可回溯。MND、CDC、TFDA、海巡署、TWCERT/CC、台電、水利署與 MOFA/NCDR 皆為官方資料的規則映射，不經 LLM。",
     pipeline: status,
     sources,
   });

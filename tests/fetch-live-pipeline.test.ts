@@ -24,6 +24,7 @@ const ENV_KEYS = [
   "SUMMARY_BASE_URL",
   "SUMMARY_MODEL",
   "SUMMARY_MAX_RETRIES",
+  "INTL_ACCUM_CAP",
 ] as const;
 
 const originalEnv = new Map<string, string | undefined>();
@@ -69,6 +70,7 @@ function setupEnv() {
   process.env.SUMMARY_BASE_URL = "https://summary.invalid/v1";
   process.env.SUMMARY_MODEL = "test-summary-model";
   process.env.SUMMARY_MAX_RETRIES = "0";
+  delete process.env.INTL_ACCUM_CAP;
 
   return dir;
 }
@@ -348,6 +350,7 @@ function makeMockFetch(
     ncdrOk?: boolean;
     twnewsOk?: boolean;
     missingOk?: boolean;
+    internationalRssOk?: boolean;
   } = {},
 ) {
   const unexpected: UnexpectedFetch[] = [];
@@ -357,6 +360,7 @@ function makeMockFetch(
   const ncdrOk = options.ncdrOk ?? true;
   const twnewsOk = options.twnewsOk ?? true;
   const missingOk = options.missingOk ?? true;
+  const internationalRssOk = options.internationalRssOk ?? process.env.SOURCES?.includes("gdelt") === true;
   const mockFetch = vi.fn(async (input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     if (url === "https://eze8.npa.gov.tw/E82OpendataWebE/api/MissPerson/json/Male") {
@@ -410,7 +414,7 @@ function makeMockFetch(
         }]) } }],
       });
     }
-    if (process.env.SOURCES?.includes("gdelt") && url === "https://feeds.bbci.co.uk/news/world/rss.xml") {
+    if (internationalRssOk && url === "https://feeds.bbci.co.uk/news/world/rss.xml") {
       return new Response(internationalRssFixture(), { headers: { "content-type": "application/rss+xml" } });
     }
     if (url.includes("news.google.com")) {
@@ -839,6 +843,53 @@ describe("fetch-live pipeline — international 全滅語義（靜默全敗家�
         expect(provenance.pipeline.gdelt.ok).toBe(false);
         expect(provenance.pipeline.international.ok).toBe(true);
         expect(provenance.pipeline.international.rawCount).toBeGreaterThan(0);
+      } finally {
+        if (prevTier === undefined) delete process.env.INTERNATIONAL_FEED_TIER;
+        else process.env.INTERNATIONAL_FEED_TIER = prevTier;
+      }
+    },
+    90_000,
+  );
+
+  it(
+    "LLM 不可用時仍以輕量路徑更新國際新聞，並使用國際資料識別與 3000 筆累積上限",
+    async () => {
+      const dataDir = setupEnv();
+      process.env.SOURCES = "rss";
+      const prevTier = process.env.INTERNATIONAL_FEED_TIER;
+      process.env.INTERNATIONAL_FEED_TIER = "core";
+      try {
+        const { unexpected } = makeMockFetch({ internationalRssOk: true });
+        const run = await importRun();
+        await expect(run()).resolves.toBeUndefined();
+
+        const provenance = readJson(join(dataDir, "provenance.json"));
+        expect(provenance.pipeline.international).toMatchObject({
+          ok: true,
+          normalizeFailed: true,
+          count: 1,
+          enriched: 0,
+          bulk: 1,
+          enrichInputCount: 1,
+          accumCap: 3000,
+        });
+        const international = readJson(join(dataDir, "international.json"));
+        expect(validateEventContract(international).invalid).toEqual([]);
+        expect(international).toHaveLength(1);
+        expect(international[0]).toMatchObject({
+          scope: "international",
+          category: "地緣政治",
+          riskLevel: "medium",
+          source: {
+            datasetId: "international-news",
+            normalizationMethod: "bulk",
+          },
+        });
+        const bbcSource = provenance.sources.find((source: any) => source.name === "國際新聞：BBC World");
+        expect(bbcSource).toMatchObject({ datasetId: "international-news" });
+        expect(bbcSource.query).toContain("輕量收錄");
+        expect(provenance.note).toContain("未精修長尾");
+        expect(unexpected.some((entry) => entry.url.includes("llm.invalid"))).toBe(true);
       } finally {
         if (prevTier === undefined) delete process.env.INTERNATIONAL_FEED_TIER;
         else process.env.INTERNATIONAL_FEED_TIER = prevTier;

@@ -2,6 +2,7 @@
 // 分類用來源主題(hint)、風險用標題與摘要關鍵字、座標用標題短名縣市偵測。
 // 與 LLM 精修層(nvidia.normalizeDomesticNews)互補：LLM 精修最近一批，其餘走這裡，達成「全量下載」。
 import { COUNTY_CENTER } from "./coords.mjs";
+import { eventIdFor } from "./event-id.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
 import { titleKey } from "./title-key.mjs";
 export { titleKey } from "./title-key.mjs";
@@ -317,6 +318,64 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
       source: {
         ...source,
         query: `${source.query}（全量收錄）`,
+      },
+    });
+  }
+  return events;
+}
+
+const INTERNATIONAL_HINT_TO_CATEGORY = {
+  地緣政治: "地緣政治",
+  治安: "治安",
+  反詐: "反詐",
+  協尋: "協尋",
+  災害: "災害",
+  災防: "災害",
+  資安: "資安",
+  金融: "金融",
+};
+
+// 國際 RSS 的長尾事件走確定性輕量收錄；LLM 只精修較小候選池。
+// id 與 normalizeInternational 相同，讓精修事件可直接取代 bulk 版本。
+export function mapBulkInternationalNews(items, { fetchedAt, excludeIds = new Set() } = {}) {
+  const seen = new Set();
+  const events = [];
+  for (const it of items || []) {
+    const title = cleanTitle(it.title);
+    const titleId = titleKey(title);
+    const officialPolice = it.official === true && ["治安", "反詐", "協尋"].includes(it.hint);
+    const dedupeKey = officialPolice ? `${titleId}|official-police|${it.source || ""}` : titleId;
+    if (!titleId || seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+
+    const id = eventIdFor("international", it.link) || `intl-${hash(`${it.source || "international"}:${title}`)}`;
+    if (excludeIds.has(id)) continue;
+    const category = INTERNATIONAL_HINT_TO_CATEGORY[it.hint] || "其他";
+    const summary = String(it.description || title).replace(/\s+/g, " ").trim().slice(0, 200) || title;
+    const detectedRisk = riskFromTitle(title, it.hint, summary);
+    const riskLevel = detectedRisk === "low" && ["地緣政治", "災害", "金融"].includes(category)
+      ? "medium"
+      : detectedRisk;
+    const source = deriveNewsProvenance(
+      { ...it, datasetId: it.datasetId || "international-news", link: it.link || id },
+      { fetchedAt },
+    );
+    events.push({
+      id,
+      title,
+      region: "國際",
+      timestamp: toIso(it.pubDate),
+      category,
+      categoryBasis: it.hint ? `hint:${it.hint}` : "default",
+      scope: "international",
+      riskLevel,
+      summary,
+      locationPrecision: "unknown",
+      locationNote: "RSS 未提供可驗證的事件座標",
+      source: {
+        ...source,
+        normalizationMethod: "bulk",
+        query: `${source.query}（輕量收錄）`,
       },
     });
   }

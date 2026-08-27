@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  mapBulkInternationalNews,
   mapBulkNews,
   titleKey,
   cleanTitle,
@@ -25,6 +26,66 @@ describe("titleKey / cleanTitle", () => {
   it("strips media suffix for dedup key and display", () => {
     expect(cleanTitle("高雄街頭砍人 - 自由時報")).toBe("高雄街頭砍人");
     expect(titleKey("高雄街頭砍人 - 自由時報")).toBe(titleKey("高雄街頭砍人 - ETtoday"));
+  });
+});
+
+describe("mapBulkInternationalNews", () => {
+  it("全量收錄國際 RSS、保留官方來源，並讓 LLM id 排除 bulk 重複", () => {
+    const items = [
+      {
+        title: "Global ransomware attack disrupts hospitals",
+        link: "https://example.test/intl/cyber",
+        description: "Hospitals reported service disruptions after a ransomware attack.",
+        source: "BBC World",
+        sourceUrl: "https://example.test/bbc.xml",
+        hint: "資安",
+        pubDate: "2026-06-20T01:00:00.000Z",
+      },
+      {
+        title: "Global ransomware attack disrupts hospitals",
+        link: "https://example.test/intl/cyber-copy",
+        description: "Syndicated duplicate.",
+        source: "Guardian World",
+        sourceUrl: "https://example.test/guardian.xml",
+        hint: "資安",
+        pubDate: "2026-06-20T01:01:00.000Z",
+      },
+      {
+        title: "Police arrest fraud suspects",
+        link: "https://example.test/intl/police",
+        description: "Police arrested suspects in a cross-border fraud case.",
+        source: "US DOJ Press Releases",
+        sourceUrl: "https://example.test/doj.xml",
+        hint: "反詐",
+        official: true,
+        pubDate: "2026-06-20T02:00:00.000Z",
+      },
+    ];
+
+    const events = mapBulkInternationalNews(items, { fetchedAt: FETCHED_AT });
+    expect(events).toHaveLength(2);
+    expect(events[0]).toMatchObject({
+      scope: "international",
+      region: "國際",
+      category: "資安",
+      locationPrecision: "unknown",
+      source: {
+        datasetId: "international-news",
+        normalizationMethod: "bulk",
+      },
+    });
+    expect(events[0].summary).toContain("Hospitals reported");
+    expect(events[0].source.query).toContain("輕量收錄");
+    expect(events[1]).toMatchObject({
+      category: "反詐",
+      source: { authority: "official", datasetId: "international-news" },
+    });
+
+    const excluded = mapBulkInternationalNews(items, {
+      fetchedAt: FETCHED_AT,
+      excludeIds: new Set([events[0].id]),
+    });
+    expect(excluded.map((event) => event.id)).toEqual([events[1].id]);
   });
 });
 
