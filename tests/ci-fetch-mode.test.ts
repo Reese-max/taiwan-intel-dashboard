@@ -179,6 +179,16 @@ describe("resolveFetchMode", () => {
     expect(deployWorkflow).not.toMatch(/TWINKLE_(?:MCP|HUB)/);
   });
 
+  it("restores pipeline data once and deploys the checked artifact", () => {
+    const workflow = readFileSync(".github/workflows/deploy.yml", "utf8");
+
+    expect(workflow).toContain("ref: pipeline-state");
+    expect(workflow).toContain("cp -f pipeline-state/data/*.json public/data/");
+    expect(workflow).toContain("npm run check");
+    expect(workflow).not.toContain("- run: npm run build");
+    expect(workflow.match(/name: deploy-dist-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/g)).toHaveLength(3);
+  });
+
   it("gates source freshness and the generated coverage matrix before deploy", () => {
     const workflow = readFileSync(".github/workflows/pipeline-audit.yml", "utf8");
     expect(workflow).toContain("npm run audit:source-freshness");

@@ -11,12 +11,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Restore pipeline state
+        uses: actions/checkout@v4
+        with:
+          ref: pipeline-state
+          path: pipeline-state
+      - name: Restore deploy data
+        run: |
+          mkdir -p public/data
+          cp -f pipeline-state/data/*.json public/data/
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
       - run: npm ci
       - run: npm run check
+      - name: Upload checked site
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
 
   deploy-preview:
     needs: check
@@ -27,12 +43,11 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Download checked site
+        uses: actions/download-artifact@v4
         with:
-          node-version: "22"
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+          name: deploy-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist
       - name: Refresh Cloudflare Token
         id: cf_token
         run: |
@@ -69,12 +84,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Download checked site
+        uses: actions/download-artifact@v4
         with:
-          node-version: "22"
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+          name: deploy-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist
       - name: Refresh Cloudflare Token
         id: cf_token
         run: |
@@ -90,6 +104,5 @@ jobs:
           apiToken: ${{ steps.cf_token.outputs.token }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name taiwan-intel-dashboard --branch production
-
 
 
