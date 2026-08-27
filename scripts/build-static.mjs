@@ -146,6 +146,11 @@ const dashboardHtml = `<!doctype html>
 writeFileSync(`${OUT}/index.html`, dashboardHtml);
 // classic.html 保留為儀表板別名（不破壞既有連結）。
 writeFileSync(`${OUT}/classic.html`, dashboardHtml);
+// 頂層 404 會停用 Cloudflare Pages 的 SPA fallback，讓已移除路由真正回傳 404。
+writeFileSync(
+  `${OUT}/404.html`,
+  '<!doctype html><html lang="zh-Hant"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>找不到頁面</title><body><main><h1>404</h1><p>找不到此頁面。</p><a href="/">返回儀表板</a></main></body></html>\n',
+);
 
 // 全球情報中心（globe.gl）移到 globe.html；intel.html 保留為別名。
 copyFileSync("static/intel.html", `${OUT}/globe.html`);

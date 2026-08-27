@@ -10,6 +10,7 @@ describe("static build asset cache busting", () => {
     expect(buildScript).toContain("function assetVersion(name)");
     expect(buildScript).toContain('./assets/main.css?v=${assetVersion("main.css")}');
     expect(buildScript).toContain('./assets/main.js?v=${assetVersion("main.js")}');
+    expect(buildScript).toMatch(/writeFileSync\(\r?\n\s+`\$\{OUT\}\/404\.html`/);
     expect(buildScript).not.toContain("src/query.ts");
     expect(buildScript).not.toContain("query.html");
   });
