@@ -181,12 +181,17 @@ describe("resolveFetchMode", () => {
 
   it("restores pipeline data once and deploys the checked artifact", () => {
     const workflow = readFileSync(".github/workflows/deploy.yml", "utf8");
+    const refreshWorkflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
 
     expect(workflow).toContain("ref: pipeline-state");
     expect(workflow).toContain("cp -f pipeline-state/data/*.json public/data/");
     expect(workflow).toContain("npm run check");
     expect(workflow).not.toContain("- run: npm run build");
     expect(workflow.match(/name: deploy-dist-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/g)).toHaveLength(3);
+    expect(workflow.match(/apiToken: \$\{\{ secrets\.CLOUDFLARE_API_TOKEN \}\}/g)).toHaveLength(2);
+    expect(workflow).not.toContain("CF_REFRESH_TOKEN");
+    expect(refreshWorkflow).toContain("apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}");
+    expect(refreshWorkflow).not.toContain("CF_REFRESH_TOKEN");
   });
 
   it("gates source freshness and the generated coverage matrix before deploy", () => {

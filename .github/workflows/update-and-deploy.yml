@@ -79,19 +79,10 @@ jobs:
           name: pipeline-dist-${{ github.run_id }}-${{ github.run_attempt }}
           path: dist
 
-      - name: Refresh Cloudflare Token
-        id: cf_token
-        run: |
-          RESP=$(curl -s -X POST "https://dash.cloudflare.com/oauth2/token" \
-            -d "grant_type=refresh_token&refresh_token=${{ secrets.CF_REFRESH_TOKEN }}&client_id=54d11594-84e4-41aa-b438-e81b8fa78ee7")
-          TOKEN=$(echo "$RESP" | jq -r '.access_token')
-          echo "::add-mask::$TOKEN"
-          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
-
       - name: 部署到 Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ steps.cf_token.outputs.token }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: "03d40efd3c60181edea80af8d927ddc1"
           command: pages deploy dist --project-name=taiwan-intel-dashboard --branch=production
 
@@ -118,4 +109,3 @@ jobs:
           else
             echo "TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID 未設定，跳過通知"
           fi
-
