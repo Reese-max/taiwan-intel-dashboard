@@ -295,7 +295,7 @@ export async function renderPoliceHealthPanel(container: HTMLElement): Promise<v
             <div><dt>本次筆數</dt><dd>${source.count} 筆</dd></div>
             <div><dt>最近成功時間</dt><dd>${esc(formatDateTime(lastSuccess))}</dd></div>
             <div><dt>本次抓取時間</dt><dd>${esc(formatDateTime(source.fetchedAt))}</dd></div>
-            <div><dt>查詢</dt><dd>${esc(source.query || `twinkle-hub police/${source.key || source.datasetId || "unknown"}`)}</dd></div>
+            <div><dt>查詢</dt><dd>${esc(source.query || "來源查詢資訊未提供")}</dd></div>
           </dl>
           ${
             stack

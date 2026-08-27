@@ -35,7 +35,6 @@ execFileSync(
   esbuild,
   [
     "src/main.ts",
-    "src/query.ts",
     "--bundle",
     "--minify",
     "--format=esm",
@@ -98,19 +97,11 @@ function trimNetwork(net) {
   return net;
 }
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
-const FRAUD_QUERY_DATASETS = new Set(["176455", "160055", "38262"]);
 for (const f of readdirSync("public/data")) {
   if (TRIM_FIELDS.has(f)) {
     const arr = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
     const trimmed = Array.isArray(arr) ? arr.map(trimEvent) : arr;
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimmed));
-    if (f === "domestic.json" && Array.isArray(trimmed)) {
-      const provenance = JSON.parse(readFileSync("public/data/provenance.json", "utf8"));
-      writeFileSync(`${OUT}/data/query-snapshot.json`, JSON.stringify({
-        generatedAt: provenance.generatedAt || null,
-        fraud: trimmed.filter((event) => FRAUD_QUERY_DATASETS.has(String(event.source?.datasetId || ""))),
-      }));
-    }
     // 同時輸出地圖 first-paint 精簡檔 <scope>.map.json（僅可定位事件 + 精簡欄位）。
     if (Array.isArray(arr)) {
       const scope = f.replace(/\.json$/, "");
@@ -155,29 +146,15 @@ const dashboardHtml = `<!doctype html>
 writeFileSync(`${OUT}/index.html`, dashboardHtml);
 // classic.html 保留為儀表板別名（不破壞既有連結）。
 writeFileSync(`${OUT}/classic.html`, dashboardHtml);
+// 頂層 404 會停用 Cloudflare Pages 的 SPA fallback，讓已移除路由真正回傳 404。
+writeFileSync(
+  `${OUT}/404.html`,
+  '<!doctype html><html lang="zh-Hant"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>找不到頁面</title><body><main><h1>404</h1><p>找不到此頁面。</p><a href="/">返回儀表板</a></main></body></html>\n',
+);
 
 // 全球情報中心（globe.gl）移到 globe.html；intel.html 保留為別名。
 copyFileSync("static/intel.html", `${OUT}/globe.html`);
 copyFileSync("static/intel.html", `${OUT}/intel.html`);
-
-// 產出 query.html（警政查詢助手，獨立頁）
-writeFileSync(
-  `${OUT}/query.html`,
-  `<!doctype html>
-<html lang="zh-Hant">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>警政查詢助手</title>
-    <link rel="stylesheet" href="./assets/query.css?v=${assetVersion("query.css")}" />
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="./assets/query.js?v=${assetVersion("query.js")}"></script>
-  </body>
-</html>
-`,
-);
 
 // Cloudflare Pages 安全標頭（_headers）。單一寬鬆但有意義的 CSP：全頁適用（含用 unpkg
 // globe.gl + inline script 的 globe.html），仍鎖 frame-ancestors/object-src/base-uri/default-src。
@@ -211,8 +188,6 @@ writeFileSync(
   Cache-Control: public, max-age=600, stale-while-revalidate=86400
 `,
 );
-writeFileSync(`${OUT}/_routes.json`, `${JSON.stringify({ version: 1, include: ["/api/*"], exclude: [] })}\n`);
-
 for (const f of readdirSync(`${OUT}/assets`)) {
   const kb = (statSync(`${OUT}/assets/${f}`).size / 1024).toFixed(1);
   console.log(`assets/${f}  ${kb} KB`);

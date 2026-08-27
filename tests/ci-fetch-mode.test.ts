@@ -12,21 +12,22 @@ describe("resolveFetchMode", () => {
   it("maps hourly cron to CWA + police + missing + Taiwan news + international RSS", () => {
     const mode = resolveFetchMode({ schedule: "5 * * * *" });
     expect(mode.label).toBe("hourly");
-    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy");
-    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,police,twnews --min-international-feeds=10 --min-international-raw=50");
+    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,police,missing,twnews --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("maps daily refresh cron to full exclusive refresh including CWA and international RSS", () => {
     const mode = resolveFetchMode({ schedule: "30 18 * * *" });
     expect(mode.label).toBe("refresh");
-    expect(mode.args).toBe("--sources=cwa,pcc,police,missing,twnews,rss,gdelt,judicial,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,legislature,tourismStat,socialPopulation,education,financeDerivatives,laborStats --exclusive");
-    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,pcc,police,judicial,twnews --min-international-feeds=10 --min-international-raw=50");
+    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver --exclusive");
+    expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,police,missing,twnews --min-international-feeds=10 --min-international-raw=50");
   });
 
   it("accepts explicit daily mode alias", () => {
     const mode = resolveFetchMode({ mode: "daily" });
     expect(mode.label).toBe("refresh");
-    expect(mode.args).toContain("judicial");
+    expect(mode.args).not.toContain("judicial");
+    expect(mode.args).not.toContain("pcc");
     expect(mode.args).toContain("--exclusive");
   });
 
@@ -100,8 +101,8 @@ describe("resolveFetchMode", () => {
   it("supports a manual Taiwan news mode with source-specific assertions", () => {
     const mode = resolveFetchMode({ mode: "twnews" });
     expect(mode.label).toBe("twnews");
-    expect(mode.args).toBe("--sources=twnews,missing");
-    expect(mode.assertArgs).toBe("--require=twnews");
+    expect(mode.args).toBe("--sources=police,twnews,missing");
+    expect(mode.assertArgs).toBe("--require=police,missing,twnews");
   });
 
   it("keeps legacy manual police mode as hourly-compatible mode", () => {
@@ -128,7 +129,7 @@ describe("resolveFetchMode", () => {
   it("defaults to hourly mode when mode is empty and schedule is hourly", () => {
     const mode = resolveFetchMode({ mode: "", schedule: "5 * * * *" });
     expect(mode.label).toBe("hourly");
-    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver,moenvAir,parkingHsinchu,parkingTaoyuan,economy");
+    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver");
   });
 
   it("defaults to hourly mode when only schedule is missing", () => {
@@ -145,7 +146,7 @@ describe("resolveFetchMode", () => {
   it("prefers manual daily override when both schedule and mode are provided", () => {
     const mode = resolveFetchMode({ schedule: "5 * * * *", mode: "daily" });
     expect(mode.label).toBe("refresh");
-    expect(mode.args).toContain("judicial");
+    expect(mode.args).not.toContain("judicial");
     expect(mode.args).toContain("--exclusive");
   });
 
@@ -168,6 +169,29 @@ describe("resolveFetchMode", () => {
     expect(workflow).toContain("LLM_FALLBACK_API_KEY: ${{ secrets.NVIDIA_API_KEY }}");
     expect(workflow).toContain("LLM_FALLBACK_BASE_URL: ${{ secrets.NVIDIA_BASE_URL }}");
     expect(workflow).toContain("LLM_FALLBACK_MODEL: ${{ secrets.NVIDIA_MODEL }}");
+  });
+
+  it("does not inject Twinkle MCP credentials into fetch or deploy workflows", () => {
+    const fetchWorkflow = readFileSync(".github/workflows/pipeline-fetch.yml", "utf8");
+    const deployWorkflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
+
+    expect(fetchWorkflow).not.toMatch(/TWINKLE_(?:MCP|HUB)/);
+    expect(deployWorkflow).not.toMatch(/TWINKLE_(?:MCP|HUB)/);
+  });
+
+  it("restores pipeline data once and deploys the checked artifact", () => {
+    const workflow = readFileSync(".github/workflows/deploy.yml", "utf8");
+    const refreshWorkflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
+
+    expect(workflow).toContain("ref: pipeline-state");
+    expect(workflow).toContain("cp -f pipeline-state/data/*.json public/data/");
+    expect(workflow).toContain("npm run check");
+    expect(workflow).not.toContain("- run: npm run build");
+    expect(workflow.match(/name: deploy-dist-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/g)).toHaveLength(3);
+    expect(workflow.match(/apiToken: \$\{\{ secrets\.CLOUDFLARE_API_TOKEN \}\}/g)).toHaveLength(2);
+    expect(workflow).not.toContain("CF_REFRESH_TOKEN");
+    expect(refreshWorkflow).toContain("apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}");
+    expect(refreshWorkflow).not.toContain("CF_REFRESH_TOKEN");
   });
 
   it("gates source freshness and the generated coverage matrix before deploy", () => {

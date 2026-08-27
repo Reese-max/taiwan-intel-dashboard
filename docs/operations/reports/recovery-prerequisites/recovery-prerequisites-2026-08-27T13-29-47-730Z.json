@@ -1,0 +1,142 @@
+{
+  "timestamp": "2026-08-27T13:29:47.730Z",
+  "dryRun": true,
+  "ok": true,
+  "summary": {
+    "total": 7,
+    "pass": 6,
+    "fail": 0,
+    "skip": 1,
+    "required": {
+      "total": 6,
+      "pass": 6,
+      "fail": 0,
+      "skip": 0
+    },
+    "optional": {
+      "total": 1,
+      "pass": 0,
+      "fail": 0,
+      "skip": 1
+    }
+  },
+  "checks": [
+    {
+      "id": "read-only-capabilities",
+      "name": "唯讀能力封鎖",
+      "status": "pass",
+      "detail": "演練只暴露 exists、readFile、readDir；HTTP、部署、生產寫入、workflow 啟用與 Cloudflare 設定變更均不可用",
+      "metadata": {
+        "exposed": [
+          "exists",
+          "readFile",
+          "readDir"
+        ],
+        "blocked": [
+          "fetch",
+          "deploy",
+          "writeProductionData",
+          "enableWorkflow",
+          "changeCloudflareSettings"
+        ]
+      }
+    },
+    {
+      "id": "dependency-integrity",
+      "name": "宣告依賴完整性",
+      "status": "pass",
+      "detail": "已確認 8 個 dependencies/devDependencies 的 package.json 存在且可讀（未安裝或載入套件）",
+      "metadata": {
+        "packageJson": "D:\\Users\\Administrator\\Desktop\\爬蟲資料\\taiwan-intel-dashboard-twinkle-modular-20260827\\package.json",
+        "declaredDependencies": [
+          "leaflet",
+          "opencc-js",
+          "@playwright/test",
+          "@types/leaflet",
+          "typescript",
+          "vite",
+          "vitest",
+          "yaml"
+        ],
+        "missingDependencies": [],
+        "checkedDependencies": [
+          "leaflet",
+          "opencc-js",
+          "@playwright/test",
+          "@types/leaflet",
+          "typescript",
+          "vite",
+          "vitest",
+          "yaml"
+        ]
+      }
+    },
+    {
+      "id": "env-secrets",
+      "name": "必要 GitHub Actions secrets 存在性",
+      "status": "pass",
+      "detail": "已檢查 GitHub Actions secrets 名稱（必要：1/1 存在）",
+      "metadata": {
+        "source": "gh secret list",
+        "requiredSecrets": [
+          "CLOUDFLARE_API_TOKEN"
+        ],
+        "presentRequired": [
+          "CLOUDFLARE_API_TOKEN"
+        ],
+        "missingRequired": []
+      }
+    },
+    {
+      "id": "data-endpoints",
+      "name": "資料端點證據檢視",
+      "status": "skip",
+      "detail": "未提供端點證據，需以 --endpoint-evidence 注入；純 dry-run 禁止對外 HTTP 端點探測",
+      "metadata": {
+        "endpoints": [],
+        "evidenceProvided": false
+      }
+    },
+    {
+      "id": "ci-workflows",
+      "name": "CI workflow 檔完整性",
+      "status": "pass",
+      "detail": "已確認並解析 8 個 workflow 檔案",
+      "metadata": {
+        "checkedFiles": [
+          "pipeline-fetch.yml",
+          "pipeline-audit.yml",
+          "pipeline-dry-run.yml",
+          "update-and-deploy.yml",
+          "pr-check.yml",
+          "dependency-build-health.yml",
+          "deploy.yml",
+          "source-health-check.yml"
+        ],
+        "missingFiles": [],
+        "invalidYaml": []
+      }
+    },
+    {
+      "id": "cloudflare-pages",
+      "name": "Cloudflare Pages 設定檢視",
+      "status": "pass",
+      "detail": "已唯讀檢視 Cloudflare Pages 專案、分支與 accountId",
+      "metadata": {
+        "hasProject": true,
+        "hasBranch": true,
+        "hasAccountId": true
+      }
+    },
+    {
+      "id": "build-artifacts",
+      "name": "建置產物檔案檢視",
+      "status": "pass",
+      "detail": "建置腳本與設定檔均存在（未執行建置）",
+      "metadata": {
+        "missing": [],
+        "dryBuildExecuted": false
+      }
+    }
+  ]
+}
