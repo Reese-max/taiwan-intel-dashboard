@@ -213,10 +213,11 @@ describe("warnOnNormalizeFailure", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const failed = warnOnNormalizeFailure({
       international: { ok: true, normalizeFailed: true, bulk: 3000 },
-      twnews: { ok: true, normalizeFailed: true },
+      twnews: { ok: true, normalizeFailed: true, bulk: 2692 },
     });
     expect(failed).toEqual(["international", "twnews"]);
     expect(warn.mock.calls.some((c) => String(c[0]).includes("輕量收錄更新 3000 筆"))).toBe(true);
+    expect(warn.mock.calls.some((c) => String(c[0]).includes("輕量收錄更新 2692 筆"))).toBe(true);
   });
 
   it("stays silent when no normalize failure flag is set", () => {

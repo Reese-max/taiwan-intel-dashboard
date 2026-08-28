@@ -112,14 +112,14 @@ export function assertInternationalPostFetchGates(
   return result;
 }
 
-// LLM 正規化全批失敗仍需告警，但國際 bulk 可讓資料繼續更新；此旗標只觀測、不擋部署。
+// LLM 正規化全批失敗仍需告警，但 bulk 可讓資料繼續更新；此旗標只觀測、不擋部署。
 export function warnOnNormalizeFailure(pipeline) {
   const failed = [];
   for (const scope of ["international", "twnews"]) {
     const status = pipeline?.[scope];
     if (status?.normalizeFailed === true) {
       failed.push(scope);
-      const detail = scope === "international" && Number(status.bulk || 0) > 0
+      const detail = Number(status.bulk || 0) > 0
         ? `本輪仍以輕量收錄更新 ${status.bulk} 筆`
         : "本輪只剩快取、資料未更新";
       console.warn(

@@ -155,8 +155,10 @@ describe("官方來源 mapper", () => {
   });
 
   it("只收 TFDA 最近期間的不合格食品邊境查驗", () => {
+    const duplicate = { 產地: "日本", 主旨: "冷凍草莓", 原因: "農藥殘留不符規定", 進口商名稱: "甲公司", 處置情形: "退運或銷毀", 發布日期: "2026/07/14", 附圖: "https://example.test/a" };
     const events = mapTfdaEvents([
-      { 產地: "日本", 主旨: "冷凍草莓", 原因: "農藥殘留不符規定", 進口商名稱: "甲公司", 處置情形: "退運或銷毀", 發布日期: "2026/07/14", 附圖: "https://example.test/a" },
+      duplicate,
+      { ...duplicate },
       { 產地: "美國", 主旨: "舊資料", 原因: "不符規定", 進口商名稱: "乙公司", 處置情形: "退運", 發布日期: "2025/01/01" },
     ], { fetchedAt: FETCHED_AT, now: Date.parse(FETCHED_AT), retentionDays: 30 });
     expect(events).toHaveLength(1);
