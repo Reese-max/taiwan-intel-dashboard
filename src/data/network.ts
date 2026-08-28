@@ -102,6 +102,8 @@ const TYPE_LABEL: Record<EdgeType, string> = {
   "same-topic": "同題情勢（弱關聯）",
 };
 
+const NETWORK_FETCH_TIMEOUT_MS = 5_000;
+
 export function edgeTypeLabel(t: EdgeType): string {
   return TYPE_LABEL[t] ?? t;
 }
@@ -157,7 +159,7 @@ export class NetworkIndex {
 // 載入並建索引；無 network.json（404）時回空索引，不報錯。
 export async function loadNetwork(scope: Scope): Promise<NetworkIndex> {
   try {
-    const res = await fetch("./data/network.json");
+    const res = await fetch("./data/network.json", { signal: AbortSignal.timeout(NETWORK_FETCH_TIMEOUT_MS) });
     if (!res.ok) return new NetworkIndex(null);
     const net = (await res.json()) as IntelNetwork;
     return new NetworkIndex(net[scope]);
