@@ -610,13 +610,22 @@ export function mapTfdaEvents(rows, {
   limit = 50,
 } = {}) {
   const cutoff = now - retentionDays * 86400000;
+  const seen = new Set();
   return (Array.isArray(rows) ? rows : [])
-    .map((row) => ({ row, timestamp: taiwanDateIso(row?.發布日期, "") }))
+    .map((row) => ({
+      row,
+      timestamp: taiwanDateIso(row?.發布日期, ""),
+      recordRef: [row?.發布日期, row?.主旨, row?.進口商名稱, row?.產地].join("|"),
+    }))
     .filter(({ timestamp }) => Number.isFinite(Date.parse(timestamp)) && Date.parse(timestamp) >= cutoff)
     .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
+    .filter(({ recordRef }) => {
+      if (seen.has(recordRef)) return false;
+      seen.add(recordRef);
+      return true;
+    })
     .slice(0, limit)
-    .map(({ row, timestamp }) => {
-      const recordRef = [row.發布日期, row.主旨, row.進口商名稱, row.產地].join("|");
+    .map(({ row, timestamp, recordRef }) => {
       return {
         id: stableId("tfda", recordRef),
         title: `TFDA 邊境查驗不符合：${compact(row.主旨, 120) || "未命名食品"}`,
