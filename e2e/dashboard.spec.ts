@@ -70,18 +70,14 @@ test("URL 深連結：hash 參數可還原到篩選器", async ({ page }) => {
   await expect(page.locator("#eventlist")).toBeVisible();
 });
 
-// XSS 回歸：focus 參數必須以文字呈現，不能注入 HTML/JS。
-test("XSS hash 回歸：focus 參數應以轉義文字顯示", async ({ page }) => {
+// XSS 回歸：無效 focus 必須安全清除，不能注入 HTML/JS。
+test("XSS hash 回歸：惡意 focus 參數應安全清除", async ({ page }) => {
   const payload = '<img src=x onerror="window.__xss=1">';
   await page.goto(`/#scope=domestic&focus=${encodeURIComponent(payload)}`);
   const focusbar = page.locator("#focusbar");
-  await expect(focusbar).not.toBeHidden({ timeout: 30_000 });
+  await expect(page.locator("#eventlist > *").first()).toBeVisible({ timeout: 30_000 });
+  await expect(focusbar).toBeHidden();
   await expect(page.locator("#focusbar img")).toHaveCount(0);
-  await expect
-    .poll(async () => page.locator("#focusbar").innerText(), { timeout: 30_000 })
-    .not.toContain("<img");
-  const focusbarText = await focusbar.innerText();
-  expect(focusbarText === "" || focusbarText.includes("img") || focusbarText.includes("onerror")).toBeTruthy();
   const xssFlag = await page.evaluate(() => window.__xss);
   expect(xssFlag).toBeUndefined();
 });

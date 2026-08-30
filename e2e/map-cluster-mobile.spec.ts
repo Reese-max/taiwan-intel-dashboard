@@ -9,8 +9,10 @@ test.use({
 
 test("行動版切到地圖後立即點聚合數字標，彈窗不應閃退", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("#count")).not.toHaveText("");
+  await expect(page.locator("#count")).not.toHaveText("", { timeout: 30_000 });
+  await page.locator("#mobile-filter-trigger").tap();
   await page.getByRole("combobox", { name: "時間範圍" }).selectOption({ label: "全部時間" });
+  await page.locator("#filter-sheet-done").tap();
   await expect(page.locator("#count")).not.toContainText("1 / 1");
   await page.locator('[data-mobile-view="map"]').tap();
 

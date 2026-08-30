@@ -31,6 +31,7 @@ const TIP_KEY = "taiwan-intel-link-tip-dismissed";
 const COMPACT_LAYOUT_KEY = "taiwan-intel-compact-layout";
 const SIDE_PANEL_STATE_KEY = "taiwan-intel-side-panel-state";
 const MOBILE_VIEW_KEY = "taiwan-intel-mobile-view";
+const MOBILE_LAYOUT_QUERY = "(max-width: 640px), (max-width: 932px) and (max-height: 500px)";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -52,13 +53,29 @@ app.innerHTML = `
     <span>🔗＝點我看關聯；點事件可追整張情報網。</span>
     <button type="button" id="close-tip">我知道了</button>
   </div>
-  <div id="filterbar" class="filterbar"></div>
+  <div class="mobile-searchbar">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>
+      <input id="mq-query" type="search" aria-label="搜尋情報" placeholder="搜尋情報…">
+    </div>
+  </div>
+  <section id="filter-panel" class="filter-panel" aria-label="情報篩選">
+    <button type="button" class="filter-scrim" aria-label="關閉篩選" tabindex="-1"></button>
+    <div class="filter-surface">
+      <header class="filter-sheet-head">
+        <div>
+          <strong id="filter-sheet-title">篩選情報</strong>
+          <span>調整分類、來源、風險與時間</span>
+        </div>
+        <button id="filter-sheet-close" type="button" aria-label="關閉篩選">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>
+        </button>
+      </header>
+      <div id="filterbar" class="filterbar"></div>
+      <button id="filter-sheet-done" class="filter-sheet-done" type="button">套用篩選</button>
+    </div>
+  </section>
   <div id="filter-summary" class="filter-summary" hidden></div>
-  <nav id="mobile-view-switcher" class="mobile-view-switcher" aria-label="行動版視圖切換">
-    <button type="button" data-mobile-view="map">地圖</button>
-    <button type="button" data-mobile-view="list">列表</button>
-    <button type="button" data-mobile-view="insights">重點</button>
-  </nav>
   <section id="kpistrip" class="kpi-strip" aria-label="關鍵指標"></section>
   <main class="layout">
     <section class="col-map">
@@ -93,16 +110,29 @@ app.innerHTML = `
       </details>
     </aside>
   </main>
-  <nav class="mobile-quickbar" aria-label="快捷操作">
-    <div class="search-box mq-search">
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>
-      <input id="mq-query" type="search" aria-label="搜尋情報" placeholder="搜尋情報…">
-    </div>
-    <button id="mq-filter" type="button">篩選</button>
+  <nav class="mobile-tabbar" aria-label="主要視圖">
+    <button type="button" data-mobile-view="list" aria-label="列表視圖">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="8" y1="6" x2="20" y2="6"></line><line x1="8" y1="12" x2="20" y2="12"></line><line x1="8" y1="18" x2="20" y2="18"></line><circle cx="4" cy="6" r="1"></circle><circle cx="4" cy="12" r="1"></circle><circle cx="4" cy="18" r="1"></circle></svg>
+      <span>列表</span>
+    </button>
+    <button type="button" data-mobile-view="map" aria-label="地圖視圖">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+      <span>地圖</span>
+    </button>
+    <button type="button" data-mobile-view="insights" aria-label="重點視圖">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="19" x2="5" y2="12"></line><line x1="12" y1="19" x2="12" y2="5"></line><line x1="19" y1="19" x2="19" y2="9"></line></svg>
+      <span>重點</span>
+    </button>
+    <button id="mobile-filter-trigger" type="button" aria-label="開啟篩選" aria-controls="filter-panel" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2"></circle><line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2"></circle><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="11" cy="18" r="2"></circle></svg>
+      <span>篩選</span><span id="mobile-filter-count" class="mobile-filter-count" hidden></span>
+    </button>
   </nav>`;
 
+const mobileMedia = window.matchMedia(MOBILE_LAYOUT_QUERY);
+
 function revealListFromMapHint(): void {
-  if (window.matchMedia("(max-width: 640px)").matches) {
+  if (mobileMedia.matches) {
     setMobileView("list", { scroll: true });
     return;
   }
@@ -114,10 +144,49 @@ const mapView = new MapView(document.getElementById("map")!, {
   onShowList: revealListFromMapHint,
 });
 
-// 手機底部快捷列：搜尋同步寫入 store；篩選鈕捲到頂並聚焦篩選器。
+// 手機搜尋同步寫入 store；底部導覽沿用既有三種視圖狀態。
 const mqQuery = document.getElementById("mq-query") as HTMLInputElement | null;
 const compactToggle = document.getElementById("compact-layout-toggle") as HTMLButtonElement | null;
+const filterPanel = document.getElementById("filter-panel") as HTMLElement | null;
+const filterSurface = filterPanel?.querySelector<HTMLElement>(".filter-surface") ?? null;
+const mobileFilterTrigger = document.getElementById("mobile-filter-trigger") as HTMLButtonElement | null;
+let lastFilterTrigger: HTMLElement | null = null;
 type MobileView = "map" | "list" | "insights";
+
+function setMobileFilters(open: boolean, restoreFocus = true): void {
+  if (!filterPanel) return;
+  const wasOpen = filterPanel.classList.contains("is-open");
+  const nextOpen = mobileMedia.matches && open;
+  filterPanel.classList.toggle("is-open", nextOpen);
+  filterPanel.setAttribute("aria-hidden", String(mobileMedia.matches && !nextOpen));
+  filterSurface?.toggleAttribute("role", nextOpen);
+  if (nextOpen) {
+    filterSurface?.setAttribute("role", "dialog");
+    filterSurface?.setAttribute("aria-modal", "true");
+    filterSurface?.setAttribute("aria-labelledby", "filter-sheet-title");
+  } else {
+    filterSurface?.removeAttribute("aria-modal");
+    filterSurface?.removeAttribute("aria-labelledby");
+  }
+  document.body.classList.toggle("mobile-filter-open", nextOpen);
+  mobileFilterTrigger?.setAttribute("aria-expanded", String(nextOpen));
+  mobileFilterTrigger?.classList.toggle("active", nextOpen);
+  if (nextOpen) {
+    window.requestAnimationFrame(() => document.getElementById("filter-sheet-close")?.focus());
+  } else if (wasOpen && restoreFocus) {
+    lastFilterTrigger?.focus();
+  }
+}
+
+function syncMobileShell(): void {
+  if (mobileMedia.matches) {
+    setMobileFilters(filterPanel?.classList.contains("is-open") ?? false, false);
+    return;
+  }
+  setMobileFilters(false, false);
+  filterPanel?.setAttribute("aria-hidden", "false");
+  filterSurface?.removeAttribute("role");
+}
 
 function isMobileView(value: string | null | undefined): value is MobileView {
   return value === "map" || value === "list" || value === "insights";
@@ -126,10 +195,11 @@ function isMobileView(value: string | null | undefined): value is MobileView {
 function mobileViewTarget(view: MobileView): HTMLElement | null {
   if (view === "map") return document.querySelector<HTMLElement>(".col-map");
   if (view === "list") return document.querySelector<HTMLElement>(".col-list");
-  return document.querySelector<HTMLElement>(".col-side");
+  return document.getElementById("kpistrip");
 }
 
 function setMobileView(view: MobileView, options: { scroll?: boolean } = {}): void {
+  setMobileFilters(false, false);
   document.body.classList.toggle("mobile-view-map", view === "map");
   document.body.classList.toggle("mobile-view-list", view === "list");
   document.body.classList.toggle("mobile-view-insights", view === "insights");
@@ -171,7 +241,7 @@ function currentMobileView(): MobileView {
 }
 
 function revealScopeChangeOnMobile(): void {
-  if (!window.matchMedia("(max-width: 640px)").matches) return;
+  if (!mobileMedia.matches) return;
   const view = currentMobileView();
   setMobileView(view === "insights" ? "list" : view, { scroll: true });
 }
@@ -194,12 +264,12 @@ function initMobileView(): void {
 }
 
 function showFocusedListOnMobile(): void {
-  if (!window.matchMedia("(max-width: 640px)").matches) return;
+  if (!mobileMedia.matches) return;
   setMobileView("list");
 }
 
 function revealListFallbackOnMobile(): void {
-  if (!window.matchMedia("(max-width: 640px)").matches) return;
+  if (!mobileMedia.matches) return;
   window.requestAnimationFrame(() => {
     mobileViewTarget("list")?.scrollIntoView({ behavior: "auto", block: "start" });
   });
@@ -268,6 +338,7 @@ function initSidePanelState(): void {
 
 initSidePanelState();
 initMobileView();
+syncMobileShell();
 
 if (mqQuery)
   mqQuery.oninput = debounce((ev: unknown) => {
@@ -279,14 +350,17 @@ window.addEventListener(
   "resize",
   debounce(() => {
     void mapView.resize();
+    syncMobileShell();
   }, 150),
 );
-const mqFilter = document.getElementById("mq-filter");
-if (mqFilter)
-  mqFilter.onclick = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    document.getElementById("f-cat")?.focus();
+if (mobileFilterTrigger)
+  mobileFilterTrigger.onclick = () => {
+    lastFilterTrigger = mobileFilterTrigger;
+    setMobileFilters(true);
   };
+document.querySelector<HTMLButtonElement>(".filter-scrim")?.addEventListener("click", () => setMobileFilters(false));
+document.getElementById("filter-sheet-close")?.addEventListener("click", () => setMobileFilters(false));
+document.getElementById("filter-sheet-done")?.addEventListener("click", () => setMobileFilters(false));
 const cache: Partial<Record<Scope, IntelEvent[]>> = {};
 const netCache: Partial<Record<Scope, NetworkIndex>> = {};
 const triageAcked = loadTriageAcked();
@@ -399,6 +473,13 @@ function renderFilterSummary(displayCount: number, totalCount: number, focusLabe
     chips.push(`<button type="button" class="filter-chip" data-clear-filter="since">時間：近 ${s.sinceDays} 天 ✕</button>`);
   if (s.query) chips.push(`<button type="button" class="filter-chip" data-clear-filter="query">搜尋：${esc(s.query)} ✕</button>`);
   if (focusLabel) chips.push(`<button type="button" class="filter-chip is-focus" data-clear-filter="focus">焦點：${esc(focusLabel)} ✕</button>`);
+
+  const activeFilterCount = Number(Boolean(s.category)) + Number(Boolean(s.newsAuthority)) + Number(Boolean(s.minRisk)) + Number(Boolean(s.sinceDays)) + Number(Boolean(s.query));
+  const mobileCount = document.getElementById("mobile-filter-count");
+  if (mobileCount) {
+    mobileCount.textContent = String(activeFilterCount);
+    mobileCount.hidden = activeFilterCount === 0;
+  }
 
   el.hidden = false;
   el.innerHTML = `
@@ -683,6 +764,11 @@ const relationGraph = createRelationGraphController({
 
 // 「/」鍵快速聚焦搜尋框（非輸入/選單狀態時）。
 document.addEventListener("keydown", (ev) => {
+  if (ev.key === "Escape" && filterPanel?.classList.contains("is-open")) {
+    ev.preventDefault();
+    setMobileFilters(false);
+    return;
+  }
   if (ev.key !== "/" || ev.ctrlKey || ev.metaKey || ev.altKey) return;
   const tag = (document.activeElement as HTMLElement | null)?.tagName;
   if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;

@@ -29,6 +29,8 @@ function emptyLabel(sinceDays: number | undefined): string {
 }
 
 export function renderTriageInbox(container: HTMLElement, events: IntelEvent[], opts: TriageInboxOptions): void {
+  const previousOpen = container.querySelector<HTMLDetailsElement>("details.triage-card")?.open;
+  const open = previousOpen ?? !window.matchMedia("(max-width: 640px), (max-width: 932px) and (max-height: 500px)").matches;
   const triage = buildTriage(events, opts.acked, Date.now());
   const rows = triage.items
     .map((e) => {
@@ -50,13 +52,18 @@ export function renderTriageInbox(container: HTMLElement, events: IntelEvent[], 
       : `<div class="triage-list">${rows}</div>${capped}`;
 
   container.innerHTML = `
-    <section class="triage-card" aria-label="危急待處置收件匣">
-      <header class="triage-head">
-        <strong>⚠ 待處置 · ${triage.unreadCount} 未讀 / ${triage.total} 則</strong>
-        <button type="button" class="triage-ack-all" ${triage.unreadCount === 0 ? "disabled" : ""}>全部標為已讀</button>
-      </header>
-      ${body}
-    </section>`;
+    <details class="triage-card" aria-label="危急待處置收件匣" ${open ? "open" : ""}>
+      <summary class="triage-head">
+        <strong>待處置 · ${triage.unreadCount} 未讀 / ${triage.total} 則</strong>
+        <span class="triage-toggle" aria-hidden="true"></span>
+      </summary>
+      <div class="triage-body">
+        <div class="triage-actions">
+          <button type="button" class="triage-ack-all" ${triage.unreadCount === 0 ? "disabled" : ""}>全部標為已讀</button>
+        </div>
+        ${body}
+      </div>
+    </details>`;
 
   container.querySelector<HTMLButtonElement>(".triage-ack-all")?.addEventListener("click", () => {
     opts.onAckAll();
