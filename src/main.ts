@@ -793,7 +793,10 @@ document.addEventListener("keydown", (ev) => {
   if (ev.key !== "/" || ev.ctrlKey || ev.metaKey || ev.altKey) return;
   const tag = (document.activeElement as HTMLElement | null)?.tagName;
   if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
-  const q = document.getElementById("f-query") as HTMLInputElement | null;
+  const q =
+    mobileMedia.matches && !filterPanel?.classList.contains("is-open")
+      ? mqQuery
+      : (document.getElementById("f-query") as HTMLInputElement | null);
   if (q) {
     ev.preventDefault();
     q.focus();

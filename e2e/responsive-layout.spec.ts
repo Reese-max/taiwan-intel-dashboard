@@ -98,9 +98,13 @@ test("手機操作殼層：首屏精簡、底部導覽切換視圖與篩選面�
   expect(shell.overflowX).toBe(false);
   expect(shell.targets.every(({ width, height }) => width >= 44 && height >= 44)).toBe(true);
 
+  await page.keyboard.press("/");
+  await expect(page.locator("#mq-query")).toBeFocused();
   await page.getByRole("button", { name: "開啟篩選" }).click();
   await expect(page.locator("#filter-panel")).toBeVisible();
   await expect(page.getByRole("combobox", { name: "分類篩選" })).toBeVisible();
+  await page.keyboard.press("/");
+  await expect(page.locator("#f-query")).toBeFocused();
   await expect(page.locator(".mobile-tabbar")).toHaveAttribute("inert", "");
   await page.getByRole("button", { name: "套用篩選" }).focus();
   await page.keyboard.press("Tab");
