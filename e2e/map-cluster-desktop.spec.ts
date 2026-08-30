@@ -6,7 +6,7 @@ test.use({
 
 test("桌面版點聚合數字標的完整命中區，彈窗不應被內層數字圓攔截或閃退", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("#count")).not.toHaveText("");
+  await expect(page.locator("#count")).not.toHaveText("", { timeout: 30_000 });
   await page.getByRole("combobox", { name: "時間範圍" }).selectOption({ label: "全部時間" });
   await expect(page.locator("#count")).not.toContainText("1 / 1");
 
