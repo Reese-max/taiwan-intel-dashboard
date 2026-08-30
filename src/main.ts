@@ -159,6 +159,9 @@ function setMobileFilters(open: boolean, restoreFocus = true): void {
   const nextOpen = mobileMedia.matches && open;
   filterPanel.classList.toggle("is-open", nextOpen);
   filterPanel.setAttribute("aria-hidden", String(mobileMedia.matches && !nextOpen));
+  for (const sibling of Array.from(filterPanel.parentElement?.children ?? [])) {
+    if (sibling instanceof HTMLElement && sibling !== filterPanel) sibling.inert = nextOpen;
+  }
   filterSurface?.toggleAttribute("role", nextOpen);
   if (nextOpen) {
     filterSurface?.setAttribute("role", "dialog");
@@ -358,6 +361,24 @@ if (mobileFilterTrigger)
     lastFilterTrigger = mobileFilterTrigger;
     setMobileFilters(true);
   };
+filterSurface?.addEventListener("keydown", (event) => {
+  if (event.key !== "Tab" || !filterPanel?.classList.contains("is-open")) return;
+  const focusable = Array.from(
+    filterSurface.querySelectorAll<HTMLElement>(
+      'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => element.getClientRects().length > 0);
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (!first || !last) return;
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
 document.querySelector<HTMLButtonElement>(".filter-scrim")?.addEventListener("click", () => setMobileFilters(false));
 document.getElementById("filter-sheet-close")?.addEventListener("click", () => setMobileFilters(false));
 document.getElementById("filter-sheet-done")?.addEventListener("click", () => setMobileFilters(false));

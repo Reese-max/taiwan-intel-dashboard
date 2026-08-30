@@ -101,8 +101,15 @@ test("手機操作殼層：首屏精簡、底部導覽切換視圖與篩選面�
   await page.getByRole("button", { name: "開啟篩選" }).click();
   await expect(page.locator("#filter-panel")).toBeVisible();
   await expect(page.getByRole("combobox", { name: "分類篩選" })).toBeVisible();
+  await expect(page.locator(".mobile-tabbar")).toHaveAttribute("inert", "");
+  await page.getByRole("button", { name: "套用篩選" }).focus();
+  await page.keyboard.press("Tab");
+  await expect(page.locator("#filter-sheet-close")).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("button", { name: "套用篩選" })).toBeFocused();
   await page.getByRole("button", { name: "套用篩選" }).click();
   await expect(page.locator("#filter-panel")).toBeHidden();
+  await expect(page.locator(".mobile-tabbar")).not.toHaveAttribute("inert", "");
 
   await page.getByRole("button", { name: "地圖視圖" }).click();
   await expect(page.locator(".col-map")).toBeVisible();
