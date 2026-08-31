@@ -29,6 +29,7 @@ export function createSourcePlan({ argv = process.argv, env = process.env } = {}
 
   return {
     sourceKeys,
+    attachedSourceKeys: DEFAULT_SOURCE_KEYS,
     exclusive,
     wants: (key) => selected.has(key),
     dropStale: (status) => exclusive && status?.skipped === true,

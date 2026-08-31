@@ -214,7 +214,7 @@ export async function run() {
   const nowMs = Date.now();
   const nowIso = new Date(nowMs).toISOString();
   const status = {};
-  const { sourceKeys, exclusive, wants: want, dropStale } = createSourcePlan();
+  const { sourceKeys, attachedSourceKeys, exclusive, wants: want, dropStale } = createSourcePlan();
   const RETENTION_DAYS = Number(process.env.NEWS_RETENTION_DAYS) || 5;
   const ADVISORY_RETENTION_DAYS = Number(process.env.NEWS_ADVISORY_RETENTION_DAYS) || 30;
   const TEMPORAL_HISTORICAL_DAYS = finiteRetentionDays(process.env.TEMPORAL_HISTORICAL_DAYS, 180);
@@ -1042,7 +1042,7 @@ export async function run() {
     events: [...domesticEvents, ...intlEvents],
     sources,
   }));
-  writeJson("domain-coverage.json", buildDomainCoverage({ generatedAt: nowIso, sources, enabledSourceKeys: sourceKeys }));
+  writeJson("domain-coverage.json", buildDomainCoverage({ generatedAt: nowIso, sources, enabledSourceKeys: attachedSourceKeys }));
 
   writeJson("provenance.json", {
     generatedAt: nowIso,
