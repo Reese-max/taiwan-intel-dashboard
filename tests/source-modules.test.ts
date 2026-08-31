@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 // @ts-expect-error — JS ESM module without types
 import { DEFAULT_SOURCE_KEYS, createSourcePlan } from "../scripts/lib/source-plan.mjs";
 // @ts-expect-error — JS ESM module without types
+import { buildDomainCoverage } from "../scripts/domain-coverage.mjs";
+// @ts-expect-error — JS ESM module without types
 import {
   DIRECT_OFFICIAL_SOURCES,
   DIRECT_OFFICIAL_SOURCE_KEYS,
@@ -47,6 +49,19 @@ describe("source plan", () => {
     expect(refresh).toBe("node --env-file=.env scripts/fetch-live.mjs --exclusive");
     expect(refresh).not.toContain("--sources=");
     expect(plan.sourceKeys).toEqual([...DEFAULT_SOURCE_KEYS]);
+  });
+
+  it("keeps pipeline attachments independent from hourly source selection", () => {
+    const plan = createSourcePlan({
+      argv: ["node", "fetch-live.mjs", "--sources=cwa,police,missing,twnews,rss,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver"],
+      env: {},
+    });
+    const report = buildDomainCoverage({ enabledSourceKeys: plan.attachedSourceKeys });
+
+    expect(plan.sourceKeys).not.toEqual(expect.arrayContaining(["cdc", "tfda"]));
+    expect(plan.attachedSourceKeys).toEqual(DEFAULT_SOURCE_KEYS);
+    expect(report.validation).toMatchObject({ ok: true, failures: [] });
+    expect(report.rows.find((row: { key: string }) => row.key === "衛生／食安")?.enabledSourceCount).toBe(2);
   });
 });
 
