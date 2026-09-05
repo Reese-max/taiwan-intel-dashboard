@@ -1,0 +1,19 @@
+{
+  "domestic": "（暫無資料）",
+  "international": "（暫無資料）",
+  "recent24h": "",
+  "byCategory": {},
+  "trend": "近五日事件數自1734驟降至706，呈現明顯且持續的下滑趨勢，跌幅近六成。",
+  "dailyCounts": [
+    1734,
+    1690,
+    1498,
+    1130,
+    706
+  ],
+  "clusterSummaries": {
+    "c104": "紐約時報廣場發生隨機砍人事件，美銀女副總裁產假復工首日遇害，警方當場擊斃兇嫌，引發曼哈頓治安關注。"
+  },
+  "model": "minimaxai/minimax-m3",
+  "generatedAt": "2026-09-05T17:01:09.424Z"
+}

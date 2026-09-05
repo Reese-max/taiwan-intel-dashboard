@@ -1,0 +1,1609 @@
+{
+  "days": {
+    "2026-07-01": {
+      "total": 6,
+      "byScope": {
+        "domestic": 6,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 3,
+        "medium": 3,
+        "high": 1,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 6,
+        "地緣政治": 1
+      }
+    },
+    "2026-07-02": {
+      "total": 2809,
+      "byScope": {
+        "domestic": 2809,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 1237,
+        "medium": 1208,
+        "high": 320,
+        "critical": 44
+      },
+      "byCategory": {
+        "交通": 131,
+        "反詐": 1996,
+        "災防": 95,
+        "治安": 769,
+        "資安": 45,
+        "社會": 21,
+        "環境": 4,
+        "食安": 28,
+        "衛生": 3,
+        "協尋": 7,
+        "地緣政治": 1
+      }
+    },
+    "2026-07-03": {
+      "total": 7947,
+      "byScope": {
+        "domestic": 7947,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 2578,
+        "medium": 4144,
+        "high": 1070,
+        "critical": 156
+      },
+      "byCategory": {
+        "反詐": 6616,
+        "治安": 897,
+        "食安": 59,
+        "資安": 50,
+        "社會": 47,
+        "交通": 182,
+        "災防": 83,
+        "環境": 8,
+        "協尋": 9,
+        "衛生": 1
+      }
+    },
+    "2026-07-04": {
+      "total": 4695,
+      "byScope": {
+        "domestic": 4695,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1294,
+        "medium": 1878,
+        "high": 1250,
+        "critical": 273
+      },
+      "byCategory": {
+        "反詐": 3943,
+        "交通": 88,
+        "治安": 520,
+        "食安": 51,
+        "災防": 109,
+        "資安": 23,
+        "社會": 68,
+        "環境": 6,
+        "衛生": 1,
+        "協尋": 19
+      }
+    },
+    "2026-07-05": {
+      "total": 3205,
+      "byScope": {
+        "domestic": 3205,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1274,
+        "medium": 1721,
+        "high": 207,
+        "critical": 6
+      },
+      "byCategory": {
+        "災防": 77,
+        "治安": 338,
+        "資安": 12,
+        "交通": 118,
+        "反詐": 2617,
+        "食安": 8,
+        "社會": 8,
+        "環境": 3,
+        "協尋": 24
+      }
+    },
+    "2026-07-06": {
+      "total": 5978,
+      "byScope": {
+        "domestic": 5978,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 2024,
+        "medium": 2733,
+        "high": 1046,
+        "critical": 175
+      },
+      "byCategory": {
+        "治安": 1133,
+        "反詐": 4213,
+        "社會": 77,
+        "食安": 123,
+        "資安": 69,
+        "交通": 220,
+        "災防": 169,
+        "環境": 4,
+        "協尋": 20,
+        "衛生": 1
+      }
+    },
+    "2026-07-07": {
+      "total": 4348,
+      "byScope": {
+        "domestic": 4348,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1771,
+        "medium": 1809,
+        "high": 656,
+        "critical": 121
+      },
+      "byCategory": {
+        "治安": 1397,
+        "反詐": 2340,
+        "災防": 238,
+        "社會": 42,
+        "資安": 84,
+        "交通": 145,
+        "食安": 90,
+        "衛生": 3,
+        "環境": 5,
+        "協尋": 26
+      }
+    },
+    "2026-07-08": {
+      "total": 3723,
+      "byScope": {
+        "domestic": 3723,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1524,
+        "medium": 1479,
+        "high": 652,
+        "critical": 89
+      },
+      "byCategory": {
+        "治安": 1371,
+        "反詐": 1587,
+        "交通": 197,
+        "社會": 65,
+        "資安": 77,
+        "環境": 15,
+        "食安": 105,
+        "災防": 288,
+        "協尋": 35,
+        "衛生": 1
+      }
+    },
+    "2026-07-09": {
+      "total": 4104,
+      "byScope": {
+        "domestic": 4104,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1463,
+        "medium": 2027,
+        "high": 640,
+        "critical": 103
+      },
+      "byCategory": {
+        "治安": 1371,
+        "社會": 75,
+        "交通": 184,
+        "食安": 125,
+        "災防": 277,
+        "資安": 86,
+        "反詐": 2955,
+        "環境": 13,
+        "協尋": 37,
+        "衛生": 1
+      }
+    },
+    "2026-07-10": {
+      "total": 6931,
+      "byScope": {
+        "domestic": 6931,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 2790,
+        "medium": 3161,
+        "high": 816,
+        "critical": 164
+      },
+      "byCategory": {
+        "治安": 786,
+        "反詐": 5738,
+        "災防": 167,
+        "食安": 66,
+        "社會": 48,
+        "交通": 96,
+        "資安": 45,
+        "環境": 6,
+        "協尋": 15
+      }
+    },
+    "2026-07-11": {
+      "total": 2677,
+      "byScope": {
+        "domestic": 2677,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 893,
+        "medium": 1383,
+        "high": 361,
+        "critical": 40
+      },
+      "byCategory": {
+        "治安": 311,
+        "反詐": 1947,
+        "災防": 205,
+        "交通": 102,
+        "食安": 39,
+        "社會": 42,
+        "協尋": 32,
+        "資安": 19,
+        "環境": 2
+      }
+    },
+    "2026-07-12": {
+      "total": 2643,
+      "byScope": {
+        "domestic": 2643,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1059,
+        "medium": 894,
+        "high": 558,
+        "critical": 132
+      },
+      "byCategory": {
+        "治安": 346,
+        "反詐": 1967,
+        "災防": 127,
+        "食安": 39,
+        "社會": 57,
+        "交通": 83,
+        "資安": 11,
+        "協尋": 16,
+        "環境": 3
+      }
+    },
+    "2026-07-13": {
+      "total": 3152,
+      "byScope": {
+        "domestic": 3152,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1171,
+        "medium": 1326,
+        "high": 553,
+        "critical": 102
+      },
+      "byCategory": {
+        "治安": 604,
+        "反詐": 2108,
+        "災防": 101,
+        "社會": 69,
+        "協尋": 25,
+        "食安": 101,
+        "交通": 132,
+        "環境": 9,
+        "資安": 53,
+        "衛生": 1
+      }
+    },
+    "2026-07-14": {
+      "total": 2503,
+      "byScope": {
+        "domestic": 2503,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 922,
+        "medium": 939,
+        "high": 530,
+        "critical": 167
+      },
+      "byCategory": {
+        "治安": 816,
+        "災防": 159,
+        "反詐": 1193,
+        "食安": 151,
+        "交通": 102,
+        "社會": 52,
+        "資安": 47,
+        "環境": 9,
+        "協尋": 19,
+        "衛生": 3
+      }
+    },
+    "2026-07-15": {
+      "total": 2006,
+      "byScope": {
+        "domestic": 2006,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 859,
+        "medium": 659,
+        "high": 398,
+        "critical": 112
+      },
+      "byCategory": {
+        "治安": 802,
+        "災防": 92,
+        "反詐": 832,
+        "資安": 72,
+        "食安": 134,
+        "協尋": 19,
+        "交通": 61,
+        "社會": 72,
+        "環境": 17,
+        "衛生": 1
+      }
+    },
+    "2026-07-16": {
+      "total": 1597,
+      "byScope": {
+        "domestic": 1597,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1264,
+        "medium": 501,
+        "high": 392,
+        "critical": 105
+      },
+      "byCategory": {
+        "治安": 912,
+        "交通": 354,
+        "災防": 409,
+        "反詐": 425,
+        "食安": 125,
+        "社會": 90,
+        "環境": 19,
+        "資安": 44,
+        "協尋": 14
+      }
+    },
+    "2026-07-17": {
+      "total": 1729,
+      "byScope": {
+        "domestic": 1729,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1296,
+        "medium": 503,
+        "high": 298,
+        "critical": 92
+      },
+      "byCategory": {
+        "治安": 900,
+        "交通": 416,
+        "災防": 414,
+        "反詐": 230,
+        "資安": 48,
+        "社會": 94,
+        "食安": 101,
+        "環境": 6,
+        "協尋": 40,
+        "衛生": 1
+      }
+    },
+    "2026-07-18": {
+      "total": 2275,
+      "byScope": {
+        "domestic": 2275,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1512,
+        "medium": 481,
+        "high": 222,
+        "critical": 60
+      },
+      "byCategory": {
+        "治安": 1112,
+        "交通": 430,
+        "災防": 482,
+        "反詐": 189,
+        "食安": 80,
+        "社會": 38,
+        "協尋": 25,
+        "環境": 10,
+        "資安": 17
+      }
+    },
+    "2026-07-19": {
+      "total": 1601,
+      "byScope": {
+        "domestic": 1601,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1267,
+        "medium": 304,
+        "high": 196,
+        "critical": 90
+      },
+      "byCategory": {
+        "治安": 838,
+        "交通": 354,
+        "災防": 409,
+        "反詐": 102,
+        "食安": 91,
+        "環境": 5,
+        "社會": 40,
+        "協尋": 19,
+        "資安": 16
+      }
+    },
+    "2026-07-20": {
+      "total": 2459,
+      "byScope": {
+        "domestic": 2459,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1596,
+        "medium": 529,
+        "high": 257,
+        "critical": 81
+      },
+      "byCategory": {
+        "治安": 1218,
+        "反詐": 117,
+        "交通": 449,
+        "災防": 488,
+        "食安": 112,
+        "資安": 71,
+        "社會": 51,
+        "環境": 5,
+        "協尋": 27
+      }
+    },
+    "2026-07-21": {
+      "total": 2648,
+      "byScope": {
+        "domestic": 2648,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 1681,
+        "medium": 626,
+        "high": 284,
+        "critical": 57
+      },
+      "byCategory": {
+        "治安": 1373,
+        "交通": 464,
+        "災防": 482,
+        "反詐": 136,
+        "食安": 105,
+        "社會": 51,
+        "環境": 9,
+        "資安": 44,
+        "協尋": 25,
+        "地緣政治": 1
+      }
+    },
+    "2026-07-22": {
+      "total": 2530,
+      "byScope": {
+        "domestic": 2530,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1654,
+        "medium": 542,
+        "high": 274,
+        "critical": 97
+      },
+      "byCategory": {
+        "治安": 1316,
+        "交通": 427,
+        "反詐": 198,
+        "災防": 466,
+        "食安": 139,
+        "資安": 61,
+        "社會": 57,
+        "協尋": 30,
+        "環境": 6,
+        "衛生": 7
+      }
+    },
+    "2026-07-23": {
+      "total": 1705,
+      "byScope": {
+        "domestic": 1705,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1298,
+        "medium": 444,
+        "high": 257,
+        "critical": 79
+      },
+      "byCategory": {
+        "治安": 887,
+        "災防": 418,
+        "交通": 391,
+        "反詐": 83,
+        "食安": 115,
+        "社會": 48,
+        "協尋": 13,
+        "資安": 43,
+        "衛生": 2,
+        "環境": 2
+      }
+    },
+    "2026-07-24": {
+      "total": 1561,
+      "byScope": {
+        "domestic": 1561,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1223,
+        "medium": 308,
+        "high": 30,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 846,
+        "反詐": 3,
+        "災防": 410,
+        "交通": 348
+      }
+    },
+    "2026-07-25": {
+      "total": 2,
+      "byScope": {
+        "domestic": 2,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 2,
+        "medium": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 2
+      }
+    },
+    "2026-07-26": {
+      "total": 6,
+      "byScope": {
+        "domestic": 6,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 5,
+        "medium": 1,
+        "high": 1,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 6,
+        "災防": 1
+      }
+    },
+    "2026-07-27": {
+      "total": 4,
+      "byScope": {
+        "domestic": 4,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 3,
+        "high": 1,
+        "critical": 0
+      },
+      "byCategory": {
+        "災防": 1,
+        "協尋": 3
+      }
+    },
+    "2026-07-28": {
+      "total": 3,
+      "byScope": {
+        "domestic": 3,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1,
+        "medium": 1,
+        "high": 2,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 1,
+        "協尋": 3
+      }
+    },
+    "2026-07-29": {
+      "total": 7,
+      "byScope": {
+        "domestic": 7,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 6,
+        "high": 1,
+        "critical": 0
+      },
+      "byCategory": {
+        "資安": 3,
+        "協尋": 4
+      }
+    },
+    "2026-07-30": {
+      "total": 4,
+      "byScope": {
+        "domestic": 4,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 1,
+        "high": 3,
+        "critical": 0
+      },
+      "byCategory": {
+        "資安": 1,
+        "協尋": 3
+      }
+    },
+    "2026-07-31": {
+      "total": 6,
+      "byScope": {
+        "domestic": 6,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 2,
+        "medium": 5,
+        "high": 1,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 2,
+        "資安": 1,
+        "災防": 1,
+        "協尋": 4
+      }
+    },
+    "2026-08-01": {
+      "total": 4,
+      "byScope": {
+        "domestic": 4,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1,
+        "medium": 3,
+        "high": 1,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 1,
+        "協尋": 4
+      }
+    },
+    "2026-08-02": {
+      "total": 2,
+      "byScope": {
+        "domestic": 2,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1,
+        "medium": 1,
+        "high": 1,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 1,
+        "協尋": 2
+      }
+    },
+    "2026-08-03": {
+      "total": 5,
+      "byScope": {
+        "domestic": 5,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1,
+        "medium": 5,
+        "high": 0,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 1,
+        "協尋": 5
+      }
+    },
+    "2026-08-04": {
+      "total": 18,
+      "byScope": {
+        "domestic": 18,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 1,
+        "medium": 15,
+        "high": 3,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 1,
+        "食安": 15,
+        "協尋": 4
+      }
+    },
+    "2026-08-05": {
+      "total": 4,
+      "byScope": {
+        "domestic": 4,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 4,
+        "high": 0,
+        "critical": 0
+      },
+      "byCategory": {
+        "協尋": 4
+      }
+    },
+    "2026-08-06": {
+      "total": 561,
+      "byScope": {
+        "domestic": 561,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 263,
+        "medium": 205,
+        "high": 90,
+        "critical": 3
+      },
+      "byCategory": {
+        "資安": 35,
+        "災防": 53,
+        "治安": 280,
+        "食安": 18,
+        "交通": 43,
+        "反詐": 114,
+        "協尋": 15,
+        "環境": 1,
+        "衛生": 2
+      }
+    },
+    "2026-08-07": {
+      "total": 646,
+      "byScope": {
+        "domestic": 646,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 346,
+        "medium": 185,
+        "high": 114,
+        "critical": 1
+      },
+      "byCategory": {
+        "治安": 351,
+        "災防": 66,
+        "資安": 37,
+        "反詐": 101,
+        "交通": 41,
+        "協尋": 23,
+        "衛生": 2,
+        "食安": 22,
+        "環境": 3,
+        "地緣政治": 1
+      }
+    },
+    "2026-08-08": {
+      "total": 417,
+      "byScope": {
+        "domestic": 417,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 171,
+        "medium": 152,
+        "high": 93,
+        "critical": 1
+      },
+      "byCategory": {
+        "治安": 220,
+        "災防": 42,
+        "協尋": 14,
+        "反詐": 60,
+        "資安": 26,
+        "交通": 42,
+        "食安": 8,
+        "環境": 3,
+        "衛生": 2
+      }
+    },
+    "2026-08-09": {
+      "total": 404,
+      "byScope": {
+        "domestic": 404,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 169,
+        "medium": 137,
+        "high": 97,
+        "critical": 1
+      },
+      "byCategory": {
+        "治安": 215,
+        "災防": 59,
+        "協尋": 13,
+        "交通": 38,
+        "反詐": 58,
+        "食安": 10,
+        "資安": 11
+      }
+    },
+    "2026-08-10": {
+      "total": 819,
+      "byScope": {
+        "domestic": 819,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 270,
+        "medium": 270,
+        "high": 224,
+        "critical": 55
+      },
+      "byCategory": {
+        "治安": 431,
+        "反詐": 105,
+        "交通": 60,
+        "災防": 90,
+        "協尋": 22,
+        "食安": 24,
+        "社會": 32,
+        "環境": 3,
+        "資安": 51,
+        "衛生": 1
+      }
+    },
+    "2026-08-11": {
+      "total": 30,
+      "byScope": {
+        "domestic": 30,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 7,
+        "medium": 16,
+        "high": 9,
+        "critical": 2
+      },
+      "byCategory": {
+        "治安": 18,
+        "反詐": 4,
+        "社會": 2,
+        "交通": 6,
+        "資安": 1,
+        "食安": 13,
+        "協尋": 4,
+        "地緣政治": 1
+      }
+    },
+    "2026-08-12": {
+      "total": 8,
+      "byScope": {
+        "domestic": 8,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 5,
+        "high": 3,
+        "critical": 0
+      },
+      "byCategory": {
+        "資安": 1,
+        "協尋": 7
+      }
+    },
+    "2026-08-13": {
+      "total": 4,
+      "byScope": {
+        "domestic": 4,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 3,
+        "high": 1,
+        "critical": 0
+      },
+      "byCategory": {
+        "災防": 1,
+        "協尋": 3
+      }
+    },
+    "2026-08-14": {
+      "total": 9,
+      "byScope": {
+        "domestic": 9,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 7,
+        "high": 2,
+        "critical": 0
+      },
+      "byCategory": {
+        "協尋": 9
+      }
+    },
+    "2026-08-15": {
+      "total": 10,
+      "byScope": {
+        "domestic": 10,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 8,
+        "high": 3,
+        "critical": 0
+      },
+      "byCategory": {
+        "災防": 1,
+        "協尋": 9
+      }
+    },
+    "2026-08-16": {
+      "total": 7,
+      "byScope": {
+        "domestic": 7,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 3,
+        "high": 4,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 1,
+        "協尋": 7
+      }
+    },
+    "2026-08-17": {
+      "total": 10,
+      "byScope": {
+        "domestic": 10,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 6,
+        "high": 5,
+        "critical": 0
+      },
+      "byCategory": {
+        "資安": 1,
+        "協尋": 9
+      }
+    },
+    "2026-08-18": {
+      "total": 21,
+      "byScope": {
+        "domestic": 20,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 1,
+        "medium": 13,
+        "high": 7,
+        "critical": 0
+      },
+      "byCategory": {
+        "食安": 9,
+        "海事": 2,
+        "協尋": 9,
+        "地緣政治": 1
+      }
+    },
+    "2026-08-19": {
+      "total": 8,
+      "byScope": {
+        "domestic": 4,
+        "international": 4
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 2,
+        "high": 3,
+        "critical": 3
+      },
+      "byCategory": {
+        "海事": 1,
+        "協尋": 3,
+        "地緣政治": 4
+      }
+    },
+    "2026-08-20": {
+      "total": 5,
+      "byScope": {
+        "domestic": 4,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 1,
+        "medium": 4,
+        "high": 0,
+        "critical": 0
+      },
+      "byCategory": {
+        "海事": 1,
+        "協尋": 3,
+        "地緣政治": 1
+      }
+    },
+    "2026-08-21": {
+      "total": 22,
+      "byScope": {
+        "domestic": 12,
+        "international": 10
+      },
+      "byRisk": {
+        "low": 1,
+        "medium": 9,
+        "high": 6,
+        "critical": 7
+      },
+      "byCategory": {
+        "國防": 1,
+        "海事": 1,
+        "協尋": 11,
+        "地緣政治": 10
+      }
+    },
+    "2026-08-22": {
+      "total": 27,
+      "byScope": {
+        "domestic": 27,
+        "international": 0
+      },
+      "byRisk": {
+        "low": 9,
+        "medium": 8,
+        "high": 10,
+        "critical": 0
+      },
+      "byCategory": {
+        "反詐": 1,
+        "災防": 3,
+        "治安": 9,
+        "協尋": 12,
+        "國防": 1,
+        "衛生": 1
+      }
+    },
+    "2026-08-23": {
+      "total": 208,
+      "byScope": {
+        "domestic": 208,
+        "international": 13
+      },
+      "byRisk": {
+        "low": 83,
+        "medium": 67,
+        "high": 59,
+        "critical": 3
+      },
+      "byCategory": {
+        "災防": 54,
+        "治安": 69,
+        "交通": 25,
+        "協尋": 16,
+        "資安": 10,
+        "食安": 1,
+        "反詐": 37,
+        "國防": 1,
+        "海事": 1,
+        "環境": 1,
+        "災害": 6
+      }
+    },
+    "2026-08-24": {
+      "total": 705,
+      "byScope": {
+        "domestic": 646,
+        "international": 96
+      },
+      "byRisk": {
+        "low": 343,
+        "medium": 222,
+        "high": 144,
+        "critical": 8
+      },
+      "byCategory": {
+        "治安": 328,
+        "資安": 73,
+        "災防": 105,
+        "交通": 31,
+        "食安": 10,
+        "反詐": 84,
+        "協尋": 46,
+        "環境": 1,
+        "國防": 1,
+        "地緣政治": 24,
+        "災害": 42
+      }
+    },
+    "2026-08-25": {
+      "total": 850,
+      "byScope": {
+        "domestic": 747,
+        "international": 230
+      },
+      "byRisk": {
+        "low": 363,
+        "medium": 352,
+        "high": 165,
+        "critical": 2
+      },
+      "byCategory": {
+        "治安": 367,
+        "災防": 122,
+        "協尋": 74,
+        "反詐": 96,
+        "交通": 33,
+        "資安": 99,
+        "食安": 30,
+        "衛生": 1,
+        "環境": 4,
+        "國防": 1,
+        "災害": 94,
+        "地緣政治": 5,
+        "金融": 53
+      }
+    },
+    "2026-08-26": {
+      "total": 1185,
+      "byScope": {
+        "domestic": 964,
+        "international": 449
+      },
+      "byRisk": {
+        "low": 470,
+        "medium": 557,
+        "high": 199,
+        "critical": 13
+      },
+      "byCategory": {
+        "治安": 494,
+        "災防": 95,
+        "資安": 158,
+        "反詐": 161,
+        "食安": 24,
+        "協尋": 112,
+        "交通": 57,
+        "衛生": 1,
+        "環境": 3,
+        "國防": 1,
+        "地緣政治": 17,
+        "災害": 149,
+        "其他": 2,
+        "金融": 153
+      }
+    },
+    "2026-08-27": {
+      "total": 2499,
+      "byScope": {
+        "domestic": 1452,
+        "international": 1435
+      },
+      "byRisk": {
+        "low": 816,
+        "medium": 1364,
+        "high": 352,
+        "critical": 55
+      },
+      "byCategory": {
+        "治安": 807,
+        "災防": 154,
+        "反詐": 174,
+        "水情": 36,
+        "食安": 55,
+        "能源": 1,
+        "交通": 106,
+        "環境": 10,
+        "協尋": 116,
+        "資安": 404,
+        "社會": 21,
+        "衛生": 2,
+        "國防": 1,
+        "海事": 3,
+        "地緣政治": 146,
+        "災害": 338,
+        "金融": 533,
+        "其他": 23
+      }
+    },
+    "2026-08-28": {
+      "total": 3123,
+      "byScope": {
+        "domestic": 1455,
+        "international": 2209
+      },
+      "byRisk": {
+        "low": 1064,
+        "medium": 1805,
+        "high": 273,
+        "critical": 31
+      },
+      "byCategory": {
+        "治安": 913,
+        "災防": 193,
+        "反詐": 168,
+        "資安": 610,
+        "食安": 27,
+        "能源": 1,
+        "水情": 36,
+        "協尋": 82,
+        "金融": 735,
+        "地緣政治": 536,
+        "災害": 484,
+        "交通": 64,
+        "國防": 1,
+        "環境": 4,
+        "衛生": 2
+      }
+    },
+    "2026-08-29": {
+      "total": 2475,
+      "byScope": {
+        "domestic": 961,
+        "international": 1689
+      },
+      "byRisk": {
+        "low": 794,
+        "medium": 1499,
+        "high": 203,
+        "critical": 13
+      },
+      "byCategory": {
+        "治安": 672,
+        "反詐": 85,
+        "災防": 99,
+        "水情": 36,
+        "食安": 33,
+        "交通": 50,
+        "資安": 457,
+        "協尋": 32,
+        "衛生": 7,
+        "國防": 1,
+        "地緣政治": 385,
+        "金融": 551,
+        "災害": 290,
+        "能源": 1,
+        "環境": 2,
+        "海事": 1
+      }
+    },
+    "2026-08-30": {
+      "total": 2118,
+      "byScope": {
+        "domestic": 1025,
+        "international": 1405
+      },
+      "byRisk": {
+        "low": 737,
+        "medium": 1200,
+        "high": 208,
+        "critical": 26
+      },
+      "byCategory": {
+        "治安": 642,
+        "反詐": 125,
+        "水情": 36,
+        "食安": 33,
+        "災防": 92,
+        "交通": 98,
+        "災害": 229,
+        "地緣政治": 401,
+        "金融": 381,
+        "資安": 376,
+        "能源": 1,
+        "衛生": 7,
+        "協尋": 46,
+        "國防": 1,
+        "環境": 1
+      }
+    },
+    "2026-08-31": {
+      "total": 3268,
+      "byScope": {
+        "domestic": 1916,
+        "international": 2035
+      },
+      "byRisk": {
+        "low": 1063,
+        "medium": 1934,
+        "high": 323,
+        "critical": 19
+      },
+      "byCategory": {
+        "治安": 1091,
+        "反詐": 284,
+        "能源": 1,
+        "水情": 36,
+        "交通": 60,
+        "地緣政治": 536,
+        "金融": 684,
+        "災害": 448,
+        "資安": 581,
+        "災防": 287,
+        "社會": 2,
+        "協尋": 63,
+        "衛生": 13,
+        "國防": 1,
+        "食安": 53,
+        "環境": 4,
+        "海事": 1
+      }
+    },
+    "2026-09-01": {
+      "total": 3443,
+      "byScope": {
+        "domestic": 1751,
+        "international": 2385
+      },
+      "byRisk": {
+        "low": 1260,
+        "medium": 1889,
+        "high": 388,
+        "critical": 82
+      },
+      "byCategory": {
+        "治安": 944,
+        "反詐": 234,
+        "水情": 36,
+        "災防": 347,
+        "協尋": 98,
+        "食安": 32,
+        "資安": 718,
+        "交通": 83,
+        "環境": 19,
+        "地緣政治": 541,
+        "災害": 499,
+        "金融": 685,
+        "能源": 1,
+        "衛生": 7,
+        "國防": 1,
+        "社會": 23
+      }
+    },
+    "2026-09-02": {
+      "total": 3748,
+      "byScope": {
+        "domestic": 1691,
+        "international": 2606
+      },
+      "byRisk": {
+        "low": 1214,
+        "medium": 2232,
+        "high": 352,
+        "critical": 140
+      },
+      "byCategory": {
+        "治安": 954,
+        "反詐": 244,
+        "能源": 1,
+        "水情": 36,
+        "災防": 278,
+        "協尋": 66,
+        "交通": 85,
+        "地緣政治": 668,
+        "金融": 684,
+        "災害": 605,
+        "資安": 705,
+        "社會": 34,
+        "環境": 11,
+        "食安": 48,
+        "國防": 1,
+        "衛生": 1,
+        "海事": 1,
+        "其他": 1
+      }
+    },
+    "2026-09-03": {
+      "total": 3386,
+      "byScope": {
+        "domestic": 1503,
+        "international": 2524
+      },
+      "byRisk": {
+        "low": 1048,
+        "medium": 2115,
+        "high": 310,
+        "critical": 55
+      },
+      "byCategory": {
+        "能源": 1,
+        "治安": 962,
+        "水情": 36,
+        "資安": 702,
+        "食安": 32,
+        "地緣政治": 611,
+        "災害": 571,
+        "金融": 678,
+        "反詐": 346,
+        "交通": 75,
+        "災防": 77,
+        "社會": 20,
+        "協尋": 41,
+        "國防": 1,
+        "海事": 1,
+        "環境": 5,
+        "其他": 3
+      }
+    },
+    "2026-09-04": {
+      "total": 3528,
+      "byScope": {
+        "domestic": 1119,
+        "international": 2574
+      },
+      "byRisk": {
+        "low": 1019,
+        "medium": 2209,
+        "high": 356,
+        "critical": 82
+      },
+      "byCategory": {
+        "資安": 697,
+        "治安": 755,
+        "反詐": 166,
+        "水情": 36,
+        "交通": 73,
+        "地緣政治": 654,
+        "金融": 669,
+        "災害": 593,
+        "能源": 1,
+        "食安": 28,
+        "協尋": 41,
+        "災防": 90,
+        "社會": 36,
+        "環境": 4,
+        "國防": 1,
+        "其他": 11
+      }
+    },
+    "2026-09-05": {
+      "total": 2718,
+      "byScope": {
+        "domestic": 694,
+        "international": 2024
+      },
+      "byRisk": {
+        "low": 782,
+        "medium": 1631,
+        "high": 268,
+        "critical": 39
+      },
+      "byCategory": {
+        "治安": 441,
+        "反詐": 100,
+        "資安": 537,
+        "水情": 36,
+        "交通": 58,
+        "金融": 650,
+        "災害": 335,
+        "地緣政治": 494,
+        "能源": 1,
+        "災防": 64,
+        "食安": 9,
+        "協尋": 28,
+        "社會": 12,
+        "其他": 8,
+        "國防": 1,
+        "衛生": 6,
+        "海事": 1,
+        "環境": 1
+      }
+    },
+    "2026-09-06": {
+      "total": 147,
+      "byScope": {
+        "domestic": 59,
+        "international": 88
+      },
+      "byRisk": {
+        "low": 59,
+        "medium": 81,
+        "high": 6,
+        "critical": 1
+      },
+      "byCategory": {
+        "治安": 30,
+        "反詐": 4,
+        "能源": 1,
+        "水情": 29,
+        "災防": 1,
+        "環境": 3,
+        "地緣政治": 19,
+        "金融": 35,
+        "災害": 11,
+        "資安": 14
+      }
+    },
+    "2026-09-08": {
+      "total": 1,
+      "byScope": {
+        "domestic": 0,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 1,
+        "high": 0,
+        "critical": 0
+      },
+      "byCategory": {
+        "金融": 1
+      }
+    },
+    "2026-09-28": {
+      "total": 1,
+      "byScope": {
+        "domestic": 0,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 1,
+        "medium": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "byCategory": {
+        "治安": 1
+      }
+    }
+  }
+}

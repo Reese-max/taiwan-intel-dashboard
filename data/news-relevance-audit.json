@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-09-05T16:43:56.060Z",
+  "windowHours": 24,
+  "windowStart": "2026-09-04T16:43:56.060Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 951,
+    "accepted": 450,
+    "rejected": 501
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "本週節目表 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTE8zcDF5T0tONVIwQjhJU1g5eENtQ3dPN25qTk1zVXBhWGxLeV9NTnBkWVNOTmU3M3Q0Q0JvZDE5eW5Odl9UbVl6WDJlZ2ZXSVE3YVhCTmhMblBrNllGSTM4Yk1GZjB0dVpMZGdZSA?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 16:33:57 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "本週節目表 rti.org.tw"
+      },
+      {
+        "title": "柯文哲京華城案二審 拚無罪或10年以下才有望再戰2028 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9heEVHNlVNZ2JNV2s4WWJnbVZPMHlfX2RBNUhrZUlvMVZBcERGSU1lRm90LV9PYnE5bE9lakhOTHQtZkZnTDNYaUg4M1ZVSWR50gFWQVVfeXFMTWNWYmI5TzJ4X01BdkQ4WkU0WlRoM0ZXM0xlWmdxT2tDN3ctYmlDQnMyRzBXYUlkSHRBMUxXWHhjektQaU1IMmwwaWFVX0EtalFuc1owNFE?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 16:07:48 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "柯文哲京華城案二審 拚無罪或10年以下才有望再戰2028 UDN"
+      },
+      {
+        "title": "京華城弊案二審8日開庭 先審政治獻金案 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9DS2tQeGN4d2NNa2RCUF9hVkYzODZPalFndnNteEEyZjRQd09iY3JJWWdaQUFhSjdIYUMwcmgtZkNzOW9LaE9ob0t0SUlzaWs20gFWQVVfeXFMT2RMa1BzYW5pQks3Y2toeGV4UlRCaHE5ckpVYUI0bjYzcDJPTXhBdmlDNG9mb0NmZDFwYWZzU2VjYzBQa05nczdtTUJhYkRCU29mT2R4LUE?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 16:07:04 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "京華城弊案二審8日開庭 先審政治獻金案 UDN"
+      },
+      {
+        "title": "台灣的生育矛盾與破碎的安全網 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9ET2RxbGhsMlFuZUNLV1Y5aFBGZ2JNOVlYcnRKbE1BYmdqUTJaN01KYVE5YktYRnpLczU3Q196WUhyMnVHdXpWQThOOEZ6T1g3ZE5BQ3QtZm5UbEZjTXgyVQ?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 16:01:13 GMT",
+        "source": "央廣 RTI 治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台灣的生育矛盾與破碎的安全網 rti.org.tw"
+      },
+      {
+        "title": "韋伯望遠鏡再立功！宇宙早期捕捉四對「小紅點」，揭遠古黑洞合併前兆",
+        "link": "https://technews.tw/2026/09/06/four-pairs-red-dots/",
+        "pubDate": "Sat, 05 Sep 2026 16:00:50 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "天文學家利用詹姆斯·韋伯太空望遠鏡的高解析度紅外線影像，在宇宙誕生後約 10 億至 13 億年的時期，發現了四 [&#8230;]"
+      },
+      {
+        "title": "NASA 揭露新型「同步雙模核火箭」細節，火星航程減半、解鎖深空探測新局",
+        "link": "https://technews.tw/2026/09/06/nasa-synchronal-bimodal-nuclear-rocket/",
+        "pubDate": "Sat, 05 Sep 2026 16:00:36 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "美國國家航空暨太空總署（NASA）專家近日提出一項突破性的「同步雙模核火箭」（S-BNR）構想，試圖以更簡化的 [&#8230;]"
+      },
+      {
+        "title": "醫牙共照 明年收案鬆綁 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5zTzVSMzhpQllaV3NsejNlTmgtS3lCZkxiNVVLcWR0WTVPUjJxd3dDZUlkUUpNY3R6b0lwZktfN1hhQXJnWnQ3R0RjQUNScXZX0gFWQVVfeXFMTmdHVGJCU0VNMzNaR1B6NW1zRHU1bnJuUV83bkhRWFVscERsa1Q2ZzJwOGhmY25wMV9LZVFhcmp3SmRnUDlyNGItcm1EN1dTUmJLN0EyMXc?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 16:00:00 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "醫牙共照 明年收案鬆綁 UDN"
+      },
+      {
+        "title": "「太平洋紫杉醇」化療藥恐致命過敏 追加警語 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9tLTRuUUdUbjZTLVFuVlBZam5wd25JaFYzZXdPVlpkNnY2Ul9rUWFWMDAybE5nTks5Nm02WXlWTG1DRmV3am0xMDlWZUFnRjhI0gFWQVVfeXFMUGRTWTRqTXpISTFUN3Bjdk4zYkozZVBHOFBHUFhGM2VMOWhGcEFUNnpzRTI3M2ZHaEFuMUR5UEpOYmxlVUZjRVVRTHduV1ZlRlVuamN0QXc?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 16:00:00 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「太平洋紫杉醇」化療藥恐致命過敏 追加警語 UDN"
+      },
+      {
+        "title": "鎮東里通往鳳山市區新建鋼構橋 最快2028完工",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5564492",
+        "pubDate": "Sat, 05 Sep 2026 23:29:44 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄市鳳山區鎮東里仰賴古蹟東福橋通行就學、買菜，但橋梁過低過窄，又因古蹟改建不易，每逢豪雨經常淹過橋面，影響人車通行，市府將投入1.6億元，打造一座百公尺鋼構橋，橫跨鳳山溪、銜...…"
+      },
+      {
+        "title": "5車硬闖無視路口學生！ 彰化8月狂抓1451件「車不讓人」",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5564477",
+        "pubDate": "Sat, 05 Sep 2026 23:17:59 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "彰化縣秀水鄉彰水路與中山路的路口，日前有學生站在斑馬線上，卻連續有5車不停讓，影片PO網引發公憤。據縣警局交通隊統計，8個月來全縣共開出1451張路口不禮讓行人罰單；該起不停讓...…"
+      },
+      {
+        "title": "台灣2所老牌國立大學要合併！「最快2028年掛牌」併校進度曝，規模將成全國第5大 - Storm.mg",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9MYzBneWZrT0RxTDJ6c082clJQejJRM25qZ1NVZWNPMERZdW5oT0ZZa0pheUhyempNcER6Y3Y0aElUTDFuaS1GNklCZlNjVG5X?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 15:12:22 GMT",
+        "source": "GN 風傳媒綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台灣2所老牌國立大學要合併！「最快2028年掛牌」併校進度曝，規模將成全國第5大 Storm.mg"
+      },
+      {
+        "title": "圖輯》士林大象來了！爆棚跟著巨象走 超狂重現當年動物園搬家",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5564459",
+        "pubDate": "Sat, 05 Sep 2026 23:10:02 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "2026台北藝術節「大象來了」！法國奧波西托劇團（Compagnie Oposito）今晚把士林夜市基河路變成劇場，3隻近5米高、8米長的機械巨象在號角與鼓聲中出發，超狂遊行重...…"
+      },
+      {
+        "title": "九合一選舉於11月28日舉行 候選人名單將在10月14日前審定 而後抽籤以決定號次 行政院編列6076億追加預算 民進黨籲在野黨理性審查、支持預算案通過 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE4tV05rNEFEM3pNaUthN3JXNldWX05uYkcxam5YaUUyX25sY3RoM0xrTVV1Q1hMMGotenhzWVdNOHpYMTVxUEdHWXN4U0FiTU41N0xRaHdUYVBFSk9HTnFPUw?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 15:08:09 GMT",
+        "source": "央廣 RTI 治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "九合一選舉於11月28日舉行 候選人名單將在10月14日前審定 而後抽籤以決定號次 行政院編列6076億追加預算 民進黨籲在野黨理性審查、支持預算案通過 rti.org.tw"
+      },
+      {
+        "title": "蘇巧慧造勢放總統級迷因 小英：第1位女總統相挺第1位新北女市長",
+        "link": "https://news.ltn.com.tw/news/NewTaipei/breakingnews/5564348",
+        "pubDate": "Sat, 05 Sep 2026 23:01:56 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨新北市長參選人蘇巧慧今天（5日）在板橋舉行競選總部成立大會，總統賴清德、前總統蔡英文兩大王牌都到場站台，甚至連迷因哏圖都一同登場。對此，蔡英文自己也在社群平台「Thread...…"
+      },
+      {
+        "title": "管仁健觀點》王炳忠改蔣炳忠後就什麼都比較會了吧？",
+        "link": "https://newtalk.tw/news/view/2026-09-05/1058055",
+        "pubDate": "Sat, 05 Sep 2026 23:01:15 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 \"They're all thieves, every damn one of them.\" （他們是賊，他們全家都是賊）這段話出自美國政治作家默爾·米勒（Merle Miller）於1974年出版的杜魯門口述傳記《實話實說》（Plain Speaking: An Oral Biography of 延伸閱讀： 蔣萬安長子赴美交換惹特權爭議 陳時奮再爆：「矽谷律師」6度遭停權 "
+      },
+      {
+        "title": "聯網車最新與熱門精選文章 - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMieEFVX3lxTE5idmZGUEptY2tDVTdjVzNudW0xWDVzTXZ2QU9ESDJ5Z2ZGM2NFbEZ3clFWVTZJbkR4TWtTMGktR3NzVUpCZWVfNHJ0SF80QlZDWndYQWswb0J4cVBFYlU1U2dkSm1mUzVFdVlaMkpPZnFUc2szR2lIUg?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 14:57:20 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "聯網車最新與熱門精選文章 今周刊"
+      },
+      {
+        "title": "趁前女友与新男友共乘摩多外出恐怖情人驾皮卡高速撞死2人 | 即时 | 国际 | 2026-09-05 - 光明日报",
+        "link": "https://news.google.com/rss/articles/CBMiuwJBVV95cUxPUEhTUjBtMnJlMFBHdUhKTGp5b2laTTFDcEJCckk5MDJFYlo4MnBaOE10amtjZGVVel90Y2NHc0s3RTFJbTlJR0NqczJJZmh2MUVmdkhsREROd19kRzhqSklnZXNxTE1xeXROOTJEQlVLMzQwalIyTGhuZjgzUFhZZW9uWjN6N3ozdTNEVnFEQ1Y4Q1R6Y2lyZ2I5RTdGNGhGNE9ETWR4TlFuV0UtRzJWY0k3SXZ6bUpyXzM2VkJXX2Y5d2FxYlF0c2cwbTZDaXFlcEFIbkVndFA4OWY1Q1VwcG1ZSGhiNy1VcmVjc3dGMC0tcHppbGYwamVqbnRlVWxvRllWa1otdUVPam9nTktXSDczcElxa3VKbWZGOXl2WEU0ZmpGdHBSQmMzX2g0VlV4UXMxLW41LTNuMG8?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 14:55:50 GMT",
+        "source": "GN 跟蹤騷擾",
+        "hint": "治安",
+        "authority": "media",
+        "description": "趁前女友与新男友共乘摩多外出恐怖情人驾皮卡高速撞死2人 | 即时 | 国际 | 2026-09-05 光明日报"
+      },
+      {
+        "title": "新北市選情要變天？沈富雄揭藍軍最大隱患：李四川要非常小心 | 蕭宥宸 | 新聞 - Storm.mg",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE56bGhVVy01azE1dDRKTTZkQmx1MXVnOVM5YnB3MEVsTlRJNklKZDA4SXdwZXRPVjIzSFhab3VTdjl6bE96NUtSWklnT1UwUQ?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 14:54:09 GMT",
+        "source": "GN 風傳媒綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "新北市選情要變天？沈富雄揭藍軍最大隱患：李四川要非常小心 | 蕭宥宸 | 新聞 Storm.mg"
+      },
+      {
+        "title": "批國民黨傲慢踐踏弱勢 尹立：柯志恩，妳也是堂堂正正的棄單人嗎？",
+        "link": "https://newtalk.tw/news/view/2026-09-05/1058053",
+        "pubDate": "Sat, 05 Sep 2026 22:46:35 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 高雄市左營、楠梓區議員候選人尹立今(5)日在臉書發文指出，從小到大中國國民黨口口聲聲教育大家要「當個堂堂正正的中國人」，檯面上也教育講求誠信與擔當，怎知到了今天，口中的誠信早已蕩然無存，取而代之的，竟是接二連三對弱勢團體「無情棄單」的冷酷行為。尹立表示，從屏東的庇護工場，到高雄的社福協會，一再重複著 延伸閱讀： 出席青年新市代市長候選人論壇 柯志恩談高雄城市發展、交通與教育政策"
+      },
+      {
+        "title": "金門縣府重申國旅優惠宣導查核 提醒旅宿業者遵守活動規範 - 蕃新聞",
+        "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBWdS16R3JOMHhlbHFXcVo2dEVLdzV4ZnY0OGZ3Umw1WlhZQkxWdGZCcGwtOWsxNzN0UW9RSHlkRXJzNkNmTmV5SGx6UDdRdEFxTkE?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 14:44:00 GMT",
+        "source": "GN 詐領補助",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "金門縣府重申國旅優惠宣導查核 提醒旅宿業者遵守活動規範 蕃新聞"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "自然保護區遭偷倒有害廢棄物 克羅埃西亞數萬人上街抗議 - 民視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBTMTlpUy0xZ0g5RUpNZXBQc0U5SEtXYW5vZE40VlF5aGhudkZPaVFmNld5WFg2cHduWDZvenFjOC1oX1ZnSFpabHJySGdGU2hJRG5hZWZIcDV0RGxNRDlSMg?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 16:18:05 GMT",
+        "source": "GN 廢棄物污染",
+        "hint": "災防",
+        "authority": "media",
+        "description": "自然保護區遭偷倒有害廢棄物 克羅埃西亞數萬人上街抗議 民視新聞網"
+      },
+      {
+        "title": "桃園多區超商ATM 成詐案提贓熱區 警：地點方便車手最愛 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFAzZXN6U0NBZVdEZGtXLXRYeXBnMHh0TmtsY28zOTRmdF8zQmN5N2hLV3ByYVFDakZFTGp1VVFqbjlqenBCUEdxNU10UW5INDRxUFlv0gFYQVVfeXFMTmdkQUZoYnJxbE9qWXc0WkZlNWFqZ1Z0YlV4bERSZXlmOEM4eHZvalpIY0xiVGR2Uk5oancweHlZa3ZQYWx1MkhaT09UVVhYbWF2dHNyRWpRTA?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 16:00:00 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "桃園多區超商ATM 成詐案提贓熱區 警：地點方便車手最愛 UDN"
+      },
+      {
+        "title": "詐團改找外籍人士當車手 「語言因素」馬來西亞籍最多 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9HYXNIWFlRR3ZaWVVZMnQtQ2JoSWVobUhjUWpBT1pZT0VQWUJ3R2tKZVpETTlSbDJWMm1FQmVvN1lwRDk0X3F2Qlo0TFhXdTE4OUpR0gFYQVVfeXFMT1NjTFZvOXNpX1hQYm1XOEZFZndKZ09PMFVyUXFBelhSQVM0QUJTaFZMVHZYXzVFb0o5UDdYQzhMNktqZE1zYkxFbDY5NG1JWkRNbl9zYlJ3Zg?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 16:00:00 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "詐團改找外籍人士當車手 「語言因素」馬來西亞籍最多 UDN"
+      },
+      {
+        "title": "警淪詐團內應 重判2年4月 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFA0VmRyX1pnT0ZfU0xnVXlGbEtmRmJqVC14dmRBTl82aGxJdVI2YU9mdHBqSnhCOVRfX2YtVU1YaGcxVThTUjJPYk9pX1VCNU5z0gFWQVVfeXFMT21OT21ST09NblZVTGQ5Q3lpQ05OcFQtNHRHTVA0MThudlF6SEZrMGh1dlJ4Y0NFcU9SMFVNZVI3WkFncWJyTk1DLWtDNnYzQkVpZEw1cGc?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 16:00:00 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "警淪詐團內應 重判2年4月 UDN"
+      },
+      {
+        "title": "「音樂課」成販毒暗號卻禁不了！警揭網路毒訊息 「半數竟是詐騙」",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5564419",
+        "pubDate": "Sat, 05 Sep 2026 23:42:31 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "網路販毒手法不斷變形，從「糖果」、「咖啡」、「飲料」、「彩虹」等暗語，到近年流傳的「音樂課」、「裝備」，更棘手的是，網路上流竄的販毒訊息，更有半數以上可能根本不是純販毒，而是詐...…"
+      },
+      {
+        "title": "「音樂課」成暗號！網路毒訊息滿天飛 家長怒轟：看就知道在幹嘛",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5564416",
+        "pubDate": "Sat, 05 Sep 2026 23:39:47 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "近年毒品透過網路社群流竄，引發高度憂心，一名曾發現孩子不慎染毒家長控訴，網路上充斥疑似毒品交易、吸食及聚會訊息，暗號更不斷翻新，甚至出現「音樂課」代稱，「連家長都知道在幹嘛，警...…"
+      },
+      {
+        "title": "遭假助理爆「保母車密談」！張孝全衰捲股票詐騙 郭雪芙、蔡康永也受害 - 鏡報",
+        "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5panZ4TXM4UzBPLXhoSHpaVkctMUg0WnNUc0p3aEZSQml6VFREaXNiWXhZcTFyN3Z5YWlnYTR3WGtRQURBNDVXVmxQZWZvbXFpYUE?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 15:18:23 GMT",
+        "source": "GN 投資飆股群組",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "遭假助理爆「保母車密談」！張孝全衰捲股票詐騙 郭雪芙、蔡康永也受害 鏡報"
+      },
+      {
+        "title": "騙慈濟10億！「大哥」李易儒傳早已潛逃香港 通緝照曝光 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMi1gJBVV95cUxOcTR0SC1rWW43SVNtUTlRQU1oQ3hnM0JwamhRcHZSY29LOHB2Q2hpNDBQVjVRbWxicHJUb3lVcXo0TXhod2d0ZnFXRURNUjNxNWFNRVhHUEJoQ2IwU0lDWmdEdmpYbER4TjdyRFAtN0JVOFducmZwcjhhb1gxV282WWkwcDFxMjBadmNSYncxN0FsWU5laGxuUGhVYU9uZVpKQnAyRi1iTGVET0RIcDdiUTYtQnhkcUVMczVjbU9SZkhYeGh5UU9PRzFmYUNCRFVFN215cUFYdWI2TTFnUGltVXhQQ1dTdm44RmlYRkpFWEg3bkNlZkVHWkFCUVpfMG5lVkVINlFIY09EN2ZObi12YVJZbHUwbEhaM0J2akl6ZVF1UURDY09aZVhSbUxEOFlKMmdjNXpBSXlYZnV6MDdWSGExWXREUndhRkk4SlM2MUdJOTExTXc?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 14:45:38 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "騙慈濟10億！「大哥」李易儒傳早已潛逃香港 通緝照曝光 Yahoo新聞"
+      },
+      {
+        "title": "中國男遊首爾偷拍女性送檢 受害者達27人 - singtao.ca",
+        "link": "https://news.google.com/rss/articles/CBMirAJBVV95cUxORWoyN0ZzV2tGQ0ZLeVJpU0JublBYczZ5ZXQxMDc5NzJ0WHJPMTNfaUtmZXQ3MGo1a1pabU1NNVExSThyczdsd2NXZ05KOHR4WWpFMGxoN0pGMGNiLVU3cHd6elJYRWNuVmd0NkFUenhFanUzNTVsSWZ3T0lvSmFXQnVCYzEyclBUb19tNzdLSVpzc2VGTC1OZFdDRWdxQXFHN05wZUxkNEVKbVZuNGhUYkhlcHJ5WE9ucnZ6TlpoV2FWNXFnR04zNFRRamh3Z2RTWXJEMDBYVGowb0l4V1FSbDhmRkw3TEFKZEdOR2d4aFJXbzBIWmxnYVZXdTd4aU1HdHVMOGRESWhfM0lfX2U4dkkxU0pTdHVqWnF5c09yMmx1V1JVdVFyb3NnOTbSAYwBQVVfeXFMTnBmTm5LUFUwYUJhZU4yZW80RE5iY3p1UkEySlZhOVBjLXBrMWQ5QWx3Mm9CZFVtQXNVWENjZkowdkg3MHEtaXA3YkNURGFnTlJmbWlKMjdkQUc3ZzBZdEZHLThvdXE2WHZsYzJnSGxtb1BKSXdfLU5ySGF1X2ExTFFKcmdyY2JENmx3QWM?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 14:37:30 GMT",
+        "source": "GN 偷拍性影像",
+        "hint": "治安",
+        "authority": "media",
+        "description": "中國男遊首爾偷拍女性送檢 受害者達27人 singtao.ca"
+      },
+      {
+        "title": "60秒教你辨識食安陷阱！食科院長的短影音爆紅之路 養生飲品創辦人的意外之旅｜被生意耽誤的創作者 - 鏡新聞",
+        "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5KM1N3UDlTbk1fU183Q0lZNEhhSDNSeFJUeVdyNElzNEFYclpwQlNpNTZCcThUV0U5ck0xMUZwNWxhRUZQQVpmTVRNQjVhZi1RNnY3MUZsdUbSAVhBVV95cUxOSjNTd1A5U25NX1NfN0NJWTRIYUgzUnhSVHlXcjRJczRBWHJacEJTaTU2QnE4VFdFOXJNMTFGcDVsYUVGUEFaZk1UTUI1YWYtUTZ2NzFGbHVG?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 14:33:00 GMT",
+        "source": "GN 食安黑心",
+        "hint": "食安",
+        "authority": "media",
+        "description": "60秒教你辨識食安陷阱！食科院長的短影音爆紅之路 養生飲品創辦人的意外之旅｜被生意耽誤的創作者 鏡新聞"
+      },
+      {
+        "title": "基隆噁男偷拍母女洗澡「當場抓包」 一查還有大量少女性影像 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFBHTmVhRi1BemZ0WnpEd0wxSUNEYmZMT1pXclREcXVOX3BiZF9PNHY4Ym52eVBqNkJ6MHExZFl6VjRnMVNZNXd1QW5kVUxFelU?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 14:30:00 GMT",
+        "source": "GN 性侵性騷",
+        "hint": "治安",
+        "authority": "media",
+        "description": "基隆噁男偷拍母女洗澡「當場抓包」 一查還有大量少女性影像 TVBS新聞網"
+      },
+      {
+        "title": "海巡破獲跨國走私海洛因 運毒集團14人遭逮起訴 - 行銷人",
+        "link": "https://news.google.com/rss/articles/CBMi5gJBVV95cUxQS2pTb0dHQmI3T1NBOURZNE9fSkd5dXNpZC0wZUwyY0ZOYTRyMlZGRE9Sbkc5NlB0Z2FBWFN3R2xwRkRkRlVfZ3lWNDNyWEpiWml1cUMtcmF4SzJkR2VVNmtPSGdsVWdHaktBNlNSSFFPR21ydXVya1B1bUFNX09GX0NSZk1YMkFXMmRKcU90ZmtaMF9OSU9TVzE1U1pSUXU3RmcxekVLRld0VEtiT2VGYVlyU1lyNDhSTEk0Vmw1TXh2LTZ2bnJhLVhQZUFJdUtQN3BXVnhmTW9NZXpKTUZVU1NiTTUzWU94b01QOEcxRnd6N1B5ejJOR3IxLWRkR0tBaGtfX2RBaTI4LTZVZ2paMUhOWHJlUm5aY0ZTU1lleHN2ZF8tODVaZW5RZ2tYZVN6Y0c2WTdWT3Zaek9yWXRHWnRpOWFvM1pMZ3VYQnJEQUVfRTlWZWlBR2Z0QmRfU1R0bnlxSEt3?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 14:23:32 GMT",
+        "source": "GN 毒品種類",
+        "hint": "治安",
+        "authority": "media",
+        "description": "海巡破獲跨國走私海洛因 運毒集團14人遭逮起訴 行銷人"
+      },
+      {
+        "title": "陳致中控趙建銘：狂騷擾3個小孩要求同意賣股、控制帳號密碼",
+        "link": "https://newtalk.tw/news/view/2026-09-05/1058051",
+        "pubDate": "Sat, 05 Sep 2026 22:16:52 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 前總統陳水扁女兒陳幸妤與前夫趙建銘對於3個小孩帳戶爭議再掀高峰。陳致中今(5)晚臉書表示， 昨天開始趙建銘狂打電話騷擾3個小孩，要小孩同意把自己帳戶的股票賣掉，錢轉進小孩自己的戶頭，問題是轉進的戶頭，帳號密碼是他在控制。至於帳號餘額多少錢，趙建銘拒絕回答，「無限跳針」，小孩的帳號約定帳號只有設定轉到 延伸閱讀： 是客戶而非盟友 半島電視台：中國不會替伊朗硬碰美國 「台灣有事」讓"
+      },
+      {
+        "title": "拒絕一級傷害 遠離依托咪酯 北市教育局啟動「三不一要」 - 政府消息新聞 - PChome Online 新聞 - PChome Online 新聞",
+        "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPNURSUUN2MExGWnZIVmtIU0pSXzdHUGRwWGszZnZpUWtoejFaXzA2S0F6bVloYS1NZTR1NVR5cWFnZWI5RzNMV0pqOGNkMnpfdFFFaUF0UjYyYTlzdjJhMU1nS1MydWtLZDRUeGpDWlRoUi0wUEVQazh6VmJuUTFTS0s3U3I?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 14:15:54 GMT",
+        "source": "GN 新興毒品",
+        "hint": "治安",
+        "authority": "media",
+        "description": "拒絕一級傷害 遠離依托咪酯 北市教育局啟動「三不一要」 - 政府消息新聞 - PChome Online 新聞 PChome Online 新聞"
+      },
+      {
+        "title": "狠詐慈濟10.6億「掮客」跑了！李易儒潛逃香港被通緝 正面照曝光",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5564323",
+        "pubDate": "Sat, 05 Sep 2026 22:06:13 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "首次上稿 18:30更新時間 22:06 慈濟基金會10.6億元BNT疫苗詐騙案關鍵人物、被神鬼女律師陳昱瑄稱為「大哥」的李易儒，在案發後潛逃出境被台中地檢署通緝，最新公...…"
+      },
+      {
+        "title": "黃國昌率自行車隊新北出發 合體邱臣遠竹北夜市掃街拜票",
+        "link": "https://news.ltn.com.tw/news/HsinchuCounty/breakingnews/5564463",
+        "pubDate": "Sat, 05 Sep 2026 22:03:48 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台灣民眾黨主席黃國昌今天下午3點半，率領自行車隊從中和出發，一路騎行至少90公里，在晚上近9點抵達竹北夜市，陪同該黨竹北市長參選人邱臣遠、議員參選人游雅婷、陳岫玫等衝刺選情大造...…"
+      },
+      {
+        "title": "阿里巴巴前高管在美國南加州離奇失蹤逾10日 警方證實死於車內 - 香港01",
+        "link": "https://news.google.com/rss/articles/CBMivgNBVV95cUxQaDRLSzhWVHp5al8teW9ic0Y1dmtLb2V6ZEJpY3UzbjJuSTM2Y2I1QW9IWVZlcllNOG5IckFucHgwWVpnUFA1cTUxT2lHc0VGNmJ0dEdTanFFRklqN0dJcTJ6Wm5rU1drc2hOb0sxRFZvcFZsVm0wUk9tU2k3cVppVzZvWmo5d1UwZlkxWWVWamdyV2dNVlRyWndJNG1QTjdrak12cHBwZHY5N2Y0RG4wUFpZQ3ZMU2ttSjU5U2h4bHlYTDd4eUZ0QXNncjAtTzhqd0RGVDBYQ3dob1EtellkMzctSXVDLVlyVUMzTHhic3RCU2J6TjUyMGQ2d3VaNEM4X1FCSW1GTGxiazBRUVZ2TU11V0gzVnhJOFNWY1NEbTM2RzRNWU14cHg0MWRHZ2s3S3JVdVlVd3FKRWF2MkxhUXktMHlrN05FbDBiakVkUDVzV3EyVnlpU19Ja2FTWWNZdko0QW9tTm10VkN3UWVfZ2Z5ZlNaZ1hBVVgzeGFRWkxZOVUwenpfYVVKdmQzYTZvd1gzZ2JUMVdiYjM2bG1fYXIzWW1jcXJ2WlFLN0s2dXgySllPdmRPSXIyZlBodw?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 13:55:27 GMT",
+        "source": "GN 失蹤協尋",
+        "hint": "治安",
+        "authority": "media",
+        "description": "阿里巴巴前高管在美國南加州離奇失蹤逾10日 警方證實死於車內 香港01"
+      },
+      {
+        "title": "阿里巴巴前員工在美國南加州離奇失蹤逾10日 警方證實死於車內 - 香港01",
+        "link": "https://news.google.com/rss/articles/CBMivgNBVV95cUxPdGJYaWlFeGF5NEdubGZuUEl5b0MwejJRbmFUOXJJcEZHVkxXNkxodThVOWQ2WmpUY3B2ekQ3U0xQUll1OHZaVFh2QkFvcnhPdjR5VUw3TGNlLWhkWDhOTnhUSUphMGtab0x4NFFYNzRpaURBbjhVWEs4R09kMGRZUnFvZlp3dEd0bUVvWEpwWGt4d29xclFGTDRRRlVVSy15WXJLRU5SakVtYTJZR3FDNFc1bWI0WTRuUEdxQWxyWUZLdXlZRHBFOTEyaXlUelc3T1h0ODdwdXk3VzRkMmVkSDZ3VEpldzM2Z1NNdUN0cnJ0QjhieU4tZDJuT2N2eDBaTGhuV0FWWGNrVFVDTU5Uenc2ZkZfSlRJM2ZSelNvUmpGekNhaWhpTlp3aG9IenAzSmE1LXUySkdQQlh3bEJNaFllYUVJTGg2RE5PSlh1ampHSlk2QnRldHc2R2Nfc29fNGFqT1praHhfdWUza2hZRWpKMGZta1ppZnVtVUgzOGxvZmF0WlpkRTRENFRPNE5WVE5IeTZ5eWlNTVQySXpMOHNNV1ZGRmVSM2NNTTJQZHRqYk1JVGIyRDVsWE1RUQ?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 13:55:27 GMT",
+        "source": "GN 失蹤協尋",
+        "hint": "治安",
+        "authority": "media",
+        "description": "阿里巴巴前員工在美國南加州離奇失蹤逾10日 警方證實死於車內 香港01"
+      },
+      {
+        "title": "29歲台男「在日當車手」遭逮 日老翁被詐2千萬日圓 | 國際 | CTWANT - CTWANT",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE9IR09pMHJMWDYxZEs4bFkwXzZwT3Z0ZmVpQkRSUnhwYVJ2WHVONENZVnExV2NheHlGdGtGVG1uYm1MQTFwOHkyUF9NMWhubDTSAVRBVV95cUxNVXdwNGlTS0FqcWNwRXFhMXNUMVdMbkVtNWUzZjRjdHk4RWxvRnZSblJvNGFJVTNGNnk3U1Jza1Vmd0ZtRE42Q1VyRU8zUVRFQTE2SDk?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 13:46:32 GMT",
+        "source": "GN 詐騙逮捕",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "29歲台男「在日當車手」遭逮 日老翁被詐2千萬日圓 | 國際 | CTWANT CTWANT"
+      },
+      {
+        "title": "厭女網紅｜泰特兄弟在羅馬尼亞被起訴 迫15歲少女拍色情片涉販運人口 - singtao.ca",
+        "link": "https://news.google.com/rss/articles/CBMiyANBVV95cUxNNk1Kenl6Q19MektXQmdXWlhCejFuZ1pXbTZiWWRQa2Fjd3JnRmJGZmxYX0xibzJrRGw5RXhUSWVxczBSQ3VkOFJUZHlhYndsaTdMNEJsNVdxdWZMdGh2SEZreUEwWjgtVXRXU244T0taTkU5TC0wOXZvUkdnYl9sUzhOUGYxazJWMkx5M3FxcTFmdi1PSDJ5bGJ0cnBjSW9LS3NhYk1FRU5xeW83VFJaRVpPRDJqWUx1YmRYQVZ3Q1NjNGIxQ21nRFdCdUV4SGpvai04RUgtUlVoM1NLdW9Yek1sOGhtb29ERGsyR2p5SFltVHVzd1g1NU8zUTZUWEdOZmd3RlUtcVNlcGhvVC1WdTdyUC1PMlNmRGNTNWdnZnB1NW9iNE5PTjF1WklVS0x6dHk5Nko0RkhtYldlT0dqMnBEbldGQ1RhNHBZamIyU0hWWDRuVGZxVE96eFBfa2E3YTZ6QW84VGtPVHg1czFaamRlVVhpX3pURnFSUTVQbmdmZG9mYTFBZ1pVY0tRU05JZ3dSVVpKVmRQMWp4NlIwN0UxQzJqT2F1WXhVM0tkd1hSZ0NOQkNmV2t6RkhMbjM5MTZvTVJRQlXSAYwBQVVfeXFMUDZ3MDJlc1RMZGU2OTVzbEVKdW5qZTFVd0tBUExKMmFnMXB2U2hMMTFBVUFUbU9lMkU3Sl9WWkFaLTRRQ2MzN3lYSXFuLWNJbjVoN1JQbWh5N3RHaVRjT3ZOZThPTXNBY1dMcVJSaUt4SURiclJyRXRNNkhadDBab3FMZk02OXd0dG9CaDI?oc=5",
+        "pubDate": "Sat, 05 Sep 2026 13:45:39 GMT",
+        "source": "GN 洗錢",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "厭女網紅｜泰特兄弟在羅馬尼亞被起訴 迫15歲少女拍色情片涉販運人口 singtao.ca"
+      }
+    ]
+  }
+}
