@@ -25,6 +25,7 @@
     "audit:source-provenance": "node scripts/audit-source-provenance.mjs",
     "audit:news-source-contribution": "node scripts/audit-news-source-contribution.mjs",
     "audit:network-quality": "node scripts/audit-network-quality.mjs",
+    "audit:summary": "node scripts/audit-summary.mjs",
     "migrate:source-provenance": "node scripts/migrate-source-provenance.mjs",
     "report:news-sources": "node scripts/report-news-source-contribution.mjs",
     "watch:daily-refresh": "scripts\\daily-refresh-loop.cmd",

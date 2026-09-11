@@ -14,6 +14,7 @@ import { eventIdFor, slug } from "./event-id.mjs";
 export { eventIdFor } from "./event-id.mjs";
 
 import { chat, extractJson, llmModel, respondedModel } from "./llm-client.mjs";
+import { deterministicBrief } from "./summary-quality.mjs";
 export { llmModel, respondedModel } from "./llm-client.mjs";
 
 const CATEGORIES = ["地緣政治", "治安", "反詐", "協尋", "災害", "資安", "金融", "其他"];
@@ -877,14 +878,21 @@ export async function summarize({ domestic = [], international = [], clusters = 
     }
   }
 
+  // Issue #18：有事件時 LLM 空回應不得寫「（暫無資料）」——改用誠實的統計備援。
+  const domesticText = dom || deterministicBrief("國內事件", domestic);
+  const internationalText = intl || deterministicBrief("國際事件", international);
+  const degraded =
+    (domestic.length > 0 && !dom) || (international.length > 0 && !intl);
+
   return {
-    domestic: dom || "（暫無資料）",
-    international: intl || "（暫無資料）",
+    domestic: domesticText,
+    international: internationalText,
     recent24h: (recent24h || "").trim(),
     byCategory,
     trend: (trend || "").trim(),
     dailyCounts,
     clusterSummaries: await summarizeClusters(clusters, domestic),
+    degraded,
     // 用實際回應的模型名（chat 已記錄），避免標示成不符的設定值。
     model: respondedModel(),
     generatedAt: new Date().toISOString(),

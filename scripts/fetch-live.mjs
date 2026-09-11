@@ -50,6 +50,7 @@ import {
   lastIntlNormalizeSkippedBatches,
   lastDomesticNormalizeSkippedBatches,
 } from "./lib/nvidia.mjs";
+import { isPlaceholder } from "./lib/summary-quality.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import {
   formatNetworkContractErrors,
@@ -786,8 +787,21 @@ export async function run() {
   try {
     const summary = await summarize({ domestic: domesticIncidents, international: intlEvents, clusters: domesticClusters });
     writeJson("summary.json", summary);
-    status.summary = { ok: true };
-    console.log("AI 摘要：完成");
+    // Issue #18：ok 要看語意，不是看 summarize() 有沒有回傳。
+    // 有事件但主摘要仍是佔位文字 → 視為失敗，讓 audit:summary 擋下部署。
+    const evidenceEmpty = domesticIncidents.length === 0 && intlEvents.length === 0;
+    const briefsEmpty =
+      isPlaceholder(summary.domestic) && isPlaceholder(summary.international);
+    status.summary = {
+      ok: evidenceEmpty || !briefsEmpty,
+      degraded: Boolean(summary.degraded),
+      ...(evidenceEmpty || !briefsEmpty
+        ? {}
+        : { error: "有事件資料但 AI 摘要為空（暫無資料）" }),
+    };
+    console.log(
+      `AI 摘要：完成${summary.degraded ? "（含統計備援）" : ""}${status.summary.ok ? "" : "（語意不合格）"}`,
+    );
   } catch (e) {
     status.summary = { ok: false, error: e.message };
     console.error(`AI 摘要失敗：${e.message}`);
