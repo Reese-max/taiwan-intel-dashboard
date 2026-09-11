@@ -11,8 +11,20 @@ export interface AiSummary {
   trend?: string;
   dailyCounts?: number[];
   clusterSummaries?: Record<string, string>;
+  // 「有資料但敘述生成失敗」的語意標記；缺此欄位的舊檔以佔位字串比對。
+  degraded?: { domestic?: boolean; international?: boolean };
   model?: string;
   generatedAt: string;
+}
+
+const EMPTY_BRIEF = "（暫無資料）";
+
+// 佔位文字不得以正常 AI 摘要呈現（看起來像「目前無事件」），標成生成失敗。
+function briefBody(text: string, degraded: boolean | undefined, limit: number): string {
+  const failed = degraded === true || text.trim() === EMPTY_BRIEF;
+  if (failed)
+    return `<p class="ai-brief-body ai-brief-degraded">⚠ AI 摘要生成失敗，請直接檢視下方事件列表</p>`;
+  return compactParagraph("ai-brief-body", text, limit);
 }
 
 // clusterSummaries 僅針對「國內」群生成（見 scripts/lib/nvidia.mjs：只 summarizeClusters(domesticClusters)）。
@@ -68,12 +80,12 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
 
   // 國際 scope：只顯示國際每日摘要（近24h/趨勢/分類為國內資料）。
   if (scope !== "domestic") {
-    container.innerHTML = `${head}${compactParagraph("ai-brief-body", summary.international, 110)}${actionHtml}${meta}`;
+    container.innerHTML = `${head}${briefBody(summary.international, summary.degraded?.international, 110)}${actionHtml}${meta}`;
     return;
   }
 
   // 國內：每日 + 近 24h 即時 + 趨勢 + 分類別。
-  const parts = [compactParagraph("ai-brief-body", summary.domestic, 110)];
+  const parts = [briefBody(summary.domestic, summary.degraded?.domestic, 110)];
   if (actionHtml) parts.push(actionHtml);
   if (summary.recent24h)
     parts.push(`<div class="ai-sub" title="${esc(summary.recent24h)}"><span class="ai-sub-tag">⚡ 近 24 小時</span>${esc(compactText(summary.recent24h, 48))}</div>`);

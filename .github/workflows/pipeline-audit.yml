@@ -53,6 +53,10 @@ jobs:
       - name: 檢查來源可追溯性
         run: npm run audit:source-provenance
 
+      # issue #18：有事件資料但 AI 摘要仍是「暫無資料」佔位 → 部署擋下
+      - name: 檢查 AI 摘要語意完整性
+        run: npm run audit:summary
+
       - name: 檢查情報網品質
         run: npm run audit:network-quality
 

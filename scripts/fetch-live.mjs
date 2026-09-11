@@ -786,8 +786,14 @@ export async function run() {
   try {
     const summary = await summarize({ domestic: domesticIncidents, international: intlEvents, clusters: domesticClusters });
     writeJson("summary.json", summary);
-    status.summary = { ok: true };
-    console.log("AI 摘要：完成");
+    // 語意檢查：有事件資料但敘述仍是佔位 → 不算成功（issue #18）
+    const degradedParts = [];
+    if (domesticIncidents.length > 0 && summary.degraded?.domestic) degradedParts.push("domestic");
+    if (intlEvents.length > 0 && summary.degraded?.international) degradedParts.push("international");
+    status.summary = degradedParts.length
+      ? { ok: false, error: "empty_brief_with_evidence", degraded: degradedParts }
+      : { ok: true };
+    console.log(degradedParts.length ? `AI 摘要：敘述為空但有資料（${degradedParts.join("/")}），標記為失敗` : "AI 摘要：完成");
   } catch (e) {
     status.summary = { ok: false, error: e.message };
     console.error(`AI 摘要失敗：${e.message}`);

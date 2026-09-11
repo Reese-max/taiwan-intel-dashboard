@@ -17,6 +17,8 @@ import { chat, extractJson, llmModel, respondedModel } from "./llm-client.mjs";
 export { llmModel, respondedModel } from "./llm-client.mjs";
 
 const CATEGORIES = ["地緣政治", "治安", "反詐", "協尋", "災害", "資安", "金融", "其他"];
+// LLM 敘述為空時的佔位字串；審計與前端依此辨識「有資料但摘要失敗」。
+export const EMPTY_BRIEF = "（暫無資料）";
 const RISKS = ["low", "medium", "high", "critical"];
 const RISK_ORDER = { low: 0, medium: 1, high: 2, critical: 3 };
 
@@ -878,8 +880,10 @@ export async function summarize({ domestic = [], international = [], clusters = 
   }
 
   return {
-    domestic: dom || "（暫無資料）",
-    international: intl || "（暫無資料）",
+    domestic: dom || EMPTY_BRIEF,
+    international: intl || EMPTY_BRIEF,
+    // 語意閘門欄位：LLM 回空 → degraded=true；有事件資料仍 degraded 即「說沒資料其實有資料」。
+    degraded: { domestic: !dom, international: !intl },
     recent24h: (recent24h || "").trim(),
     byCategory,
     trend: (trend || "").trim(),
