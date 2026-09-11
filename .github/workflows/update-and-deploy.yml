@@ -79,6 +79,9 @@ jobs:
           name: pipeline-dist-${{ github.run_id }}-${{ github.run_attempt }}
           path: dist
 
+      - name: operating-state 部署守衛（PAUSED 不得部署）
+        run: node scripts/check-operating-state.mjs --require-active
+
       - name: 部署到 Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:

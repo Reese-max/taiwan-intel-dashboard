@@ -2,9 +2,9 @@
 
 聚合台灣國內外多源公開資料，以 LLM 正規化、風險評級、關聯分析，呈現為互動式情報視覺化網站。
 
-- 狀態：**已暫停**（canonical 回應 HTTP 503；自動更新 workflow 已停用）
+- 狀態：**運作中**（operating-state 合約見 [`ops/operating-state.json`](ops/operating-state.json)；`npm run check:operating-state` 機器驗證宣告與排程、文件、復原證據一致）
 - 網址：<https://taiwan-intel-dashboard.pages.dev>
-- 復原程序：[`docs/operations/pause-and-restore.md`](docs/operations/pause-and-restore.md)
+- 暫停／復原程序：[`docs/operations/pause-and-restore.md`](docs/operations/pause-and-restore.md)
 - 技術棧：Vite + Vanilla TypeScript + Leaflet（唯一 runtime 依賴）｜資料層 Node.js ESM 腳本｜LLM 走 OpenAI 相容端點（現用 MiniMax-M2）｜部署 Cloudflare Pages｜CI GitHub Actions
 
 ## 資料管線（`scripts/fetch-live.mjs` 主控，`--sources=` 選擇）
