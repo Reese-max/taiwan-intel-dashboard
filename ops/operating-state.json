@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "state": "DEGRADED",
+  "effectiveAt": "2026-09-11T09:39:00Z",
+  "owner": "Reese-max",
+  "reason": "排程與 canonical 已恢復運作，但 2026-07-30 暫停後未完成受控復原收據；在補登 restore receipt 前以 DEGRADED 標示，不宣稱已暫停或 503。",
+  "transitions": {
+    "PAUSED": "ops 決策暫停；所有 mutation 工作流程必須跳過並留 receipt",
+    "RESTORING": "僅允許受控驗證路徑（pipeline-dry-run）；不得有公開運作宣稱",
+    "ACTIVE": "需要 docs/operations/receipts/ 下存在含 run URL 的通過收據",
+    "DEGRADED": "允許排程繼續，但 README/狀態必須標示未完成受控復原"
+  },
+  "evidence": {
+    "supersedes": "docs/operations/pause-and-restore.md#目前狀態（2026-07-30 暫停宣告）",
+    "restoreReceipt": null
+  }
+}
