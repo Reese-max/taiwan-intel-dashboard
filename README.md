@@ -2,7 +2,7 @@
 
 聚合台灣國內外多源公開資料，以 LLM 正規化、風險評級、關聯分析，呈現為互動式情報視覺化網站。
 
-- 狀態：**已暫停**（canonical 回應 HTTP 503；自動更新 workflow 已停用）
+- 狀態：**降級運作中**（依 `ops/operating-state.json`，生效 2026-09-11；排程與網站已恢復，但受控復原收據尚未登錄 — 復原程序見 `docs/operations/pause-and-restore.md`）
 - 網址：<https://taiwan-intel-dashboard.pages.dev>
 - 復原程序：[`docs/operations/pause-and-restore.md`](docs/operations/pause-and-restore.md)
 - 技術棧：Vite + Vanilla TypeScript + Leaflet（唯一 runtime 依賴）｜資料層 Node.js ESM 腳本｜LLM 走 OpenAI 相容端點（現用 MiniMax-M2）｜部署 Cloudflare Pages｜CI GitHub Actions
@@ -36,7 +36,7 @@
 
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
-> 目前 workflow 為手動停用狀態。完成資料膨脹修正的受控上線驗證前，不要重新啟用。
+> 排程是否可執行由 `ops/operating-state.json` 的契約狀態決定（`PAUSED` 全擋、`RESTORING` 只准 dry-run 驗證、`ACTIVE` 需復原收據、`DEGRADED` 允許但標示未驗證）。`pipeline-fetch.yml` 在任何外部 mutation 前先跑 `scripts/operating-state.mjs guard-schedule`，被擋時留 `OPERATING_STATE_RECEIPT` 稽核行。
 
 - 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+gdelt+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver 增量
 - 每日 18:30 UTC（台北 02:30）：上述來源加上 cdc、tfda 的 exclusive 重建

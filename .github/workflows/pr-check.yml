@@ -36,3 +36,9 @@ jobs:
       # public/data 不進版控；需要候選資料的 build 由 pipeline-audit 在下載 artifact 後執行。
       - name: TypeScript 型別檢查
         run: npx tsc --noEmit
+
+      # 營運狀態契約與 README 狀態行必須一致（ops/operating-state.json 單一真源）
+      - name: 營運狀態契約一致性
+        run: |
+          node scripts/operating-state.mjs validate
+          node scripts/operating-state.mjs verify-docs

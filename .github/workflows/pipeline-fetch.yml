@@ -12,6 +12,11 @@ on:
       renorm_intl:
         type: boolean
         default: false
+      purpose:
+        # mutation（預設）或 validation；ops/operating-state.json 的狀態會擋下
+        # 不該跑的類型（PAUSED 全擋、RESTORING 只准 validation）
+        type: string
+        default: mutation
     outputs:
       fetch_args:
         description: 本輪抓取參數
@@ -28,6 +33,9 @@ jobs:
     steps:
       - name: Checkout 原始碼
         uses: actions/checkout@v4
+
+      - name: 營運狀態閘門（PAUSED/RESTORING 時 fail closed）
+        run: node scripts/operating-state.mjs guard-schedule --purpose "${{ inputs.purpose }}"
 
       - name: 取回獨立狀態庫
         id: state
