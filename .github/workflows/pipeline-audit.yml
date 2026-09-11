@@ -56,6 +56,9 @@ jobs:
       - name: 檢查情報網品質
         run: npm run audit:network-quality
 
+      - name: 檢查 AI 摘要完整性
+        run: npm run audit:summary
+
       - name: 檢查國際風險分布
         continue-on-error: true
         run: npm run audit:intl-risk
