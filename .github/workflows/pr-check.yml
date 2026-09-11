@@ -30,6 +30,9 @@ jobs:
       - name: 安裝相依
         run: npm ci
 
+      - name: operating-state 合約一致性
+        run: npm run check:operating-state
+
       - name: 單元測試
         run: npm test
 

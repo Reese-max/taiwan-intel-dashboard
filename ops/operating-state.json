@@ -1,0 +1,7 @@
+{
+  "schema": "operating-state/v1",
+  "state": "ACTIVE",
+  "effectiveAt": "2026-09-11T00:00:00+08:00",
+  "restoreReceipt": "docs/operations/reports/recovery-prerequisites/recovery-prerequisites-2026-08-27T13-29-47-730Z.json",
+  "notes": "update-and-deploy.yml 已啟用且持續部署成功；README 的暫停宣告為過期文件。恢復證據見 restoreReceipt（必要檢查 6/6 pass）。狀態變更必須改此檔並通過 check:operating-state。"
+}

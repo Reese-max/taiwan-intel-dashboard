@@ -1,8 +1,12 @@
 # 線上暫停與復原
 
+> 權威狀態見 `ops/operating-state.json`（`check:operating-state` 驗證）。
+> 本檔 2026-07-30 的「目前狀態」段是暫停當下的快照；產品目前已恢復運作，
+> 復原證據見 `recovery-prerequisites-2026-08-27T13-29-47-730Z.json`。
+
 狀態基準：2026-07-30（Asia/Taipei）。這是可逆暫停，不是下架或刪除專案。
 
-## 目前狀態
+## 目前狀態（2026-07-30 快照）
 
 - GitHub Actions `update-and-deploy.yml`：`disabled_manually`，無排隊或執行中的 run。
 - Cloudflare Pages canonical：維護頁，所有路徑回應 HTTP 503。
