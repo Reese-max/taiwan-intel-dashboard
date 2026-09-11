@@ -23,6 +23,7 @@
     "audit:coverage": "node scripts/audit-coverage.mjs",
     "audit:data-size": "node scripts/audit-data-size.mjs",
     "audit:source-provenance": "node scripts/audit-source-provenance.mjs",
+    "audit:summary": "node scripts/audit-summary.mjs",
     "audit:news-source-contribution": "node scripts/audit-news-source-contribution.mjs",
     "audit:network-quality": "node scripts/audit-network-quality.mjs",
     "migrate:source-provenance": "node scripts/migrate-source-provenance.mjs",
