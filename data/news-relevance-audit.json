@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-09-13T01:22:51.050Z",
+  "windowHours": 24,
+  "windowStart": "2026-09-12T01:22:51.050Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 1098,
+    "accepted": 562,
+    "rejected": 536
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "44歲男持刀挾持鬧桃機！航警也被刀劃傷 傷勢曝光| 社會焦點 - 太報 TaiSounds",
+        "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTFBPQVozSjFSbW95OHJ6Uzh5TzdBY0taejByd0RicWpUUmhUTE51YmxPVnh6a211SzlVYjhSMm9URk1aeTIzMWVjOUhIVmNTR2hXR0JDTmxLVGxhTmhT?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 01:11:34 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "44歲男持刀挾持鬧桃機！航警也被刀劃傷 傷勢曝光| 社會焦點 太報 TaiSounds"
+      },
+      {
+        "title": "林鐵奮起湖車站假日限定3列車同框吸睛 成打卡景點",
+        "link": "https://news.ltn.com.tw/news/ChiayiCounty/breakingnews/5572160",
+        "pubDate": "Sun, 13 Sep 2026 09:11:24 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "奮起湖是阿里山國家風景區的熱門景點，奮起湖車站則是阿里山林業鐵路最重要的中途站。平日的奮起湖，每天各有上下山共4個車次列車在車站交會，到了假日（含前後的週五、一）還有栩悅號和福...…"
+      },
+      {
+        "title": "周玉琴遭突襲式解雇 發長文反擊：被逼退當天才知「中天反對兩岸交流」",
+        "link": "https://www.mirrormedia.mg/story/20260913edi010",
+        "pubDate": "Sun, 13 Sep 2026 09:09:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "蘇巧慧重申捷運中央補助一毛不會少 李四川競辦：先把541億毛還來",
+        "link": "https://news.ltn.com.tw/news/NewTaipei/breakingnews/5572171",
+        "pubDate": "Sun, 13 Sep 2026 09:08:16 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "新北市明年度中央捷運補助被減列54.1億元，民進黨立委、新北市長參選人蘇巧慧昨天跟交通部長陳世凱同台重申「中央的補助一毛都不會少」；國民黨新北市長參選人李四川競選辦公室今表示，...…"
+      },
+      {
+        "title": "全球首見！成年暴龍「4枚巨大腳印」出土 6650萬年前滅絕前夕足跡曝光",
+        "link": "https://www.mirrormedia.mg/story/20260912edi021",
+        "pubDate": "Sun, 13 Sep 2026 09:03:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "駐龍卡位龐巴迪大單逾百項零件，董座曝航太業結構轉變「誰有產能誰就贏！」",
+        "link": "https://technews.tw/2026/09/13/drewloong-benefits-from-aidc-bombardier-orders/",
+        "pubDate": "Sun, 13 Sep 2026 01:00:17 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "漢翔築起本土供應鏈，為台灣爭取到首項民用機前機身組件長單，其中最關鍵的協力廠，正是高雄機製件大廠駐龍精密。駐龍 [&#8230;]"
+      },
+      {
+        "title": "新竹縣志工官網上線 招募媒合與培訓資訊一次整合",
+        "link": "https://news.ltn.com.tw/news/HsinchuCounty/breakingnews/5572164",
+        "pubDate": "Sun, 13 Sep 2026 08:59:39 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "為提供民眾與志工團隊更便捷的服務，新竹縣政府社會處與志願服務推廣中心推出全新官方網站（ https://hchg.tw ），方便民眾快速查詢各項志工招募資訊，也讓團體能直接在線...…"
+      },
+      {
+        "title": "日本高中教師色欲失控！涉買春未成年女學生 付5.5萬日圓丟工作",
+        "link": "https://www.mirrormedia.mg/story/20260911edi089",
+        "pubDate": "Sun, 13 Sep 2026 08:58:58 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "中天周玉琴被資遣 中視美女主播也驚爆離職！待3年不捨大哭：滿滿的感謝",
+        "link": "https://www.mirrormedia.mg/story/20260913edi003",
+        "pubDate": "Sun, 13 Sep 2026 08:55:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "桃園機場發生持刀挾持事件 1名國泰實習生受傷 - Now 新聞",
+        "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTE5kY1N0M2VYb3V4R3dzNVpockpMRUdjUDg3WmstbGt1U2RPdDdpdFRHWGl6WTN6ZElsSVdmMXBtRVBoTXdYTXhUODNiYm5JUXZqYWZ6MllQa2U5MFhVOVYzektKXzhwUnpqOVdvRA?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:44:55 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "桃園機場發生持刀挾持事件 1名國泰實習生受傷 Now 新聞"
+      },
+      {
+        "title": "菲律賓渡輪大火增至76死 臥鋪區發現逾40具焦黑遺體 | 太報 - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE9acmpFNTRlYVcwYXItMDZTRXYxMHYybWNVSEw3ZHRUSHhIYU5GWUFhTVpwWGpEZnpIeThodkxwbGREaFFQYkdJWk94bEJzTGp4UHp4THJR?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:40:54 GMT",
+        "source": "GN 陳屍遺體",
+        "hint": "治安",
+        "authority": "media",
+        "description": "菲律賓渡輪大火增至76死 臥鋪區發現逾40具焦黑遺體 | 太報 LINE TODAY"
+      },
+      {
+        "title": "未向公司報備擅自赴中參與活動？周玉琴：原來中天不支持「兩岸和平交流」",
+        "link": "https://newtalk.tw/news/view/2026-09-13/1059410",
+        "pubDate": "Sun, 13 Sep 2026 08:37:01 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 陸軍退役上校賴岳謙接受中國媒體採訪時竟開嗆不認同自己是中國人的台灣人「請你搬走」，更宣稱「這個地方（台灣）是我們中國人的」，引起輿論譁然。傳出長期和賴岳謙合作的中天通知他將不再成為政論節目來賓，他的妻子周玉琴11日無預警透露遭公司資遣，引發關注。雙方一來一往透過聲明、直播回擊，各執一詞。中天否認外傳 延伸閱讀： 嗆「不當中國人不配住台灣」中天不再用賴岳謙、周玉琴 沈榮欽：耐人尋"
+      },
+      {
+        "title": "AI 可能在一年內失控，Anthropic 執行長呼籲放慢腳步等待安全技術跟上",
+        "link": "https://infosecu.technews.tw/2026/09/13/dario-amodei-calls-for-slowing-down-the-pace-of-ai-development-for-the-safety-tech-to-align/",
+        "pubDate": "Sun, 13 Sep 2026 00:36:53 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "知名人工智慧新創 Anthropic 執行長阿莫戴（Dario Amodei）近日發出警告，呼籲全球 AI 產 [&#8230;]"
+      },
+      {
+        "title": "我也有！高雄這家必比登名店秀賴瑞隆賀軸 警告「想撕的人」放尊重",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5572155",
+        "pubDate": "Sun, 13 Sep 2026 08:32:46 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄米其林必比登名店「弘記肉燥飯舖」近日捲入送貨廠商人員撕毀立委賴瑞隆賀軸的風波；另家也獲必比登推介的「旗山秀明豬心冬粉」，闆娘則在臉書大方秀出賴瑞隆贈送的同款賀軸，強調支持弘...…"
+      },
+      {
+        "title": "快訊／用路人注意！國道追撞「大貨車側翻」 車速一度剩15km塞爆 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE9GR2Iya3Q4NHJ5T3VKSG41Y0tySmgtbE5qS3ZXM216WWJyT0psRlhWSVB3RXdzNFU0QWVZcm9BTlB2Y1hDaC04aVJFM2RWMFk?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:32:00 GMT",
+        "source": "GN 車禍肇逃",
+        "hint": "交通",
+        "authority": "media",
+        "description": "快訊／用路人注意！國道追撞「大貨車側翻」 車速一度剩15km塞爆 TVBS新聞網"
+      },
+      {
+        "title": "「不給複製就被換掉！」AI 浪潮洗牌影視產業，真人演員面臨生存危機",
+        "link": "https://technews.tw/2026/09/13/ai-short-dramas-human-performers-survival-crisis/",
+        "pubDate": "Sun, 13 Sep 2026 00:30:05 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "人工智慧（AI）正以前所未有的速度改寫短劇與影視製作模式。從角色生成、場景設計到整部作品的完成，AI 已不再只 [&#8230;]"
+      },
+      {
+        "title": "人妻健身都在跟教練「運動」 他「幫老公播種」還拍無套片",
+        "link": "https://www.mirrormedia.mg/story/20260911web003",
+        "pubDate": "Sun, 13 Sep 2026 08:29:58 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "警廣宜蘭分臺13日起舉辦空中傳愛挽袖捐血活動 號召用熱血守護生命 - pbs.npa.gov.tw",
+        "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxNSkpYdXI5U3FCZU44LVF2LXl2V0FaLVMxdENVYU1zbnh5dEEyNTdHcGpvMzlnUE91NWhnczMwb2tWWjh3bG1qdEpzWXFZQVM2UWVMUzRpSWk0bXFKX1hIalRGSmFJRV9pVUV6MHRvQi0wdXBMU0ItQ0k1a0h4TlA5X25ITXY5R2JXNU1LZXd5cnVNV3QzMC1DSDhUSURKWnN3a2tIeGNnNzhIOTha?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:25:02 GMT",
+        "source": "警政署官網",
+        "hint": "治安",
+        "authority": "official",
+        "description": "警廣宜蘭分臺13日起舉辦空中傳愛挽袖捐血活動 號召用熱血守護生命 pbs.npa.gov.tw"
+      },
+      {
+        "title": "櫻花鳥森林結合白冷圳文化 「白冷圳森林辦桌」10/11上菜！",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5572151",
+        "pubDate": "Sun, 13 Sep 2026 08:24:04 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台南鍘美節辦桌3秒秒殺，「白冷圳森林辦桌文化宴」也將於10月11日在台中市新社區櫻花鳥森林登場！主辦單位邀請台中在地總舖師「阿輝師」掌廚，結合白冷圳文化、森林環境及音樂，呈現傳...…"
+      },
+      {
+        "title": "聯邦上訴法院撤銷川普命令 密西根州老舊燃煤電廠不得再被強制延役 - 梅花新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1rZ292NEZnbUVhMGt4WmwwWFhCM0F5NlpBT3VoN205dmRKcHBsU2FPNXBNWXBici1lWkJ3LUxtSVRGNW9hX2tQTU4tbTEteUgzRTMySV9XQ1E?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:15:00 GMT",
+        "source": "GN 妨害自由恐嚇",
+        "hint": "治安",
+        "authority": "media",
+        "description": "聯邦上訴法院撤銷川普命令 密西根州老舊燃煤電廠不得再被強制延役 梅花新聞網"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "3招營造深情假象！陽明山勒斃女友棄屍 黑幫男友遭收押禁見 - 三立新聞",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE5vU1JFeWUzajhjcUM4TEpNM0VjS1dxLXk3SktONWQ2VnNOSkVBYmpIeDAyU1AtVDNLemxiQ1dyUTJFX1d4LVYxLdIBTEFVX3lxTE9HYzhDaDBBSWlxcGplZ3V2Y1NJNHdfVXJaQVp5aDNmSEJ4RXU2OTJLdlNmbTR2YnFmSi1VWnVzSXlNeGdUcjBWR1RkUGY?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 01:19:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "3招營造深情假象！陽明山勒斃女友棄屍 黑幫男友遭收押禁見 三立新聞"
+      },
+      {
+        "title": "蘇巧慧稱捷運經費一毛不少 李四川反問：難道沒選上就不給錢？",
+        "link": "https://newtalk.tw/news/view/2026-09-13/1059421",
+        "pubDate": "Sun, 13 Sep 2026 09:12:48 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 2026新北市長選舉白熱化，新北捷運建設成為藍綠攻防焦點。民進黨新北市長候選人蘇巧慧日前強調，中央對新北軌道建設高度重視，相關經費「一毛都不會少」。對此，國民黨新北市長候選人李四川今（13）日反問，既然經費一毛都不會少，「為什麼不現在給？」並質疑若工程進度已達標，就應按照進度核撥經費。李四川表示，新 延伸閱讀： 監院廉政委員會癱瘓！學者：陽光法案退化為資料登錄平台，失去嚇阻與問"
+      },
+      {
+        "title": "奧迪跑車過路口突偏移 迎頭撞LEXUS釀6傷",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5572176",
+        "pubDate": "Sun, 13 Sep 2026 09:11:47 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "苗栗縣頭份市中正三路與親民路口，昨（12）日發生LEXUS掀背車與奧迪雙門跑車碰撞事故，2車6人皆受傷送醫，警方調閱路口監視器影像，發現奧迪雙門跑車於穿越路口後偏移到對向車道，...…"
+      },
+      {
+        "title": "高雄港大型活動愈來愈多 警方終於動用這項設備監控",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5572175",
+        "pubDate": "Sun, 13 Sep 2026 09:09:52 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "愈來愈多大型活動在高雄港舉行，大量人潮湧入增加治安疑慮。為確保參與者安全，高雄港務警察總隊終於首度動用無人機，加上海面警艇與岸邊警力，採「陸、海、空」立體部署，維護活動安全及周...…"
+      },
+      {
+        "title": "萬那杜渡輪遇惡劣海象沉沒 釀1死逾30人失蹤 | 民視新聞網 - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE9waldKTVdvZ3laOW5NLTJmUXd5eXlZS2lNamV2TTl2XzItaHVlYW1LQ0JqdE9mdklKdnJMZXlhbWR6TndyeHBGUUhVcGhzRW13VlhUN0hB?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 01:08:09 GMT",
+        "source": "GN 山難海難",
+        "hint": "災防",
+        "authority": "media",
+        "description": "萬那杜渡輪遇惡劣海象沉沒 釀1死逾30人失蹤 | 民視新聞網 LINE TODAY"
+      },
+      {
+        "title": "挾女友關門窗揚言引爆瓦斯 苗栗男被收押禁見",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5572159",
+        "pubDate": "Sun, 13 Sep 2026 09:05:01 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "苗栗市32歲魏姓男子11日晚間疑似與家人發生爭執，情緒失控挾持女友並緊閉住家門窗、關燈揚言引爆家中瓦斯，造成家人及附近住戶恐慌。苗栗警方調派優勢警力到場，與魏男溝通近3小時，化...…"
+      },
+      {
+        "title": "台北狠夫教出「台灣史上首位女槍手」殺妻！裁定羈押送進看守所- 社會新聞- PChome Online 新聞 - PChome Online 新聞",
+        "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxNWWhabWRMc3ZIdDhYX2tlMnRJWFVDUjhLVXQ4Q1VHMTdwT2hWTEV1X251bmJUWEJvYjI4dVc5eG1JWWpWNExQTkNxakxoYjJRRXVoaXg1YkdZaFpQdDVLYkEtRjJwZ20xQlBEaUJkQWtWdk5KU3BQSFVQMXdKNWlxb083WDlRUUxCWldV?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:58:31 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北狠夫教出「台灣史上首位女槍手」殺妻！裁定羈押送進看守所- 社會新聞- PChome Online 新聞 PChome Online 新聞"
+      },
+      {
+        "title": "車內怪怪的 竟是自己藏毒 男報案驚動警方反遭查獲毒駕跟毒品 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMimgNBVV95cUxPYjN3SkkwRTdmZV9CN2VwU19ab3BuTTFBYi1ndGdjbWlnZWRoZkxFY09Ccl8yUDNGXzVMZkRZd1A1a0g1RlFXdG55VUFKeXZHTG4xcDU1WUxfcTh1NzItV2RPRl9HUUI0eDk5ZTRUbVFSZGo4TlBPalhDbHRPc0JwczhaNGlpV0k1Q0tKaW1UMGZJcVlkWXA3Nk04NnNQZzdqUG44bUlPY04xR3FEZ2U2UlEzeXRDbk0tbjR5bUhFQ0FibnpEX2FqczVRZEhjcnoyNkc3RGdBN01qZk15TU5VWUgxekN4RzdSdFRxTXZiRTREaWY1akJXYlNfemROaXNxQWEwWE81UnFQcWYzUEx5QUF6U1cxQjNqTlROLXoyd1p5cEZuOUctdmltM3pOa0VuUVdDa24yZjhJaDQ3bTBqbGNNT25FTGNlVjlnMDhWVjJ3amtUNXVMNUYtWUsyZU9WZGdXR3QtTkg0Q3B5RzBTSmhGbDBYV25HeTBBdWExRm5VbU1URmlJZHVjNG9VOENDUXdBX0pVLW4wQQ?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:53:08 GMT",
+        "source": "GN 毒品查獲",
+        "hint": "治安",
+        "authority": "media",
+        "description": "車內怪怪的 竟是自己藏毒 男報案驚動警方反遭查獲毒駕跟毒品 Yahoo新聞"
+      },
+      {
+        "title": "桃機首見持刀挾持地勤實習生！3航警也受傷 男初步犯案動機曝 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMijwNBVV95cUxQYVJmeTM5V2gtOU5ITnJHT3Rsc1lhTXMxaW12SVBxd04yNUhZbVdUblN4SmlFRmFPWHZ4a29PeDJhVlMxR1hmQzlYRTQ0X012ekJXc21GcmhZNk1yeHJ1WGlpN0ZIOXlUVlVva1B6V3lIZzg0VDctRTMzYkNVTXFWM2VjM2FGRW5xaDIzMGhOQVJOSG16bEs3ZEl2VWo1bE9weFBNUEE2cGpxZmRKdlFPd2lMY2JtVmxuZ0RUOE5ockRELTZwYXdBN192Vk15Ylkyd1NSaDRESC1PbnZISGdEdzNpUE9JNGlWWnJTTlRQZzNIVzJXVkZlXzRmVHVwallIdTh6am1fVkVfTWlMaVNYR09lUjQ5QkhNcFkzNWVjaFFqWVdZUmxBLURpNEo0d0d4YU55UWhKQVMyQnNUeWRfVlNBZTlIUzBkM2VXNnRSSm5FVjBjVmZYXzk4cDN2cXlGNVFGX1drX1Y5bWxKbXRoclZpeEpYbTJ4NlFHVktDRDhRdE1LbU1oTFNzbHo3S00?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:50:39 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "桃機首見持刀挾持地勤實習生！3航警也受傷 男初步犯案動機曝 Yahoo新聞"
+      },
+      {
+        "title": "車內怪怪的 竟是自己藏毒 男報案驚動警方反遭查獲毒駕跟毒品- 政府消息新聞- PChome Online 新聞 - PChome Online 新聞",
+        "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOSEFJSUNkalFsb1M5MFZiVkFPVU04MUU5eTRPSkpKckJNbno4UjltdGJFRXV1ajd6OFZOVTdDV3Z4ei1vbld5UHpNT0Z6aU1rbHNLNWEzMUloaEhMd0FfYmJub1ZsTWFGWVlzXzB1THJzemxwSlk3dmlHZ1lXdUllM0FFYi10cHJwRjBv?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:45:39 GMT",
+        "source": "GN 酒駕毒駕",
+        "hint": "交通",
+        "authority": "media",
+        "description": "車內怪怪的 竟是自己藏毒 男報案驚動警方反遭查獲毒駕跟毒品- 政府消息新聞- PChome Online 新聞 PChome Online 新聞"
+      },
+      {
+        "title": "屏東鎮海公園溺水8歲弟獲救.13歲兄送醫不治- 社會 - 華視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTFBPR25Ed1puMFNKQmptM0Jvbi13aW96ZWNlekF5VnVRSER6MG1sRGFGR0JGR0pvVTUzN3NINVZRcXFmbUlmWHN5c3hFV0hMNTRuMF9tUnl4ZHJ1V29PSld0bExkQU5HdUdyZXZOeFNZelA?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:45:00 GMT",
+        "source": "GN 山難海難",
+        "hint": "災防",
+        "authority": "media",
+        "description": "屏東鎮海公園溺水8歲弟獲救.13歲兄送醫不治- 社會 華視新聞網"
+      },
+      {
+        "title": "檳榔西施慘遭男友勒斃！棄屍陽明山27天成白骨 狠男落網羈押禁見 - 知新聞",
+        "link": "https://news.google.com/rss/articles/CBMib0FVX3lxTE1KT0IxRlhMNzdwNDlkZDIwSXpOUE5pRHBpZVVFN3NZTmV6RTNkd1g3eEoyR3BGcng0SU9kN21fdVEwOEtINWQ1eFppdC1wSk45RmJneVVLSld3c3JJdFZKYU5VcUVWVzh0R1RIWnZMOA?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:34:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "檳榔西施慘遭男友勒斃！棄屍陽明山27天成白骨 狠男落網羈押禁見 知新聞"
+      },
+      {
+        "title": "台灣桃園機場驚爆挾持案 嫌犯當場落網 - 新唐人電視台",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBsLXNjTndfQkFMUHNzRmNBckZOOGNVUk03Y2JsU2tzRUIzc2V0czVJcVpTSkRfcFY4NjdRMVd0VmFjbjJudm9peXBGbTNObjBIWVUwSUVYN1JTczRJZDE4SdIBZkFVX3lxTFBCa2xyc1k1dlJRb3I5aGlEdm8tYUZzYk5fSXdjcFp2WG9TVXo2MWpfa3gzUmVtWmxMNnQwaVJKc1h1cTZ3bHBuMmNsR01qbUdhQmJ2c3VidTh6ZjROMGY2RXRraXRDUQ?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:31:25 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台灣桃園機場驚爆挾持案 嫌犯當場落網 新唐人電視台"
+      },
+      {
+        "title": "潛入國小校園行竊偷走餅乾、泡麵 換來8個月徒刑",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5572154",
+        "pubDate": "Sun, 13 Sep 2026 08:26:19 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "康姓男子利用凌晨潛入屏東原鄉某國小校園，見校內工作室無人看管，便翻越窗戶偷走工作室內的餅乾、泡麵及飲料，學校人員發現後，報警逮到行竊的康男送辦，屏東地院依踰越窗戶竊盜罪，判處康...…"
+      },
+      {
+        "title": "女網友約聊天台中男竟硬上 賠30萬換免關",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5572150",
+        "pubDate": "Sun, 13 Sep 2026 08:25:03 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台中劉姓男子，前年從交友軟體認識女網友小麗（化名），小麗凌晨相約到她台中沙鹿的租屋處聊天，沒想到劉男起色心，當天清晨7點多，不顧小麗反對，仍將她強壓在床性侵得逞，小麗事後報警提...…"
+      },
+      {
+        "title": "桃機首見持刀挾持地勤！3航警也受傷 男初步犯案動機曝 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMi6wJBVV95cUxNSllnN1kxTVNkOE1Ubm5OVGdQWlZFcnhST3lfWTMtZWpUN0ZFSjVWT3Y3Zkowa0dzYlZQeUpjY3M3d01CMjNtMU1MNHh1Z1JMLTBZanFSb0RPMU9kN1pJQlFoUndwR2NXWmFIaE90UDhMVFREVzYwai00aUtCUTFfbDQ0Q01yUFRwMXd0cnJWZWRHM1ZrUkt6LVpHVGo2aEF0aWlZWnctV2xlemZVdHdnejBFX3VZcGdEZFBEYzMwRzRFY2Y4d3I2aHF0UDdkRmhiODlVWmk2c013TTE3dVY3d0tCRWJvZFpqemg5UkNnTXBfVjVJSHlVN3Ffd0ZqcTFFUWxHXzhHSmZWVndqNUlmOGFGVWxaMmtPVDRXRVhOM0VvWTRXcHhwUEpBZlItT1lRSFVNR2xIcHVDZ19xWDI4V1VzNnFMRDctWU9DRDl5V2FmTkk0c280VDNmOERnSkVudV9maDhvV1IxVWc?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:24:18 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "桃機首見持刀挾持地勤！3航警也受傷 男初步犯案動機曝 Yahoo新聞"
+      },
+      {
+        "title": "獨家照片曝！ 桃機首例持刀挾持案凶嫌預計今移送桃檢－民視新聞- 民視新聞網 - 民視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFA5MTEzUk52VWVDOHlZY0ZEd0Q5OV9PZDJRRXRTeEx2M2pRV29KS0dCcXRNWVRRX1pvSXJOM29GSzI5VC16aHlySDZKOVI4Qk9ValoxZzZmVTVWQWtzaVYxbElmMmV2aG8?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:19:21 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "獨家照片曝！ 桃機首例持刀挾持案凶嫌預計今移送桃檢－民視新聞- 民視新聞網 民視新聞網"
+      },
+      {
+        "title": "系草變恐怖情人！資工系男大生闖前女友家「持刀抵腹硬上」恐嚇殺全家 | 三立新聞網 - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE9UR3YzTGRGTFJaQ2JSeEVIcS04VDEwQUc4SFUyNWEtd2VhMm44d0lhU0pqai1jZ3Z1TXNmSW9qRkUwRjM4dVRlX0dUcHU5djZwYTZiR3dn?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:10:50 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "系草變恐怖情人！資工系男大生闖前女友家「持刀抵腹硬上」恐嚇殺全家 | 三立新聞網 LINE TODAY"
+      },
+      {
+        "title": "討論牆 | 烤雞旁「狂沖烤爐」民眾憂食安 美式賣場暫無回應 - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE10XzF4RGNkcXNwQnVncm1yQ2U1UkVHYWsxRVl1dnZhanRXU1NHOGE1TGpmbkhENkJ0R3F5eXVZbHBGNEtIXzdsTVFXeUt2d2RkVlh2MmZ2VkY4M2FXdDY0SEZ5RWg?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:08:07 GMT",
+        "source": "GN 食安黑心",
+        "hint": "食安",
+        "authority": "media",
+        "description": "討論牆 | 烤雞旁「狂沖烤爐」民眾憂食安 美式賣場暫無回應 LINE TODAY"
+      },
+      {
+        "title": "勒斃檳榔闆娘棄屍陽明山 嫌布疑陣先報案「女友失蹤」 嗆家屬別再問 - 中時新聞網",
+        "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9zekRoVnk3dWoxdzNpSjFOVGRfNDZtUm1OeWNwLTFJVmVtdmwzdDk0Xzk5dUYzMFVKdG5uV1VHTlVrdThaajJTR05kT2ItV01MRDJtTEd3QXQtdVhENTFUT2dIT0t0WEtFaVhFb09n?oc=5",
+        "pubDate": "Sun, 13 Sep 2026 00:06:43 GMT",
+        "source": "GN 殺人分屍",
+        "hint": "治安",
+        "authority": "media",
+        "description": "勒斃檳榔闆娘棄屍陽明山 嫌布疑陣先報案「女友失蹤」 嗆家屬別再問 中時新聞網"
+      }
+    ]
+  }
+}
