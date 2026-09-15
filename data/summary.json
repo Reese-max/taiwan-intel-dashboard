@@ -1,0 +1,17 @@
+{
+  "domestic": "（暫無資料）",
+  "international": "（暫無資料）",
+  "recent24h": "",
+  "byCategory": {},
+  "trend": "",
+  "dailyCounts": [
+    1440,
+    1260,
+    989,
+    1198,
+    1150
+  ],
+  "clusterSummaries": {},
+  "model": "MiniMax-M3",
+  "generatedAt": "2026-09-15T23:41:06.394Z"
+}

@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-09-15T23:38:38.299Z",
+  "windowHours": 24,
+  "windowStart": "2026-09-14T23:38:38.299Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 1551,
+    "accepted": 804,
+    "rejected": 747
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "網戀喊「老婆」就要90萬？東港警識破假交友 婦人90萬成功保住 - focus.586.com.tw",
+        "link": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE9Gb3R2WW5OX3YyRDVKQzBuYkxCVlI0alA2a3I3bDdadDBZUHlUVVRkcWs4RTVfUUQ1S1E3VF9jRkRhaktuaU0xMGpmVGMzSzZnako1THZjUQ?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 23:32:32 GMT",
+        "source": "GN 假投資假交友",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "網戀喊「老婆」就要90萬？東港警識破假交友 婦人90萬成功保住 focus.586.com.tw"
+      },
+      {
+        "title": "IBM 與 NASA 聯手推開源 AI 模型，助攻月球冰層探勘與科學研究",
+        "link": "https://technews.tw/2026/09/16/nasa-and-ibm-open-source-lunar-mapping-tools/",
+        "pubDate": "Tue, 15 Sep 2026 23:20:18 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "IBM 與美國國家航空暨太空總署（NASA）9 月 10 日宣布，推出開放原始碼的「NASA-IBM 月球基礎 [&#8230;]"
+      },
+      {
+        "title": "【舊金山現場直擊】Benioff 稱史上最重要的 Dreamforce！Salesforce 發表 AIforce 釋放企業系統裡被困住的價值、宣告介面革命",
+        "link": "https://www.inside.com.tw/article/42404-dreamforce-2026-salesforce-aiforce-interface-revolution",
+        "pubDate": "2026-09-16T07:19:00+08:00",
+        "source": "INSIDE RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "Salesforce 年度大會 Dreamforce 2026 在舊金山登場，AIforce 是今年主題演講的核心發表，也代表 Salesforce 從 Agent 層跨入介面層。Salesforce 董事長暨執行長 Marc Benioff 表示，過去 3 年談的都是 Agent，今年則是第一次談到 Salesforce 上的即時介面；Anthropic 共同創辦人暨執行長 Dario Amod"
+      },
+      {
+        "title": "黃仁勳論 AI 風險與未來：放慢發展腳步絕對是錯誤策略",
+        "link": "https://infosecu.technews.tw/2026/09/16/jensen-huang-speaks-at-all-in-summit-2026/",
+        "pubDate": "Tue, 15 Sep 2026 23:14:44 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "NVIDIA 執行長黃仁勳上週末出席 All-In Summit 2026，圍繞 AI 相關議題與主持人深度對 [&#8230;]"
+      },
+      {
+        "title": "Palantir、Nvidia、Booz Allen 齊聲限制 Anthropic Fable 模型，憂 30 天資料留存危及商業機密",
+        "link": "https://www.inside.com.tw/article/42391-palantir-nvidia-booz-allen-restrict-anthropic-fable-model",
+        "pubDate": "2026-09-16T07:11:00+08:00",
+        "source": "INSIDE RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "Palantir、Nvidia、Booz Allen Hamilton 三家企業因不滿 Anthropic Fable 5 的 30 天資料留存政策，相繼限制或禁止將 Fable 模型用於敏感業務，Anthropic 隨即宣布新的企業數據主權方案，允許客戶把使用紀錄存放在自有雲端環境。"
+      },
+      {
+        "title": "三星放話 CES 2027 亮相人型機器人，投資 19 兆韓圜龜尾基地曝光",
+        "link": "https://technews.tw/2026/09/16/samsung-aims-to-unveil-first-humanoid-robot-at-ces-2027/",
+        "pubDate": "Tue, 15 Sep 2026 23:10:37 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "三星已將人型機器人列入正式產品開發軌道，目標 2027 年 1 月美國拉斯維加斯 CES 消費電子展首度公開自 [&#8230;]"
+      },
+      {
+        "title": "葉門內戰惡化 聯合國：逾10萬人流離失所 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE5zSVlTaG9mMTJ0cWttMWdCSU9SNXhiRzZQZzY3NGRZVTE0anJzbkRlOTc0OWlXSndvdW1vNGFuNnRQQmtNZTBQM2JwTVc1a3doRkxKQ0hlSQ?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 23:06:26 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "葉門內戰惡化 聯合國：逾10萬人流離失所 rti.org.tw"
+      },
+      {
+        "title": "邊玩桌遊邊學道安！南投把集集小火車、九蛙搬進交通安全教材",
+        "link": "https://news.ltn.com.tw/news/Nantou/breakingnews/5575280",
+        "pubDate": "Wed, 16 Sep 2026 07:05:27 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "為深化國小學童交通安全觀念，南投縣政府將傳統的交通安全宣導教材轉化成塗鴉本與桌遊，並融入孩子熟悉的日月潭九蛙及集集小火車等在地元素，盼透過寓教於樂方式，讓交通安全教育從小扎根。...…"
+      },
+      {
+        "title": "SEMICON Taiwan 2026：矽光子引領 AI 算力解方",
+        "link": "https://technews.tw/2026/09/16/semicon-taiwan-2026-cpo-ai/",
+        "pubDate": "Tue, 15 Sep 2026 23:00:34 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "傳統架構下，各環節分工明確，但在共同封裝光學與系統技術協同最佳化（System-Technology Co-O [&#8230;]"
+      },
+      {
+        "title": "獨家／Ozone年底約滿 黃文廷傳不滿公司且充滿怨氣 打算脫隊單飛",
+        "link": "https://www.mirrormedia.mg/story/20260915-194ent-022918",
+        "pubDate": "Wed, 16 Sep 2026 07:00:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "選戰不只拚政見！ 蘇致榮號召議員候選人「拚菜高」",
+        "link": "https://newtalk.tw/news/view/2026-09-16/1059999",
+        "pubDate": "Wed, 16 Sep 2026 06:50:53 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 選戰進入熱身階段，候選人除了拚政見、拚行程，也開始拚起創意，高雄市議員鳳山區候選人蘇致榮號召各區議員新人，舉辦「政策好菜疊出新高度」趣味競賽，讓選戰走出傳統政治場合，改用最接地氣的夜市美食交流，現場更要比誰的菜山堆得最高，讓候選人用另類方式展現活力，也拉近與民眾的距離。這次「政策好菜疊出新高度」趣味 延伸閱讀： 酸柯志恩張冠李戴又鬧笑話 尹立：對高雄根本無心！ 轟藍營消費前鎮漁"
+      },
+      {
+        "title": "高雄輕軌8月運量增6.5％ 「這一站」排名從後段變前段班",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5575277",
+        "pubDate": "Wed, 16 Sep 2026 06:50:16 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄輕軌今年8月獲全台最大好市多、全台最大半室內兒童樂園加持，整月運量較去年同期增加6.5%，緊鄰兒童樂園的C35凱旋武昌站表現最亮眼，原本在38站中運量排名30，一舉進步到第...…"
+      },
+      {
+        "title": "前鎮漁港新增多項優惠措施 照顧漁工權益、加速攤商進駐誘因",
+        "link": "https://newtalk.tw/news/view/2026-09-16/1059996",
+        "pubDate": "Wed, 16 Sep 2026 06:48:55 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 針對外界對前鎮漁港改建、多功能水產品運銷中心與船員會館等討論，高市府海洋局長石慶豐表示，市府15日與農業部政務次長黃昭欽、漁業署署長王茂城及高雄區漁會總幹事楊孟凡進行協調，成功爭取進駐前兩年免收清潔管理費與使用費、提高船員住宿補助等優惠措施，照顧漁民及攤商權益共創多贏。石慶豐說明，前鎮漁港為第一類漁 延伸閱讀： 前鎮漁港「3,000萬變81億」？ 海洋局：韓國瑜任內預算已增至4"
+      },
+      {
+        "title": "中市第二市場竟飄咖啡香 19日正式開幕",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5575276",
+        "pubDate": "Wed, 16 Sep 2026 06:46:53 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台中市第二市場停車場已啟用，為吸引更多旅客來台中市，第二市場位於一樓附屬店鋪的「FU SPACE共享空間」與「時間到咖啡館」將於9月19日聯合開幕，推出以咖啡休憩及彈性共享空間...…"
+      },
+      {
+        "title": "前鎮漁港砸81億卻亂象頻傳 湯茹婷五大質疑：公帑究竟花得值不值？",
+        "link": "https://newtalk.tw/news/view/2026-09-16/1059995",
+        "pubDate": "Wed, 16 Sep 2026 06:46:41 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 耗資81.37億元重金打造的高雄市前鎮漁港，近期隨媒體實地走訪，現場亂象逐一曝光。對此，國民黨議員候選人湯茹婷15日提出預算膨脹翻倍、工程規劃漏洞百出等五大質疑，怒批當初市府信誓旦旦稱要將前鎮漁港打造為「兼具冷鏈、觀光與現代化台版豐洲市場」，如今卻發現各種問題，而執政團隊面對合理的監督與檢驗，不但未 延伸閱讀： 前鎮漁港「3,000萬變81億」？ 海洋局：韓國瑜任內預算已增至4"
+      },
+      {
+        "title": "公館夜市捲「洋流」！沈伯洋夜掃2小時 店家「餵食」大辣蔥抓餅",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5575212",
+        "pubDate": "Wed, 16 Sep 2026 06:45:46 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "首次上稿 09-15 23:40更新時間 09-16 06:45 民進黨籍台北市長參選人沈伯洋昨天（15日）晚間到公館夜市商圈，從8點半左右開始掃一圈，約到10點半才結束，走...…"
+      },
+      {
+        "title": "民眾黨台中選戰分進合擊 柯文哲黃國昌重點輔選北屯西屯",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5575270",
+        "pubDate": "Wed, 16 Sep 2026 06:37:37 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "距離九合一大選只剩下70多天，民眾黨中市6位市議員參選人也頻頻找大咖來輔選，中市黨部主委陳清龍表示，原本規劃共同為交通罰款專款專用公投案一起聯合競選，但是公投案遭中選會否決，目...…"
+      },
+      {
+        "title": "直擊》沈伯洋簽名難求 小妹妹苦等1小時「洋流」伸援手",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5575260",
+        "pubDate": "Wed, 16 Sep 2026 06:36:28 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨台北市長參選人沈伯洋帶起「洋流」熱潮，近來每次走訪各地掃街，聚集的人潮越來越多，從「單獨合照」變成「群體合照」，甚至只能以擊掌取代合影，想拿到沈伯洋親筆簽名更是難上加難。...…"
+      },
+      {
+        "title": "失能者重審駕照未過 強制註銷／交部預告新制 初估有身心障礙證明約4.7萬人 | 自由電子報 - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBRaFpZYUNkV1lKaU5hZzR4Uk9VUXBPLW5lbVYxUU4xYzNWS2hIMDZWQlR5WHFJU3lJQmowa3FZYmRWYmVWZ3I1bl82UFRUeE40c21FY2Vn?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:36:07 GMT",
+        "source": "GN 妨害自由恐嚇",
+        "hint": "治安",
+        "authority": "media",
+        "description": "失能者重審駕照未過 強制註銷／交部預告新制 初估有身心障礙證明約4.7萬人 | 自由電子報 LINE TODAY"
+      },
+      {
+        "title": "北東舒適偶陣雨 中南偏熱午後雨 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE9vVUtHOEFSTG9VWWZkNl9wV3pwSThPLTRRU25DdjRKYy10eEhrR2MwRDY2NXJjeVNhQWdwZmJ2WjhOV0s5MmwxTXJMeFU2SzBiQ3VLZDNHdw?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:31:14 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "北東舒適偶陣雨 中南偏熱午後雨 rti.org.tw"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "一、釣魚的兩條路：騙你執行或騙你交密碼 - iT 邦幫忙",
+        "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5wNlJFNGFFempCTXlSQkpiMFNVZy0zcWlNNVNNTHpheVZndDBWRFdRTnVPUF80dGRUNnh3Yjl0SUF1cGJGZzF5LVdCbGZSM0VRWHhPcEEzYmJqWG5ibWNUeHlTT1R0bkE?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 23:38:16 GMT",
+        "source": "GN iThome 資安",
+        "hint": "資安",
+        "authority": "media",
+        "description": "一、釣魚的兩條路：騙你執行或騙你交密碼 iT 邦幫忙"
+      },
+      {
+        "title": "微軟更新修補 974 個破記錄的漏洞，2026 年也將締造年度最多漏洞新紀綠",
+        "link": "https://infosecu.technews.tw/2026/09/16/microsoft-patches-record-974-flaws/",
+        "pubDate": "Tue, 15 Sep 2026 23:30:29 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "微軟 9 月「週二修補日」（Patch Tuesday）一口氣修補多達 974 個漏洞，較先前 7 月創下的 [&#8230;]"
+      },
+      {
+        "title": "【百萬獎金看這裡！張俊傑登刑事局「重要緊急查緝專案」第一名】 檢舉有獎金！(#起啵) - facebook.com",
+        "link": "https://news.google.com/rss/articles/CBMi6ANBVV95cUxPa1ZITGFNV2sySEduZ1dHMFNuRjM3MGhaaGhyaElib1ZNVjVLdThCUzNQRWdmRGpnSC1MZDdkSENhdTdGalhuUkpfNzhBVUpNNml3TUlTaW1BR3FSQTZHckRGaFJRdVd0dzg0ZWIyQjV2aHBlN3FEaXdhaVVFQlFqUlhmdWk4TmtXMUJULUliRGplTTFoSHpDTVlyVUo5MW50VVZnUUpKc1JBU1lDWkUxTXF1ZEl1TElVZ3ZVTzZkU1FxOFd1MmJSYmF4azZ3bXh3N3lJYTRjTF9KLUpYYW4weENRcmh1S2o0RUk1UDRLNk0xOTgwMGlGRzRmbHFqMy1qSDBabG5JSk15bTFwZE55cnZ1WkIyeHh3N1VDSFdfV29mREozMmo4cGZoUmNfWjVZaF9zQjIyUFZyMGVDSDRzckt3SHlYZjMtN2MyNXFUSGdrc1ZRb2tkZUlyWXVmM0J4RldoUDZhWnBpN2w3Tnc4S2Vxb25KVG04N3dGeWNsS180UTF3Y3JHa3otYmhsWWRuREdBR0x2STR4b3NJbXZ5T2VhUVA5TFFsS3Z2N1JaWVRzcTBlakNfTG1meW5uVmhFdW15SU5RS3cxc3QyU2k1TEZ3X2NoeWxjQXpWR3JMOFNxU0V3UDNrTw?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 23:25:12 GMT",
+        "source": "GN 刑事局偵破",
+        "hint": "治安",
+        "authority": "media",
+        "description": "【百萬獎金看這裡！張俊傑登刑事局「重要緊急查緝專案」第一名】 檢舉有獎金！(#起啵) facebook.com"
+      },
+      {
+        "title": "風評：賴政府猛打恐嚇牌，洪申翰還要去南京？ | 主筆室 | 評論 - 風傳媒",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE90Q0R2NlplVGExX1NXdTZGUHc1ZHd0Yk9ndUYtM0V0OU9qM3R3ZDRscUpNTmJKTUNPLUF0TXhJOFFQRDg2eFIwTWdCVldYdw?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 23:10:00 GMT",
+        "source": "GN 妨害自由恐嚇",
+        "hint": "治安",
+        "authority": "media",
+        "description": "風評：賴政府猛打恐嚇牌，洪申翰還要去南京？ | 主筆室 | 評論 風傳媒"
+      },
+      {
+        "title": "巴西環境捍衛者遇害人數倍增 全球過半命案集中亞馬遜 - ftvnews.com.tw",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5hek9kWE5xZ1d4S0dQSmZwYlNFemhxOS1tWWZJOUJ3cXhDUHQ5LW5USmhyNGZ0ZDFCOE1pc3Y5bmxrclFVRzFwNTZDdXdWVlFGYkRyeVRBRllUZXZBTjVXTQ?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 23:08:39 GMT",
+        "source": "GN 命案兇殺",
+        "hint": "治安",
+        "authority": "media",
+        "description": "巴西環境捍衛者遇害人數倍增 全球過半命案集中亞馬遜 ftvnews.com.tw"
+      },
+      {
+        "title": "獨家／雙劈三角戀！黃文廷劈腿女主角曝光 他戀上林亭莉 公然搶潘君侖女友",
+        "link": "https://www.mirrormedia.mg/story/20260915-194ent-021653",
+        "pubDate": "Wed, 16 Sep 2026 07:00:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "中國殺人犯潛逃泰國買假身份匿36年 變億萬富豪擁5公司17物業申簽證落網 - singtao.ca",
+        "link": "https://news.google.com/rss/articles/CBMizgNBVV95cUxNbjcxYUhnMXZpWHNOcDdOelhzR3FXN3RfSHZScHZnNXE5eWQxV3ltWXBsb2hXYjBJdGd0TEdHcnljT2MyZzdyUXRHN1lBR09oOHpzQ2gwUkh5WktYR2NudE9xeWozcTk1RkVmc2NwMkpNV2wxekhnbXlQYkk3Z1k0NmJqNi03TXhqZ1k2VVhZMjFzZXlUV3E4LThWQmxTSkU3b21PdWZGaVpYYmZCcUhZMkp6UDZGTndEOFR2c3JZWWZ3dUxfVkR2SllwNEZnNWFtXzFpSHUyTHdEU21oUFRIa1Z5aG01c0NnRWFodEIwSzJRNHJ2N0ZvSjcwenl1MnlBQ0tGOWRVZDF5Z245UHRzNDdnS0xPeFZxRDdnUW8wMlQ3QXNsdXp4VGZfLWZiNVVvZ0RXSklxdDRMdlJNLWpmN1hpWGZNcUI5bERKVE1Qamd5WXozdGxfTEVyTzdrYW5abnN5dU5palNZMGQxWXV1Tk1fbldXNWZlbDVGcExhUlBPSk11cHVsOW9IaWk4U3J4Xzd3dUxNTENfTE5VXzc2enM3UnliaFc4YkNabUk0LXBmT25laUdnc0lDYkVab1hRU3FOMF9ZalNZQkRwVWfSAYoBQVVfeXFMUC1PSFYtenVCLUJ6OWFURVFCX0U2OTR6OVpMcy1XZ2MtVFJYMnlOdVNXX2xheFpadU8yb1UxODNtNkoydzNhb2ZiUlc2bGFiYVVvSEY2OHNRUmNMbkxPWFJVSFNUZGhUNjBKWjVRYmhGYWk4WlFVTTJwRy1DY0tGQzFfdDVUMWZmY2d3?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:59:14 GMT",
+        "source": "GN 殺人分屍",
+        "hint": "治安",
+        "authority": "media",
+        "description": "中國殺人犯潛逃泰國買假身份匿36年 變億萬富豪擁5公司17物業申簽證落網 singtao.ca"
+      },
+      {
+        "title": "竹聯「武將」涉接應高金助理張俊傑遭通緝| 聯合新聞網 - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBsV0EySE9pX1BxU0QwVmJSdUU2WXpQTnRKbWlWU0FqZjRHMVVtYkxDUDJKUFhSUHRSSWZCSEhnNllHMHFNZ3k3OUJEcF9SNEhWOTByVHh3?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:56:30 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "竹聯「武將」涉接應高金助理張俊傑遭通緝| 聯合新聞網 LINE TODAY"
+      },
+      {
+        "title": "民進黨開鍘違紀參選黨員 高市薛兆基、黃淑美遭除名",
+        "link": "https://newtalk.tw/news/view/2026-09-16/1059997",
+        "pubDate": "Wed, 16 Sep 2026 06:53:38 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 民進黨高雄市黨部針對2026年高雄市議員選舉違紀參選案件，於候選人登記截止後，隨即依中央黨部相關規定提報，其中涉及退黨參選案件共計第四選區(左營、楠梓)薛兆基及高雄市第七選區(三民)黃淑美2人，相關案件已於市黨部第九屆第三次執行評議委員會議中報告，並送交中央黨部進行後續處理。市黨部表示，薛兆基及黃淑 延伸閱讀： 轟藍營消費前鎮漁港改建案 黃敬雅：柯志恩淪打壓高雄政治打手 警方偵"
+      },
+      {
+        "title": "回應民進黨開除黨籍 薛兆基：感謝過去、走自己的路",
+        "link": "https://newtalk.tw/news/view/2026-09-16/1059998",
+        "pubDate": "Wed, 16 Sep 2026 06:52:28 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 針對民進黨日前大動作開除黨籍，高雄市左營楠梓市議員參選人薛兆基表示，感謝民進黨過去讓他有機會學習、歷練與成長，也尊重黨所做的決定；對他而言，離開一個政黨，不代表否定過去，選擇另一條路，也不代表改變自己對左楠的感情與責任。「路還在前面。我，繼續走。剩下的70天，我還是會走進市場、走進社區、走進每一條熟 延伸閱讀： 盧秀燕拋「在野大聯盟」 民進黨：搶當在野共主當作施政失能的遮羞布 "
+      },
+      {
+        "title": "泰國淫僧｜女信徒「愛姐」被爆為通緝犯 阿贊初作供：2年前開始有性關係 - 星島頭條",
+        "link": "https://news.google.com/rss/articles/CBMisgNBVV95cUxQdjRwdWpNS09KRTVNNDlBMGlGTFplX2hsb0drWVBmR2VTSlNxRFNucTRsc08yYmtDMVo1cmsxeTJIbUxwZVVQZF9vSWh5cWVsRy1WRWlMczJjR0JRMm9kNDhUYm5aV3lvcnFCbm9ISVNvNHJtRURPeFlOMUF1dThqSVFNN1NPSnJrb0RvX2dvREdScWVNOGhIbXlQZUVTVVhnQmNOT2VhTUJDYWtfYWd5SjZsYkU0eThYUGMtZGRMcmJrZDlQX0NkZUJFbGJyeW5LYVpkb01WeXNtSU02WEFDNG5tanMwbnQyRnNLOHY2d0hUVXN0ZXFtMmtSSTc3dTBxM296QWhlUlV4aWVwWS1FbDBPRVBOVGRfQVItMHdhaHMxYTFJeUU1V09PTDdRZ3lUUEdjSnI4cURLMUh5Sm41YkRnUG5EM0tTNFRvWG1mUjllU3hJN1lWNzVNbVUxZXE0OGZlUjlQUHRXVXZsR2ItWDlLdGdYTHdVdGZ2VDBEVFBsTXprRGVFYU5abFhaTjRtM3JBQVVNQ2VlWEhneVZCSGJrNElDWEQzVUhoakxqTkJIZw?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:46:11 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "泰國淫僧｜女信徒「愛姐」被爆為通緝犯 阿贊初作供：2年前開始有性關係 星島頭條"
+      },
+      {
+        "title": "遭開除民進黨籍仍無悔 黃淑美：追隨余登發無黨從政精神",
+        "link": "https://newtalk.tw/news/view/2026-09-16/1060001",
+        "pubDate": "Wed, 16 Sep 2026 06:44:39 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 回鍋參選三民區高雄市議員的黃淑美，雖然選擇退出民進黨黨內初選並在登記前辦理退黨程序，但仍遭民進黨高雄市黨部祭出黨紀處分，決議提報中央開除黨籍。對此，黃淑美表示奉獻民進黨超過30年，這次在派系夾殺下退黨，無奈選擇以無黨籍身分投入議員選舉，也呼籲創黨精神不能變質，派系利益不能超過黨的利益，不能超過國家與 延伸閱讀： 轟藍營消費前鎮漁港改建案 黃敬雅：柯志恩淪打壓高雄政治打手 警方偵"
+      },
+      {
+        "title": "將軍澳海水化淡廠水泵過熱冒蒸氣 3消防遭飛脫機件擊傷清醒送院 - 香港01",
+        "link": "https://news.google.com/rss/articles/CBMisANBVV95cUxOOW9SdGlBQXpndlBEaHRsZ1ZFTGx5OFNXeXRuTFFZWGVzc0dKRk4wUGhIanhPQU80emZpdnIyTVh2T1JKOXhaX3IwQ3ZMMlQ4SG9WcmgyblpER1Y1Um1rQ3BvcC1VZ0ZQVjN1WTl2Ykx2OUt4SUs0eU10X0RCUjQ5WU43ZTBJNU5BSGNKSDM1anVmSXZKLVBDdThsTzBmblhIN1VuMEZUQUJlSzZQVGJsUXRwMVFGdFhFZFlVTXk5ZjlEQjNHc05sQXNpaFQ0aUtkaXdBWlA2TWpTVktVVFdEMU9aRlJYTGF4N0JxV2tvU0FiRmF3NE52c1ZIdDdURUY4clRJTFJOZVZ4czZxLXhwdUhfZnRSOWFkcm5LdUtjamxnR1JGNW5sV1BrN1kxektEbktGQWJUSnlNeEthQ3dkVWRDYWR2VV9NbGo0WWdPLXFaVmc0Q0tFc2JxbllnUHJNUml4ekQ0WUxFNkJ2WkN6LUE2MlR6blFtc1ZJYkl5dXNoYW05OFlzQmRiMU5HblpLaTBOcHVjb3BWdjVRYzdrNkFLU2RFUzRUd0NoRjBoYVI?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:36:30 GMT",
+        "source": "GN 消防員傷亡",
+        "hint": "災防",
+        "authority": "media",
+        "description": "將軍澳海水化淡廠水泵過熱冒蒸氣 3消防遭飛脫機件擊傷清醒送院 香港01"
+      },
+      {
+        "title": "國道死亡車禍！貨車肇事翻覆「雞蛋碎滿地」27歲運將重傷不治、乘客受傷 - tw.news.yahoo.com",
+        "link": "https://news.google.com/rss/articles/CBMiqwNBVV95cUxOUEtERUQzalZ6MEZmTU9EVnF3aTlranh3ZjJmbTZWVTZUazFFQUVPZVM3cEQzaUpiZGgxQzZUTXpLc0ItSkFLOEh5LUlDbXJ5ZU9Ic3VodExFSjV2VUljWmJZNjJYLUpObDctS24xc3ZUcEo0NXZBMWZQOFdwT2thSlZpVTNjVks2ZjF5Q0xUbnFXYUhDSDdEY2twaDdUb0lUYzNYdlFvUU84ekNMVTlpU0o0Wl9ZZEZiX19BYXFDTjVmSVJFQVBUa3Racm8wSU1hX053NjNWZVVCT2xnYUtkVjczNDVLRUFhVjY5TVNZb1JTRGw0MzR1QlA2d0hMekZFTlVYZnVaeWxSaHRxU2FJWjNsMk9BQWp3MVVyZzFDcnBONkdtbXdyUkxqV0h0dnZxN28xdWg0bkxsel9JWnIxdnQyZE9sTHpxWTJSSFFESTNGU0oyZnJESHVpLUNFa2tIMnEtWXJYQ1BFNUtkSllaTEY0RUI3NENoT3ktaGVySExYdFpZaHZPU1o2c1ZNM3A3MlItY25Bc1FWR0xOVHZWbnVzYWpVZHFORjJ3?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:16:00 GMT",
+        "source": "GN 車禍肇逃",
+        "hint": "交通",
+        "authority": "media",
+        "description": "國道死亡車禍！貨車肇事翻覆「雞蛋碎滿地」27歲運將重傷不治、乘客受傷 tw.news.yahoo.com"
+      },
+      {
+        "title": "蜜月勝地驚傳命案！ 峇厘島1家3口陳屍出租屋慘死- 社會 - 中時新聞網",
+        "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTFBBYmk5RC1MMjU5Q0JZRGxnNGZ1Sjd2cTQ2VWlqQnB4Y0N5WEdScVlGa1U2b1Vrdzh1TDR3cGtveW1LVUVRNWpOY09NVlhnSnhyMTV4cFhNZ283X01kWkJ0eHpsZlZ4dzBKYnlfQUZn?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:10:30 GMT",
+        "source": "GN 命案兇殺",
+        "hint": "治安",
+        "authority": "media",
+        "description": "蜜月勝地驚傳命案！ 峇厘島1家3口陳屍出租屋慘死- 社會 中時新聞網"
+      },
+      {
+        "title": "烏龍尋仇砸錯店！ 「快打部隊」po限動被抓回派出所",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5575252",
+        "pubDate": "Wed, 16 Sep 2026 06:07:18 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "尋仇砸錯店，還發限動自稱「快打部隊」反成鐵證！周姓男子昨天凌晨4點多率眾持球棒砸毀仇家公司，卻不知該址是無辜的共享辦公室。警方火速逮人，訊後依毀損與妨害秩序罪嫌函送台南地檢署偵辦...…"
+      },
+      {
+        "title": "美人計掏空工程大佬近億元 林渝鈞交保替豔麗工友慶生 - 生活新聞 - PChome Online 新聞 - PChome Online 新聞",
+        "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQb1Y1cmFHTWdGTnljVzhjSEJuRjBnTWhKaUUzdDhCMlBNLWNMY3MzNWU2Und6NC1hYkl0RkNkQzJWci1yWEs0dmVwS0VPUVNvOTNOYVhDMGhTTjkxSHIwVGJKLXlFX1g2UEZ6TmFKbFRHX3ZDX2YxZGlFVVNXWGFfUXN6Y3c1dk5R?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:00:00 GMT",
+        "source": "GN 洗錢",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "美人計掏空工程大佬近億元 林渝鈞交保替豔麗工友慶生 - 生活新聞 - PChome Online 新聞 PChome Online 新聞"
+      },
+      {
+        "title": "重利檢察官3／避貪污重罪不扣資產 基檢查自家人遭疑「大放水」 | 社會 | CTWANT - CTWANT",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1BVVc3a3dyS2JMRjlBX2VBRFdsMDBrT2YwMUlCcEVxdGlFYUhEcFN5RjBnbUZ5YzBDLTZSdzVjQ1FRYnZab3JTYlZfZW1Vd1HSAVRBVV95cUxPb3Bwa0xCN3lLNzVXZ1FkcVIxZUpGdFlWcnNWWDI1RlJBZUZXczZzYXZLXzVaYkFPQi1kQ3dHWWNXVDRHUG1NSUU4RHVCOWZHRkxPc0I?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:00:00 GMT",
+        "source": "GN 洗錢",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "重利檢察官3／避貪污重罪不扣資產 基檢查自家人遭疑「大放水」 | 社會 | CTWANT CTWANT"
+      },
+      {
+        "title": "重利檢察官1／美人計掏空工程大佬近億元 林渝鈞交保替豔麗工友慶生 | 社會 | CTWANT - CTWANT",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE9hLTJldVE5cGpOZlhmZ29NYTJqRDRzUkZhVjI0Tmx6aEI3eDQxbUZRVmQ3Q1lrcEpXdXNCRkVYZDVMTkhkZzVYNDhDdjJscFXSAVRBVV95cUxNaTQ0LXZQdWQ5XzE1c2Y3ODVyaW1LeWc1d01qUGRPMzl2WmhEejI4bDdtVzFMS0Ixc3R0UncybDJfNnAwdDJrRnVtY1NWYmw0b0E1Ykw?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:00:00 GMT",
+        "source": "GN 洗錢",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "重利檢察官1／美人計掏空工程大佬近億元 林渝鈞交保替豔麗工友慶生 | 社會 | CTWANT CTWANT"
+      },
+      {
+        "title": "重利檢察官3／避貪污重罪不扣資產 基檢查自家人遭疑「大放水」 - PChome Online 新聞",
+        "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxNMFRudHRDYVVLOTJvTWFfeU80d3RobVZDalpXUkZXRjNWNDdkU3hIZlFEVFE3QTh3d1BBb1JPTTdNVHhuaUNBMWQ5Vk9aQ0FiaUNQWmdSRC1tZTJxdUhDQ29BV0FJMWpyMlNodG9xekJYVkk3SGdmS19BLVpIUk9KcjBwajFHWHQ1UkE?oc=5",
+        "pubDate": "Tue, 15 Sep 2026 22:00:00 GMT",
+        "source": "GN 檢調起訴",
+        "hint": "治安",
+        "authority": "media",
+        "description": "重利檢察官3／避貪污重罪不扣資產 基檢查自家人遭疑「大放水」 PChome Online 新聞"
+      }
+    ]
+  }
+}
