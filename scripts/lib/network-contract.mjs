@@ -227,6 +227,12 @@ export function validateNetworkContract(network, { minEvents = MIN_NETWORK_EVENT
   if (!isNonEmptyString(network.generatedAt)) errors.push("generatedAt：必須是非空字串");
   else if (!Number.isFinite(Date.parse(network.generatedAt))) errors.push("generatedAt：必須是可解析的日期時間");
   if (!isNonEmptyString(network.scopeNote)) errors.push("scopeNote：必須是非空字串");
+  if (network.snapshotId !== undefined && !isNonEmptyString(network.snapshotId)) {
+    errors.push("snapshotId：存在時必須是非空字串");
+  }
+  if (network.rulesVersion !== undefined && !isNonEmptyString(network.rulesVersion)) {
+    errors.push("rulesVersion：存在時必須是非空字串");
+  }
 
   const scopeEvents = SCOPES.map((scope) => validateScope(scope, network[scope], errors));
   const excluded = requiredRecord(network, "excluded", "excluded", errors);

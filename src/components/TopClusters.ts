@@ -1,4 +1,4 @@
-import type { NetCluster } from "../data/network";
+import type { NetCluster, NetworkState } from "../data/network";
 import { esc } from "../utils/escape";
 
 function fmtDate(ts?: string): string {
@@ -30,19 +30,31 @@ function compactText(text: string, limit: number): string {
   return `${chars.slice(0, limit).join("")}…`;
 }
 
+export interface RenderTopClustersOptions {
+  netState?: NetworkState;
+  netError?: string;
+}
+
 export function renderTopClusters(
   container: HTMLElement,
   clusters: NetCluster[],
   summaries: Record<string, string> = {},
   limit = 3,
+  options: RenderTopClustersOptions = {},
 ): void {
   const top = clusters
     .slice()
     .sort(compareTopCluster)
     .slice(0, limit);
+
+  const staleTag = options.netState === "stale" ? `<span class="cluster-stale-tag" role="status">（快照備援中）</span>` : "";
+  const emptyHtml = options.netState === "error"
+    ? `<p class="empty compact top-clusters-error" role="status"><span aria-hidden="true">⚠️ </span>情報群資料載入失敗，已暫停展開</p>`
+    : `<p class="empty compact">尚無可展開的情報群</p>`;
+
   container.innerHTML = `
     <section class="top-clusters-card">
-      <h4>今日最大情報群</h4>
+      <h4>今日最大情報群${staleTag}</h4>
       <p class="cluster-hint">點一群展開全部成員。</p>
       ${
         top.length
@@ -60,7 +72,7 @@ export function renderTopClusters(
                 </li>`;
               })
               .join("")}</ol>`
-          : `<p class="empty compact">尚無可展開的情報群</p>`
+          : emptyHtml
       }
     </section>`;
 }

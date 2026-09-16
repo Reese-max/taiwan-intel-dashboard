@@ -38,4 +38,19 @@ describe("renderTopClusters", () => {
     expect(el.innerHTML).toContain('title="這是 c0 的很長 AI 摘要');
     expect(el.innerHTML).not.toContain('data-cluster="c3"');
   });
+
+  it("關聯載入失敗時顯示無障礙錯誤提示，而非普通無情報", () => {
+    const el = container();
+    renderTopClusters(el, [], {}, 3, { netState: "error", netError: "連線逾時" });
+    expect(el.innerHTML).toContain("top-clusters-error");
+    expect(el.innerHTML).toContain('role="status"');
+    expect(el.innerHTML).toContain("情報群資料載入失敗，已暫停展開");
+  });
+
+  it("關聯為快照備援時顯示備援標籤", () => {
+    const el = container();
+    renderTopClusters(el, [], {}, 3, { netState: "stale" });
+    expect(el.innerHTML).toContain("cluster-stale-tag");
+    expect(el.innerHTML).toContain("快照備援中");
+  });
 });

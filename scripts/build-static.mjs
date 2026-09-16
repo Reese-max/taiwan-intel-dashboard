@@ -15,6 +15,7 @@ import {
 import { resolve } from "node:path";
 import { emptyDirContents } from "./lib/fs-safe.mjs";
 import { minifyOrCopyJson } from "./lib/minify-json.mjs";
+import { buildCohortManifest, writeCohortManifest } from "./lib/manifest.mjs";
 
 const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
@@ -119,6 +120,10 @@ for (const f of readdirSync("public/data")) {
     minifyOrCopyJson(`public/data/${f}`, `${OUT}/data/${f}`);
   }
 }
+
+const manifest = buildCohortManifest({ dataDir: `${OUT}/data` });
+writeCohortManifest(`${OUT}/data`, manifest);
+writeCohortManifest("public/data", manifest);
 
 // 首頁＝美化後的儀表板（地圖＋清單＋情報網，吃 data/*.json）。
 // 與 dev 的 index.html 同步：含字型 preconnect/links、theme-color、description。

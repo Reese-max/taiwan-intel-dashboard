@@ -83,10 +83,16 @@ export interface ScopeNetwork {
   stats: Record<string, unknown>;
 }
 
+export type NetworkState = "ready" | "empty" | "error" | "stale";
+
 export interface IntelNetwork {
+  snapshotId?: string;
+  rulesVersion?: string;
   generatedAt: string;
+  scopeNote?: string;
   domestic: ScopeNetwork;
   international: ScopeNetwork;
+  excluded?: { domestic: number; international: number };
 }
 
 export interface RelatedRef {
@@ -102,20 +108,52 @@ const TYPE_LABEL: Record<EdgeType, string> = {
   "same-topic": "同題情勢（弱關聯）",
 };
 
-const NETWORK_FETCH_TIMEOUT_MS = 5_000;
+export const NETWORK_FETCH_TIMEOUT_MS = 5_000;
 
 export function edgeTypeLabel(t: EdgeType): string {
   return TYPE_LABEL[t] ?? t;
 }
 
+export interface NetworkIndexOptions {
+  state?: NetworkState;
+  error?: string;
+  generatedAt?: string;
+  snapshotId?: string;
+  rulesVersion?: string;
+}
+
 // 鄰接索引：給定事件 id 回傳相連事件（依關聯強度排序）。
 export class NetworkIndex {
+  readonly state: NetworkState;
+  readonly error?: string;
+  readonly generatedAt?: string;
+  readonly snapshotId?: string;
+  readonly rulesVersion?: string;
+  readonly rawNetwork: ScopeNetwork | null;
+
   private adj = new Map<string, RelatedRef[]>();
   private clusterById = new Map<string, NetCluster>();
   private clusterByMember = new Map<string, NetCluster>();
   private clusterList: NetCluster[] = [];
 
-  constructor(net?: ScopeNetwork | null) {
+  constructor(net?: ScopeNetwork | null, options?: NetworkIndexOptions) {
+    this.rawNetwork = net ?? null;
+    this.error = options?.error;
+    this.generatedAt = options?.generatedAt;
+    this.snapshotId = options?.snapshotId;
+    this.rulesVersion = options?.rulesVersion;
+
+    if (options?.state) {
+      this.state = options.state;
+    } else if (options?.error) {
+      this.state = "error";
+    } else if (!net) {
+      this.state = "empty";
+    } else {
+      const hasData = (net.edges?.length ?? 0) > 0 || (net.clusters?.length ?? 0) > 0 || (net.nodes?.length ?? 0) > 0;
+      this.state = hasData ? "ready" : "empty";
+    }
+
     if (!net) return;
     this.clusterList = [...(net.clusters ?? [])];
     for (const c of this.clusterList) {
@@ -127,6 +165,28 @@ export class NetworkIndex {
       this.push(e.b, { id: e.a, type: e.type, weight: e.weight, why: e.why });
     }
     for (const list of this.adj.values()) list.sort((x, y) => y.weight - x.weight);
+  }
+
+  static createReady(net: ScopeNetwork, meta?: { generatedAt?: string; snapshotId?: string; rulesVersion?: string }): NetworkIndex {
+    return new NetworkIndex(net, { state: "ready", ...meta });
+  }
+
+  static createEmpty(meta?: { generatedAt?: string; snapshotId?: string; rulesVersion?: string }): NetworkIndex {
+    return new NetworkIndex(null, { state: "empty", ...meta });
+  }
+
+  static createError(error: string, meta?: { snapshotId?: string; rulesVersion?: string }): NetworkIndex {
+    return new NetworkIndex(null, { state: "error", error, ...meta });
+  }
+
+  static createStale(previous: NetworkIndex, error: string): NetworkIndex {
+    return new NetworkIndex(previous.rawNetwork, {
+      state: "stale",
+      error,
+      generatedAt: previous.generatedAt,
+      snapshotId: previous.snapshotId,
+      rulesVersion: previous.rulesVersion,
+    });
   }
 
   private push(id: string, ref: RelatedRef): void {
@@ -156,14 +216,84 @@ export class NetworkIndex {
   }
 }
 
-// 載入並建索引；無 network.json（404）時回空索引，不報錯。
-export async function loadNetwork(scope: Scope): Promise<NetworkIndex> {
-  try {
-    const res = await fetch("./data/network.json", { signal: AbortSignal.timeout(NETWORK_FETCH_TIMEOUT_MS) });
-    if (!res.ok) return new NetworkIndex(null);
-    const net = (await res.json()) as IntelNetwork;
-    return new NetworkIndex(net[scope]);
-  } catch {
-    return new NetworkIndex(null);
-  }
+export interface LoadNetworkOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  previousIndex?: NetworkIndex | null;
+  networkUrl?: string;
+  expectedSnapshotId?: string;
 }
+
+// 載入並建索引；明確區分 ready、empty、error、stale。
+export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}): Promise<NetworkIndex> {
+  const url = options.networkUrl ?? "./data/network.json";
+  const timeoutMs = options.timeoutMs ?? NETWORK_FETCH_TIMEOUT_MS;
+  const previous = options.previousIndex && options.previousIndex.state !== "error" ? options.previousIndex : null;
+
+  let res: Response;
+  try {
+    const timeoutSignal = AbortSignal.timeout(timeoutMs);
+    const signal = options.signal
+      ? typeof AbortSignal.any === "function"
+        ? AbortSignal.any([options.signal, timeoutSignal])
+        : options.signal
+      : timeoutSignal;
+
+    res = await fetch(url, { signal });
+  } catch (err: unknown) {
+    const isTimeout =
+      (err instanceof DOMException && err.name === "TimeoutError") ||
+      (err instanceof Error && /timeout|aborted/i.test(err.message));
+    const errorMsg = isTimeout
+      ? `載入情報網逾時 (超過 ${Math.round(timeoutMs / 1000)} 秒)`
+      : `網路連線異常: ${err instanceof Error ? err.message : String(err)}`;
+    if (previous) return NetworkIndex.createStale(previous, errorMsg);
+    return NetworkIndex.createError(errorMsg);
+  }
+
+  if (!res.ok) {
+    const errorMsg =
+      res.status === 404
+        ? "情報網資料尚未產生或檔案不存在 (HTTP 404)"
+        : `載入情報網失敗 (HTTP ${res.status})`;
+    if (previous) return NetworkIndex.createStale(previous, errorMsg);
+    return NetworkIndex.createError(errorMsg);
+  }
+
+  let net: IntelNetwork;
+  try {
+    net = (await res.json()) as IntelNetwork;
+  } catch (err: unknown) {
+    const errorMsg = `情報網資料格式錯誤 (JSON 無法解析: ${err instanceof Error ? err.message : String(err)})`;
+    if (previous) return NetworkIndex.createStale(previous, errorMsg);
+    return NetworkIndex.createError(errorMsg);
+  }
+
+  if (!net || typeof net !== "object") {
+    const errorMsg = "情報網資料根值不是物件";
+    if (previous) return NetworkIndex.createStale(previous, errorMsg);
+    return NetworkIndex.createError(errorMsg);
+  }
+
+  if (options.expectedSnapshotId && net.snapshotId && net.snapshotId !== options.expectedSnapshotId) {
+    const errorMsg = `情報網快照版本不符 (期望 ${options.expectedSnapshotId}，實收 ${net.snapshotId})`;
+    if (previous) return NetworkIndex.createStale(previous, errorMsg);
+    return NetworkIndex.createError(errorMsg);
+  }
+
+  const scopeNet = net[scope];
+  if (!scopeNet || typeof scopeNet !== "object") {
+    const errorMsg = `情報網未包含 ${scope} 領域資料`;
+    if (previous) return NetworkIndex.createStale(previous, errorMsg);
+    return NetworkIndex.createError(errorMsg);
+  }
+
+  const meta = {
+    generatedAt: net.generatedAt,
+    snapshotId: net.snapshotId,
+    rulesVersion: net.rulesVersion,
+  };
+  const hasData = (scopeNet.edges?.length ?? 0) > 0 || (scopeNet.clusters?.length ?? 0) > 0 || (scopeNet.nodes?.length ?? 0) > 0;
+  return hasData ? NetworkIndex.createReady(scopeNet, meta) : NetworkIndex.createEmpty(meta);
+}
+

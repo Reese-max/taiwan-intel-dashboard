@@ -255,4 +255,29 @@ describe("eventCard", () => {
     expect(eventCard({ ...base, temporal: "judicial" })).toContain("司法結果");
     expect(eventCard(base)).not.toContain("temporal-badge");
   });
+
+  it("零關聯或關聯失敗降級時不顯示破裂按鈕，保留原文連結與完整卡片資訊", () => {
+    const event: IntelEvent = {
+      id: "no-rel",
+      title: "獨立事件新聞",
+      region: "新北市",
+      timestamp: "2026-06-27T00:00:00.000Z",
+      category: "治安",
+      scope: "domestic",
+      riskLevel: "medium",
+      summary: "內容摘要",
+      source: {
+        name: "中央社",
+        type: "news-rss",
+        url: "https://www.cna.com.tw/news/123",
+        fetchedAt: "2026-06-27T00:00:00.000Z",
+      },
+    };
+
+    const html = eventCard(event, 0);
+    expect(html).not.toContain("🔗 關聯");
+    expect(html).toContain("https://www.cna.com.tw/news/123");
+    expect(html).toContain("獨立事件新聞");
+    expect(html).toContain("新北市");
+  });
 });

@@ -24,6 +24,7 @@ import { filterTriageEvents, loadTriageAcked, saveTriageAcked, type TriageSortMo
 import { corroborationOf } from "./utils/corroboration";
 import { collapseSameIncident } from "./utils/collapse";
 import { stalenessNotice } from "./utils/staleness";
+import { loadManifest, type CohortManifest } from "./data/manifest";
 
 const DEFAULT_SINCE_DAYS = 3;
 const REFRESH_MS = 300000;
@@ -32,6 +33,10 @@ const COMPACT_LAYOUT_KEY = "taiwan-intel-compact-layout";
 const SIDE_PANEL_STATE_KEY = "taiwan-intel-side-panel-state";
 const MOBILE_VIEW_KEY = "taiwan-intel-mobile-view";
 const MOBILE_LAYOUT_QUERY = "(max-width: 640px), (max-width: 932px) and (max-height: 500px)";
+
+let cohortManifest: CohortManifest | null = null;
+let refreshRequestId = 0;
+const netAutoRetried: Record<string, number> = {};
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -88,6 +93,7 @@ app.innerHTML = `
       <h2>${t.events} <span id="count" class="count-pill"></span></h2>
       <div id="triageinbox" class="triage-inbox"></div>
       <div id="focusbar" class="focusbar" hidden></div>
+      <div id="relation-notice" class="relation-notice" role="status" aria-live="polite" hidden></div>
       <div id="relationgraph" class="relation-graph" hidden></div>
       <div id="eventlist"></div>
     </section>
@@ -523,6 +529,12 @@ function renderFocusBar(events: IntelEvent[], net: NetworkIndex): void {
   }
   let label = "";
   let count = events.length;
+  let statusSuffix = "";
+  if (net.state === "error") {
+    statusSuffix = " · 關聯載入失敗";
+  } else if (net.state === "stale") {
+    statusSuffix = " · 快照備援中";
+  }
   if (focusCluster) {
     const c = net.cluster(focusCluster);
     label = `情報群：${esc(c?.representativeTitle || focusCluster)}`;
@@ -533,7 +545,7 @@ function renderFocusBar(events: IntelEvent[], net: NetworkIndex): void {
     count = net.count(focusId);
   }
   bar.hidden = false;
-  bar.innerHTML = `<span class="focus-label">🔗 <strong>${label}</strong>（${count} 則）</span>
+  bar.innerHTML = `<span class="focus-label">🔗 <strong>${label}</strong>（${count} 則${statusSuffix}）</span>
     <button type="button" id="clear-focus" class="clear-focus">✕ 返回全部</button>`;
   document.getElementById("clear-focus")!.onclick = () => {
     focusId = null;
@@ -544,8 +556,17 @@ function renderFocusBar(events: IntelEvent[], net: NetworkIndex): void {
 }
 
 async function refresh(): Promise<void> {
+  const requestId = ++refreshRequestId;
   const s = getState();
   const eventList = document.getElementById("eventlist")!;
+  const relationNoticeEl = document.getElementById("relation-notice");
+
+  // 同步載入小型靜態 manifest（僅首載或重新整理時），鎖定同版快照
+  if (!cohortManifest) {
+    cohortManifest = await loadManifest();
+    if (requestId !== refreshRequestId) return;
+  }
+
   // 事件與情報網兩支 fetch 並行（原本串行，第二支要等第一支完成才開始）。
   if (!cache[s.scope] || !netCache[s.scope]) {
     // 首載/切換 scope 時主資料尚未快取：顯示載入佔位（篩選變更走快取、不會閃爍）。
@@ -553,11 +574,17 @@ async function refresh(): Promise<void> {
     try {
       const [ev, net] = await Promise.all([
         cache[s.scope] ?? loadEvents(s.scope),
-        netCache[s.scope] ?? loadNetwork(s.scope),
+        netCache[s.scope] ??
+          loadNetwork(s.scope, {
+            expectedSnapshotId: cohortManifest?.snapshotId,
+            previousIndex: netCache[s.scope],
+          }),
       ]);
+      if (requestId !== refreshRequestId) return;
       cache[s.scope] = ev;
       netCache[s.scope] = net;
     } catch (err) {
+      if (requestId !== refreshRequestId) return;
       // 主資料 fetch 失敗：無既有快取時顯示可重試錯誤卡，不留白、不中斷（不 throw）。
       if (!cache[s.scope]) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -568,6 +595,23 @@ async function refresh(): Promise<void> {
       // 有舊快取則沿用，靜默續繪
     }
   }
+
+  // 若關聯發生錯誤，至多允許一次自動有界重試，不無限迴圈
+  if (netCache[s.scope]?.state === "error" && (netAutoRetried[s.scope] ?? 0) < 1) {
+    netAutoRetried[s.scope] = 1;
+    try {
+      const retriedNet = await loadNetwork(s.scope, {
+        expectedSnapshotId: cohortManifest?.snapshotId,
+        previousIndex: netCache[s.scope],
+      });
+      if (requestId !== refreshRequestId) return;
+      netCache[s.scope] = retriedNet;
+    } catch {
+      // 保持 error 狀態，等待使用者手動重試
+    }
+  }
+
+  if (requestId !== refreshRequestId) return;
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
   const byId = new Map(all.map((e) => [e.id, e] as const));
@@ -629,7 +673,12 @@ async function refresh(): Promise<void> {
     collapsedGroupCount = listGroups.filter((g) => g.members.length > 1 && g.sourceCount >= 2).length;
   }
 
-  const emptyMessage = display.length === 0 ? emptyListHint(all, s, Date.now()) : null;
+  const emptyMessage =
+    display.length === 0
+      ? (focusId || focusCluster) && net.state === "error"
+        ? "關聯資料載入失敗，無法顯示延伸事件；請點擊重試或返回全部。"
+        : emptyListHint(all, s, Date.now())
+      : null;
   let focusSummaryLabel = "";
   if (focusCluster) {
     const c = net.cluster(focusCluster);
@@ -644,8 +693,10 @@ async function refresh(): Promise<void> {
     corroboration: (id) => corroborationOf(id, byId, net),
     ...(emptyMessage ? { emptyMessage } : {}),
   });
-  // 聚焦時於清單上方畫關聯網圖：單一事件＝放射狀；情報群＝以核心成員展開（一般清單不畫）。
-  if (focusId && all.some((e) => e.id === focusId)) {
+  // 聚焦時於清單上方畫關聯網圖：單一事件＝放射狀；情報群＝以核心成員展開（一般清單不畫；錯誤時清空）。
+  if (net.state === "error") {
+    relationGraph.clear();
+  } else if (focusId && all.some((e) => e.id === focusId)) {
     const center = byId.get(focusId)!;
     const neighbors = net
       .related(focusId)
@@ -696,8 +747,44 @@ async function refresh(): Promise<void> {
     lastViewKey = viewKey;
   }
   renderFocusBar(display, net);
+  if (relationNoticeEl) {
+    if ((focusId || focusCluster) && net.state === "error") {
+      relationNoticeEl.hidden = false;
+      relationNoticeEl.innerHTML = `
+        <div class="relation-status-notice relation-status-error">
+          <span>⚠️ 情報網關聯資料載入失敗（${esc(net.error || "檔案或連線異常")}）。普通新聞、原文與地點查詢仍可正常使用。</span>
+          <button type="button" id="retry-network-btn" class="btn-retry-network">重試載入關聯</button>
+        </div>`;
+      document.getElementById("retry-network-btn")?.addEventListener("click", () => {
+        delete netCache[s.scope];
+        netAutoRetried[s.scope] = 0;
+        void refresh();
+      });
+    } else if ((focusId || focusCluster) && net.state === "stale") {
+      relationNoticeEl.hidden = false;
+      relationNoticeEl.innerHTML = `
+        <div class="relation-status-notice relation-status-stale">
+          <span>ℹ️ 情報網關聯使用先前快照備援（更新失敗：${esc(net.error || "連線逾時")}）。</span>
+          <button type="button" id="retry-network-btn" class="btn-retry-network">重新整理關聯</button>
+        </div>`;
+      document.getElementById("retry-network-btn")?.addEventListener("click", () => {
+        delete netCache[s.scope];
+        netAutoRetried[s.scope] = 0;
+        void refresh();
+      });
+    } else {
+      relationNoticeEl.hidden = true;
+      relationNoticeEl.innerHTML = "";
+    }
+  }
   renderFilterSummary(display.length, all.length, focusSummaryLabel);
-  renderTopClusters(document.getElementById("topclusters")!, net.clusters(), clusterSummariesForScope(summary, s.scope));
+  renderTopClusters(
+    document.getElementById("topclusters")!,
+    net.clusters(),
+    clusterSummariesForScope(summary, s.scope),
+    3,
+    { netState: net.state, netError: net.error },
+  );
   const mapKey = `${viewKey}:${display.length}:${display[0]?.id ?? ""}:${display[display.length - 1]?.id ?? ""}`;
   if (mapKey !== lastMapKey) {
     lastMapKey = mapKey;

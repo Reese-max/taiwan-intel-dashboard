@@ -5,6 +5,7 @@
 // 執行：node --env-file=.env scripts/fetch-live.mjs
 //      （若未用 --env-file，會自動讀同層 .env）
 
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -68,6 +69,7 @@ import { isPlaceholder } from "./lib/summary-quality.mjs";
 import { applyTemporal } from "./lib/temporal.mjs";
 import { buildCoverageMatrix } from "./audit-coverage.mjs";
 import { buildDomainCoverage } from "./domain-coverage.mjs";
+import { buildCohortManifest, writeCohortManifest, RULES_VERSION } from "./lib/manifest.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -757,11 +759,14 @@ export async function run() {
 
   // --- 情報網：把新聞事件串成關聯圖（純加法，不影響既有輸出）---
   let domesticClusters = []; // 供 AI 群摘要用（cluster id 與 build-network 一致，因同 correlateEvents/同 domestic.json）
+  let network = null;
   try {
     const domesticNews = domesticEvents.filter(isNewsLikeEvent);
     const intlNews = intlEvents.filter(isNewsLikeEvent);
-    const network = {
+    network = {
+      snapshotId: `cohort-${nowIso.slice(0, 10).replace(/-/g, "")}-${createHash("sha256").update(nowIso).digest("hex").slice(0, 8)}`,
       generatedAt: nowIso,
+      rulesVersion: RULES_VERSION,
       scopeNote: "情報網僅含新聞類事件（RSS / tw-news），排除政府模板化統計資料",
       domestic: correlateEvents(domesticNews),
       international: correlateEvents(intlNews),
@@ -1077,6 +1082,16 @@ export async function run() {
     pipeline: status,
     sources,
   });
+
+  writeCohortManifest(
+    DATA_DIR,
+    buildCohortManifest({
+      dataDir: DATA_DIR,
+      snapshotId: network?.snapshotId,
+      rulesVersion: RULES_VERSION,
+      nowIso,
+    }),
+  );
 
   console.log("\n=== 完成 ===");
   console.log(JSON.stringify(status, null, 2));

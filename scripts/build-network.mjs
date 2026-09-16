@@ -1,5 +1,6 @@
 // 對現有快照產出情報網 data/network.json（獨立於 live 抓取，供開發/CI 使用）。
 // 用法：node scripts/build-network.mjs
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,6 +10,11 @@ import {
   NETWORK_FILE,
   validateNetworkContract,
 } from "./lib/network-contract.mjs";
+import {
+  buildCohortManifest,
+  writeCohortManifest,
+  RULES_VERSION,
+} from "./lib/manifest.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // 與 fetch-live 一致：實際服務／部署的資料在 public/data，dist/data 為已 build 副本。
@@ -30,11 +36,16 @@ function readEvents(name) {
   }
 }
 
-export function buildNetwork(domestic, international, nowIso) {
+export function buildNetwork(domestic, international, nowIso, { snapshotId, rulesVersion = RULES_VERSION } = {}) {
   const domesticNews = (domestic || []).filter(isNewsLikeEvent);
   const intlNews = (international || []).filter(isNewsLikeEvent);
+  const sid =
+    snapshotId ||
+    `cohort-${nowIso.slice(0, 10).replace(/-/g, "")}-${createHash("sha256").update(nowIso).digest("hex").slice(0, 8)}`;
   return {
+    snapshotId: sid,
     generatedAt: nowIso,
+    rulesVersion,
     scopeNote: "情報網僅含新聞類事件（RSS / tw-news），排除政府模板化統計資料",
     domestic: correlateEvents(domesticNews),
     international: correlateEvents(intlNews),
@@ -48,7 +59,8 @@ export function buildNetwork(domestic, international, nowIso) {
 function main() {
   const domestic = readEvents("domestic.json");
   const international = readEvents("international.json");
-  const net = buildNetwork(domestic, international, new Date().toISOString());
+  const nowIso = new Date().toISOString();
+  const net = buildNetwork(domestic, international, nowIso);
   const contractErrors = validateNetworkContract(net);
   if (contractErrors.length) {
     throw new Error(`產物契約驗收失敗：\n${formatNetworkContractErrors(NETWORK_FILE, contractErrors)}`);
@@ -58,6 +70,15 @@ function main() {
   const json = JSON.stringify(net, null, 2) + "\n";
   writeFileSync(join(DATA_DIR, "network.json"), json);
   if (existsSync(DIST_DATA_DIR)) writeFileSync(join(DIST_DATA_DIR, "network.json"), json);
+
+  const manifest = buildCohortManifest({
+    dataDir: DATA_DIR,
+    snapshotId: net.snapshotId,
+    rulesVersion: net.rulesVersion,
+    nowIso,
+  });
+  writeCohortManifest(DATA_DIR, manifest);
+  if (existsSync(DIST_DATA_DIR)) writeCohortManifest(DIST_DATA_DIR, manifest);
 
   const d = net.domestic.stats;
   const i = net.international.stats;
