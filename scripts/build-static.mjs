@@ -27,10 +27,15 @@ mkdirSync(`${OUT}/assets`, { recursive: true });
 //  - JS API 在 Node 25 會 crash（exit 9）
 //  - npx 在某些 shell 不在 PATH（exit 127）
 //  - execFileSync 不經 shell，免 PATH/引號問題
-const ESBUILD_BIN = `node_modules/@esbuild/${process.platform}-${process.arch}/esbuild${
-  process.platform === "win32" ? ".exe" : ""
-}`;
-const esbuild = existsSync(ESBUILD_BIN) ? ESBUILD_BIN : "node_modules/.bin/esbuild";
+const isWin = process.platform === "win32";
+const ext = isWin ? ".exe" : "";
+const ESBUILD_CANDIDATES = [
+  `node_modules/@esbuild/${process.platform}-${process.arch}/bin/esbuild${ext}`,
+  `node_modules/@esbuild/${process.platform}-${process.arch}/esbuild${ext}`,
+  `node_modules/esbuild/bin/esbuild`,
+  `node_modules/.bin/esbuild${ext}`,
+];
+const esbuild = ESBUILD_CANDIDATES.find((p) => existsSync(p)) || "esbuild";
 execFileSync(
   esbuild,
   [

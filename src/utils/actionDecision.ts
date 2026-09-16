@@ -10,7 +10,7 @@ export interface ActionDecision {
 }
 
 function categoryText(e: IntelEvent): string {
-  return `${e.category} ${e.title} ${stripHtml(e.summary)}`;
+  return `${e.category || ""} ${e.title || ""} ${stripHtml(e.summary || "")}`;
 }
 
 export function actionImpactDomain(e: IntelEvent): string {

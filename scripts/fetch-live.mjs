@@ -80,7 +80,7 @@ function loadDotEnv() {
   if (!existsSync(p)) return;
   for (const line of readFileSync(p, "utf8").split("\n")) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/i);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
   }
 }
 

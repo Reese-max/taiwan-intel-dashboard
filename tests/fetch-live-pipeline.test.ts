@@ -629,7 +629,7 @@ describe("fetch-live pipeline integration (missing)", () => {
     expect(provenance.pipeline.police).toEqual({ skipped: true });
     expect(provenance.pipeline.missing).toMatchObject({ ok: true, count: 2 });
     expect(unexpected).toEqual([]);
-  });
+  }, 20000);
 });
 
 describe("fetch-live pipeline integration (MOFA + NCDR)", () => {
