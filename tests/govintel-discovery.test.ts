@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -307,6 +307,9 @@ describe("CLI end-to-end", () => {
   });
 
   it("真實 domestic.json 產出符合 schema 的 feed", () => {
+    if (!existsSync("public/data/govintel-discovery.json")) {
+      execFileSync("node", ["scripts/govintel-discovery.mjs"], { encoding: "utf8" });
+    }
     const feed = JSON.parse(readFileSync("public/data/govintel-discovery.json", "utf8"));
     expect(feed.schema_version).toBe(1);
     expect(["ACTIVE", "DEGRADED", "RESTORING", "PAUSED"]).toContain(feed.operating_state);
