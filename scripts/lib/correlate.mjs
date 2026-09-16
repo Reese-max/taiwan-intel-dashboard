@@ -3,7 +3,7 @@
 import { clusterSignals } from "./cluster-signals.mjs";
 // 輸出：事件之間的「關聯圖」——把散落各源的孤立事件串成情報網。
 //   · same-incident：同縣市 + 案類關鍵詞/實體重疊 + 時間相近 + 不同來源（跨源佐證，情報網骨幹）
-//   · same-entity ：跨地共享同一具名實體（分局/地檢署/路名/行政區…）
+//   · same-entity ：具名實體線索；地名須同區域且不單獨成群
 //   · same-topic  ：同縣市同類同關鍵詞、時序相近（同一波相關情勢）
 // 設計為 build-time 產出 network.json，前端僅載入呈現、零計算。
 
@@ -16,7 +16,7 @@ const INCIDENT_MIN_SCORE = 2; // 關鍵詞+實體+標題bigram 重疊分數門�
 const ENTITY_GENERIC_CAP = 40; // 某實體出現超過此數視為過於泛用，跳過（避免巨型團）
 // 非地理性的「縣市」值：新聞常無縣市而落在「全國」，這類不可當作「同地」做 same-topic 連結
 // （否則全國一塊會互相亂連成毛球）；same-incident 仍可成立（靠跨源+用詞，捕捉全國性議題）。
-const VAGUE_REGION = new Set(["全國", "未知", "", "—", "-"]);
+const VAGUE_REGION = new Set(["全國", "未知", "", "—", "-", "全球", "國際", "海外", "臺灣", "台灣"]);
 const W_INCIDENT = 1.0;
 const W_ENTITY = 0.6;
 const W_TOPIC = 0.3;
@@ -130,11 +130,26 @@ function matchEntities(text) {
   return ents;
 }
 
+// 只正規化臺灣行政區的台／臺字形，不改寫原始事件欄位。
+function normalizeRegion(value) {
+  return String(value || "").trim().replace(/^台(?=[北中南東])/, "臺");
+}
+
+// 路段、車站、校園等名稱需要區域消歧；組織名稱仍可提供跨地線索。
+function isLocalPlace(entity) {
+  return /(?:路|街|大道|夜市|車站|轉運站|機場|醫院|大學|國中|國小|園區)$/.test(entity);
+}
+
+function withinWindow(a, b, windowMs) {
+  return a.timeKnown && b.timeKnown && Math.abs(a.t - b.t) <= windowMs;
+}
+
 function cjkBigrams(text, region) {
   const regionText = String(region || "");
-  let cleaned = String(text || "").replace(new RegExp(regionText || "__NO_REGION__", "g"), "");
+  // 來源地名是文字，不能當成正規表示式（例如含括號、加號的地名）。
+  let cleaned = regionText ? String(text || "").split(regionText).join(" ") : String(text || "");
   if (regionText.length > 1 && /[縣市]$/.test(regionText)) {
-    cleaned = cleaned.replace(new RegExp(regionText.slice(0, -1), "g"), "");
+    cleaned = cleaned.split(regionText.slice(0, -1)).join(" ");
   }
   const bigrams = new Set();
   const runs = cleaned.match(/[一-鿿]{2,}/g) || [];
@@ -164,15 +179,23 @@ export function extractSignals(event) {
       if (isSpecificEntity(e)) entities.add(e);
     }
   }
+  // 地名不再同時充當「共享實體」與標題相似度的兩份同案證據。
+  const identityEntities = new Set([...entities].filter((entity) => !isLocalPlace(entity)));
+  let titleEvidence = String(event.title || "");
+  for (const entity of entities) {
+    if (isLocalPlace(entity)) titleEvidence = titleEvidence.split(entity).join(" ");
+  }
   return {
     id: event.id,
-    region: event.region || "全國",
+    region: normalizeRegion(event.region) || "全國",
     category: event.category || "",
     scope: event.scope || "domestic",
     t: toMs(event.timestamp),
+    timeKnown: typeof event.timestamp === "string" && Number.isFinite(Date.parse(event.timestamp)),
     keywords: matchLexicon(text),
     entities,
-    bigrams: cjkBigrams(event.title, event.region),
+    identityEntities,
+    bigrams: cjkBigrams(titleEvidence, event.region),
     // LLM 萃取的具體事件/故事線（Pass 3 同題語意連結用）。
     aiTopic: typeof event.aiTopic === "string" ? event.aiTopic.trim() : "",
     sourceName: event.source?.name || "",
@@ -196,14 +219,11 @@ function edgeKey(a, b) {
   return a < b ? `${a}|${b}` : `${b}|${a}`;
 }
 
-function sameEntityEdgeEntity(edge) {
-  if (edge?.type !== "same-entity") return "";
-  return edge.why?.match(/共享實體「(.+?)」/)?.[1] || "";
-}
-
 function shouldUnionSameEntity(edge) {
-  const ent = sameEntityEdgeEntity(edge);
-  return ent ? !SAME_ENTITY_UNION_BLOCKLIST.has(ent) : true;
+  // 地名線索只供探索，不因同地名就把不同新聞串成同一情報群。
+  // 同權重可能合併多個理由；任一非地理、非 blocklist 的實體才允許成群。
+  const entities = [...String(edge.why || "").matchAll(/共享實體「(.+?)」/g)].map((m) => m[1]);
+  return entities.some((ent) => !isLocalPlace(ent) && !SAME_ENTITY_UNION_BLOCKLIST.has(ent));
 }
 
 // 把多個候選邊合併（同一對取最高權重，理由併陳）。
@@ -229,8 +249,10 @@ export function correlateEvents(events, opts = {}) {
   // ── Pass 1：同縣市區塊內、時間鄰近的配對（same-incident / same-topic）──
   const byRegion = new Map();
   for (const s of sigs) {
-    if (!byRegion.has(s.region)) byRegion.set(s.region, []);
-    byRegion.get(s.region).push(s);
+    if (!s.timeKnown) continue; // 缺時資料仍可查閱，不冒充「時間相近」。
+    const key = JSON.stringify([s.scope, s.region]);
+    if (!byRegion.has(key)) byRegion.set(key, []);
+    byRegion.get(key).push(s);
   }
   for (const block of byRegion.values()) {
     block.sort((x, y) => x.t - y.t);
@@ -241,7 +263,7 @@ export function correlateEvents(events, opts = {}) {
         const dt = B.t - A.t;
         if (dt > PAIR_WINDOW_MS) break; // 已排序，後面只會更遠
         const kw = inter(A.keywords, B.keywords);
-        const ent = inter(A.entities, B.entities);
+        const ent = inter(A.identityEntities, B.identityEntities);
         const bg = inter(A.bigrams, B.bigrams);
         const bgRatio = overlapRatio(bg, A.bigrams, B.bigrams);
         const score = kw + ent + bg;
@@ -254,7 +276,7 @@ export function correlateEvents(events, opts = {}) {
           ? strongMatch && kw >= 1
           : hasTitleEvidence && kw >= 1 && score >= INCIDENT_MIN_SCORE;
         if (diffSource && dt <= INCIDENT_WINDOW_MS && incidentOk) {
-          upsertEdge(edges, A.id, B.id, "same-incident", W_INCIDENT + Math.min(score, 5) * 0.1, "跨源佐證：同地、案類與用詞重疊、時間相近");
+          upsertEdge(edges, A.id, B.id, "same-incident", W_INCIDENT + Math.min(score, 5) * 0.1, `同事件候選：${VAGUE_REGION.has(A.region) ? "地區未明；" : `${A.region}；`}案類與具體用詞重疊、時間相近（仍需查證）`);
         } else if (
           !diffSource &&
           A.category &&
@@ -269,48 +291,58 @@ export function correlateEvents(events, opts = {}) {
     }
   }
 
-  // ── Pass 2：跨地共享具名實體（same-entity），用倒排索引 ──
+  // ── Pass 2：具名實體倒排索引；地名以 scope＋區域消歧 ──
   const byEntity = new Map();
   for (const s of sigs) {
     for (const ent of s.entities) {
-      if (!byEntity.has(ent)) byEntity.set(ent, []);
-      byEntity.get(ent).push(s.id);
+      const local = isLocalPlace(ent);
+      if (local && VAGUE_REGION.has(s.region)) continue;
+      const key = JSON.stringify([s.scope, local ? s.region : "", ent]);
+      if (!byEntity.has(key)) byEntity.set(key, { ent, local, members: [] });
+      byEntity.get(key).members.push(s);
     }
   }
   let skippedGeneric = 0;
-  for (const [ent, ids] of byEntity) {
-    if (ids.length < 2) continue;
-    if (ids.length > ENTITY_GENERIC_CAP) {
+  for (const { ent, local, members } of byEntity.values()) {
+    if (members.length < 2) continue;
+    if (members.length > ENTITY_GENERIC_CAP) {
       skippedGeneric++;
       continue;
     }
-    for (let i = 0; i < ids.length; i++)
-      for (let j = i + 1; j < ids.length; j++)
-        upsertEdge(edges, ids[i], ids[j], "same-entity", W_ENTITY, `共享實體「${ent}」`);
+    for (let i = 0; i < members.length; i++) {
+      for (let j = i + 1; j < members.length; j++) {
+        const A = members[i];
+        const B = members[j];
+        if (local && !withinWindow(A, B, INCIDENT_WINDOW_MS)) continue;
+        const why = local
+          ? `同區域地名「${ent}」（${A.region}；僅文字線索，非同案）`
+          : `共享實體「${ent}」`;
+        upsertEdge(edges, A.id, B.id, "same-entity", W_ENTITY, why);
+      }
+    }
   }
 
-  // ── Pass 3：LLM 萃取的「同題」語意連結（跨來源同一起事件/故事線）──
-  // aiTopic 由逐則 LLM 正規化產出；同一具體事件即使各家用詞不同，也能對上，
-  // 補足純啟發式（關鍵詞/bigram 重疊）抓不到的語意關聯。
+  // ── Pass 3：AI 同題只補弱關聯，不自行升格為同案或獨立佐證 ──
   const byTopic = new Map();
   for (const s of sigs) {
     const topic = s.aiTopic;
-    if (!topic || topic.length < 4) continue;
-    if (!byTopic.has(topic)) byTopic.set(topic, []);
-    byTopic.get(topic).push(s);
+    if (!topic || topic.length < 4 || !s.timeKnown) continue;
+    const key = JSON.stringify([s.scope, topic]);
+    if (!byTopic.has(key)) byTopic.set(key, { topic, members: [] });
+    byTopic.get(key).members.push(s);
   }
   let aiTopicEdges = 0;
-  for (const [topic, members] of byTopic) {
+  for (const { topic, members } of byTopic.values()) {
     if (members.length < 2 || members.length > ENTITY_GENERIC_CAP) continue;
     for (let i = 0; i < members.length; i++) {
       for (let j = i + 1; j < members.length; j++) {
         const A = members[i];
         const B = members[j];
-        // 不同來源＝跨源佐證（情報網骨幹）；同來源系列文＝同題弱連結。
-        const diffSource = A.sourceName !== B.sourceName;
-        const type = diffSource ? "same-incident" : "same-topic";
-        const weight = diffSource ? W_INCIDENT + 0.2 : W_TOPIC + 0.1;
-        upsertEdge(edges, A.id, B.id, type, weight, `AI 同題：${topic}`);
+        if (!withinWindow(A, B, TOPIC_WINDOW_MS)) continue;
+        // 跨區必須另有共同具名實體；同名路段不算跨區證據。
+        if (A.region !== B.region && inter(A.identityEntities, B.identityEntities) === 0) continue;
+        upsertEdge(edges, A.id, B.id, "same-topic", W_TOPIC + 0.1,
+          `AI 同題：${topic}（時間相近；主題線索，非同案佐證）`);
         aiTopicEdges++;
       }
     }
