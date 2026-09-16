@@ -79,7 +79,7 @@ describe("eventCard", () => {
     expect(html).not.toContain(">GN 詐騙逮捕<");
   });
 
-  it("confirmed cross-source corroboration renders a positive source chip", () => {
+  it("legacy confirmed input renders an unverified candidate chip, not proof", () => {
     const html = eventCard(
       {
         id: "confirmed",
@@ -98,11 +98,14 @@ describe("eventCard", () => {
       },
       0,
       undefined,
-      { sources: 3, confirmed: true },
+      { sources: 3, channels: 3, confirmed: true },
     );
 
-    expect(html).toContain("corroboration-chip");
-    expect(html).toContain("✓ 3 源佐證");
+    expect(html).toContain("candidate-source-note");
+    expect(html).toContain("多來源線索（3 個標記）·待查證");
+    expect(html).toContain("先查證原文再行動");
+    expect(html).not.toContain("✓ 3 源佐證");
+    expect(html).not.toContain("corroboration-chip");
     expect(html).not.toContain("單一來源·待查證");
   });
 
@@ -130,7 +133,7 @@ describe("eventCard", () => {
     );
 
     expect(html).toContain("channel-chip");
-    expect(html).toContain("多管道收錄（2 管道）");
+    expect(html).toContain("多管道收錄（2 管道）·待查證");
     expect(html).not.toContain("源佐證");
     expect(html).not.toContain("單一來源·待查證");
   });
@@ -154,7 +157,7 @@ describe("eventCard", () => {
       },
       0,
       undefined,
-      { sources: 1, confirmed: false },
+      { sources: 1, channels: 1, confirmed: false },
     );
 
     expect(html).toContain("single-source-note");

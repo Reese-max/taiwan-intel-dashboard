@@ -1,5 +1,5 @@
 import type { IntelEvent } from "../types/event";
-import type { CorroborationResult } from "./corroboration";
+import { candidateSourceLabel, type CorroborationResult } from "./corroboration";
 import { stripHtml } from "./escape";
 
 export interface ActionDecision {
@@ -63,17 +63,17 @@ function isLowRelevanceIntl(e: IntelEvent): boolean {
   return e.scope === "international" && typeof e.twRelevance === "number" && e.twRelevance < 30;
 }
 
-function needsPrimarySourceCheck(e: IntelEvent, corroboration?: CorroborationResult): boolean {
-  if (corroboration?.confirmed) return false;
+function needsPrimarySourceCheck(e: IntelEvent): boolean {
+  // 多來源／候選關聯不是查證證據，不能解除原文核對要求。
   return e.source.sourceConfidence === "aggregated" || e.source.type === "news-rss";
 }
 
-function recommendation(e: IntelEvent, domain: string, corroboration?: CorroborationResult): string {
+function recommendation(e: IntelEvent, domain: string): string {
   if (e.temporal === "historical") return "作為歷史參考";
   if (e.temporal === "judicial") return "參考司法結果";
   if (isLowRelevanceIntl(e) && e.riskLevel !== "critical") return "背景觀察，不升級";
   if (e.riskLevel === "critical") return e.scope === "international" ? "列入重點追蹤" : "立即避開／處理";
-  if (needsPrimarySourceCheck(e, corroboration) && e.riskLevel === "high") return "先查證原文再行動";
+  if (needsPrimarySourceCheck(e) && e.riskLevel === "high") return "先查證原文再行動";
   if (e.riskLevel === "high" || e.riskLevel === "medium") return categoryAction(domain);
   return "低優先掃描";
 }
@@ -81,7 +81,8 @@ function recommendation(e: IntelEvent, domain: string, corroboration?: Corrobora
 function status(e: IntelEvent, corroboration?: CorroborationResult): string {
   if (e.temporal === "historical") return "歷史資料";
   if (e.temporal === "judicial") return "司法結果";
-  if (corroboration?.confirmed) return `${corroboration.sources} 源佐證`;
+  const candidateLabel = candidateSourceLabel(corroboration);
+  if (candidateLabel) return candidateLabel;
   if (corroboration?.sources === 1 && (e.riskLevel === "critical" || e.riskLevel === "high")) return "單一來源待查證";
   if (e.source.sourceConfidence === "aggregated") return "聚合來源待核";
   if (e.categoryBasis === "default") return "分類待確認";
@@ -94,7 +95,7 @@ export function getActionDecision(e: IntelEvent, corroboration?: CorroborationRe
   const domain = actionImpactDomain(e);
   return {
     impact: impactScope(e, domain),
-    recommendation: recommendation(e, domain, corroboration),
+    recommendation: recommendation(e, domain),
     status: status(e, corroboration),
     domain,
   };

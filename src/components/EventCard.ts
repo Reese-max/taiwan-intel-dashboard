@@ -1,5 +1,5 @@
 import type { IntelEvent } from "../types/event";
-import type { CorroborationResult } from "../utils/corroboration";
+import { candidateSourceLabel, type CorroborationResult } from "../utils/corroboration";
 import { riskBadge } from "./RiskBadge";
 import { esc, stripHtml } from "../utils/escape";
 import { getActionDecision } from "../utils/actionDecision";
@@ -142,13 +142,12 @@ export function eventCard(
     ? `<span class="rel-chip" title="${esc(relation.why)}">${esc(relation.label)}：${esc(relation.why)}</span>`
     : "";
   const isElevatedRisk = e.riskLevel === "critical" || e.riskLevel === "high";
-  const corroborationChip = corroboration?.confirmed
-    ? `<span class="corroboration-chip" title="${esc(`獨立發布者數：${corroboration.sources}，收錄管道：${corroboration.channels}`)}">${esc(`✓ ${corroboration.sources} 源佐證`)}</span>`
-    : corroboration?.isMultiChannel
-      ? `<span class="channel-chip" title="${esc(`同事件經 ${corroboration.channels} 個管道收錄，未見獨立第二發布來源`)}">${esc(`多管道收錄（${corroboration.channels} 管道）`)}</span>`
-      : corroboration?.sources === 1 && isElevatedRisk
-        ? `<span class="single-source-note" title="${esc("目前僅見單一來源，需人工查證")}">${esc("單一來源·待查證")}</span>`
-        : "";
+  const candidateLabel = candidateSourceLabel(corroboration);
+  const corroborationChip = candidateLabel
+    ? `<span class="channel-chip candidate-source-note" title="來源標記與收錄管道只供探索，不代表獨立證據或完成查證。">${esc(candidateLabel)}</span>`
+    : corroboration?.sources === 1 && isElevatedRisk
+      ? `<span class="single-source-note" title="${esc("目前僅見單一來源，需人工查證")}">${esc("單一來源·待查證")}</span>`
+      : "";
   const temporal = temporalBadge(e.temporal, e.timestamp);
   const location = locationSearchLink(e);
   const locationHtml = location
