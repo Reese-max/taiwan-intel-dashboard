@@ -106,6 +106,35 @@ describe("eventCard", () => {
     expect(html).not.toContain("單一來源·待查證");
   });
 
+  it("multi-channel single-publisher event renders a channel chip instead of confirmed", () => {
+    const html = eventCard(
+      {
+        id: "multi-channel",
+        title: "多管道收錄報導",
+        region: "臺北市",
+        timestamp: "2026-06-27T00:00:00.000Z",
+        category: "治安",
+        scope: "domestic",
+        riskLevel: "high",
+        summary: "摘要",
+        source: {
+          name: "中央社 RSS",
+          publisherName: "中央社",
+          type: "news-rss",
+          fetchedAt: "2026-06-27T00:00:00.000Z",
+        },
+      },
+      0,
+      undefined,
+      { sources: 1, channels: 2, confirmed: false, isMultiChannel: true },
+    );
+
+    expect(html).toContain("channel-chip");
+    expect(html).toContain("多管道收錄（2 管道）");
+    expect(html).not.toContain("源佐證");
+    expect(html).not.toContain("單一來源·待查證");
+  });
+
   it("high-risk single-source event renders a subtle verification note", () => {
     const html = eventCard(
       {
