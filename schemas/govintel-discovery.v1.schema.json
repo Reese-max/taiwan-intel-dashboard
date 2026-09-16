@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://taiwan-intel-dashboard.pages.dev/schemas/govintel-discovery.v1.schema.json",
+  "title": "GovIntel Discovery Feed v1",
+  "description": "Taiwan Intel Dashboard 產出的唯讀 discovery feed（issue #25）。下游 GovIntel 據此做事件發現，不得把 summary/risk_level 等 LLM 欄位當 verified fact。",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "operating_state",
+    "stale",
+    "operating_state_source",
+    "source_snapshot_hash",
+    "window",
+    "truncated",
+    "item_count",
+    "excluded_counts",
+    "items"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "operating_state": {
+      "type": "string",
+      "enum": ["ACTIVE", "DEGRADED", "RESTORING", "PAUSED"],
+      "description": "依 #17 ops/operating-state.json 契約；契約缺失時 fail closed 為 PAUSED。consumer 必須依此 fail closed，非 ACTIVE 不得當 current/live。"
+    },
+    "stale": {
+      "type": "boolean",
+      "description": "operating_state != ACTIVE 時為 true；consumer 見 true 不得把資料當新鮮。"
+    },
+    "operating_state_source": {
+      "type": "string",
+      "enum": ["contract", "contract-missing-or-invalid"]
+    },
+    "source_snapshot_hash": {
+      "type": ["string", "null"],
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "輸入 domestic.json 快照的 sha256，供重播稽核。"
+    },
+    "window": {
+      "type": "object",
+      "required": ["since_hours"],
+      "additionalProperties": false,
+      "properties": {
+        "since_hours": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "truncated": {
+      "type": "boolean",
+      "description": "達到 max items 或 max bytes 上限時為 true；consumer 不得假設已見全部事件。"
+    },
+    "item_count": { "type": "integer", "minimum": 0 },
+    "excluded_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "description": "被各政策排除的數量（out_of_window / category_filtered / no_source_identity / duplicate_source）。"
+    },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/discoveryItem" }
+    }
+  },
+  "$defs": {
+    "discoveryItem": {
+      "type": "object",
+      "required": [
+        "discovery_id",
+        "title",
+        "event_time",
+        "observed_at",
+        "category",
+        "authority",
+        "source_url",
+        "original_source_identity",
+        "rights_status"
+      ],
+      "properties": {
+        "discovery_id": {
+          "type": "string",
+          "pattern": "^gd-[0-9a-f]{16}$",
+          "description": "穩定可重播 ID（datasetId|recordRef|title 的 sha256 前 16 hex），不用陣列 index。"
+        },
+        "title": { "type": ["string", "null"] },
+        "event_time": {
+          "type": ["string", "null"],
+          "description": "原事件/報導時間；未知保持 null。"
+        },
+        "observed_at": { "type": ["string", "null"] },
+        "region": { "type": ["string", "null"] },
+        "lat": { "type": ["number", "null"] },
+        "lng": { "type": ["number", "null"] },
+        "location_precision": { "type": ["string", "null"] },
+        "category": { "type": ["string", "null"] },
+        "risk_level": {
+          "type": ["string", "null"],
+          "description": "Dashboard 語意；僅 discovery metadata，GovIntel 不可當正式公務優先級。"
+        },
+        "summary": {
+          "type": ["string", "null"],
+          "description": "discovery text；不是 canonical GovIntel claim。"
+        },
+        "entities": {},
+        "topic": { "type": ["string", "null"] },
+        "source_url": {
+          "type": ["string", "null"],
+          "description": "來源 URL；聚合新聞（google-news-rss）此處為聚合頁，原始出處以 publisher_name + original_source_identity 判定。"
+        },
+        "publisher_name": { "type": ["string", "null"] },
+        "authority": {
+          "type": "string",
+          "enum": ["official", "media"],
+          "description": "media 永遠只是 DISCOVERY_UNVERIFIED；official 也只是取得路徑，GovIntel 仍需回查原始來源。"
+        },
+        "source_confidence": { "type": ["string", "null"] },
+        "ingest_method": { "type": ["string", "null"] },
+        "original_dataset_id": { "type": ["string", "null"] },
+        "record_ref": { "type": ["string", "null"] },
+        "original_source_identity": {
+          "type": ["string", "null"],
+          "description": "同源去重依據：直接取得為 datasetId:recordRef；聚合新聞為 media:publisher:titleHash。direct 與 Dashboard 兩路取得同一原始來源時此值相同，只計一個來源。"
+        },
+        "rights_status": {
+          "type": "string",
+          "enum": ["OPEN_DATA", "REVIEW_REQUIRED"],
+          "description": "依 #19：有政府開放授權標示為 OPEN_DATA；其餘（含媒體摘要）一律 REVIEW_REQUIRED，下游不得全文轉散布。"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
