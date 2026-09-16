@@ -3,6 +3,7 @@ import type { CorroborationResult } from "../utils/corroboration";
 import { riskBadge } from "./RiskBadge";
 import { esc, stripHtml } from "../utils/escape";
 import { getActionDecision } from "../utils/actionDecision";
+import { locationSearchLink } from "../utils/locationLink";
 
 export interface RelationChip {
   label: string;
@@ -149,10 +150,14 @@ export function eventCard(
         ? `<span class="single-source-note" title="${esc("目前僅見單一來源，需人工查證")}">${esc("單一來源·待查證")}</span>`
         : "";
   const temporal = temporalBadge(e.temporal, e.timestamp);
+  const location = locationSearchLink(e);
+  const locationHtml = location
+    ? `<a class="location-link src-link" href="${esc(location.href)}" target="_blank" rel="noopener noreferrer" title="${esc(location.description)}">${esc(location.label)}</a>`
+    : "";
   return `
     <article class="event-card" data-id="${esc(e.id)}">
       <header>${riskBadge(e.riskLevel)} <span class="cat">${esc(e.category)}</span>${temporal}
-        <span class="region">${esc(e.region)}</span>${relationChip}${corroborationChip}${extraHeaderHtml}${rel}</header>
+        <span class="region">${esc(e.region)}</span>${locationHtml}${relationChip}${corroborationChip}${extraHeaderHtml}${rel}</header>
       <h3>${esc(e.title)}</h3>
       <p class="summary">${esc(stripHtml(e.summary))}</p>
       ${decisionPanel(e, corroboration)}
