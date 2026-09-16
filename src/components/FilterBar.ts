@@ -25,8 +25,8 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
       <option value="critical">僅危急</option>
     </select>
     <select id="f-range" aria-label="時間範圍">
-      <option value="3">近 3 天</option>
-      <option value="5">近 5 天</option>
+      <option value="3">近 3 天（72 小時）</option>
+      <option value="5">近 5 天（120 小時）</option>
       <option value="">全部時間</option>
     </select>
     <div class="search-box">

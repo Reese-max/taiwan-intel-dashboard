@@ -101,9 +101,15 @@ function eventContext(e: IntelEvent): string {
   </details>`;
 }
 
-function temporalBadge(temporal: IntelEvent["temporal"]): string {
+function temporalBadge(temporal: IntelEvent["temporal"], timestamp?: string): string {
   if (temporal === "historical") return `<span class="temporal-badge temporal-historical">${esc("歷史資料")}</span>`;
   if (temporal === "judicial") return `<span class="temporal-badge temporal-judicial">${esc("司法結果")}</span>`;
+  if (timestamp) {
+    const t = Date.parse(timestamp);
+    if (Number.isFinite(t) && t > Date.now()) {
+      return `<span class="temporal-badge temporal-future" title="預警或未來生效資料">${esc("預警資料")}</span>`;
+    }
+  }
   return "";
 }
 
@@ -140,7 +146,7 @@ export function eventCard(
     : corroboration?.sources === 1 && isElevatedRisk
       ? `<span class="single-source-note" title="${esc("目前僅見單一來源，需人工查證")}">${esc("單一來源·待查證")}</span>`
       : "";
-  const temporal = temporalBadge(e.temporal);
+  const temporal = temporalBadge(e.temporal, e.timestamp);
   return `
     <article class="event-card" data-id="${esc(e.id)}">
       <header>${riskBadge(e.riskLevel)} <span class="cat">${esc(e.category)}</span>${temporal}

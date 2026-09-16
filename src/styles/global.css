@@ -874,6 +874,10 @@ body.layout-compact .col-list {
 .temporal-judicial {
   border-color: color-mix(in srgb, var(--color-border) 72%, var(--color-accent));
 }
+.temporal-future {
+  border-color: color-mix(in srgb, var(--color-border) 60%, #f59e0b);
+  color: #fbbf24;
+}
 .rel-chip {
   border: 1px solid rgba(56, 189, 248, 0.3);
   color: var(--color-accent);

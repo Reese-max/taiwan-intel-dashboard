@@ -71,7 +71,7 @@ describe("filterEvents", () => {
     }
   });
 
-  it("非法 timestamp 不會被時間過濾而保留", () => {
+  it("非法 timestamp 在指定 sinceDays 時被排除，但可透過 includeUnknownTime 保留", () => {
     vi.useFakeTimers();
     try {
       vi.setSystemTime(new Date("2026-06-20T00:00:00+08:00"));
@@ -79,7 +79,8 @@ describe("filterEvents", () => {
         { ...base, id: "invalid-time", timestamp: "not-a-number" },
         { ...base, id: "old", timestamp: "2026-06-12T10:00:00+08:00" },
       ];
-      expect(filterEvents(events, { sinceDays: 3 }).map((e) => e.id)).toEqual(["invalid-time"]);
+      expect(filterEvents(events, { sinceDays: 3 }).map((e) => e.id)).toEqual([]);
+      expect(filterEvents(events, { sinceDays: 3, includeUnknownTime: true }).map((e) => e.id)).toEqual(["invalid-time"]);
     } finally {
       vi.useRealTimers();
     }

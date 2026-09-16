@@ -491,7 +491,7 @@ function renderFilterSummary(displayCount: number, totalCount: number, focusLabe
   if (s.minRisk)
     chips.push(`<button type="button" class="filter-chip" data-clear-filter="risk">風險：${esc(riskFilterLabel(s.minRisk))} ✕</button>`);
   if (s.sinceDays)
-    chips.push(`<button type="button" class="filter-chip" data-clear-filter="since">時間：近 ${s.sinceDays} 天 ✕</button>`);
+    chips.push(`<button type="button" class="filter-chip" data-clear-filter="since">時間：近 ${s.sinceDays} 天（${s.sinceDays * 24}h） ✕</button>`);
   if (s.query) chips.push(`<button type="button" class="filter-chip" data-clear-filter="query">搜尋：${esc(s.query)} ✕</button>`);
   if (focusLabel) chips.push(`<button type="button" class="filter-chip is-focus" data-clear-filter="focus">焦點：${esc(focusLabel)} ✕</button>`);
 

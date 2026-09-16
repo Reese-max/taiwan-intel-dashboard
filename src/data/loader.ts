@@ -8,11 +8,14 @@ export interface FilterOptions {
   source?: string;
   newsAuthority?: NewsAuthority;
   sinceDays?: number;
+  now?: number;
+  includeUnknownTime?: boolean;
 }
 
 export function filterEvents(events: IntelEvent[], opts: FilterOptions): IntelEvent[] {
-  const cutoff = opts.sinceDays ? Date.now() - opts.sinceDays * 86400000 : undefined;
-  const maxFuture = opts.sinceDays ? Date.now() + 86400000 : undefined;
+  const now = typeof opts.now === "number" && Number.isFinite(opts.now) ? opts.now : Date.now();
+  const cutoff = opts.sinceDays ? now - opts.sinceDays * 86400000 : undefined;
+  const maxFuture = opts.sinceDays ? now + 86400000 : undefined;
   return events.filter((e) => {
     if (opts.scope && e.scope !== opts.scope) return false;
     if (opts.category && e.category !== opts.category) return false;
@@ -24,11 +27,15 @@ export function filterEvents(events: IntelEvent[], opts: FilterOptions): IntelEv
     const isMediaPoliceNews = e.source.datasetId === "tw-news" && e.source.authority !== "official";
     if (opts.newsAuthority === "official" && !isOfficialPoliceNews) return false;
     if (opts.newsAuthority === "media" && !isMediaPoliceNews) return false;
-    const eventTime = new Date(e.timestamp).getTime();
-    if (Number.isFinite(eventTime)) {
-      if (maxFuture && eventTime > maxFuture) return false;
-      if (cutoff && eventTime < cutoff) return false;
+
+    if (!cutoff) return true;
+
+    const eventTime = e.timestamp ? Date.parse(e.timestamp) : NaN;
+    if (!Number.isFinite(eventTime)) {
+      return Boolean(opts.includeUnknownTime);
     }
+    if (maxFuture && eventTime > maxFuture) return false;
+    if (eventTime < cutoff) return false;
     return true;
   });
 }
