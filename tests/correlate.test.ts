@@ -534,6 +534,8 @@ describe("correlateEvents — 時序演變與地理聚集訊號", () => {
     expect(cluster.degraded).toEqual({
       missingTimestamp: { count: 1, ids: ["tc"] },
       missingCoordinates: { count: 1, ids: ["tc"] },
+      lowPrecisionCoordinates: { count: 0, ids: [] },
+      nonIncidentLocationRole: { count: 0, ids: [] },
     });
   });
 

@@ -4,7 +4,9 @@ export type NewsAuthority = "official" | "media";
 export type SourceType = "gov-open-data" | "news-rss" | "cwa" | "manual";
 export type IngestMethod = "direct-rss" | "google-news-rss" | "gdelt-doc" | "gov-open-data" | "manual";
 export type SourceConfidence = "verified" | "aggregated" | "inferred";
-export type LocationPrecision = "exact" | "address" | "district" | "city" | "country" | "global" | "unknown";
+export type LocationPrecision = "exact" | "address" | "district" | "city" | "county-center" | "country" | "global" | "unknown";
+export type LocationRole = "incident" | "arrest" | "impact_zone" | "agency" | "mention" | "unknown";
+export type LocationMethod = "exact-source" | "address-parse" | "district-centroid" | "city-centroid" | "county-center" | "country-centroid" | "inferred" | "unknown";
 
 export interface Provenance {
   name: string;
@@ -33,6 +35,9 @@ export interface IntelEvent {
   lng?: number;
   locationPrecision?: LocationPrecision;
   locationNote?: string;
+  locationRole?: LocationRole;
+  locationMethod?: LocationMethod;
+  locationSourceBasis?: string;
   timestamp: string; // ISO8601
   category: string;
   categoryBasis?: string; // 分類來源標記：llm / rule:<類> / hint:<hint> / default

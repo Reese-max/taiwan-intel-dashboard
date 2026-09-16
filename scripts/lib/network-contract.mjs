@@ -170,9 +170,15 @@ function validateScope(scope, value, errors) {
         if (!isRecord(cluster.degraded)) {
           errors.push(`${path}.degraded：必須是 JSON 物件`);
         } else {
-          for (const kind of ["missingTimestamp", "missingCoordinates"]) {
+          for (const kind of ["missingTimestamp", "missingCoordinates", "lowPrecisionCoordinates", "nonIncidentLocationRole"]) {
             const dp = `${path}.degraded.${kind}`;
             const degraded = cluster.degraded[kind];
+            if (degraded === undefined) {
+              if (kind === "missingTimestamp" || kind === "missingCoordinates") {
+                errors.push(`${dp}：必須存在`);
+              }
+              continue;
+            }
             if (!isRecord(degraded)) {
               errors.push(`${dp}：必須是 JSON 物件`);
               continue;

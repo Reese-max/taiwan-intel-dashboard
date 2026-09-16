@@ -97,4 +97,28 @@ describe("地點與新聞關聯的證據邊界", () => {
     assert.equal(net.edges[0]?.type, "same-entity");
     assert.equal(net.clusters.length, 1);
   });
+  it("同市不同區的同名場所或路段不連線（區級消歧）", () => {
+    // 兩者皆在臺北市，但一為大安區、一為中山區
+    assert.deepEqual(
+      pair(
+        { title: "大安區 中山路 舉辦活動", region: "臺北市" },
+        { title: "中山區 中山路 完成施工", region: "臺北市" },
+      ).edges,
+      [],
+    );
+  });
+  it("不同分院／校區不光靠主名稱合併（分院消歧）", () => {
+    assert.deepEqual(
+      pair(
+        { title: "臺大醫院總院 門診公告", region: "臺北市" },
+        { title: "臺大醫院金山分院 門診公告", region: "新北市" },
+      ).edges,
+      [],
+    );
+  });
+  it("裸詞分院／分校不單獨成為具名實體", () => {
+    const sigs = extractSignals(event("bare-branch", { title: "主管前往分院與分校勘查" }));
+    assert.equal(sigs.entities.has("分院"), false);
+    assert.equal(sigs.entities.has("分校"), false);
+  });
 });

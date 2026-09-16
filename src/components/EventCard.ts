@@ -4,6 +4,7 @@ import { riskBadge } from "./RiskBadge";
 import { esc, stripHtml } from "../utils/escape";
 import { getActionDecision } from "../utils/actionDecision";
 import { locationSearchLink } from "../utils/locationLink";
+import { locationPrecisionLabel, locationRoleLabel } from "../utils/geoPolicy";
 
 export interface RelationChip {
   label: string;
@@ -42,24 +43,6 @@ function sourceChain(e: IntelEvent): string {
   return bits.join("｜");
 }
 
-function locationPrecisionLabel(value: IntelEvent["locationPrecision"]): string {
-  switch (value) {
-    case "exact":
-    case "address":
-      return "精準位置";
-    case "district":
-      return "行政區推論";
-    case "city":
-      return "縣市推論";
-    case "country":
-      return "國家層級";
-    case "global":
-      return "全球概略";
-    default:
-      return "未知";
-  }
-}
-
 function decisionPanel(e: IntelEvent, corroboration?: CorroborationResult): string {
   const decision = getActionDecision(e, corroboration);
   const items = [
@@ -80,6 +63,10 @@ function eventContext(e: IntelEvent): string {
     verifyParts.push(`<span class="ctx-aggregator"><b>經由</b>${esc(e.source.aggregatorName)}</span>`);
   if (e.locationPrecision)
     verifyParts.push(`<span class="ctx-location"><b>定位</b>${esc(locationPrecisionLabel(e.locationPrecision))}</span>`);
+  if (e.locationRole)
+    verifyParts.push(`<span class="ctx-location-role"><b>地點角色</b>${esc(locationRoleLabel(e.locationRole))}</span>`);
+  if (e.locationSourceBasis)
+    verifyParts.push(`<span class="ctx-location-basis"><b>定位依據</b>${esc(e.locationSourceBasis)}</span>`);
 
   const rawParts = [];
   if (e.source.datasetId) rawParts.push(`<span><b>資料集</b>${esc(e.source.datasetId)}</span>`);

@@ -107,6 +107,7 @@ function isSpecificEntity(entity) {
   if (/^[一-鿿]{2,4}[縣市區鄉鎮]$/.test(e)) return false;
   if (/^[一-鿿]姓(?:男子|女子)?$/.test(e)) return false;
   if (/(地檢署|地方法院|高等法院|法院|地院|法務部)$/.test(e)) return false;
+  if (/^(?:分院|總院|分校|校區|分館|分局|支局|分署|辦事處|門市|分店)$/.test(e)) return false;
   return true;
 }
 
@@ -135,9 +136,29 @@ function normalizeRegion(value) {
   return String(value || "").trim().replace(/^台(?=[北中南東])/, "臺");
 }
 
-// 路段、車站、校園等名稱需要區域消歧；組織名稱仍可提供跨地線索。
+// 路段、車站、校園、院區等名稱需要區域消歧；組織名稱仍可提供跨地線索。
 function isLocalPlace(entity) {
-  return /(?:路|街|大道|夜市|車站|轉運站|機場|醫院|大學|國中|國小|園區)$/.test(entity);
+  return /(?:路|街|大道|夜市|車站|轉運站|機場|醫院|分院|總院|大學|國中|國小|園區|校區|分校)$/.test(entity);
+}
+
+const STOP_DISTRICTS = new Set([
+  "災區", "園區", "特區", "管區", "校區", "院區", "重劃區", "風景區", "警戒區", "熱區", "原鄉", "故鄉", "小鎮", "城鎮",
+]);
+
+function extractDistricts(text) {
+  const matches = String(text || "").match(/[一-鿿]{1,4}(?:區|鄉|鎮)/g) || [];
+  const set = new Set();
+  for (const m of matches) {
+    if (!STOP_DISTRICTS.has(m) && m.length >= 2 && m.length <= 5) {
+      set.add(m);
+    }
+  }
+  return set;
+}
+
+function extractBranchQualifiers(text) {
+  const matches = String(text || "").match(/[一-鿿]{1,4}(?:分院|院區|分校|校區|分館|分局|總院)/g) || [];
+  return new Set(matches);
 }
 
 function withinWindow(a, b, windowMs) {
@@ -198,6 +219,8 @@ export function extractSignals(event) {
     bigrams: cjkBigrams(titleEvidence, event.region),
     // LLM 萃取的具體事件/故事線（Pass 3 同題語意連結用）。
     aiTopic: typeof event.aiTopic === "string" ? event.aiTopic.trim() : "",
+    districts: extractDistricts(`${event.title || ""} ${event.summary || ""} ${event.locationNote || ""}`),
+    branches: extractBranchQualifiers(`${event.title || ""} ${event.summary || ""}`),
     sourceName: event.source?.name || "",
     sourceType: event.source?.type || "",
   };
@@ -314,6 +337,14 @@ export function correlateEvents(events, opts = {}) {
         const A = members[i];
         const B = members[j];
         if (local && !withinWindow(A, B, INCIDENT_WINDOW_MS)) continue;
+        // 同市不同區：若兩事件皆具備明確行政區且無交集，不因同名場所或路段合併
+        if (local && A.districts.size > 0 && B.districts.size > 0 && inter(A.districts, B.districts) === 0) {
+          continue;
+        }
+        // 分院／分校消歧：若兩事件具備不同的院區／分校限定詞且無交集，不光靠同字串合併
+        if (local && A.branches.size > 0 && B.branches.size > 0 && inter(A.branches, B.branches) === 0) {
+          continue;
+        }
         const why = local
           ? `同區域地名「${ent}」（${A.region}；僅文字線索，非同案）`
           : `共享實體「${ent}」`;

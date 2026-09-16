@@ -1,4 +1,5 @@
 import type { IntelEvent } from "../types/event";
+import { isValidCoordinate, isExactPrecision, locationRoleLabel } from "./geoPolicy";
 
 export interface LocationLink {
   href: string;
@@ -12,25 +13,20 @@ const VAGUE_REGIONS = new Set([
   "unknown", "global", "worldwide", "n/a",
 ]);
 
-type LocationInput = Pick<IntelEvent, "region" | "scope" | "lat" | "lng" | "locationPrecision">;
-
-function hasValidCoordinates(e: LocationInput): boolean {
-  return typeof e.lat === "number" && typeof e.lng === "number"
-    && Number.isFinite(e.lat) && Number.isFinite(e.lng)
-    && e.lat >= -90 && e.lat <= 90 && e.lng >= -180 && e.lng <= 180
-    && !(e.lat === 0 && e.lng === 0);
-}
+type LocationInput = Pick<IntelEvent, "region" | "scope" | "lat" | "lng" | "locationPrecision"> &
+  Partial<Pick<IntelEvent, "locationRole">>;
 
 /** 只使用既有位置欄位；不把縣市中心、新聞標題或推測地址當成案發點。 */
 export function locationSearchLink(e: LocationInput): LocationLink | null {
   if (e.locationPrecision === "global") return null;
-  const precise = e.locationPrecision === "exact" || e.locationPrecision === "address";
-  if (precise && hasValidCoordinates(e)) {
+  const precise = isExactPrecision(e.locationPrecision);
+  if (precise && isValidCoordinate(e.lat, e.lng)) {
     const params = new URLSearchParams({ api: "1", query: `${e.lat},${e.lng}` });
+    const roleSuffix = e.locationRole ? `（${locationRoleLabel(e.locationRole)}）` : "";
     return {
       href: `https://www.google.com/maps/search/?${params}`,
       label: "查看資料座標",
-      description: "在 Google Maps 開啟資料提供的座標；定位精度仍以原始來源為準。",
+      description: `在 Google Maps 開啟資料提供的座標${roleSuffix}；定位精度仍以原始來源為準。`,
       kind: "coordinates",
     };
   }

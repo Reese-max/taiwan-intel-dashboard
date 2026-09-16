@@ -10,6 +10,17 @@
 //   · 全員時間缺失時 省略 firstSeenTs/lastSeenTs 欄位（不輸出空字串），以 degraded
 //     missingTimestamp 標記降級——絕不編造時間、絕不把無座標事件併入任何地理群集。
 
+import {
+  isValidCoordinate,
+  isLowPrecision,
+  isNonIncidentRole,
+  isExactPrecision,
+  isIncidentRole,
+  canClusterByDistance,
+} from "./geo-policy.mjs";
+
+export { isValidCoordinate };
+
 const HAVERSINE_KM = 6371.0088;
 const GEO_DISTANCE_KM = (() => {
   const n = Number(process.env.CLUSTER_GEO_DISTANCE_KM);
@@ -18,12 +29,6 @@ const GEO_DISTANCE_KM = (() => {
 
 export function isValidTimestamp(iso) {
   return typeof iso === "string" && Number.isFinite(Date.parse(iso));
-}
-
-export function isValidCoordinate(lat, lng) {
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
-  if (lat === 0 && lng === 0) return false; // (0,0) 常為未填的佔位座標
-  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 }
 
 function dayKey(ms) {
@@ -85,11 +90,21 @@ function haversineKm(lat1, lng1, lat2, lng2) {
 export function geoClustersOf(members) {
   const points = [];
   const missingCoordinates = [];
+  const lowPrecisionCoordinates = [];
+  const nonIncidentLocationRole = [];
+
   for (const event of members || []) {
-    if (isValidCoordinate(event?.lat, event?.lng)) {
-      points.push({ id: event.id, lat: event.lat, lng: event.lng });
+    const id = event?.id || "";
+    if (!isValidCoordinate(event?.lat, event?.lng)) {
+      missingCoordinates.push(id);
+    } else if (isLowPrecision(event?.locationPrecision)) {
+      lowPrecisionCoordinates.push(id);
+    } else if (isNonIncidentRole(event?.locationRole) || (isExactPrecision(event?.locationPrecision) && !isIncidentRole(event?.locationRole))) {
+      nonIncidentLocationRole.push(id);
+    } else if (canClusterByDistance(event)) {
+      points.push({ id, lat: event.lat, lng: event.lng });
     } else {
-      missingCoordinates.push(event?.id);
+      nonIncidentLocationRole.push(id);
     }
   }
   // 先依座標排序讓輸出與輸入順序無關（可重現）。
@@ -125,6 +140,8 @@ export function geoClustersOf(members) {
     clusters: groups,
     degraded: {
       missingCoordinates: { count: missingCoordinates.length, ids: missingCoordinates },
+      lowPrecisionCoordinates: { count: lowPrecisionCoordinates.length, ids: lowPrecisionCoordinates },
+      nonIncidentLocationRole: { count: nonIncidentLocationRole.length, ids: nonIncidentLocationRole },
     },
   };
 }
@@ -142,6 +159,8 @@ export function clusterSignals(members, options = {}) {
     degraded: {
       missingTimestamp: temporal.degraded.missingTimestamp,
       missingCoordinates: geo.degraded.missingCoordinates,
+      lowPrecisionCoordinates: geo.degraded.lowPrecisionCoordinates,
+      nonIncidentLocationRole: geo.degraded.nonIncidentLocationRole,
     },
   };
 }

@@ -150,6 +150,46 @@ describe("geoClustersOf — 地理座標群集與成員佐證", () => {
     expect(clusters[0].members.map((m: any) => m.id)).toEqual(["with-coord"]);
     expect(degraded.missingCoordinates).toEqual({ count: 2, ids: ["no-coord", "zero-zero"] });
   });
+
+  it("行政中心與縣市推估座標不形成案發距離熱點，記入 degraded.lowPrecisionCoordinates", () => {
+    const members = [
+      ev("taipei-gov-1", { lat: 25.0375, lng: 121.5637, locationPrecision: "city" }),
+      ev("taipei-gov-2", { lat: 25.0375, lng: 121.5637, locationPrecision: "county-center" }),
+      ev("taipei-gov-3", { lat: 25.038, lng: 121.564, locationPrecision: "district" }),
+      ev("real-incident", { lat: 25.05, lng: 121.54, locationPrecision: "exact", locationRole: "incident" }),
+    ];
+    const { clusters, degraded } = geoClustersOf(members);
+
+    // 只有 real-incident 進入案發熱點（孤立點 size 1）
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].members.map((m: any) => m.id)).toEqual(["real-incident"]);
+
+    // 3 筆低精度推估全部進入 lowPrecisionCoordinates，絕不形成假熱點
+    expect(degraded.lowPrecisionCoordinates).toEqual({
+      count: 3,
+      ids: ["taipei-gov-1", "taipei-gov-2", "taipei-gov-3"],
+    });
+  });
+
+  it("機關所在地與角色未知不當成案發熱點，記入 degraded.nonIncidentLocationRole", () => {
+    const members = [
+      ev("police-hq", { lat: 25.04, lng: 121.52, locationPrecision: "exact", locationRole: "agency" }),
+      ev("court-mention", { lat: 25.035, lng: 121.51, locationPrecision: "address", locationRole: "mention" }),
+      ev("exact-no-role", { lat: 25.04, lng: 121.52, locationPrecision: "exact" }),
+      ev("arrest-spot", { lat: 25.042, lng: 121.522, locationPrecision: "exact", locationRole: "arrest" }),
+    ];
+    const { clusters, degraded } = geoClustersOf(members);
+
+    // 只有 arrest-spot 進入案發/查獲距離群集
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].members.map((m: any) => m.id)).toEqual(["arrest-spot"]);
+
+    // police-hq, court-mention, exact-no-role 進入 nonIncidentLocationRole
+    expect(degraded.nonIncidentLocationRole).toEqual({
+      count: 3,
+      ids: ["police-hq", "court-mention", "exact-no-role"],
+    });
+  });
 });
 
 describe("clusterSignals — 單一入口", () => {
@@ -169,6 +209,8 @@ describe("clusterSignals — 單一入口", () => {
     expect(signals.degraded).toEqual({
       missingTimestamp: { count: 1, ids: ["c"] },
       missingCoordinates: { count: 1, ids: ["c"] },
+      lowPrecisionCoordinates: { count: 0, ids: [] },
+      nonIncidentLocationRole: { count: 0, ids: [] },
     });
   });
 

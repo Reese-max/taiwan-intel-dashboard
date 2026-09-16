@@ -3,6 +3,7 @@ import type * as L from "leaflet";
 import type { IntelEvent, RiskLevel, Scope } from "../types/event";
 import { esc } from "../utils/escape";
 import { getActionDecision } from "../utils/actionDecision";
+import { locationPrecisionLabel, locationRoleLabel } from "../utils/geoPolicy";
 
 const RISK_COLOR: Record<RiskLevel, string> = {
   low: "#3b82f6",
@@ -87,31 +88,14 @@ export function markerClass(level: RiskLevel, event?: IntelEvent): string {
   const base = level === "critical" ? "mk mk-critical" : level === "high" ? "mk mk-high" : "mk";
   const confidence = event?.source.sourceConfidence ? ` source-${event.source.sourceConfidence}` : "";
   const precision = event?.locationPrecision ? ` loc-${event.locationPrecision}` : "";
-  return `${base}${confidence}${precision}`;
+  const role = event?.locationRole ? ` role-${event.locationRole}` : "";
+  return `${base}${confidence}${precision}${role}`;
 }
 
 function sourceDisplayName(e: IntelEvent): string {
   if (e.source.publisherName) return e.source.publisherName;
   if (e.source.aggregatorName) return `${e.source.aggregatorName} 聚合`;
   return e.source.name;
-}
-
-function locationPrecisionLabel(value: IntelEvent["locationPrecision"]): string {
-  switch (value) {
-    case "exact":
-    case "address":
-      return "精準位置";
-    case "district":
-      return "行政區推論";
-    case "city":
-      return "縣市推論";
-    case "country":
-      return "國家層級";
-    case "global":
-      return "全球概略";
-    default:
-      return "未知";
-  }
 }
 
 function compactClusterTitle(title: string): string {
@@ -132,9 +116,12 @@ export function mapPopupHtml(e: IntelEvent): string {
   const via = e.source.aggregatorName
     ? `<br><span class="map-popup-warn">經由：${esc(e.source.aggregatorName)}，請點開原文確認</span>`
     : "";
+  const roleText = e.locationRole ? `（${locationRoleLabel(e.locationRole)}）` : "";
   const loc = e.locationPrecision
-    ? `<br><span class="map-popup-muted">定位：${esc(locationPrecisionLabel(e.locationPrecision))}</span>`
-    : "";
+    ? `<br><span class="map-popup-muted">定位：${esc(locationPrecisionLabel(e.locationPrecision))}${esc(roleText)}</span>`
+    : e.locationRole
+      ? `<br><span class="map-popup-muted">地點角色：${esc(locationRoleLabel(e.locationRole))}</span>`
+      : "";
   return `<b>${esc(e.title)}</b><br>${esc(e.region)}｜${esc(e.category)}<br>來源：${esc(sourceDisplayName(e))}
     <br><span class="map-popup-decision">建議：${esc(decision.recommendation)}｜${esc(decision.status)}</span>
     ${via}${loc}<br><a class="map-popup-action map-focus-btn" data-map-focus="${esc(e.id)}" href="${esc(eventFocusHash(e))}">查看關聯網 →</a>`;

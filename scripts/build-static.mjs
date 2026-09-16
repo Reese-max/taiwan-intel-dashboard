@@ -16,6 +16,7 @@ import { resolve } from "node:path";
 import { emptyDirContents } from "./lib/fs-safe.mjs";
 import { minifyOrCopyJson } from "./lib/minify-json.mjs";
 import { buildCohortManifest, writeCohortManifest } from "./lib/manifest.mjs";
+import { isValidCoordinate } from "./lib/geo-policy.mjs";
 
 const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
@@ -74,7 +75,7 @@ function trimEvent(e) {
 // 地圖 first-paint 精簡點：只取「可定位」事件、只留地圖渲染與 filterEvents 所需欄位
 // （捨 recordRef/AI 等詳情專用欄），讓地圖不必等完整 <scope>.json 即可先繪標點。
 function isLocated(e) {
-  return e.lat != null && e.lng != null && !(e.lat === 0 && e.lng === 0) && e.locationPrecision !== "global";
+  return isValidCoordinate(e.lat, e.lng) && e.locationPrecision !== "global";
 }
 function mapTrim(e) {
   const s = e.source && typeof e.source === "object" ? e.source : {};
@@ -85,6 +86,9 @@ function mapTrim(e) {
     lat: e.lat,
     lng: e.lng,
     locationPrecision: e.locationPrecision,
+    ...(e.locationRole ? { locationRole: e.locationRole } : {}),
+    ...(e.locationMethod ? { locationMethod: e.locationMethod } : {}),
+    ...(e.locationSourceBasis ? { locationSourceBasis: e.locationSourceBasis } : {}),
     timestamp: e.timestamp,
     category: e.category,
     scope: e.scope,
