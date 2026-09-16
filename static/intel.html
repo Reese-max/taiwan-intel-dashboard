@@ -248,7 +248,7 @@
       <div class="net-title">🕸 關聯線分析 <span id="net-count">—</span></div>
       <div class="arc-filter-row" aria-label="關聯型別篩選">
         <button type="button" class="arc-toggle active" data-arc-type="same-incident" onclick="toggleArcType('same-incident')">
-          <i class="arc-chip" style="background:#ffc107;"></i>跨源佐證
+          <i class="arc-chip" style="background:#ffc107;"></i>同事件候選（待查證）
         </button>
         <button type="button" class="arc-toggle active" data-arc-type="same-entity" onclick="toggleArcType('same-entity')">
           <i class="arc-chip" style="background:#b388ff;"></i>共享實體
@@ -351,7 +351,7 @@ const NET_WEAK_ARC_MAX = 350; // 弱關聯另設上限，避免同題線一開�
 const LEVEL_COLOR = { critical: '#ff4444', warning: '#ffc107', info: '#00c8ff', normal: '#44ff88' };
 // 情報網弧線配色（依關聯型別）：佐證=琥珀、共享實體=紫、弱關聯=青。
 const ARC_COLOR = { 'same-incident': '#ffc107', 'same-entity': '#b388ff', 'same-topic': '#00c8ff' };
-const ARC_TYPE_LABEL = { 'same-incident': '跨源佐證', 'same-entity': '共享實體', 'same-topic': '同題情勢（弱關聯）' };
+const ARC_TYPE_LABEL = { 'same-incident': '同事件候選（待查證）', 'same-entity': '共享實體', 'same-topic': '同題情勢（弱關聯）' };
 const ARC_TYPE_ENABLED = { 'same-incident': true, 'same-entity': true, 'same-topic': false };
 const LEVEL_LABEL = { critical: '高威脅', warning: '需關注', info: '一般情資', normal: '已解除' };
 const RISK_TO_LEVEL = { critical: 'critical', high: 'warning', medium: 'info', low: 'normal' };

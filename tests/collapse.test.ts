@@ -77,9 +77,32 @@ describe("collapseSameIncident", () => {
     expect(groups[0].sourceCount).toBe(1);
   });
 
-  it("三事件鏈狀 same-incident 會形成同一連通分量", () => {
+  it("三事件鏈狀 same-incident（A-B、B-C 缺少 A-C）不得傳遞收合成同一事件（Issue #36 B2）", () => {
     const events = [event("a", "來源A"), event("b", "來源B"), event("c", "來源C")];
     const net = fakeNet({ a: [same("b")], b: [same("a"), same("c")], c: [same("b")] });
+
+    const groups = collapseSameIncident(events, net);
+
+    // 杜絕無差別傳遞閉包：A 與 C 無直接佐證，不能因 B 橋接而將三者併為同案
+    expect(groups).toHaveLength(2);
+    const hasA = groups.some((g) => g.members.some((m) => m.id === "a"));
+    const hasC = groups.some((g) => g.members.some((m) => m.id === "c"));
+    expect(hasA).toBe(true);
+    expect(hasC).toBe(true);
+    // 驗證 a 與 c 絕不落在同一個收合組中
+    for (const g of groups) {
+      const ids = g.members.map((m) => m.id);
+      expect(ids.includes("a") && ids.includes("c")).toBe(false);
+    }
+  });
+
+  it("三事件完全圖（A-B、B-C、A-C 全互相佐證）可安全收合成同一群組", () => {
+    const events = [event("a", "來源A"), event("b", "來源B"), event("c", "來源C")];
+    const net = fakeNet({
+      a: [same("b"), same("c")],
+      b: [same("a"), same("c")],
+      c: [same("a"), same("b")],
+    });
 
     const groups = collapseSameIncident(events, net);
 
@@ -88,12 +111,68 @@ describe("collapseSameIncident", () => {
     expect(groups[0].sourceCount).toBe(3);
   });
 
+  it("可驗證的原始紀錄重複（同 canonical URL）自動收合成一組", () => {
+    const ev1: IntelEvent = {
+      ...event("a", "管道A"),
+      source: {
+        name: "管道A",
+        type: "news-rss",
+        url: "https://news.example.com/story/100?utm_source=rss",
+        fetchedAt: "2026-07-05T00:00:00+08:00",
+      },
+    };
+    const ev2: IntelEvent = {
+      ...event("b", "管道B"),
+      source: {
+        name: "管道B",
+        type: "news-rss",
+        url: "https://news.example.com/story/100?utm_source=aggregator",
+        fetchedAt: "2026-07-05T00:00:00+08:00",
+      },
+    };
+
+    const groups = collapseSameIncident([ev1, ev2], fakeNet({}));
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].members.map((e) => e.id).sort()).toEqual(["a", "b"]);
+    expect(groups[0].sourceCount).toBe(1);
+    expect(groups[0].isMultiChannel).toBe(true);
+  });
+
   it("同來源多筆 sourceCount 會去重", () => {
     const events = [event("a", "同來源"), event("b", "同來源")];
 
     const groups = collapseSameIncident(events, fakeNet({ a: [same("b")], b: [same("a")] }));
 
     expect(groups[0].sourceCount).toBe(1);
+  });
+
+  it("通用 datasetId 不得當成發布者身分，缺身分時 sourceCount 不膨脹", () => {
+    const ev1: IntelEvent = {
+      ...event("a", "gov-open-data"),
+      source: {
+        name: "gov-open-data",
+        datasetId: "dataset-police-1",
+        type: "gov-open-data",
+        fetchedAt: "2026-07-05T00:00:00+08:00",
+      },
+    };
+    const ev2: IntelEvent = {
+      ...event("b", "gov-open-data"),
+      source: {
+        name: "gov-open-data",
+        datasetId: "dataset-police-2",
+        type: "gov-open-data",
+        fetchedAt: "2026-07-05T00:00:00+08:00",
+      },
+    };
+
+    const groups = collapseSameIncident([ev1, ev2], fakeNet({ a: [same("b")], b: [same("a")] }));
+
+    expect(groups).toHaveLength(1);
+    // 缺明確 publisherName 身分，不得因 datasetId 不同而宣稱 2 個獨立發布者
+    expect(groups[0].sourceCount).toBe(1);
+    expect(groups[0].channelCount).toBe(2);
   });
 
   it("輸出組順序依 representative 在原 events 的原始順序", () => {

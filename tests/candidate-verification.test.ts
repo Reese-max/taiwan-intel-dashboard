@@ -106,4 +106,39 @@ describe("候選關聯與查證分離（Issue #36）", () => {
     assert.ok(!html.includes("<img src=x")); assert.ok(!html.includes("<script>"));
     assert.ok(html.includes("&lt;img"));
   });
+
+  it("來源身分政策：單一來源、多管道同稿、不同發布者、缺身分四種情境仍可分辨（Issue #36 B2）", () => {
+    // 1. 單一來源
+    const rSingle = resultFor([event("a")]);
+    assert.equal(rSingle.sources, 1);
+    assert.equal(rSingle.channels, 1);
+    assert.equal(rSingle.isMultiChannel, false);
+
+    // 2. 多管道同稿（同一 URL）
+    const aSame = event("a", { source: { name: "管道1", publisherName: "中央社", type: "news-rss", url: "https://cna.example/1", fetchedAt: "2026-09-16T10:00:00Z" } });
+    const bSame = event("b", { source: { name: "管道2", publisherName: "中央社", type: "news-rss", url: "https://cna.example/1?ref=agg", fetchedAt: "2026-09-16T10:00:00Z" } });
+    const rMultiChannel = resultFor([aSame, bSame]);
+    assert.equal(rMultiChannel.sources, 1);
+    assert.equal(rMultiChannel.channels, 2);
+    assert.equal(rMultiChannel.isMultiChannel, true);
+
+    // 3. 不同發布者
+    const aDiff = event("a", { source: { name: "中央社", publisherName: "中央社", type: "news-rss", url: "https://cna.example/1", fetchedAt: "2026-09-16T10:00:00Z" } });
+    const bDiff = event("b", { source: { name: "自由時報", publisherName: "自由時報", type: "news-rss", url: "https://ltn.example/2", fetchedAt: "2026-09-16T10:00:00Z" } });
+    const rDiff = resultFor([aDiff, bDiff]);
+    assert.equal(rDiff.sources, 2);
+    assert.equal(rDiff.channels, 2);
+    assert.equal(rDiff.isMultiChannel, false);
+
+    // 4. 缺身分（無 publisherName，僅不同 datasetId）
+    const aMissing = event("a", { source: { name: "gov-open-data", datasetId: "police-set-1", type: "gov-open-data", fetchedAt: "2026-09-16T10:00:00Z" } });
+    const bMissing = event("b", { source: { name: "gov-open-data", datasetId: "police-set-2", type: "gov-open-data", fetchedAt: "2026-09-16T10:00:00Z" } });
+    const rMissing = resultFor([aMissing, bMissing]);
+    assert.equal(rMissing.publishers, 0);
+    assert.equal(rMissing.sources, 1); // 保底 1，不膨脹為 2
+    assert.equal(rMissing.channels, 2);
+    assert.equal(rMissing.isMultiChannel, true);
+    assert.equal(rMissing.missingPublisherIdentity, true);
+  });
 });
+

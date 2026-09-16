@@ -3,14 +3,17 @@ import type { IntelEvent } from "../types/event";
 
 export interface CorroborationResult {
   sources: number;
+  publishers?: number;
   channels: number;
+  rawReports?: number;
   /** @deprecated 保留舊欄位相容；自動候選不能當成查證結論。 */
   confirmed: boolean;
   verification?: "unverified";
   isMultiChannel?: boolean;
+  missingPublisherIdentity?: boolean;
 }
 
-function normalizeUrl(raw?: string): string {
+export function normalizeUrl(raw?: string): string {
   if (!raw) return "";
   try {
     const u = new URL(raw);
@@ -25,16 +28,57 @@ function normalizeUrl(raw?: string): string {
 }
 
 export function extractPublisherKey(e: IntelEvent): string {
-  if (e.source.publisherName) return e.source.publisherName.trim();
-  if (e.source.datasetId) return `dataset:${e.source.datasetId}`;
+  if (e.source.publisherName) {
+    const p = e.source.publisherName.trim();
+    if (p) return p;
+  }
   if (e.source.publisherUrl) {
     try {
-      return new URL(e.source.publisherUrl).hostname;
+      const host = new URL(e.source.publisherUrl).hostname.replace(/^www\./, "");
+      if (host) return host;
     } catch {}
   }
   let name = e.source.name || "";
-  if (name.startsWith("GN ")) name = name.slice(3).trim();
-  return name || "unknown";
+  if (name.startsWith("GN ")) {
+    const gn = name.slice(3).trim();
+    if (gn) return gn;
+  }
+  if (e.source.type === "cwa") {
+    return "中央氣象署";
+  }
+  if (e.source.url) {
+    try {
+      const host = new URL(e.source.url).hostname.replace(/^www\./, "");
+      if (host && !host.includes("google.com") && !host.includes("gdeltproject.org")) {
+        return host;
+      }
+    } catch {}
+  }
+  // 嚴禁將通用 datasetId / aggregator / gov-open-data 偽裝成發布者身分
+  if (
+    name &&
+    !name.startsWith("dataset:") &&
+    name !== "gov-open-data" &&
+    name !== "cwa" &&
+    name !== "manual"
+  ) {
+    return name;
+  }
+  return "";
+}
+
+export function extractChannelKey(e: IntelEvent): string {
+  if (e.source.datasetId) return `dataset:${e.source.datasetId.trim()}`;
+  if (e.source.aggregatorName) return `aggregator:${e.source.aggregatorName.trim()}`;
+  if (e.source.feedLabel) return `feed:${e.source.feedLabel.trim()}`;
+  if (e.source.name) return `channel:${e.source.name.trim()}`;
+  return "channel:default";
+}
+
+export function extractRawReportKey(e: IntelEvent): string {
+  const norm = normalizeUrl(e.source.url ?? e.source.recordRef);
+  if (norm) return norm;
+  return `event:${e.id}`;
 }
 
 export function corroborationOf(
@@ -43,7 +87,7 @@ export function corroborationOf(
   net: NetworkIndex,
 ): CorroborationResult {
   const event = byId.get(eventId);
-  if (!event) return { sources: 1, channels: 1, confirmed: false, verification: "unverified" };
+  if (!event) return { sources: 1, publishers: 0, channels: 1, rawReports: 0, confirmed: false, verification: "unverified" };
 
   const clusterEvents: IntelEvent[] = [event];
   for (const ref of net.related(eventId)) {
@@ -55,28 +99,45 @@ export function corroborationOf(
   const channels = new Set<string>();
   const publishers = new Set<string>();
   const canonicalUrls = new Set<string>();
+  let hasMissingPublisher = false;
 
   for (const ev of clusterEvents) {
-    channels.add(ev.source.name);
-    publishers.add(extractPublisherKey(ev));
+    const ch = extractChannelKey(ev);
+    if (ch) channels.add(ch);
+
+    const pub = extractPublisherKey(ev);
+    if (pub) {
+      publishers.add(pub);
+    } else {
+      hasMissingPublisher = true;
+    }
+
     const url = normalizeUrl(ev.source.url ?? ev.source.recordRef);
     if (url) canonicalUrls.add(url);
   }
 
-  // 沿用來源／URL 去重，僅作候選線索計數，不代表消息獨立或事實已查證。
+  // 沿用來源／URL 去重：
+  // 1. 同稿多管道（同一原始 URL 被多管道收錄）：effectiveSources 不得超過 1
+  // 2. 缺身分：不能因 datasetId 不同而膨脹獨立發布者數
   let effectiveSources = publishers.size;
-  if (canonicalUrls.size === 1 && clusterEvents.length > 1) {
+  if (publishers.size === 0) {
+    effectiveSources = 1;
+  } else if (canonicalUrls.size === 1 && clusterEvents.length > 1) {
     effectiveSources = 1;
   }
 
   const isMultiChannel = effectiveSources < 2 && channels.size >= 2;
+  const missingPublisherIdentity = hasMissingPublisher && publishers.size === 0;
 
   return {
     sources: Math.max(1, effectiveSources),
-    channels: channels.size,
+    publishers: publishers.size,
+    channels: Math.max(1, channels.size),
+    rawReports: Math.max(1, canonicalUrls.size || clusterEvents.length),
     confirmed: false,
     verification: "unverified",
     isMultiChannel,
+    missingPublisherIdentity,
   };
 }
 

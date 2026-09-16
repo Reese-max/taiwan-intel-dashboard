@@ -169,7 +169,7 @@ export function renderRelationGraph(
     </svg>
     <div class="rg-preview" hidden></div>
     <div class="rg-legend" role="group" aria-label="依關聯型別篩選">
-      <button type="button" class="rg-legend-btn" data-type="same-incident" aria-pressed="true"><i class="edge-same-incident"></i>跨源佐證</button>
+      <button type="button" class="rg-legend-btn" data-type="same-incident" aria-pressed="true"><i class="edge-same-incident"></i>${esc(edgeTypeLabel("same-incident"))}</button>
       <button type="button" class="rg-legend-btn" data-type="same-entity" aria-pressed="true"><i class="edge-same-entity"></i>共享實體</button>
       <button type="button" class="rg-legend-btn" data-type="same-topic" aria-pressed="true"><i class="edge-same-topic"></i>${esc(edgeTypeLabel("same-topic"))}</button>
     </div>`;
