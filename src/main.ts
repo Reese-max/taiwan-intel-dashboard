@@ -20,7 +20,7 @@ import { MapView } from "./components/MapView";
 import type { IntelEvent, NewsAuthority, RiskLevel, Scope } from "./types/event";
 import { emptyListHint } from "./utils/emptyHint";
 import { applySearchSubnet } from "./search";
-import { filterTriageEvents, loadTriageAcked, saveTriageAcked } from "./utils/triage";
+import { filterTriageEvents, loadTriageAcked, saveTriageAcked, type TriageSortMode } from "./utils/triage";
 import { corroborationOf } from "./utils/corroboration";
 import { collapseSameIncident } from "./utils/collapse";
 import { stalenessNotice } from "./utils/staleness";
@@ -385,6 +385,8 @@ document.getElementById("filter-sheet-done")?.addEventListener("click", () => se
 const cache: Partial<Record<Scope, IntelEvent[]>> = {};
 const netCache: Partial<Record<Scope, NetworkIndex>> = {};
 const triageAcked = loadTriageAcked();
+let triageStorageOk = true;
+let triageSortMode: TriageSortMode = "default";
 // 地圖 first-paint：先用精簡 map.json 即時繪出標點，不必等完整事件（給清單用）載入；
 // refresh() 隨後以完整集重繪校正。slim 載入失敗則無早繪、行為不變。
 void loadMapEvents(getState().scope).then((pts) => {
@@ -575,17 +577,25 @@ async function refresh(): Promise<void> {
     renderTriageInbox(document.getElementById("triageinbox")!, triageEvents, {
       acked: triageAcked,
       sinceDays: s.sinceDays,
+      sortMode: triageSortMode,
+      storageOk: triageStorageOk,
+      onSortModeChange: (mode) => {
+        triageSortMode = mode;
+        renderInbox();
+      },
       onFocus: focusEvent,
       onAck: (id) => {
         triageAcked.add(id);
-        saveTriageAcked(triageAcked);
+        const res = saveTriageAcked(triageAcked);
+        if (!res.ok) triageStorageOk = false;
         renderInbox();
       },
       onAckAll: () => {
         triageEvents.forEach((e) => {
           if (e.riskLevel === "critical" || e.riskLevel === "high") triageAcked.add(e.id);
         });
-        saveTriageAcked(triageAcked);
+        const res = saveTriageAcked(triageAcked);
+        if (!res.ok) triageStorageOk = false;
         renderInbox();
       },
     });

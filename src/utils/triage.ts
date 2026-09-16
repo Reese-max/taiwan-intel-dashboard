@@ -29,47 +29,91 @@ function timestampMs(value: string): number {
   return Number.isFinite(ms) ? ms : Number.NEGATIVE_INFINITY;
 }
 
+export type TriageSortMode = "default" | "unread-first" | "unread-only";
+
+export interface BuildTriageOptions {
+  cap?: number;
+  mode?: TriageSortMode;
+}
+
+export interface SaveTriageResult {
+  ok: boolean;
+  error?: string;
+}
+
 export function buildTriage(
   events: IntelEvent[],
   ackedIds: Set<string> | string[],
   nowMs: number,
-  opts: { cap?: number } = {},
+  opts: BuildTriageOptions = {},
 ): TriageResult {
   void nowMs;
   const acked = ackedIds instanceof Set ? ackedIds : new Set(ackedIds);
   const cap = Math.max(0, opts.cap ?? 30);
-  const sorted = events
-    .filter(isElevated)
-    .slice()
-    .sort((a, b) => {
-      const riskDelta = RISK_ORDER[b.riskLevel] - RISK_ORDER[a.riskLevel];
-      if (riskDelta !== 0) return riskDelta;
-      return timestampMs(b.timestamp) - timestampMs(a.timestamp);
-    });
-  const items = sorted.slice(0, cap).map((e) => ({ ...e, unread: !acked.has(e.id) }));
+  const mode = opts.mode ?? "default";
+
+  const elevated = events.filter(isElevated);
+  const total = elevated.length;
+  const unreadCount = elevated.filter((e) => !acked.has(e.id)).length;
+
+  let pool: IntelEvent[];
+  if (mode === "unread-only") {
+    pool = elevated.filter((e) => !acked.has(e.id));
+  } else {
+    pool = elevated.slice();
+  }
+
+  pool.sort((a, b) => {
+    // 1. 保留風險優先（critical 優先於 high），不讓低風險未讀壓過高風險
+    const riskDelta = RISK_ORDER[b.riskLevel] - RISK_ORDER[a.riskLevel];
+    if (riskDelta !== 0) return riskDelta;
+
+    // 2. 若為未讀優先模式，同風險下未讀優先於已讀
+    if (mode === "unread-first") {
+      const aUnread = !acked.has(a.id);
+      const bUnread = !acked.has(b.id);
+      if (aUnread !== bUnread) return (bUnread ? 1 : 0) - (aUnread ? 1 : 0);
+    }
+
+    // 3. 同順位下 timestamp 由新至舊
+    return timestampMs(b.timestamp) - timestampMs(a.timestamp);
+  });
+
+  const items = pool.slice(0, cap).map((e) => ({ ...e, unread: !acked.has(e.id) }));
 
   return {
     items,
-    unreadCount: sorted.filter((e) => !acked.has(e.id)).length,
-    total: sorted.length,
-    capped: Math.max(0, sorted.length - items.length),
+    unreadCount,
+    total,
+    capped: Math.max(0, pool.length - items.length),
   };
 }
 
 export function loadTriageAcked(storage: Storage = localStorage): Set<string> {
   try {
     const raw = storage.getItem(TRIAGE_ACKED_KEY);
-    const ids = raw ? JSON.parse(raw) : [];
-    return new Set(Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : []);
+    if (!raw) return new Set();
+    const ids = JSON.parse(raw);
+    if (!Array.isArray(ids)) return new Set();
+    return new Set(
+      ids.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+    );
   } catch {
     return new Set();
   }
 }
 
-export function saveTriageAcked(ackedIds: Set<string> | string[], storage: Storage = localStorage): void {
+export function saveTriageAcked(
+  ackedIds: Set<string> | string[],
+  storage: Storage = localStorage,
+): SaveTriageResult {
   try {
-    storage.setItem(TRIAGE_ACKED_KEY, JSON.stringify([...(ackedIds instanceof Set ? ackedIds : new Set(ackedIds))]));
-  } catch {
-    // localStorage 可能因隱私模式或容量限制失敗；收件匣仍可在本次 render 中運作。
+    const list = [...(ackedIds instanceof Set ? ackedIds : new Set(ackedIds))];
+    storage.setItem(TRIAGE_ACKED_KEY, JSON.stringify(list));
+    return { ok: true };
+  } catch (err) {
+    // localStorage 可能因隱私模式、無痕、或容量限制被拒
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: message };
   }
 }
