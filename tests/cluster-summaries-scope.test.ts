@@ -93,9 +93,8 @@ describe("clusterSummariesForScope", () => {
     expect(container.innerHTML).toContain("國內摘要國內摘要");
     expect(container.innerHTML).toContain("…");
     expect((container.innerHTML.match(/<li/g) ?? [])).toHaveLength(1);
-    expect(container.innerHTML).not.toContain("反詐分類摘要");
-    expect(container.innerHTML).not.toContain("資安分類摘要");
-    expect(container.innerHTML).not.toContain("災防分類摘要不應顯示");
+    expect(container.innerHTML).toContain("ai-cats-more");
+    expect(container.innerHTML).toContain("查看其餘 3 個分類摘要");
     expect(container.innerHTML).toContain('title="國內摘要');
   });
 });

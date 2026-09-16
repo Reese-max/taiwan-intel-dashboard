@@ -51,8 +51,30 @@ function compactText(text: string, limit: number): string {
   return `${chars.slice(0, limit).join("")}…`;
 }
 
-function compactParagraph(className: string, text: string, limit: number): string {
-  return `<p class="${className}" title="${esc(text)}">${esc(compactText(text, limit))}</p>`;
+function expandableParagraph(className: string, text: string, limit: number): string {
+  if (!text) return "";
+  const chars = Array.from(text.trim());
+  if (chars.length <= limit) {
+    return `<p class="${className}" title="${esc(text)}">${esc(text)}</p>`;
+  }
+  const preview = `${chars.slice(0, limit).join("")}…`;
+  return `<details class="ai-expandable ${className}-expandable">
+    <summary class="${className}" title="${esc(text)}">${esc(preview)} <span class="ai-expand-trigger" aria-label="展開全文">展開全文 ▾</span></summary>
+    <div class="ai-full-text" aria-label="完整內容">${esc(text)}</div>
+  </details>`.trim();
+}
+
+function expandableSub(tag: string, text: string, limit: number): string {
+  if (!text) return "";
+  const chars = Array.from(text.trim());
+  if (chars.length <= limit) {
+    return `<div class="ai-sub" title="${esc(text)}"><span class="ai-sub-tag">${tag}</span>${esc(text)}</div>`;
+  }
+  const preview = `${chars.slice(0, limit).join("")}…`;
+  return `<details class="ai-expandable ai-sub-expandable">
+    <summary class="ai-sub" title="${esc(text)}"><span class="ai-sub-tag">${tag}</span>${esc(preview)} <span class="ai-expand-trigger" aria-label="展開文字">展開 ▾</span></summary>
+    <div class="ai-full-text"><span class="ai-sub-tag">${tag}</span>${esc(text)}</div>
+  </details>`.trim();
 }
 
 export function renderAiBrief(container: HTMLElement, summary: AiSummary | null, scope: Scope, events: IntelEvent[] = []): void {
@@ -60,32 +82,51 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
     container.innerHTML = `<div class="ai-brief-head">🤖 AI 情勢摘要</div><p class="empty">摘要尚未生成</p>`;
     return;
   }
-  const head = `<div class="ai-brief-head">🤖 AI 情勢摘要</div>`;
+  const scopeLabel = scope === "domestic" ? "國內全域" : "國際全域";
+  const head = `<div class="ai-brief-head">🤖 AI 情勢摘要 <span class="ai-scope-tag">${esc(scopeLabel)}</span></div>
+    <div class="ai-scope-hint">全域情報敘述 · 不隨目前篩選條件變動</div>`;
   const gen = new Date(summary.generatedAt).toLocaleString("zh-TW", { hour12: false });
-  const meta = `<p class="ai-brief-meta">${summary.model ? `由 ${esc(summary.model)} 生成` : "AI 生成"} · ${esc(gen)}</p>`;
+  const meta = `<p class="ai-brief-meta">${summary.model ? `由 ${esc(summary.model)} 生成` : "AI 生成"} · 生成於 ${esc(gen)}</p>`;
+
   const action = actionDecisionBrief(events);
-  const actionHtml = action ? `<div class="ai-action">${esc(action)}</div>` : "";
+  let actionHtml = "";
+  if (events.length === 0) {
+    actionHtml = `<div class="ai-action ai-action-empty"><span class="ai-action-scope">目前篩選</span> 無符合事件</div>`;
+  } else if (action) {
+    actionHtml = `<div class="ai-action"><span class="ai-action-scope">目前篩選 (${events.length} 則)</span> ${esc(action)}</div>`;
+  }
 
   // 國際 scope：只顯示國際每日摘要（近24h/趨勢/分類為國內資料）。
   if (scope !== "domestic") {
-    container.innerHTML = `${head}${compactParagraph("ai-brief-body", summary.international, 110)}${actionHtml}${meta}`;
+    container.innerHTML = `${head}${expandableParagraph("ai-brief-body", summary.international, 110)}${actionHtml}${meta}`;
     return;
   }
 
   // 國內：每日 + 近 24h 即時 + 趨勢 + 分類別。
-  const parts = [compactParagraph("ai-brief-body", summary.domestic, 110)];
+  const parts = [expandableParagraph("ai-brief-body", summary.domestic, 110)];
   if (actionHtml) parts.push(actionHtml);
   if (summary.recent24h)
-    parts.push(`<div class="ai-sub" title="${esc(summary.recent24h)}"><span class="ai-sub-tag">⚡ 近 24 小時</span>${esc(compactText(summary.recent24h, 48))}</div>`);
+    parts.push(expandableSub("⚡ 近 24 小時", summary.recent24h, 48));
   if (summary.trend)
-    parts.push(`<div class="ai-sub" title="${esc(summary.trend)}"><span class="ai-sub-tag">📈 趨勢</span>${esc(compactText(summary.trend, 48))}</div>`);
+    parts.push(expandableSub("📈 趨勢", summary.trend, 48));
+
   const cats = summary.byCategory ? Object.entries(summary.byCategory) : [];
   if (cats.length) {
-    const items = cats
-      .slice(0, 1)
-      .map(([c, t]) => `<li title="${esc(t)}"><b>${esc(c)}</b>${esc(compactText(t, 42))}</li>`)
-      .join("");
-    parts.push(`<ul class="ai-cats">${items}</ul>`);
+    const [first, ...rest] = cats;
+    const firstPreview = compactText(first[1], 42);
+    const firstFull = first[1];
+    const firstHtml = Array.from(firstFull.trim()).length > 42
+      ? `<li title="${esc(firstFull)}"><details class="ai-cat-expandable"><summary><b>${esc(first[0])}</b>${esc(firstPreview)} <span class="ai-expand-trigger">展開 ▾</span></summary><div class="ai-full-text"><b>${esc(first[0])}</b>${esc(firstFull)}</div></details></li>`
+      : `<li title="${esc(firstFull)}"><b>${esc(first[0])}</b>${esc(firstFull)}</li>`;
+    parts.push(`<ul class="ai-cats">${firstHtml}</ul>`);
+
+    if (rest.length > 0) {
+      const restRows = rest.map(([c, t]) => {
+        const preview = compactText(t, 42);
+        return `<div class="ai-cat-row" title="${esc(t)}"><b>${esc(c)}</b>${esc(preview)}</div>`;
+      }).join("");
+      parts.push(`<details class="ai-cats-more"><summary class="ai-cats-more-toggle">查看其餘 ${rest.length} 個分類摘要 ▾</summary><div class="ai-cats-more-list">${restRows}</div></details>`);
+    }
   }
   container.innerHTML = `${head}${parts.join("")}${meta}`;
 }

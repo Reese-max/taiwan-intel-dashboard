@@ -1419,6 +1419,94 @@ body.layout-compact .col-list {
   line-height: 1.5;
   color: var(--color-muted);
 }
+.ai-scope-tag {
+  background: var(--color-panel-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  margin-left: 0.4em;
+  vertical-align: middle;
+}
+.ai-scope-hint {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  margin: -0.2em 0 0.55em;
+  line-height: 1.35;
+}
+.ai-action-scope {
+  background: var(--color-panel-2);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  margin-right: 0.4em;
+}
+.ai-action-empty {
+  color: var(--color-muted);
+  background: var(--color-panel-2);
+  border-color: var(--color-border);
+}
+.ai-expandable {
+  margin-bottom: 0.5em;
+}
+.ai-expandable summary {
+  cursor: pointer;
+  list-style: none;
+}
+.ai-expandable summary::-webkit-details-marker {
+  display: none;
+}
+.ai-expand-trigger {
+  color: var(--color-accent);
+  font-size: 0.74rem;
+  font-weight: 600;
+  margin-left: 0.4em;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ai-full-text {
+  background: color-mix(in srgb, var(--color-panel-2) 90%, var(--color-bg));
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--color-text);
+  white-space: pre-wrap;
+}
+.ai-cats-more {
+  margin: 0.2em 0 0.6em;
+}
+.ai-cats-more-toggle {
+  cursor: pointer;
+  color: var(--color-accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 0;
+}
+.ai-cats-more-list {
+  display: grid;
+  gap: 0.4em;
+  padding: 6px 8px;
+  background: var(--color-panel-2);
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+.ai-cat-row {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--color-muted);
+}
+.ai-cat-row b {
+  color: var(--color-text);
+  margin-right: 0.4em;
+}
 .ai-cats li b {
   color: var(--color-text);
   margin-right: 0.4em;
