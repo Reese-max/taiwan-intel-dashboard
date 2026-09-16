@@ -11,8 +11,20 @@ export interface AiSummary {
   trend?: string;
   dailyCounts?: number[];
   clusterSummaries?: Record<string, string>;
+  degraded?: boolean | { domestic?: boolean; international?: boolean };
   model?: string;
   generatedAt: string;
+}
+
+export function isScopeDegraded(summary: AiSummary | null, scope: Scope): boolean {
+  if (!summary || !summary.degraded) return false;
+  if (typeof summary.degraded === "boolean") return summary.degraded;
+  return Boolean(summary.degraded[scope]);
+}
+
+export function isBriefPlaceholder(text: string): boolean {
+  const trimmed = (text || "").trim();
+  return !trimmed || trimmed === "（暫無資料）";
 }
 
 // clusterSummaries 僅針對「國內」群生成（見 scripts/lib/nvidia.mjs：只 summarizeClusters(domesticClusters)）。
@@ -77,6 +89,21 @@ function expandableSub(tag: string, text: string, limit: number): string {
   </details>`.trim();
 }
 
+function renderBriefBody(text: string, degraded: boolean, hasEvidence: boolean): string {
+  if (isBriefPlaceholder(text)) {
+    if (hasEvidence) {
+      return `<p class="ai-brief-body ai-brief-degraded" role="alert">⚠ AI 摘要生成失敗，請直接檢視下方事件列表</p>`;
+    }
+    return `<p class="ai-brief-body ai-brief-empty">暫無事件資料</p>`;
+  }
+  const isFallback = degraded || text.includes("系統統計備援") || text.includes("AI 摘要暫時無法生成");
+  if (isFallback) {
+    const notice = `<div class="ai-brief-fallback-notice" role="status"><span class="ai-fallback-badge">系統統計備援</span> AI 摘要暫時無法生成，事件資料仍可查閱</div>`;
+    return `${notice}${expandableParagraph("ai-brief-body ai-brief-degraded-body", text, 110)}`;
+  }
+  return expandableParagraph("ai-brief-body", text, 110);
+}
+
 export function renderAiBrief(container: HTMLElement, summary: AiSummary | null, scope: Scope, events: IntelEvent[] = []): void {
   if (!summary) {
     container.innerHTML = `<div class="ai-brief-head">🤖 AI 情勢摘要</div><p class="empty">摘要尚未生成</p>`;
@@ -86,7 +113,13 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
   const head = `<div class="ai-brief-head">🤖 AI 情勢摘要 <span class="ai-scope-tag">${esc(scopeLabel)}</span></div>
     <div class="ai-scope-hint">全域情報敘述 · 不隨目前篩選條件變動</div>`;
   const gen = new Date(summary.generatedAt).toLocaleString("zh-TW", { hour12: false });
-  const meta = `<p class="ai-brief-meta">${summary.model ? `由 ${esc(summary.model)} 生成` : "AI 生成"} · 生成於 ${esc(gen)}</p>`;
+
+  const hasEvidence = events.length > 0 || Boolean(summary.dailyCounts?.some((c) => c > 0));
+  const degradedThisScope = isScopeDegraded(summary, scope) || (scope === "domestic" ? summary.domestic : summary.international).includes("系統統計備援");
+  const modelLabel = degradedThisScope
+    ? "系統統計備援"
+    : (summary.model ? `由 ${esc(summary.model)} 生成` : "AI 生成");
+  const meta = `<p class="ai-brief-meta">${modelLabel} · 生成於 ${esc(gen)}</p>`;
 
   const action = actionDecisionBrief(events);
   let actionHtml = "";
@@ -98,12 +131,12 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
 
   // 國際 scope：只顯示國際每日摘要（近24h/趨勢/分類為國內資料）。
   if (scope !== "domestic") {
-    container.innerHTML = `${head}${expandableParagraph("ai-brief-body", summary.international, 110)}${actionHtml}${meta}`;
+    container.innerHTML = `${head}${renderBriefBody(summary.international, degradedThisScope, hasEvidence)}${actionHtml}${meta}`;
     return;
   }
 
   // 國內：每日 + 近 24h 即時 + 趨勢 + 分類別。
-  const parts = [expandableParagraph("ai-brief-body", summary.domestic, 110)];
+  const parts = [renderBriefBody(summary.domestic, degradedThisScope, hasEvidence)];
   if (actionHtml) parts.push(actionHtml);
   if (summary.recent24h)
     parts.push(expandableSub("⚡ 近 24 小時", summary.recent24h, 48));

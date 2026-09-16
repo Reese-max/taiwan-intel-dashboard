@@ -105,3 +105,61 @@ describe("AiBrief — Issue #29 可操作全文展開與無障礙", () => {
     expect(c.innerHTML).toContain("災防");
   });
 });
+
+describe("AiBrief — Issue #18 語意降級與統計備援無障礙渲染", () => {
+  it("使用系統統計備援時，顯示非純顏色之提示框、備援標章與明確提示文字", () => {
+    const fallbackText = "國內事件共 12 起，以 治安 8 起 為主。（AI 摘要暫時無法生成，事件資料仍可查閱；此為系統統計備援）";
+    const degradedSummary: AiSummary = {
+      domestic: fallbackText,
+      international: "正常國際摘要",
+      degraded: { domestic: true, international: false },
+      model: "test-model",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    const c = mockContainer();
+    renderAiBrief(c, degradedSummary, "domestic", [sampleEvent]);
+
+    expect(c.innerHTML).toContain("ai-brief-fallback-notice");
+    expect(c.innerHTML).toContain('role="status"');
+    expect(c.innerHTML).toContain("ai-fallback-badge");
+    expect(c.innerHTML).toContain("系統統計備援");
+    expect(c.innerHTML).toContain("AI 摘要暫時無法生成，事件資料仍可查閱");
+    // meta 標示統計備援，不冒充 AI 模型
+    expect(c.innerHTML).toContain("系統統計備援");
+    expect(c.innerHTML).not.toContain("由 test-model 生成");
+    // 保留全文內容與可展開特性
+    expect(c.innerHTML).toContain(fallbackText);
+  });
+
+  it("有事件資料但摘要為佔位字串時，明確警示生成失敗", () => {
+    const failedSummary: AiSummary = {
+      domestic: "（暫無資料）",
+      international: "（暫無資料）",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    const c = mockContainer();
+    renderAiBrief(c, failedSummary, "domestic", [sampleEvent]);
+
+    expect(c.innerHTML).toContain("ai-brief-degraded");
+    expect(c.innerHTML).toContain('role="alert"');
+    expect(c.innerHTML).toContain("AI 摘要生成失敗，請直接檢視下方事件列表");
+  });
+
+  it("真正無事件資料時，佔位字串以正常空狀態顯示", () => {
+    const emptySummary: AiSummary = {
+      domestic: "（暫無資料）",
+      international: "（暫無資料）",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    const c = mockContainer();
+    renderAiBrief(c, emptySummary, "domestic", []);
+
+    expect(c.innerHTML).toContain("ai-brief-empty");
+    expect(c.innerHTML).toContain("暫無事件資料");
+    expect(c.innerHTML).not.toContain("生成失敗");
+  });
+});
+

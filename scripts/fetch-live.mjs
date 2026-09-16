@@ -64,6 +64,7 @@ import {
 import { applyDailyRollup, taiwanLocalDay } from "./lib/daily-rollup.mjs";
 import { buildPoliceSourceTree, taiwanLocalDate } from "./lib/police-tree.mjs";
 import { validateEventContract, clampImplausibleTimestamps, isReferenceEvent } from "./lib/event-contract.mjs";
+import { isPlaceholder } from "./lib/summary-quality.mjs";
 import { applyTemporal } from "./lib/temporal.mjs";
 import { buildCoverageMatrix } from "./audit-coverage.mjs";
 import { buildDomainCoverage } from "./domain-coverage.mjs";
@@ -786,8 +787,31 @@ export async function run() {
   try {
     const summary = await summarize({ domestic: domesticIncidents, international: intlEvents, clusters: domesticClusters });
     writeJson("summary.json", summary);
-    status.summary = { ok: true };
-    console.log("AI 摘要：完成");
+    const domHasEvents = domesticIncidents.length > 0;
+    const intlHasEvents = intlEvents.length > 0;
+    const domPlaceholder = isPlaceholder(summary.domestic);
+    const intlPlaceholder = isPlaceholder(summary.international);
+    const placeholderWithEvidence = (domHasEvents && domPlaceholder) || (intlHasEvents && intlPlaceholder);
+
+    status.summary = {
+      ok: !placeholderWithEvidence,
+      domestic: !domHasEvents ? "empty" : (summary.degraded?.domestic ? "degraded" : "success"),
+      international: !intlHasEvents ? "empty" : (summary.degraded?.international ? "degraded" : "success"),
+      degraded: {
+        domestic: Boolean(summary.degraded?.domestic),
+        international: Boolean(summary.degraded?.international),
+      },
+      ...(placeholderWithEvidence ? { error: "有事件資料但 AI 摘要為佔位字串（未取得敘述且無備援）" } : {}),
+    };
+
+    const degradedLabels = [
+      summary.degraded?.domestic ? "國內統計備援" : "",
+      summary.degraded?.international ? "國際統計備援" : "",
+    ].filter(Boolean).join("、");
+
+    console.log(
+      `AI 摘要：完成${degradedLabels ? `（含 ${degradedLabels}）` : ""}${status.summary.ok ? "" : "（語意不合格）"}`,
+    );
   } catch (e) {
     status.summary = { ok: false, error: e.message };
     console.error(`AI 摘要失敗：${e.message}`);

@@ -1427,6 +1427,45 @@ body.layout-compact .col-list {
   font-size: 0.72rem;
   margin: 0;
 }
+.ai-brief-fallback-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-sm, 6px);
+  padding: 5px 8px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  color: var(--color-warning, #f59e0b);
+  line-height: 1.4;
+}
+.ai-fallback-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  background: rgba(245, 158, 11, 0.25);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fbbf24;
+}
+.ai-brief-degraded-body {
+  border-left: 2px solid rgba(245, 158, 11, 0.5);
+  padding-left: 8px;
+}
+.ai-brief-empty {
+  color: var(--color-muted);
+  font-style: italic;
+}
+.ai-brief-degraded {
+  color: var(--color-danger, #ef4444);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
 .ai-action {
   background: color-mix(in srgb, var(--color-accent) 10%, var(--color-panel-2));
   border: 1px solid var(--border-accent);
