@@ -103,9 +103,11 @@ describe("MapView helpers", () => {
     expect(firstTitle).toMatch(/…$/);
     expect(firstTitle).not.toBe(longTitle);
     expect(html).toContain(`title="${longTitle}"`);
-    expect(html).toContain("另有 2 則，放大後再拆讀。");
-    expect(html).not.toContain("第三則不應直接展開");
-    expect(html).not.toContain("第四則不應直接展開");
+    expect(html).toContain("另有 2 則，可展開完整列表（共 4 則，同座標免放大）");
+    expect(html).toContain("map-cluster-details");
+    expect(html).toContain("第三則不應直接展開");
+    expect(html).toContain("第四則不應直接展開");
+    expect(html).toContain("此區新聞");
   });
 
   it("builds focus hashes from event scope and id", () => {

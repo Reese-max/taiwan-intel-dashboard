@@ -6,6 +6,7 @@ type FakeElement = {
   value: string;
   onchange?: ((ev: Event) => void) | null;
   oninput?: ((ev: Event) => void) | null;
+  onclick?: (() => void) | null;
 };
 
 type FakeContainer = {
@@ -21,6 +22,7 @@ const createContainer = (): { el: FakeContainer; refs: Record<string, FakeElemen
     "#f-risk": { value: "" },
     "#f-range": { value: "" },
     "#f-query": { value: "" },
+    "#clear-region-btn": { value: "" },
   };
 
   const el: FakeContainer = {
@@ -42,6 +44,7 @@ const resetState = (): void => {
   setState({
     scope: "domestic",
     category: undefined,
+    region: undefined,
     minRisk: undefined,
     source: undefined,
     newsAuthority: undefined,
@@ -139,5 +142,19 @@ describe("FilterBar 國內分類選項", () => {
     vi.advanceTimersByTime(200);
 
     expect(getState().query).toBe("警政");
+  });
+
+  it("若有地區篩選則顯示標籤，點擊清除地區會更新 store", () => {
+    setState({ region: "臺北市" });
+    const { el } = createContainer();
+    renderFilterBar(el as unknown as HTMLElement, "domestic");
+
+    expect(el.innerHTML).toContain("region-filter-chip");
+    expect(el.innerHTML).toContain("臺北市");
+    expect(el.innerHTML).toContain('id="clear-region-btn"');
+
+    const clearBtn = el.querySelector("#clear-region-btn") as any;
+    clearBtn.onclick?.();
+    expect(getState().region).toBeUndefined();
   });
 });

@@ -4,6 +4,7 @@ import type { IntelEvent, RiskLevel, Scope } from "../types/event";
 import { esc } from "../utils/escape";
 import { getActionDecision } from "../utils/actionDecision";
 import { locationPrecisionLabel, locationRoleLabel } from "../utils/geoPolicy";
+import { setState } from "../store";
 
 const RISK_COLOR: Record<RiskLevel, string> = {
   low: "#3b82f6",
@@ -128,44 +129,56 @@ export function mapPopupHtml(e: IntelEvent): string {
 }
 
 export function clusterPopupHtml(events: IntelEvent[]): string {
-  const shown = events
+  const sorted = events
     .slice()
     .sort((a, b) => {
       const risk = RISK_RANK[b.riskLevel] - RISK_RANK[a.riskLevel];
       if (risk) return risk;
       return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-    })
-    .slice(0, CLUSTER_POPUP_ITEMS);
-  const hidden = Math.max(0, events.length - shown.length);
-  const primary = shown[0];
+    });
+  const shown = sorted.slice(0, CLUSTER_POPUP_ITEMS);
+  const remaining = sorted.slice(CLUSTER_POPUP_ITEMS);
+  const hidden = remaining.length;
+  const primary = sorted[0];
   const riskSummary = (["critical", "high", "medium", "low"] as RiskLevel[])
     .map((risk) => {
       const count = events.filter((e) => e.riskLevel === risk).length;
       return count ? `<span class="map-cluster-stat risk-${esc(risk)}">${esc(RISK_LABEL[risk])} ${count}</span>` : "";
     })
     .join("");
-  const items = shown
-      .map(
-        (e) => `<li>
-        <span class="map-cluster-risk risk-${esc(e.riskLevel)}">${esc(RISK_LABEL[e.riskLevel])}</span>
-        <span class="map-cluster-title" title="${esc(e.title)}">${esc(compactClusterTitle(e.title))}</span>
-        <span class="map-cluster-meta">${esc(e.region)}｜${esc(e.category)}</span>
-        <a class="map-cluster-action map-focus-btn" data-map-focus="${esc(e.id)}" href="${esc(eventFocusHash(e))}">查看</a>
-        </li>`,
-      )
-      .join("");
+
+  const renderItem = (e: IntelEvent, isRemaining = false) => `<li>
+    <span class="map-cluster-risk risk-${esc(e.riskLevel)}">${esc(RISK_LABEL[e.riskLevel])}</span>
+    <span class="${isRemaining ? "map-cluster-remaining-title" : "map-cluster-title"}" title="${esc(e.title)}">${esc(compactClusterTitle(e.title))}</span>
+    <span class="map-cluster-meta">${esc(e.region)}｜${esc(e.category)}</span>
+    <a class="map-cluster-action map-focus-btn" data-map-focus="${esc(e.id)}" href="${esc(eventFocusHash(e))}">查看</a>
+  </li>`;
+
+  const items = shown.map((e) => renderItem(e, false)).join("");
   const primaryAction = primary
     ? `<a class="map-cluster-action map-focus-btn" data-map-focus="${esc(primary.id)}" href="${esc(eventFocusHash(primary))}">查看最高風險</a>`
     : "";
-  const more = hidden ? `<div class="map-cluster-more">另有 ${hidden} 則，放大後再拆讀。</div>` : "";
+  const regionAction = primary && primary.region
+    ? `<button type="button" class="map-cluster-action filter-region-btn" data-filter-region="${esc(primary.region)}">此區新聞</button>`
+    : "";
+
+  const more = hidden
+    ? `<details class="map-cluster-details">
+        <summary class="map-cluster-more">另有 ${hidden} 則，可展開完整列表（共 ${events.length} 則，同座標免放大）</summary>
+        <ul class="map-cluster-remaining-list">${remaining.map((e) => renderItem(e, true)).join("")}</ul>
+      </details>`
+    : "";
+
   return `<div class="map-cluster-popup">
     <b>此區有 ${events.length} 則情報</b>
+    <div class="map-cluster-hint">（聚合標點非同一事件；同座標或同區域情報彙整）</div>
     <div class="map-cluster-summary" aria-label="此區風險構成">${riskSummary}</div>
     <div class="map-cluster-actions">
       <button class="map-cluster-action map-cluster-zoom" type="button">放大拆分</button>
       ${primaryAction}
+      ${regionAction}
     </div>
-    <ul>${items}</ul>
+    <ul class="map-cluster-primary-list">${items}</ul>
     ${more}
   </div>`;
 }
@@ -255,11 +268,50 @@ export class MapView {
 
     el.addEventListener("click", (ev) => {
       const target = (ev.target as HTMLElement).closest<HTMLElement>(".map-focus-btn[data-map-focus]");
-      if (!target) return;
-      ev.preventDefault();
-      const id = target.dataset.mapFocus;
-      if (id && this.onFocus) this.onFocus(id);
+      if (target) {
+        ev.preventDefault();
+        const id = target.dataset.mapFocus;
+        if (id && this.onFocus) this.onFocus(id);
+        return;
+      }
+      const regionBtn = (ev.target as HTMLElement).closest<HTMLElement>(".filter-region-btn[data-filter-region]");
+      if (regionBtn) {
+        ev.preventDefault();
+        const reg = regionBtn.dataset.filterRegion;
+        if (reg) setState({ region: reg });
+        return;
+      }
     });
+  }
+
+  async locateEvent(id: string): Promise<boolean> {
+    await this.ready;
+    const target = this._cachedLocated.find((e) => e.id === id);
+    if (!target || target.lat == null || target.lng == null) return false;
+
+    this.map.setView([target.lat, target.lng], Math.max(this.map.getZoom(), 14));
+    this.redraw();
+
+    window.setTimeout(() => {
+      let opened = false;
+      this.layer.eachLayer((layer: any) => {
+        if (layer.getLatLng && !opened) {
+          const ll = layer.getLatLng();
+          if (Math.abs(ll.lat - target.lat) < 0.005 && Math.abs(ll.lng - target.lng) < 0.005) {
+            layer.openPopup?.();
+            opened = true;
+          }
+        }
+      });
+      if (!opened) {
+        this.lib.popup()
+          .setLatLng([target.lat, target.lng])
+          .setContent(mapPopupHtml(target))
+          .openOn(this.map);
+      }
+    }, 50);
+
+    return true;
   }
 
   async resize(): Promise<void> {

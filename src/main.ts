@@ -1,7 +1,7 @@
 import "./styles/global.css";
 import { t } from "./i18n/zh-TW";
 import { getState, setState, subscribe } from "./store";
-import { loadEvents, filterEvents, loadMapEvents } from "./data/loader";
+import { loadEvents, filterEvents, loadMapEvents, explainOutOfFilter } from "./data/loader";
 import { edgeTypeLabel, loadNetwork, NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
 import { renderKpiStrip } from "./components/KpiStrip";
@@ -403,6 +403,7 @@ let summary: AiSummary | null = null;
 // 情報網聚焦：可選單一事件，或選一個 cluster 展開整群。
 let focusId: string | null = null;
 let focusCluster: string | null = null;
+let showOutOfFilterRelated = false;
 let applyingHash = false;
 let lastQuery = "";
 let lastViewKey = "";
@@ -435,6 +436,7 @@ function writeHash(mode: "replace" | "push" = "replace"): void {
   const params = new URLSearchParams();
   params.set("scope", s.scope);
   if (s.category) params.set("category", s.category);
+  if (s.region) params.set("region", s.region);
   if (s.minRisk) params.set("risk", s.minRisk);
   if (s.newsAuthority) params.set("news", s.newsAuthority);
   if (s.sinceDays) params.set("since", String(s.sinceDays));
@@ -463,6 +465,7 @@ function applyHash(): void {
   setState({
     scope,
     category: params.get("category") || undefined,
+    region: params.get("region") || undefined,
     minRisk: risk,
     newsAuthority: scope === "domestic" && isNewsAuthority(newsRaw) ? newsRaw : undefined,
     sinceDays,
@@ -495,6 +498,7 @@ function renderFilterSummary(displayCount: number, totalCount: number, focusLabe
   const chips: string[] = [];
   chips.push(`<span class="filter-chip is-base">${s.scope === "domestic" ? "國內" : "國際"}</span>`);
   if (s.category) chips.push(`<button type="button" class="filter-chip" data-clear-filter="category">分類：${esc(s.category)} ✕</button>`);
+  if (s.region) chips.push(`<button type="button" class="filter-chip" data-clear-filter="region">地區：${esc(s.region)} ✕</button>`);
   if (s.newsAuthority)
     chips.push(`<button type="button" class="filter-chip" data-clear-filter="newsAuthority">來源：${s.newsAuthority === "official" ? "官方警政新聞" : "媒體警政新聞"} ✕</button>`);
   if (s.minRisk)
@@ -504,7 +508,13 @@ function renderFilterSummary(displayCount: number, totalCount: number, focusLabe
   if (s.query) chips.push(`<button type="button" class="filter-chip" data-clear-filter="query">搜尋：${esc(s.query)} ✕</button>`);
   if (focusLabel) chips.push(`<button type="button" class="filter-chip is-focus" data-clear-filter="focus">焦點：${esc(focusLabel)} ✕</button>`);
 
-  const activeFilterCount = Number(Boolean(s.category)) + Number(Boolean(s.newsAuthority)) + Number(Boolean(s.minRisk)) + Number(Boolean(s.sinceDays)) + Number(Boolean(s.query));
+  const activeFilterCount =
+    Number(Boolean(s.category)) +
+    Number(Boolean(s.region)) +
+    Number(Boolean(s.newsAuthority)) +
+    Number(Boolean(s.minRisk)) +
+    Number(Boolean(s.sinceDays)) +
+    Number(Boolean(s.query));
   const mobileCount = document.getElementById("mobile-filter-count");
   if (mobileCount) {
     mobileCount.textContent = String(activeFilterCount);
@@ -521,7 +531,13 @@ function renderFilterSummary(displayCount: number, totalCount: number, focusLabe
     <button type="button" class="filter-clear-all" data-clear-filter="all">清除條件</button>`;
 }
 
-function renderFocusBar(events: IntelEvent[], net: NetworkIndex): void {
+interface FocusBarDetails {
+  centerOutOfFilterReasons?: string[];
+  inFilterCount?: number;
+  outFilterCount?: number;
+}
+
+function renderFocusBar(events: IntelEvent[], net: NetworkIndex, details?: FocusBarDetails): void {
   const bar = document.getElementById("focusbar")!;
   if (!focusId && !focusCluster) {
     bar.hidden = true;
@@ -545,15 +561,44 @@ function renderFocusBar(events: IntelEvent[], net: NetworkIndex): void {
     label = `關聯網：${esc(center ? center.title : focusId)}`;
     count = net.count(focusId);
   }
+
+  let extraHtml = "";
+  if (details?.centerOutOfFilterReasons && details.centerOutOfFilterReasons.length > 0) {
+    extraHtml += `<div class="focus-notice-warn">⚠️ 中心事件超出目前篩選條件（${esc(details.centerOutOfFilterReasons.join("、"))}），保留作為關聯核心</div>`;
+  }
+  if (focusId && typeof details?.outFilterCount === "number" && details.outFilterCount > 0) {
+    const inCount = details.inFilterCount ?? 0;
+    const outCount = details.outFilterCount;
+    extraHtml += `<div class="focus-related-split">
+      <span class="focus-split-text">篩選內相關報導：${inCount} 則 ｜ 篩選外相關報導：${outCount} 則</span>
+      <button type="button" id="toggle-out-filter-btn" class="toggle-out-filter-btn">
+        ${showOutOfFilterRelated ? "收合篩選外相關報導" : `展開篩選外相關報導（+${outCount} 則）`}
+      </button>
+    </div>`;
+  }
+
   bar.hidden = false;
-  bar.innerHTML = `<span class="focus-label">🔗 <strong>${label}</strong>（${count} 則${statusSuffix}）</span>
-    <button type="button" id="clear-focus" class="clear-focus">✕ 返回全部</button>`;
+  bar.innerHTML = `
+    <div class="focus-header-row">
+      <span class="focus-label">🔗 <strong>${label}</strong>（${count} 則${statusSuffix}）</span>
+      <button type="button" id="clear-focus" class="clear-focus">✕ 返回全部</button>
+    </div>
+    ${extraHtml}`;
+
   document.getElementById("clear-focus")!.onclick = () => {
     focusId = null;
     focusCluster = null;
+    showOutOfFilterRelated = false;
     writeHash("push");
     void refresh();
   };
+  const toggleBtn = document.getElementById("toggle-out-filter-btn");
+  if (toggleBtn) {
+    toggleBtn.onclick = () => {
+      showOutOfFilterRelated = !showOutOfFilterRelated;
+      void refresh();
+    };
+  }
 }
 
 async function refresh(): Promise<void> {
@@ -722,25 +767,60 @@ async function refresh(): Promise<void> {
   let display: IntelEvent[];
   let listGroups: ReturnType<typeof collapseSameIncident> | null = null;
   let collapsedGroupCount = 0;
+  let focusBarDetails: FocusBarDetails | undefined;
   const viewKey = focusCluster
     ? `cluster:${focusCluster}`
     : focusId
-      ? `focus:${focusId}`
-      : `list:${s.scope}:${s.category ?? ""}:${s.newsAuthority ?? ""}:${s.minRisk ?? ""}:${s.sinceDays ?? ""}:${s.query ?? ""}`;
+      ? `focus:${focusId}:${showOutOfFilterRelated ? "all" : "in"}`
+      : `list:${s.scope}:${s.category ?? ""}:${s.region ?? ""}:${s.newsAuthority ?? ""}:${s.minRisk ?? ""}:${s.sinceDays ?? ""}:${s.query ?? ""}`;
   const relationById = new Map<string, { label: string; why: string }>();
   if (focusCluster && net.cluster(focusCluster)) {
     const members = new Set(net.cluster(focusCluster)!.members);
     display = all.filter((e) => members.has(e.id)).sort(byTimeDesc);
   } else if (focusId && all.some((e) => e.id === focusId)) {
-    const order = new Map<string, number>([[focusId, Number.POSITIVE_INFINITY]]);
-    for (const r of net.related(focusId)) {
-      order.set(r.id, r.weight);
-      relationById.set(r.id, relationChip(r));
+    const center = byId.get(focusId)!;
+    const centerReasons = explainOutOfFilter(center, s);
+    const relatedRefs = net.related(focusId);
+    const inFilterRelated: { ref: RelatedRef; event: IntelEvent }[] = [];
+    const outFilterRelated: { ref: RelatedRef; event: IntelEvent }[] = [];
+
+    for (const r of relatedRefs) {
+      const ev = byId.get(r.id);
+      if (!ev) continue;
+      const reasons = explainOutOfFilter(ev, s);
+      if (reasons.length === 0) {
+        inFilterRelated.push({ ref: r, event: ev });
+      } else {
+        outFilterRelated.push({ ref: r, event: ev });
+      }
     }
-    display = all.filter((e) => order.has(e.id)).sort((a, b) => order.get(b.id)! - order.get(a.id)!);
+
+    inFilterRelated.sort((a, b) => b.ref.weight - a.ref.weight);
+    outFilterRelated.sort((a, b) => b.ref.weight - a.ref.weight);
+
+    const activeRelated = showOutOfFilterRelated
+      ? [...inFilterRelated, ...outFilterRelated]
+      : inFilterRelated;
+
+    for (const item of activeRelated) {
+      const chip = relationChip(item.ref);
+      const reasons = explainOutOfFilter(item.event, s);
+      if (reasons.length > 0) {
+        chip.why += `（超出篩選：${reasons.join("、")}）`;
+      }
+      relationById.set(item.ref.id, chip);
+    }
+
+    display = [center, ...activeRelated.map((x) => x.event)];
+    focusBarDetails = {
+      centerOutOfFilterReasons: centerReasons.length > 0 ? centerReasons : undefined,
+      inFilterCount: inFilterRelated.length,
+      outFilterCount: outFilterRelated.length,
+    };
   } else {
     focusId = null;
     focusCluster = null;
+    showOutOfFilterRelated = false;
     display = applySearchSubnet(filterEvents(all, s), net, s.query);
     listGroups = collapseSameIncident(display, net);
     collapsedGroupCount = listGroups.filter((g) => g.members.length > 1 && g.sourceCount >= 2).length;
@@ -819,7 +899,7 @@ async function refresh(): Promise<void> {
     resetEventListScroll(eventList);
     lastViewKey = viewKey;
   }
-  renderFocusBar(display, net);
+  renderFocusBar(display, net, focusBarDetails);
   if (relationNoticeEl) {
     if ((focusId || focusCluster) && net.state === "error") {
       relationNoticeEl.hidden = false;
@@ -877,6 +957,7 @@ async function refresh(): Promise<void> {
 function focusEvent(id: string): void {
   focusId = id;
   focusCluster = null;
+  showOutOfFilterRelated = false;
   writeHash("push");
   void refresh().then(() => {
     showFocusedListOnMobile();
@@ -889,6 +970,7 @@ function focusEvent(id: string): void {
 function focusClusterById(id: string): void {
   focusCluster = id;
   focusId = null;
+  showOutOfFilterRelated = false;
   writeHash("push");
   void refresh().then(() => {
     showFocusedListOnMobile();
@@ -908,8 +990,24 @@ function renderUsageTip(): void {
   };
 }
 
-// 點「🔗 關聯 N」→ 聚焦該事件的關聯網（事件委派，列表重繪後仍有效）。
+// 點「📍 本頁定位」、「🔍 查看此區新聞」或「🔗 關聯 N」
 document.getElementById("eventlist")!.addEventListener("click", (ev) => {
+  const locateBtn = (ev.target as HTMLElement).closest<HTMLButtonElement>(".locate-on-page-btn");
+  if (locateBtn?.dataset.locate) {
+    const id = locateBtn.dataset.locate;
+    void mapView.locateEvent(id).then((ok) => {
+      if (ok) {
+        document.getElementById("map")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    });
+    return;
+  }
+  const regionBtn = (ev.target as HTMLElement).closest<HTMLButtonElement>(".filter-region-btn");
+  if (regionBtn?.dataset.filterRegion) {
+    const reg = regionBtn.dataset.filterRegion;
+    setState({ region: reg });
+    return;
+  }
   const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>(".rel-link");
   if (!btn?.dataset.rel) return;
   focusEvent(btn.dataset.rel);
@@ -922,6 +1020,9 @@ document.getElementById("filter-summary")!.addEventListener("click", (ev) => {
   switch (btn.dataset.clearFilter) {
     case "category":
       setState({ category: undefined });
+      break;
+    case "region":
+      setState({ region: undefined });
       break;
     case "risk":
       setState({ minRisk: undefined });
@@ -938,13 +1039,22 @@ document.getElementById("filter-summary")!.addEventListener("click", (ev) => {
     case "focus":
       focusId = null;
       focusCluster = null;
+      showOutOfFilterRelated = false;
       writeHash("push");
       void refresh();
       break;
     case "all":
       focusId = null;
       focusCluster = null;
-      setState({ category: undefined, newsAuthority: undefined, minRisk: undefined, query: undefined, sinceDays: DEFAULT_SINCE_DAYS });
+      showOutOfFilterRelated = false;
+      setState({
+        category: undefined,
+        region: undefined,
+        newsAuthority: undefined,
+        minRisk: undefined,
+        query: undefined,
+        sinceDays: DEFAULT_SINCE_DAYS,
+      });
       break;
   }
   renderFilterBar(document.getElementById("filterbar")!, scope);
@@ -988,8 +1098,17 @@ document.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((btn) => {
     const scope = btn.dataset.scope as Scope;
     focusId = null;
     focusCluster = null;
+    showOutOfFilterRelated = false;
     setActiveScopeTab(scope);
-    setState({ scope, category: undefined, newsAuthority: undefined, minRisk: undefined, query: undefined, sinceDays: DEFAULT_SINCE_DAYS });
+    setState({
+      scope,
+      category: undefined,
+      region: undefined,
+      newsAuthority: undefined,
+      minRisk: undefined,
+      query: undefined,
+      sinceDays: DEFAULT_SINCE_DAYS,
+    });
     renderFilterBar(document.getElementById("filterbar")!, scope);
     revealScopeChangeOnMobile();
   };

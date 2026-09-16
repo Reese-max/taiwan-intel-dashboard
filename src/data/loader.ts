@@ -10,17 +10,80 @@ export interface FilterOptions {
   sinceDays?: number;
   now?: number;
   includeUnknownTime?: boolean;
+  region?: string;
+  query?: string;
+}
+
+export function explainOutOfFilter(e: IntelEvent, opts: FilterOptions): string[] {
+  const reasons: string[] = [];
+  const now = typeof opts.now === "number" && Number.isFinite(opts.now) ? opts.now : Date.now();
+  const cutoff = opts.sinceDays ? now - opts.sinceDays * 86400000 : undefined;
+  const maxFuture = opts.sinceDays ? now + 86400000 : undefined;
+  const targetRegion = opts.region ? opts.region.trim().replace(/^台(?=[北中南東])/, "臺") : "";
+
+  if (opts.category && e.category !== opts.category) {
+    reasons.push(`分類非「${opts.category}」`);
+  }
+  if (opts.minRisk && RISK_ORDER[e.riskLevel] < RISK_ORDER[opts.minRisk]) {
+    reasons.push(`風險未達「${opts.minRisk}」`);
+  }
+  if (targetRegion) {
+    const eReg = (e.region || "").trim().replace(/^台(?=[北中南東])/, "臺");
+    if (!eReg || (eReg !== targetRegion && !eReg.includes(targetRegion) && !targetRegion.includes(eReg))) {
+      reasons.push(`地點非「${opts.region}」`);
+    }
+  }
+  const isOfficialPoliceNews =
+    e.source.datasetId === "7505" ||
+    (e.source.datasetId === "tw-news" && e.source.authority === "official");
+  const isMediaPoliceNews = e.source.datasetId === "tw-news" && e.source.authority !== "official";
+  if (opts.newsAuthority === "official" && !isOfficialPoliceNews) {
+    reasons.push("來源非官方新聞");
+  } else if (opts.newsAuthority === "media" && !isMediaPoliceNews) {
+    reasons.push("來源非媒體新聞");
+  }
+
+  if (cutoff) {
+    const eventTime = e.timestamp ? Date.parse(e.timestamp) : NaN;
+    if (!Number.isFinite(eventTime)) {
+      if (!opts.includeUnknownTime) reasons.push("時間未明");
+    } else if (maxFuture && eventTime > maxFuture) {
+      reasons.push("超過未來時間範圍");
+    } else if (eventTime < cutoff) {
+      reasons.push(`時間超出近 ${opts.sinceDays} 天`);
+    }
+  }
+  if (opts.query) {
+    const q = opts.query.toLowerCase();
+    const title = (e.title || "").toLowerCase();
+    const summary = (e.summary || "").toLowerCase();
+    const region = (e.region || "").toLowerCase();
+    if (!title.includes(q) && !summary.includes(q) && !region.includes(q)) {
+      reasons.push(`未含關鍵字「${opts.query}」`);
+    }
+  }
+
+  return reasons;
 }
 
 export function filterEvents(events: IntelEvent[], opts: FilterOptions): IntelEvent[] {
   const now = typeof opts.now === "number" && Number.isFinite(opts.now) ? opts.now : Date.now();
   const cutoff = opts.sinceDays ? now - opts.sinceDays * 86400000 : undefined;
   const maxFuture = opts.sinceDays ? now + 86400000 : undefined;
+  const targetRegion = opts.region ? opts.region.trim().replace(/^台(?=[北中南東])/, "臺") : "";
+
   return events.filter((e) => {
     if (opts.scope && e.scope !== opts.scope) return false;
     if (opts.category && e.category !== opts.category) return false;
     if (opts.minRisk && RISK_ORDER[e.riskLevel] < RISK_ORDER[opts.minRisk]) return false;
     if (opts.source && e.source.name !== opts.source) return false;
+    if (targetRegion) {
+      const eReg = (e.region || "").trim().replace(/^台(?=[北中南東])/, "臺");
+      if (!eReg) return false;
+      if (eReg !== targetRegion && !eReg.includes(targetRegion) && !targetRegion.includes(eReg)) {
+        return false;
+      }
+    }
     const isOfficialPoliceNews =
       e.source.datasetId === "7505" ||
       (e.source.datasetId === "tw-news" && e.source.authority === "official");

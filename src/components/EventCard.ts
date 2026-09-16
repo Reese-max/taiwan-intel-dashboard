@@ -3,8 +3,8 @@ import { candidateSourceLabel, type CorroborationResult } from "../utils/corrobo
 import { riskBadge } from "./RiskBadge";
 import { esc, stripHtml } from "../utils/escape";
 import { getActionDecision } from "../utils/actionDecision";
-import { locationSearchLink } from "../utils/locationLink";
-import { locationPrecisionLabel, locationRoleLabel } from "../utils/geoPolicy";
+import { locationSearchLink, VAGUE_REGIONS } from "../utils/locationLink";
+import { isValidCoordinate, locationPrecisionLabel, locationRoleLabel } from "../utils/geoPolicy";
 
 export interface RelationChip {
   label: string;
@@ -136,14 +136,25 @@ export function eventCard(
       ? `<span class="single-source-note" title="${esc("目前僅見單一來源，需人工查證")}">${esc("單一來源·待查證")}</span>`
       : "";
   const temporal = temporalBadge(e.temporal, e.timestamp);
+  const canLocateOnPage = isValidCoordinate(e.lat, e.lng) && e.locationPrecision !== "global";
+  const locateBtn = canLocateOnPage
+    ? `<button type="button" class="card-loc-action locate-on-page-btn" data-locate="${esc(e.id)}" title="在地圖上定位並標示此事件">📍 本頁定位</button>`
+    : "";
+
+  const reg = typeof e.region === "string" ? e.region.trim() : "";
+  const canFilterRegion = reg && !VAGUE_REGIONS.has(reg.toLowerCase()) && reg.length <= 160;
+  const regionBtn = canFilterRegion
+    ? `<button type="button" class="card-loc-action filter-region-btn" data-filter-region="${esc(reg)}" title="查看「${esc(reg)}」相關情報">🔍 查看此區新聞</button>`
+    : "";
+
   const location = locationSearchLink(e);
   const locationHtml = location
-    ? `<a class="location-link src-link" href="${esc(location.href)}" target="_blank" rel="noopener noreferrer" title="${esc(location.description)}">${esc(location.label)}</a>`
+    ? `<a class="location-link src-link" href="${esc(location.href)}" target="_blank" rel="noopener noreferrer" title="${esc(location.description)}">↗ ${esc(location.label)}</a>`
     : "";
   return `
     <article class="event-card" data-id="${esc(e.id)}">
       <header>${riskBadge(e.riskLevel)} <span class="cat">${esc(e.category)}</span>${temporal}
-        <span class="region">${esc(e.region)}</span>${locationHtml}${relationChip}${corroborationChip}${extraHeaderHtml}${rel}</header>
+        <span class="region">${esc(e.region)}</span>${locateBtn}${regionBtn}${locationHtml}${relationChip}${corroborationChip}${extraHeaderHtml}${rel}</header>
       <h3>${esc(e.title)}</h3>
       <p class="summary">${esc(stripHtml(e.summary))}</p>
       ${decisionPanel(e, corroboration)}

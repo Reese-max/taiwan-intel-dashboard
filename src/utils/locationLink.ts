@@ -8,7 +8,7 @@ export interface LocationLink {
   kind: "coordinates" | "region";
 }
 
-const VAGUE_REGIONS = new Set([
+export const VAGUE_REGIONS = new Set([
   "", "全國", "未知", "不詳", "未提供", "—", "-", "全球", "國際", "海外",
   "unknown", "global", "worldwide", "n/a",
 ]);

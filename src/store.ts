@@ -8,6 +8,7 @@ export interface AppState {
   newsAuthority?: NewsAuthority;
   sinceDays?: number;
   query?: string;
+  region?: string;
 }
 
 type Listener = (s: AppState) => void;

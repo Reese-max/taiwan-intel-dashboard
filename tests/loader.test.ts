@@ -99,4 +99,71 @@ describe("filterEvents", () => {
       vi.useRealTimers();
     }
   });
+
+  it("支援地區篩選與台／臺異體字正規化匹配", () => {
+    const events: IntelEvent[] = [
+      { ...base, id: "tp-main", region: "臺北市" },
+      { ...base, id: "tp-sub", region: "台北市中正區" },
+      { ...base, id: "ntp", region: "新北市" },
+      { ...base, id: "tc", region: "臺中市西區" },
+    ];
+
+    expect(filterEvents(events, { region: "臺北市" }).map((e) => e.id)).toEqual(["tp-main", "tp-sub"]);
+    expect(filterEvents(events, { region: "台北市" }).map((e) => e.id)).toEqual(["tp-main", "tp-sub"]);
+    expect(filterEvents(events, { region: "台中市" }).map((e) => e.id)).toEqual(["tc"]);
+    expect(filterEvents(events, { region: "新北市" }).map((e) => e.id)).toEqual(["ntp"]);
+  });
+});
+
+import { explainOutOfFilter } from "../src/data/loader";
+
+describe("explainOutOfFilter", () => {
+  it("回傳未符條件之明確原因，符合時回傳空陣列", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-06-20T00:00:00+08:00"));
+      const event: IntelEvent = {
+        ...base,
+        id: "ev-out",
+        category: "治安",
+        riskLevel: "low",
+        region: "臺南市",
+        timestamp: "2026-06-10T00:00:00+08:00", // 10 days ago
+      };
+
+      const reasons = explainOutOfFilter(event, {
+        category: "反詐",
+        minRisk: "high",
+        region: "臺北市",
+        sinceDays: 3,
+        query: "投資",
+      });
+
+      expect(reasons).toContain("分類非「反詐」");
+      expect(reasons).toContain("風險未達「high」");
+      expect(reasons).toContain("地點非「臺北市」");
+      expect(reasons).toContain("時間超出近 3 天");
+      expect(reasons).toContain("未含關鍵字「投資」");
+
+      // 符合條件時
+      const matchingEvent: IntelEvent = {
+        ...base,
+        id: "ev-match",
+        category: "反詐",
+        riskLevel: "high",
+        region: "臺北市中正區",
+        timestamp: "2026-06-19T10:00:00+08:00",
+        title: "投資詐騙破獲",
+      };
+      expect(explainOutOfFilter(matchingEvent, {
+        category: "反詐",
+        minRisk: "high",
+        region: "台北市",
+        sinceDays: 3,
+        query: "投資",
+      })).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

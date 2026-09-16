@@ -33,7 +33,13 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>
       <input id="f-query" type="search" aria-label="關鍵字搜尋" placeholder="搜尋情報關鍵字…（自動帶出關聯）" value="${esc(state.query ?? "")}">
       <kbd class="search-hint" aria-hidden="true">/</kbd>
-    </div>`;
+    </div>
+    ${state.region ? `
+      <span class="region-filter-chip" id="region-chip" aria-label="地區條件：${esc(state.region)}">
+        📍 ${esc(state.region)}
+        <button type="button" id="clear-region-btn" class="clear-region-btn" aria-label="清除地區條件" title="清除地區條件">✕</button>
+      </span>
+    ` : ""}`;
   container.querySelector<HTMLSelectElement>("#f-cat")!.value = state.category ?? "";
   const authority = container.querySelector<HTMLSelectElement>("#f-authority");
   if (authority) authority.value = state.newsAuthority ?? "";
@@ -57,4 +63,8 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
     const input = (ev as Event).target as HTMLInputElement;
     setState({ query: input.value.trim() || undefined });
   }, 200);
+  const clearRegionBtn = container.querySelector<HTMLButtonElement>("#clear-region-btn");
+  if (clearRegionBtn) {
+    clearRegionBtn.onclick = () => setState({ region: undefined });
+  }
 }

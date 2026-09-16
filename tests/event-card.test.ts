@@ -280,4 +280,63 @@ describe("eventCard", () => {
     expect(html).toContain("獨立事件新聞");
     expect(html).toContain("新北市");
   });
+
+  it("卡片分開三個動作：本頁定位、查看此區新聞、外部地圖，無座標時保留新聞閱讀", () => {
+    const fullLocEvent: IntelEvent = {
+      id: "loc-test-1",
+      title: "台北車站周邊巡邏",
+      region: "臺北市中正區",
+      lat: 25.0478,
+      lng: 121.517,
+      locationPrecision: "district",
+      timestamp: "2026-06-27T00:00:00.000Z",
+      category: "治安",
+      scope: "domestic",
+      riskLevel: "medium",
+      summary: "內容摘要",
+      source: {
+        name: "中央社",
+        type: "news-rss",
+        fetchedAt: "2026-06-27T00:00:00.000Z",
+      },
+    };
+
+    const htmlFull = eventCard(fullLocEvent, 0);
+    expect(htmlFull).toContain("locate-on-page-btn");
+    expect(htmlFull).toContain('data-locate="loc-test-1"');
+    expect(htmlFull).toContain("📍 本頁定位");
+    expect(htmlFull).toContain("filter-region-btn");
+    expect(htmlFull).toContain('data-filter-region="臺北市中正區"');
+    expect(htmlFull).toContain("🔍 查看此區新聞");
+    expect(htmlFull).toContain("location-link");
+    expect(htmlFull).toContain("google.com/maps");
+    expect(htmlFull).toContain("查詢區域");
+
+    // 缺少座標：不顯示本頁定位，但若有具體行政區仍可看此區新聞
+    const noCoordEvent: IntelEvent = {
+      ...fullLocEvent,
+      id: "no-coord",
+      lat: undefined,
+      lng: undefined,
+    };
+    const htmlNoCoord = eventCard(noCoordEvent, 0);
+    expect(htmlNoCoord).not.toContain("locate-on-page-btn");
+    expect(htmlNoCoord).toContain("filter-region-btn");
+    expect(htmlNoCoord).toContain("台北車站周邊巡邏");
+
+    // 概略/籠統位置（如全國、台灣）：不提供地區過濾按鈕，保留新聞閱讀
+    const vagueEvent: IntelEvent = {
+      ...fullLocEvent,
+      id: "vague-loc",
+      region: "全國",
+      lat: undefined,
+      lng: undefined,
+      locationPrecision: "global",
+    };
+    const htmlVague = eventCard(vagueEvent, 0);
+    expect(htmlVague).not.toContain("locate-on-page-btn");
+    expect(htmlVague).not.toContain("filter-region-btn");
+    expect(htmlVague).toContain("全國");
+    expect(htmlVague).toContain("台北車站周邊巡邏");
+  });
 });
