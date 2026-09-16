@@ -97,7 +97,7 @@ export interface RelatedRef {
 }
 
 const TYPE_LABEL: Record<EdgeType, string> = {
-  "same-incident": "跨源佐證",
+  "same-incident": "同事件候選（待查證）",
   "same-entity": "共享實體",
   "same-topic": "同題情勢（弱關聯）",
 };

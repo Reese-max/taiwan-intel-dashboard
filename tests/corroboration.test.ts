@@ -40,7 +40,7 @@ describe("corroborationOf", () => {
     expect(corroborationOf("a", events, fakeNet({}))).toMatchObject({ sources: 1, confirmed: false });
   });
 
-  it("有 2 個 same-incident 異源鄰居時，計為 3 源並確認", () => {
+  it("有 2 個 same-incident 異源鄰居時，保留 3 個來源標記但不確認", () => {
     const events = byId([event("a", "來源A"), event("b", "來源B"), event("c", "來源C")]);
     const net = fakeNet({
       a: [
@@ -49,7 +49,7 @@ describe("corroborationOf", () => {
       ],
     });
 
-    expect(corroborationOf("a", events, net)).toMatchObject({ sources: 3, confirmed: true });
+    expect(corroborationOf("a", events, net)).toMatchObject({ sources: 3, confirmed: false, verification: "unverified" });
   });
 
   it("鄰居同 source.name 時會去重", () => {
@@ -61,7 +61,7 @@ describe("corroborationOf", () => {
       ],
     });
 
-    expect(corroborationOf("a", events, net)).toMatchObject({ sources: 2, confirmed: true });
+    expect(corroborationOf("a", events, net)).toMatchObject({ sources: 2, confirmed: false, verification: "unverified" });
   });
 
   it("same-topic 與 same-entity 不算佐證", () => {
@@ -85,13 +85,14 @@ describe("corroborationOf", () => {
       ],
     });
 
-    expect(corroborationOf("a", events, net)).toMatchObject({ sources: 2, confirmed: true });
+    expect(corroborationOf("a", events, net)).toMatchObject({ sources: 2, confirmed: false, verification: "unverified" });
   });
 
   it("事件本身不在 byId 時回傳單一來源待查證預設值", () => {
     expect(corroborationOf("missing", byId([event("a", "來源A")]), fakeNet({}))).toMatchObject({
       sources: 1,
       confirmed: false,
+      verification: "unverified",
     });
   });
 
@@ -161,7 +162,7 @@ describe("corroborationOf", () => {
     });
   });
 
-  it("不同發布者報導同一事件時，確認為多源佐證", () => {
+  it("不同發布者的同事件候選只提供多來源線索，維持未查證", () => {
     const ev1: IntelEvent = {
       ...event("a", "中央社 RSS"),
       source: {
@@ -190,7 +191,8 @@ describe("corroborationOf", () => {
     expect(res).toMatchObject({
       sources: 2,
       channels: 2,
-      confirmed: true,
+      confirmed: false,
+      verification: "unverified",
       isMultiChannel: false,
     });
   });

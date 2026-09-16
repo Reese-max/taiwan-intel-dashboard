@@ -93,35 +93,28 @@ test("KPI 卡片：點擊危急／高風險卡可過濾清單", async ({ page })
   await expect(page.locator("#eventlist")).toBeVisible();
 });
 
-// cross-source corroboration：用 DOM 探索尋找至少一張 same-incident 回接的事件卡。
-test("跨源佐證徽章：事件清單可呈現 N 源佐證 chip", async ({ page }) => {
-  test.setTimeout(120_000);
-
-  const findChip = async (): Promise<boolean> => {
-    await expect(page.locator("#eventlist > *").first()).toBeVisible({ timeout: 30_000 });
-    for (let i = 0; i < 100; i += 1) {
-      if ((await page.locator("#eventlist .corroboration-chip").count()) > 0) return true;
-      const loadMore = page.locator("#eventlist .load-more-btn");
-      if ((await loadMore.count()) === 0) break;
-      await loadMore.click();
-    }
-    return false;
+// 固定候選資料驗證提示，不再因 live data 沒有舊佐證徽章就跳過。
+test("同事件候選：多來源卡片仍顯示待查證並保留原文核對提醒", async ({ page }) => {
+  const now = new Date().toISOString();
+  const events = ["candidate-a", "candidate-b"].map((id) => ({
+    id, title: `合成測試報導 ${id}`, summary: "僅為測試，不是實際案件。", region: "臺北市",
+    timestamp: now, category: "治安", scope: "domestic", riskLevel: "high",
+    lat: 25.03, lng: 121.56, locationPrecision: "city",
+    source: { name: id, publisherName: id, type: "news-rss", url: `https://${id}.example/news/1`, fetchedAt: now },
+  }));
+  const empty = { nodes: [], edges: [], clusters: [], stats: {} };
+  const net = {
+    generatedAt: now,
+    domestic: { ...empty, edges: [{ a: "candidate-a", b: "candidate-b", type: "same-incident", weight: 1.2, why: "同事件候選，仍需查證" }] },
+    international: empty,
   };
-
-  await page.goto("/#scope=domestic&since=5");
-  let found = await findChip();
-
-  if (!found) {
-    await page.locator("#f-range").selectOption("");
-    found = await findChip();
-  }
-
-  if (!found) {
-    await page.locator('button[data-scope="international"]').click();
-    await page.locator("#f-range").selectOption("");
-    found = await findChip();
-  }
-
-  test.skip(!found, "目前載入資料中沒有可探索到的 .corroboration-chip（same-incident 跨源佐證徽章）");
-  await expect(page.locator("#eventlist .corroboration-chip").first()).toContainText(/\d+ 源佐證/);
+  await page.route("**/data/domestic.json", (route) => route.fulfill({ json: events }));
+  await page.route("**/data/domestic.map.json", (route) => route.fulfill({ json: events }));
+  await page.route("**/data/network.json", (route) => route.fulfill({ json: net }));
+  await page.goto("/#scope=domestic&focus=candidate-a");
+  await expect(page.locator("#eventlist .candidate-source-note")).toHaveCount(2, { timeout: 30_000 });
+  await expect(page.locator("#eventlist .candidate-source-note").first()).toHaveText("多來源線索（2 個標記）·待查證");
+  await expect(page.locator("#eventlist .corroboration-chip")).toHaveCount(0);
+  await expect(page.locator('#eventlist [data-id="candidate-a"] .event-decision')).toContainText("先查證原文再行動");
+  await expect(page.locator('#eventlist [data-id="candidate-a"] .location-link')).toContainText("非案發點");
 });
