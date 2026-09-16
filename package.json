@@ -34,7 +34,8 @@
     "serve": "node --env-file=.env server/index.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "check": "npm run test && npm run build"
+    "check": "npm run test && npm run build",
+    "feed:govintel": "node scripts/govintel-discovery.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

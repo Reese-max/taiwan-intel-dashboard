@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-16T12:00:00.000Z",
+  "operating_state": "PAUSED",
+  "stale": true,
+  "operating_state_source": "contract",
+  "source_snapshot_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "window": {
+    "since_hours": 72
+  },
+  "truncated": false,
+  "item_count": 2,
+  "excluded_counts": {
+    "out_of_window": 0,
+    "category_filtered": 0,
+    "no_source_identity": 0,
+    "duplicate_source": 0,
+    "scope_filtered": 0,
+    "malformed": 0,
+    "truncated": 0
+  },
+  "items": [
+    {
+      "discovery_id": "gd-cc6d1cdd71e2823d",
+      "title": "消防署發布大雷雨即時訊息",
+      "event_time": "2026-09-16T09:00:00.000Z",
+      "observed_at": "2026-09-16T09:30:00Z",
+      "region": "全國",
+      "lat": null,
+      "lng": null,
+      "location_precision": "city",
+      "category": "災防",
+      "risk_level": "medium",
+      "summary": "範例摘要",
+      "entities": null,
+      "topic": null,
+      "source_url": "http://www.nfa.gov.tw/example",
+      "publisher_name": "內政部消防署",
+      "authority": "official",
+      "source_confidence": null,
+      "ingest_method": "gov-open-data",
+      "original_dataset_id": "ncdr-cap-alert",
+      "record_ref": "NFA_Example_001",
+      "original_source_identity": "ncdr-cap-alert:NFA_Example_001",
+      "rights_status": "OPEN_DATA"
+    },
+    {
+      "discovery_id": "gd-d3617ded4f4bd9b1",
+      "title": "詐騙集團假冒客服詐騙",
+      "event_time": "2026-09-16T09:00:00.000Z",
+      "observed_at": "2026-09-16T09:31:00Z",
+      "region": "全國",
+      "lat": null,
+      "lng": null,
+      "location_precision": "city",
+      "category": "反詐",
+      "risk_level": "medium",
+      "summary": "範例摘要",
+      "entities": null,
+      "topic": null,
+      "source_url": "https://news.example.com/article/1",
+      "publisher_name": "範例新聞",
+      "authority": "media",
+      "source_confidence": "verified",
+      "ingest_method": "direct-rss",
+      "original_dataset_id": "tw-news",
+      "record_ref": "https://news.example.com/article/1",
+      "original_source_identity": "tw-news:https://news.example.com/article/1",
+      "rights_status": "REVIEW_REQUIRED"
+    }
+  ]
+}
