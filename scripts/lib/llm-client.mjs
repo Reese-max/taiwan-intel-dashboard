@@ -121,7 +121,7 @@ export async function chatVia(c, messages, maxTokens, temperature) {
         if (typeof json.model === "string" && json.model) lastRespondedModel = json.model;
         let content = json.choices?.[0]?.message?.content || "";
         // 推理模型（如 MiniMax）會輸出 <think>…</think>，need 剝除避免污染摘要/JSON。
-        content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+        content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/\uFFFD/g, "").trim();
         // 殘留未閉合 <think> ＝ 推理被 max_tokens 截斷、無有效輸出。
         if (/<think>/i.test(content)) return "";
         return toTraditional(content);

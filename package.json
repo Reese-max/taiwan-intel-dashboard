@@ -8,6 +8,7 @@
     "build:static": "tsc --noEmit && node scripts/build-network.mjs && node scripts/build-static.mjs",
     "build:network": "node scripts/build-network.mjs",
     "check:network-contract": "node scripts/assert-network-contract.mjs",
+    "summary": "node --env-file=.env scripts/generate-summary.mjs",
     "fetch:police": "node --env-file=.env scripts/fetch-live.mjs --sources=police",
     "refresh": "node --env-file=.env scripts/fetch-live.mjs --exclusive",
     "refresh:news": "node --env-file=.env scripts/fetch-live.mjs --sources=police,twnews,missing",
