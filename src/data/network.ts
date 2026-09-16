@@ -1,6 +1,7 @@
 // 情報網前端載入層：讀 build-time 產出的 network.json，建立 事件id → 相連事件 的索引。
 // 前端零計算（關聯在抓取階段算好），這裡只做 O(E) 建索引與查詢。
 import type { Scope } from "../types/event";
+import { computeSha256Hex } from "../utils/sha256";
 
 export type EdgeType = "same-incident" | "same-entity" | "same-topic";
 
@@ -222,6 +223,7 @@ export interface LoadNetworkOptions {
   previousIndex?: NetworkIndex | null;
   networkUrl?: string;
   expectedSnapshotId?: string;
+  expectedSha256?: string;
 }
 
 // 載入並建索引；明確區分 ready、empty、error、stale。
@@ -260,13 +262,33 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
     return NetworkIndex.createError(errorMsg);
   }
 
+  let rawText: string | null = null;
   let net: IntelNetwork;
-  try {
-    net = (await res.json()) as IntelNetwork;
-  } catch (err: unknown) {
-    const errorMsg = `情報網資料格式錯誤 (JSON 無法解析: ${err instanceof Error ? err.message : String(err)})`;
-    if (previous) return NetworkIndex.createStale(previous, errorMsg);
-    return NetworkIndex.createError(errorMsg);
+  if (typeof res.text === "function") {
+    rawText = await res.text();
+    if (options.expectedSha256 && globalThis.crypto?.subtle) {
+      const hash = await computeSha256Hex(rawText);
+      if (hash && hash !== options.expectedSha256) {
+        const errorMsg = `情報網 SHA-256 不符 (期望 ${options.expectedSha256}，實收 ${hash})`;
+        if (previous) return NetworkIndex.createStale(previous, errorMsg);
+        return NetworkIndex.createError(errorMsg);
+      }
+    }
+    try {
+      net = JSON.parse(rawText) as IntelNetwork;
+    } catch (err: unknown) {
+      const errorMsg = `情報網資料格式錯誤 (JSON 無法解析: ${err instanceof Error ? err.message : String(err)})`;
+      if (previous) return NetworkIndex.createStale(previous, errorMsg);
+      return NetworkIndex.createError(errorMsg);
+    }
+  } else {
+    try {
+      net = (await res.json()) as IntelNetwork;
+    } catch (err: unknown) {
+      const errorMsg = `情報網資料格式錯誤 (JSON 無法解析: ${err instanceof Error ? err.message : String(err)})`;
+      if (previous) return NetworkIndex.createStale(previous, errorMsg);
+      return NetworkIndex.createError(errorMsg);
+    }
   }
 
   if (!net || typeof net !== "object") {
@@ -275,10 +297,17 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
     return NetworkIndex.createError(errorMsg);
   }
 
-  if (options.expectedSnapshotId && net.snapshotId && net.snapshotId !== options.expectedSnapshotId) {
-    const errorMsg = `情報網快照版本不符 (期望 ${options.expectedSnapshotId}，實收 ${net.snapshotId})`;
-    if (previous) return NetworkIndex.createStale(previous, errorMsg);
-    return NetworkIndex.createError(errorMsg);
+  if (options.expectedSnapshotId) {
+    if (!net.snapshotId || !net.snapshotId.trim()) {
+      const errorMsg = `情報網缺少快照版本 (期望 ${options.expectedSnapshotId}，實收無版本)`;
+      if (previous) return NetworkIndex.createStale(previous, errorMsg);
+      return NetworkIndex.createError(errorMsg, { snapshotId: options.expectedSnapshotId });
+    }
+    if (net.snapshotId !== options.expectedSnapshotId) {
+      const errorMsg = `情報網快照版本不符 (期望 ${options.expectedSnapshotId}，實收 ${net.snapshotId})`;
+      if (previous) return NetworkIndex.createStale(previous, errorMsg);
+      return NetworkIndex.createError(errorMsg, { snapshotId: net.snapshotId });
+    }
   }
 
   const scopeNet = net[scope];

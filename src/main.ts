@@ -2,7 +2,7 @@ import "./styles/global.css";
 import { t } from "./i18n/zh-TW";
 import { getState, setState, subscribe } from "./store";
 import { loadEvents, filterEvents, loadMapEvents } from "./data/loader";
-import { edgeTypeLabel, loadNetwork, type NetworkIndex, type RelatedRef } from "./data/network";
+import { edgeTypeLabel, loadNetwork, NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
 import { renderKpiStrip } from "./components/KpiStrip";
 import { renderRelationGraph, type RelationNode } from "./components/RelationGraph";
@@ -37,6 +37,7 @@ const MOBILE_LAYOUT_QUERY = "(max-width: 640px), (max-width: 932px) and (max-hei
 let cohortManifest: CohortManifest | null = null;
 let refreshRequestId = 0;
 const netAutoRetried: Record<string, number> = {};
+const manifestAutoRetried: Record<string, number> = {};
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -567,29 +568,98 @@ async function refresh(): Promise<void> {
     if (requestId !== refreshRequestId) return;
   }
 
+  const fetchCohortPair = async (manifest: CohortManifest | null) => {
+    const manifestEvents = manifest?.scopes?.[s.scope]?.events;
+    const eventsPath = manifestEvents ? `./data/${manifestEvents}` : `./data/${s.scope}.json`;
+    const expectedEventsHash =
+      manifest?.files?.[manifestEvents || ""]?.sha256 || manifest?.scopes?.[s.scope]?.sha256;
+    const manifestNetwork = manifest?.scopes?.[s.scope]?.network;
+    const networkPath = manifestNetwork ? `./data/${manifestNetwork}` : "./data/network.json";
+    const expectedNetworkHash = manifest?.files?.[manifestNetwork || "network.json"]?.sha256;
+
+    return await Promise.all([
+      cache[s.scope] ??
+        loadEvents(s.scope, {
+          url: eventsPath,
+          expectedSha256: expectedEventsHash,
+        }),
+      netCache[s.scope] ??
+        loadNetwork(s.scope, {
+          networkUrl: networkPath,
+          expectedSnapshotId: manifest?.snapshotId,
+          expectedSha256: expectedNetworkHash,
+          previousIndex: netCache[s.scope],
+        }),
+    ]);
+  };
+
   // 事件與情報網兩支 fetch 並行（原本串行，第二支要等第一支完成才開始）。
   if (!cache[s.scope] || !netCache[s.scope]) {
     // 首載/切換 scope 時主資料尚未快取：顯示載入佔位（篩選變更走快取、不會閃爍）。
     if (!cache[s.scope]) eventList.innerHTML = `<p class="empty">情報載入中…</p>`;
     try {
-      const [ev, net] = await Promise.all([
-        cache[s.scope] ?? loadEvents(s.scope),
-        netCache[s.scope] ??
-          loadNetwork(s.scope, {
-            expectedSnapshotId: cohortManifest?.snapshotId,
-            previousIndex: netCache[s.scope],
-          }),
-      ]);
+      let [ev, net] = await fetchCohortPair(cohortManifest);
       if (requestId !== refreshRequestId) return;
-      cache[s.scope] = ev;
-      netCache[s.scope] = net;
+
+      const isMismatch = net.error && /不符|缺少快照版本/i.test(net.error);
+      if (isMismatch && (manifestAutoRetried[s.scope] ?? 0) < 1) {
+        manifestAutoRetried[s.scope] = 1;
+        const refreshedManifest = await loadManifest();
+        if (requestId !== refreshRequestId) return;
+        if (refreshedManifest) {
+          cohortManifest = refreshedManifest;
+          try {
+            [ev, net] = await fetchCohortPair(cohortManifest);
+            if (requestId !== refreshRequestId) return;
+          } catch {
+            // 保持現狀
+          }
+        }
+      }
+
+      if (net.error && /不符|缺少快照版本/i.test(net.error)) {
+        if (cache[s.scope] && netCache[s.scope]?.state !== "error") {
+          // 保留先前一致快取
+        } else {
+          cache[s.scope] = ev;
+          netCache[s.scope] = NetworkIndex.createError(
+            "情報網與事件快照版本不一致，已停用關聯網以維護資料正確性",
+            { snapshotId: cohortManifest?.snapshotId },
+          );
+        }
+      } else {
+        cache[s.scope] = ev;
+        netCache[s.scope] = net;
+      }
     } catch (err) {
       if (requestId !== refreshRequestId) return;
+      const isHashMismatch = err instanceof Error && /SHA-256 不符/i.test(err.message);
+      if (isHashMismatch && (manifestAutoRetried[s.scope] ?? 0) < 1) {
+        manifestAutoRetried[s.scope] = 1;
+        const refreshedManifest = await loadManifest();
+        if (requestId !== refreshRequestId) return;
+        if (refreshedManifest) {
+          cohortManifest = refreshedManifest;
+          try {
+            const [ev, net] = await fetchCohortPair(cohortManifest);
+            if (requestId !== refreshRequestId) return;
+            cache[s.scope] = ev;
+            netCache[s.scope] = net;
+          } catch {
+            // 仍失敗
+          }
+        }
+      }
+
       // 主資料 fetch 失敗：無既有快取時顯示可重試錯誤卡，不留白、不中斷（不 throw）。
       if (!cache[s.scope]) {
         const msg = err instanceof Error ? err.message : String(err);
         eventList.innerHTML = `<div class="empty load-error">情報載入失敗（${esc(msg)}）<button type="button" id="retry-load" class="retry-load">重試</button></div>`;
-        document.getElementById("retry-load")?.addEventListener("click", () => void refresh());
+        document.getElementById("retry-load")?.addEventListener("click", () => {
+          cohortManifest = null;
+          manifestAutoRetried[s.scope] = 0;
+          void refresh();
+        });
         return;
       }
       // 有舊快取則沿用，靜默續繪
@@ -600,8 +670,11 @@ async function refresh(): Promise<void> {
   if (netCache[s.scope]?.state === "error" && (netAutoRetried[s.scope] ?? 0) < 1) {
     netAutoRetried[s.scope] = 1;
     try {
+      const manifestNetwork = cohortManifest?.scopes?.[s.scope]?.network;
       const retriedNet = await loadNetwork(s.scope, {
+        networkUrl: manifestNetwork ? `./data/${manifestNetwork}` : "./data/network.json",
         expectedSnapshotId: cohortManifest?.snapshotId,
+        expectedSha256: cohortManifest?.files?.[manifestNetwork || "network.json"]?.sha256,
         previousIndex: netCache[s.scope],
       });
       if (requestId !== refreshRequestId) return;
@@ -758,6 +831,8 @@ async function refresh(): Promise<void> {
       document.getElementById("retry-network-btn")?.addEventListener("click", () => {
         delete netCache[s.scope];
         netAutoRetried[s.scope] = 0;
+        manifestAutoRetried[s.scope] = 0;
+        cohortManifest = null;
         void refresh();
       });
     } else if ((focusId || focusCluster) && net.state === "stale") {
@@ -770,6 +845,8 @@ async function refresh(): Promise<void> {
       document.getElementById("retry-network-btn")?.addEventListener("click", () => {
         delete netCache[s.scope];
         netAutoRetried[s.scope] = 0;
+        manifestAutoRetried[s.scope] = 0;
+        cohortManifest = null;
         void refresh();
       });
     } else {
