@@ -86,3 +86,12 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 - `docs/specs/` — 設計/規格（含 2026-07-03 強化與可持續性計畫）
 - `docs/plans/` — 實作計畫
 - `docs/reports/` — 診斷報告（含新聞來源漏斗診斷）
+- `docs/research/` — 研究與決策紀錄（含授權與權利邊界研究）
+
+## 授權與權利邊界（Licensing & Rights）
+
+本專案儲存庫之公開可見性不代表授予第三方任意再利用許可。詳細權利分層、政府資料條款與內容引用邊界請參見 [`docs/research/issue-19-licensing-decision.md`](docs/research/issue-19-licensing-decision.md)（所有授權選項目前待專案擁有者審核決定）：
+- 原創原始碼：保留所有權利，待選定正式開源條款。
+- 政府開放資料：受原發布機關之「政府資料開放授權條款」或宣告拘束，保留來源標註。
+- 新聞與媒體：僅作必要之標題與短摘要引述並附原文連結，不重新散布全文；權利未知不代表允許再利用。
+- 下游發現饋送（Discovery Feed）：遵循相同權利規則，未經授權資料標記為 `REVIEW_REQUIRED`。
