@@ -306,15 +306,35 @@ describe("CLI end-to-end", () => {
     }
   });
 
-  it("真實 domestic.json 產出符合 schema 的 feed", () => {
-    const feed = JSON.parse(readFileSync("public/data/govintel-discovery.json", "utf8"));
-    expect(feed.schema_version).toBe(1);
-    expect(["ACTIVE", "DEGRADED", "RESTORING", "PAUSED"]).toContain(feed.operating_state);
-    expect(feed.stale).toBe(feed.operating_state !== "ACTIVE");
-    for (const it2 of feed.items) {
-      expect(it2.discovery_id).toMatch(/^gd-[0-9a-f]{16}$/);
-      expect(["official", "media"]).toContain(it2.authority);
-      expect(it2.original_source_identity || it2.source_url).toBeTruthy();
+  it("真實 domestic.json 在隔離目錄生成符合 schema 的 feed，不依賴預建產物", () => {
+    const dir = mkdtempSync(join(tmpdir(), "disc-real-cli-"));
+    try {
+      // CI 還原的是輸入快照；測試自行生成輸出，不修改 public/data 或依賴其他測試執行順序。
+      writeFileSync(join(dir, "domestic.json"), readFileSync("public/data/domestic.json"));
+      const out = execFileSync(process.execPath, ["scripts/govintel-discovery.mjs"], {
+        env: {
+          ...process.env,
+          DISCOVERY_DATA_DIR: dir,
+          DISCOVERY_STATE_PATH: join(dir, "missing.json"),
+          DISCOVERY_NOW: NOW.toISOString(),
+        },
+        encoding: "utf8",
+        timeout: 15_000,
+      });
+      expect(out).toContain("state=PAUSED");
+      const feed = JSON.parse(readFileSync(join(dir, "govintel-discovery.json"), "utf8"));
+      expect(feed.schema_version).toBe(1);
+      expect(feed.operating_state).toBe("PAUSED");
+      expect(feed.stale).toBe(true);
+      expect(feed.source_snapshot_hash).toMatch(/^sha256:[0-9a-f]{64}$/);
+      expect(Array.isArray(feed.items)).toBe(true);
+      for (const it2 of feed.items) {
+        expect(it2.discovery_id).toMatch(/^gd-[0-9a-f]{16}$/);
+        expect(["official", "media"]).toContain(it2.authority);
+        expect(it2.original_source_identity || it2.source_url).toBeTruthy();
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });
