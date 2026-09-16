@@ -115,7 +115,8 @@ describe("renderSourcePanel", () => {
     try {
       await renderSourcePanel(container);
       expect(container.innerHTML).toContain("國際來源新鮮度／缺口");
-      expect(container.innerHTML).toContain("原始 120，正規化 48");
+      expect(container.innerHTML).toContain("原始 120");
+      expect(container.innerHTML).toContain("交付 48");
       expect(container.innerHTML).toContain("Swedish Police National News：正規化未產出");
       expect(container.innerHTML).toContain("Europol News：抓取失敗：HTTP 503");
       expect(container.innerHTML).toContain("只告警，不直接阻斷部署");

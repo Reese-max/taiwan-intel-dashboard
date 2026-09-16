@@ -2032,6 +2032,82 @@ body.layout-compact .col-list {
   background: color-mix(in srgb, var(--color-warn) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-warn) 42%, var(--color-border));
 }
+.source-alert-norm {
+  background: color-mix(in srgb, var(--color-panel-2) 80%, transparent);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent);
+}
+.source-alert-norm h5 {
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+.norm-intro {
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  margin-bottom: 8px;
+  line-height: 1.45;
+}
+.norm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+.norm-card {
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+.norm-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.norm-head strong {
+  font-size: 0.8rem;
+  color: var(--color-text);
+}
+.norm-status-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+}
+.source-tag-ok {
+  background: color-mix(in srgb, var(--color-ok, #67c23a) 15%, transparent);
+  color: var(--color-ok, #67c23a);
+  border: 1px solid var(--color-ok, #67c23a);
+}
+.source-tag-warn {
+  background: color-mix(in srgb, var(--color-warn, #e6a23c) 15%, transparent);
+  color: var(--color-warn, #e6a23c);
+  border: 1px solid var(--color-warn, #e6a23c);
+}
+.source-tag-plain {
+  background: var(--color-panel-2);
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+}
+.norm-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 0.74rem;
+  color: var(--color-muted);
+}
+.norm-metrics b {
+  color: var(--color-text);
+  margin-right: 2px;
+}
+.norm-diag-msg {
+  font-size: 0.72rem;
+  color: var(--color-warn, #e6a23c);
+  margin-top: 6px;
+  line-height: 1.35;
+}
 .source-alert h5 {
   margin: 0 0 4px;
   color: var(--color-warn);

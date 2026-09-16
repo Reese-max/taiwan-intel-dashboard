@@ -1,4 +1,8 @@
 import { esc } from "../utils/escape";
+import {
+  evaluateDomesticNormalization,
+  evaluateInternationalNormalization,
+} from "../utils/normalizationHealth";
 
 interface ProvSource {
   key?: string;
@@ -25,6 +29,14 @@ interface Manifest {
   note?: string;
   pipeline?: {
     twnews?: {
+      ok?: boolean;
+      normalizeFailed?: boolean;
+      normalizeError?: string;
+      normalizeSkippedBatches?: number;
+      count?: number;
+      enriched?: number;
+      bulk?: number;
+      rawUnique?: number;
       lowContributionFeeds?: string[];
       sourceContributionTotals?: {
         raw?: number;
@@ -32,10 +44,16 @@ interface Manifest {
         policeRelevant?: number;
         finalEvents?: number;
       };
+      feeds?: FeedStatus[];
     };
     international?: {
+      ok?: boolean;
+      normalizeFailed?: boolean;
+      normalizeError?: string;
       rawCount?: number;
       count?: number;
+      enriched?: number;
+      bulk?: number;
       okFeeds?: number;
       totalFeeds?: number;
       normalizeSkippedBatches?: number;
@@ -201,7 +219,9 @@ function internationalGapBlock(manifest: Manifest): string {
   const hidden = gaps.slice(6);
   const metrics = [
     typeof pipeline?.rawCount === "number" ? `原始 ${pipeline.rawCount}` : undefined,
-    typeof pipeline?.count === "number" ? `正規化 ${pipeline.count}` : undefined,
+    typeof pipeline?.count === "number"
+      ? `交付 ${pipeline.count}（精修 ${pipeline.enriched ?? 0}／輕量 ${pipeline.bulk ?? 0}）`
+      : undefined,
     typeof pipeline?.okFeeds === "number" && typeof pipeline?.totalFeeds === "number"
       ? `有資料來源 ${pipeline.okFeeds}/${pipeline.totalFeeds}`
       : undefined,
@@ -213,6 +233,43 @@ function internationalGapBlock(manifest: Manifest): string {
     <p>${esc(metrics || "已載入來源狀態")}；此區只告警，不直接阻斷部署。</p>
     ${gaps.length ? `<div class="source-chip-list">${visible.map(item).join("")}</div>` : `<p>目前沒有已知來源缺口。</p>`}
     ${hidden.length ? `<details class="source-alert-more"><summary>查看其餘 ${hidden.length} 個缺口</summary><div class="source-chip-list">${hidden.map(item).join("")}</div></details>` : ""}
+  </section>`;
+}
+
+function normalizationHealthBlock(manifest: Manifest): string {
+  const p = manifest.pipeline;
+  if (!p) return "";
+  const domestic = evaluateDomesticNormalization(p.twnews);
+  const intl = evaluateInternationalNormalization(p.international, p.gdelt);
+
+  const renderCard = (h: ReturnType<typeof evaluateDomesticNormalization>): string => {
+    const badgeClass = h.isDegraded ? "source-tag-warn" : h.state === "fully-enriched" ? "source-tag-ok" : "source-tag-plain";
+    const diag = h.diagnostics?.fallbackReason
+      ? `<p class="norm-diag-msg">處理說明：${esc(h.diagnostics.fallbackReason)}</p>`
+      : "";
+    const rawUniqueInfo = typeof h.counts.rawUnique === "number" ? ` · 去重後 ${h.counts.rawUnique}` : "";
+    return `<div class="norm-card">
+      <div class="norm-head">
+        <strong>${esc(h.scopeLabel)}</strong>
+        <span class="norm-status-tag ${badgeClass}">${esc(h.stateLabel)}</span>
+      </div>
+      <div class="norm-metrics">
+        <span><b>AI 精修</b> ${h.counts.enriched} 筆</span>
+        <span><b>輕量收錄</b> ${h.counts.bulk} 筆</span>
+        <span><b>交付事件</b> ${h.counts.delivered} 筆</span>
+        ${typeof h.counts.raw === "number" ? `<span><b>原始進線</b> ${h.counts.raw} 筆${rawUniqueInfo}</span>` : ""}
+      </div>
+      ${diag}
+    </div>`;
+  };
+
+  return `<section class="source-alert source-alert-norm" aria-label="新聞 AI 正規化分層健康">
+    <h5>新聞處理與 AI 正規化分層健康</h5>
+    <p class="norm-intro">分離資料擷取（Fetch）、AI 精修（Enrich）與輕量規則（Bulk）；AI 降級時保留輕量收錄，不阻擋事件檢視。</p>
+    <div class="norm-grid">
+      ${renderCard(domestic)}
+      ${renderCard(intl)}
+    </div>
   </section>`;
 }
 
@@ -243,6 +300,7 @@ export async function renderSourcePanel(container: HTMLElement): Promise<void> {
         <div><b>官方來源 ${official}</b><span>政府／氣象署</span></div>
       </div>
       <p class="source-generated">擷取於 ${esc(generated)}</p>
+      ${normalizationHealthBlock(m)}
       ${internationalGapBlock(m)}
       ${lowContributionBlock(m)}
       <ul class="source-list">${items}</ul>
