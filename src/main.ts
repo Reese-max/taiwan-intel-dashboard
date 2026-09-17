@@ -1,7 +1,7 @@
 import "./styles/global.css";
 import { t } from "./i18n/zh-TW";
 import { getState, setState, subscribe } from "./store";
-import { loadEvents, filterEvents, loadMapEvents, explainOutOfFilter } from "./data/loader";
+import { loadEvents, filterEvents, loadFirstPaintMapEvents, explainOutOfFilter } from "./data/loader";
 import { edgeTypeLabel, loadNetwork, NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
 import { renderKpiStrip } from "./components/KpiStrip";
@@ -24,7 +24,7 @@ import { filterTriageEvents, loadTriageAcked, saveTriageAcked, type TriageSortMo
 import { corroborationOf } from "./utils/corroboration";
 import { collapseSameIncident } from "./utils/collapse";
 import { stalenessNotice } from "./utils/staleness";
-import { loadManifest, type CohortManifest } from "./data/manifest";
+import { loadManifest, createManifestLoader, type CohortManifest } from "./data/manifest";
 
 const DEFAULT_SINCE_DAYS = 3;
 const REFRESH_MS = 300000;
@@ -35,6 +35,8 @@ const MOBILE_VIEW_KEY = "taiwan-intel-mobile-view";
 const MOBILE_LAYOUT_QUERY = "(max-width: 640px), (max-width: 932px) and (max-height: 500px)";
 
 let cohortManifest: CohortManifest | null = null;
+// 啟動期 first-paint 與 refresh 共用同一次 manifest 抓取（settled 後不留存，重試仍可重抓）。
+const fetchManifestOnce = createManifestLoader();
 let refreshRequestId = 0;
 const netAutoRetried: Record<string, number> = {};
 const manifestAutoRetried: Record<string, number> = {};
@@ -394,11 +396,6 @@ const netCache: Partial<Record<Scope, NetworkIndex>> = {};
 const triageAcked = loadTriageAcked();
 let triageStorageOk = true;
 let triageSortMode: TriageSortMode = "default";
-// 地圖 first-paint：先用精簡 map.json 即時繪出標點，不必等完整事件（給清單用）載入；
-// refresh() 隨後以完整集重繪校正。slim 載入失敗則無早繪、行為不變。
-void loadMapEvents(getState().scope).then((pts) => {
-  if (pts && !cache[getState().scope]) void mapView.render(filterEvents(pts, getState()), getState().scope);
-});
 let summary: AiSummary | null = null;
 // 情報網聚焦：可選單一事件，或選一個 cluster 展開整群。
 let focusId: string | null = null;
@@ -607,9 +604,10 @@ async function refresh(): Promise<void> {
   const eventList = document.getElementById("eventlist")!;
   const relationNoticeEl = document.getElementById("relation-notice");
 
-  // 同步載入小型靜態 manifest（僅首載或重新整理時），鎖定同版快照
+  // 同步載入小型靜態 manifest（僅首載或重新整理時），鎖定同版快照；
+  // 與地圖 first-paint 共用同一次 inflight 抓取，避免開機重複請求。
   if (!cohortManifest) {
-    cohortManifest = await loadManifest();
+    cohortManifest = await fetchManifestOnce();
     if (requestId !== refreshRequestId) return;
   }
 
@@ -1142,6 +1140,19 @@ window.addEventListener("popstate", () => {
 });
 
 applyHash();
+// 地圖 first-paint：先鎖定 cohort manifest，精簡點位通過 SHA-256 驗證才早繪；
+// manifest 不可用或驗證失敗時不晉級未驗證產物，交由 refresh() 以同版資料補繪。
+// 放在 applyHash() 之後：scope 以網址深連結為準。晉級前核對：scope 未被切走、
+// refresh 未先完成（cache 有值）、且所用 manifest 仍是目前鎖定版本（refresh 重讀到新版時不覆蓋）。
+{
+  const firstPaintScope = getState().scope;
+  void loadFirstPaintMapEvents(firstPaintScope, { fetchManifest: fetchManifestOnce }).then((res) => {
+    if (!res || getState().scope !== firstPaintScope || cache[firstPaintScope]) return;
+    if (!cohortManifest) cohortManifest = res.manifest;
+    if (cohortManifest.snapshotId !== res.manifest.snapshotId) return;
+    void mapView.render(filterEvents(res.events, getState()), firstPaintScope);
+  });
+}
 renderUsageTip();
 // 側欄警政健康面板只用尾端趨勢、且多在首屏摺線下：捲入視窗才抓 police-hourly-history.json（數 MB），
 // 讓它離開首屏關鍵載入窗，不與 domestic 主資料搶頻寬（IntersectionObserver 不支援時退回立即渲染）。
