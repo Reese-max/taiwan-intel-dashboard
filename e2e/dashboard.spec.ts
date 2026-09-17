@@ -118,3 +118,70 @@ test("同事件候選：多來源卡片仍顯示待查證並保留原文核對�
   await expect(page.locator('#eventlist [data-id="candidate-a"] .event-decision')).toContainText("先查證原文再行動");
   await expect(page.locator('#eventlist [data-id="candidate-a"] .location-link')).toContainText("非案發點");
 });
+
+// #38：部署切換時，即使舊 cohort 的 slim map 還可被 HTTP 取得，未鎖定 manifest/hash 的 first-paint 不得請求或晉級。
+test("cohort first-paint：舊 S1 map 不得在 S2 manifest/full data 前短暫晉級", async ({ page }) => {
+  const now = new Date().toISOString();
+  const staleMapEvent = {
+    id: "stale-s1-map",
+    title: "S1 舊快照地圖事件",
+    summary: "僅用於跨部署競態測試。",
+    region: "臺北市",
+    timestamp: now,
+    category: "治安",
+    scope: "domestic",
+    riskLevel: "high",
+    lat: 25.01,
+    lng: 121.51,
+    locationPrecision: "exact",
+    locationRole: "incident",
+    source: { name: "fixture-s1", type: "fixture", fetchedAt: now },
+  };
+  const currentEvent = {
+    ...staleMapEvent,
+    id: "current-s2-event",
+    title: "S2 目前快照事件",
+    lat: 25.08,
+    lng: 121.58,
+    source: { name: "fixture-s2", type: "fixture", fetchedAt: now },
+  };
+  const manifest = {
+    manifestVersion: 1,
+    snapshotId: "cohort-s2",
+    generatedAt: now,
+    rulesVersion: "correlate-v1",
+    scopes: {
+      domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+      international: { events: "international.json", map: "international.map.json", network: "network.json" },
+    },
+    files: {},
+  };
+  const empty = { nodes: [], edges: [], clusters: [], stats: {} };
+  const network = {
+    snapshotId: "cohort-s2",
+    generatedAt: now,
+    rulesVersion: "correlate-v1",
+    domestic: empty,
+    international: empty,
+  };
+  let staleMapRequests = 0;
+
+  await page.route("**/data/manifest.json", (route) => route.fulfill({ json: manifest }));
+  await page.route("**/data/domestic.map.json", (route) => {
+    staleMapRequests += 1;
+    return route.fulfill({ json: [staleMapEvent] });
+  });
+  await page.route("**/data/domestic.json", async (route) => {
+    // 刻意讓完整 S2 慢於舊 S1 map；舊實作會在這個窗口先晉級 S1。
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await route.fulfill({ json: [currentEvent] });
+  });
+  await page.route("**/data/network.json", (route) => route.fulfill({ json: network }));
+
+  await page.goto("/#scope=domestic&since=3");
+  await expect(page.locator('#eventlist [data-id="current-s2-event"]')).toBeVisible({ timeout: 30_000 });
+
+  expect(staleMapRequests).toBe(0);
+  await expect(page.locator('#eventlist [data-id="stale-s1-map"]')).toHaveCount(0);
+  await expect(page.locator("#map .leaflet-marker-icon")).toHaveCount(1, { timeout: 10_000 });
+});
