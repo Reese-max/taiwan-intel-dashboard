@@ -1,0 +1,21 @@
+{
+  "domestic": "國內事件共 6674 起，以 治安 4385 起、反詐 685 起、災防 419 起 為主。（AI 摘要暫時無法生成，事件資料仍可查閱；此為系統統計備援）",
+  "international": "國際事件共 3200 起，以 地緣政治 863 起、資安 662 起、災害 662 起 為主。（AI 摘要暫時無法生成，事件資料仍可查閱；此為系統統計備援）",
+  "recent24h": "",
+  "byCategory": {},
+  "trend": "",
+  "dailyCounts": [
+    1431,
+    1612,
+    1581,
+    1139,
+    681
+  ],
+  "clusterSummaries": {},
+  "degraded": {
+    "domestic": true,
+    "international": true
+  },
+  "model": "MiniMax-M3",
+  "generatedAt": "2026-09-19T17:57:32.029Z"
+}

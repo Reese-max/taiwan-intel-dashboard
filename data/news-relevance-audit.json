@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-09-19T17:55:20.166Z",
+  "windowHours": 24,
+  "windowStart": "2026-09-18T17:55:20.166Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 932,
+    "accepted": 448,
+    "rejected": 484
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "資產管理新局1／台灣資產管理業進化 跨區發展 下階段關鍵 | 專題報導 | 專題 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE5ZRDBzaVpMTER4ck01aW4zUzRaTkxXYlVJbG83UXlJVVVacGY5dWE0SFd3NUxiUEhFYTVxTXNEY2RIcnhla0RzT1RUX2JHWUh3NWs4eVFWNl93b1d1?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 17:20:52 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "資產管理新局1／台灣資產管理業進化 跨區發展 下階段關鍵 | 專題報導 | 專題 經濟日報"
+      },
+      {
+        "title": "資產管理業進化 跨區發展 下階段關鍵 | 市場焦點 | 證券 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMid0FVX3lxTFAxVWlLQW5vYlVBaFBFVVljdFM3Wnd5UUc4cjkzSTB2dGNZTUZVMzBFUi1yNm94YU45Vi1xLThYMW9Dc2ExVTdFQ2tMNFh2Rm5aLW5DWEVmS0czeHRsbE5vMWtMdlJzblJtdGlpazlCTmV5T2pEUFlV?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 17:20:40 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "資產管理業進化 跨區發展 下階段關鍵 | 市場焦點 | 證券 經濟日報"
+      },
+      {
+        "title": "LINE別再幫投票！點連結、要驗證碼等於帳號送人... 設定「2功能」快關，帳號被盜怎麼辦？自救剩這招 - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPbW9YSGhtLXlucVFHeFlOTko4TmhJcEZGUUZ0QzlhY3gzZklsYWlNSnN6YkJsWjVCMmFqeEMzU191ZDhFeVdvUXVPSnVQa2g4YWZDenROckgyckdzWGgzZHdsWlByT0J0V2RCc3ZZVWJxTHZzaWJpb2VnaG53akdGbg?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:53:28 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "LINE別再幫投票！點連結、要驗證碼等於帳號送人... 設定「2功能」快關，帳號被盜怎麼辦？自救剩這招 今周刊"
+      },
+      {
+        "title": "天氣／22度微涼舒適「這天」結束，秋老虎報到！中秋連假天氣預報：烤肉賞月選哪天 10日報先看 - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQNFEzR3ZOU3pkSzAzTEtHbkM5aEItVFBPZ2hyckZ6VkhZdkdvVjVOeERGSHZZQXUyR2RrOFpnQTdYR08wanJXVmhTQnZSckc5REkwT1ZDM01mLS14UkwxN19BYnU0aUx5ZlZ3WXhwUnVRQ2RtUldhNTc5OHliaWZGaQ?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:49:52 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "天氣／22度微涼舒適「這天」結束，秋老虎報到！中秋連假天氣預報：烤肉賞月選哪天 10日報先看 今周刊"
+      },
+      {
+        "title": "全家鋪野餐墊、毛孩也來了！鍘美藝術節變身大型露營看戲場",
+        "link": "https://news.ltn.com.tw/news/Tainan/breakingnews/5579786",
+        "pubDate": "Sun, 20 Sep 2026 00:39:58 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「鍘美藝術節」連續兩晚湧入大批人潮，草根性文化的魅力在安平現場發酵。住安億停車場附近的林小姐連續2天到場看戲，她笑說，沒想到傳統戲曲能吸引這麼多人，「真的很不容易」，也讓她感受...…"
+      },
+      {
+        "title": "五類族群投保 細節要留意 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE5yTU9Vc2l6N1NEYlJ0aU1SVWJocE5kaEZDQkVEcV9xM3lEMHFPUGIwVUNGSHFxaTFFMXBsbzdIWkxqZGdkVHBvck5Jc0FhejVtakpZSHNISnZSOUlF0gFiQVVfeXFMUHAtQ1p2aGVQdTBkMVAwM3BDVC1ITnFsUm8tRDFhNmx3X1pkd2g0RXFHZmtwOGR1UXNMazdsSXktZXBpakVCVWgzUU0yVm9ybDNxLWVQVlpSWnZTMi1DMmZKUFE?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:39:24 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "五類族群投保 細節要留意 經濟日報"
+      },
+      {
+        "title": "保險小百科／買登山綜合險 加保緊急救援 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE93SkZmYUFWdEpwOTBzcmQ5cFdIVmRVMXdidzEyX1dRY3BYQmsxTGlmcV9NbWlzR2w0ckJDMFZLOUg5SlM1MEdLRDVjZmkzRXJ3Q3QzWG10dkUzU25i0gFiQVVfeXFMUDBZZGtuelJFdkdYVU01bXNoSWtJaHZKYkpzTkhCdUx5VTl2RFJRQmxZdVVyVzJ3eHFBV2pJSVhYczVORzI1aDlXNmVZQXZZckNvcUcxa0poaUpqU0NVdkZ1cXc?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:39:19 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "保險小百科／買登山綜合險 加保緊急救援 經濟日報"
+      },
+      {
+        "title": "本週節目表 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1vQ0FDQXpKd1hIZWJxMS1WV2l6RkdUN0NhZHVZemVRak11bU9ELVl0LW5xaDNzT3ZYTkRHbmp2bVl6bWFvZ0hwLVpOalJsZDNVQnRnLURfZGtSV2x3SjVQMmJNX2JGZHFzbTFGcA?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:31:50 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "本週節目表 rti.org.tw"
+      },
+      {
+        "title": "台南校園監視設備「補洞」 市府盤點90處分階建置| 雲嘉南| 地方 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMickFVX3lxTE5zYzhxNWJJaVJxejQ1ZXhkcERhMkhhWk1VZGVnYURzSVBrMkctcHVuTFZTdk1BSW5SUVB1S285dFlfeXgzdEI0c2d3bGVkM25KYzUxa1NuSGYzSkdoR0drUndWcllIMlVGMUtLRHBnckZOdw?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:31:04 GMT",
+        "source": "GN 校園安全",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台南校園監視設備「補洞」 市府盤點90處分階建置| 雲嘉南| 地方 UDN"
+      },
+      {
+        "title": "鳳山人有感治水改善 林智鴻：持續盤點「剩餘風險」",
+        "link": "https://newtalk.tw/news/view/2026-09-20/1060798",
+        "pubDate": "Sun, 20 Sep 2026 00:14:12 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 高雄8月連日豪雨考驗城市防洪韌性，一名居住鳳山行政中心周邊多年的網友日前在Threads分享，住處過去曾留下約30公分淹水痕跡，搬入後也曾遇到店面前方積水甚至進水，但這波豪雨期間積淹水情形已有明顯改善。高雄市議員林智鴻18日於農林部門質詢表示，市民親身感受到改變，就是對治水工程最直接的檢驗，成效值得 延伸閱讀： 黃文志「好徛起廟埕音樂會」開跑 賴瑞隆隔空叫陣「靈魂歌手」陳其邁 "
+      },
+      {
+        "title": "現場直擊》｢洋流｣湧進港都！沈伯洋南下高雄合體賴瑞隆人潮大爆滿",
+        "link": "https://newtalk.tw/news/view/2026-09-20/1060792",
+        "pubDate": "Sun, 20 Sep 2026 00:07:21 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 民進黨台北市長參選人沈伯洋今（19）天到高雄與同黨高雄市長參選人賴瑞隆合體，體驗水岸城市魅力。賴瑞隆更化身「高雄導覽員」，向沈伯洋介紹高雄城市轉型，現場高雄鄉親熱情湧入英雄路，步行至愛河灣水樂園時，人潮大爆滿，就連位在2樓的海豚步道也站滿人，現場不斷呼喊「高雄的市長賴瑞隆」、「台北的市長沈伯洋」。 延伸閱讀： (影)「洋流」襲捲深藍票倉文山區 支持沈伯洋上千人潮擠爆景美夜市 蔣"
+      },
+      {
+        "title": "藍綠鳳山同日拚場 蘇致榮成立競總爭取議會過半關鍵一席",
+        "link": "https://newtalk.tw/news/view/2026-09-20/1060797",
+        "pubDate": "Sun, 20 Sep 2026 00:02:08 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 高雄市議員參選人蘇致榮今(19)日成立競選總部，同日國民黨高雄市長候選人柯志恩也選在鳳山造勢，藍綠陣營同在鳳山展開競選布局，戰火一觸即發。蘇致榮競總成立大會現場超過4,000位鄉親將現場擠得水洩不通，近50位里長及特地趕來相挺，高雄市長候選人賴瑞隆與許智傑、邱志偉、李昆澤、李柏毅、邱議瑩等5位立委， 延伸閱讀： 黃文志「好徛起廟埕音樂會」開跑 賴瑞隆隔空叫陣「靈魂歌手」陳其邁 "
+      },
+      {
+        "title": "桑葚對腸道菌叢與新陳代謝有驚人功效？研究揭示關鍵在於「加工方式」",
+        "link": "https://technews.tw/2026/09/20/mulberry-gut-health/",
+        "pubDate": "Sat, 19 Sep 2026 16:00:31 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "桑葚向來是備受喜愛的傳統食材，但波蘭研究團隊的最新綜述指出，其背後其實蘊藏著影響人體代謝的強大「腸道機制」。研 [&#8230;]"
+      },
+      {
+        "title": "八月半(badˋ ngied ban)中秋節快樂!恭喜Rti央廣客語節目首次入圍曾虛白先生新聞獎 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBTY3ZZZEpha0puMUVVcnNUX0hwZXJzcEJGWUhSOU5oOW9pZ0xrN0VqRllRM1JLbUlOVVBDckZteTc2TnVSalJ5MUNySWVOZmxuZTRncllyZkFFTkdjOWdyUw?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:00:00 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "八月半(badˋ ngied ban)中秋節快樂!恭喜Rti央廣客語節目首次入圍曾虛白先生新聞獎 rti.org.tw"
+      },
+      {
+        "title": "科學人物誌：洪信介 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1zWU1mYUNCV3hIdzJac2tKcmNHcFVjQmotNWtLM0pDeW1NM0xVNjdZb3E1STBTaHpXckVGOFBSSEU5R0NwV3pQdVd1QUNyWVJXbmVSUktzdjdpdm50bWZ1NQ?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:00:00 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "科學人物誌：洪信介 rti.org.tw"
+      },
+      {
+        "title": "曾是科技業老將！鍘美藝術節發起人歷經破產 體驗「停損」哲學",
+        "link": "https://news.ltn.com.tw/news/Tainan/breakingnews/5579774",
+        "pubDate": "Sat, 19 Sep 2026 23:59:09 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「鍘美藝術節」發起人蘇先生私下其實相當健談，聊起多年投資股市的心得，他認為，投資最重要的從來不是每1次都看準行情，而是知道什麼時候該停損。對他而言，「停損」不只是投資技巧，更是...…"
+      },
+      {
+        "title": "水湳轉運中心9線國道客運月底進駐 挨批「8年做半套」",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5579702",
+        "pubDate": "Sat, 19 Sep 2026 23:56:43 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台中市水湳轉運中心啟用1個多月，斥資46億打造，卻只有9條市區公車進駐，人潮冷清。交通局宣布9月30日起增加9條往台北、新竹及桃園機場的國道客運。但在地議員均認為，公車及國道客...…"
+      },
+      {
+        "title": "高雄8大工業區後援會成軍 賴瑞隆：傳產支撐科技、科技加值傳產",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5579750",
+        "pubDate": "Sat, 19 Sep 2026 23:40:47 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨高雄市長候選人賴瑞隆八大工業區後援會今成立，總統府資政、行政院前副院長沈榮津也受邀出席；賴瑞隆表示，工業撐起高雄經濟發展半個世紀，他已準備好為高雄再拚出下一個黃金十年，訴...…"
+      },
+      {
+        "title": "萬華驚悚情殺！科技男勒斃外籍女友 遺體藏公司冰櫃 | 太報 - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5HSC1wOXEtVFdFemdodmVlQ2pGY3FocHFnS29BM2pyRWpRM01nckVIMzQ3SkV6c1Q5V3lJcGJVYUJ5ZGhRc0RpUUdqNjhpRV9fVXQ1di1n?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:30:41 GMT",
+        "source": "GN 命案兇殺",
+        "hint": "治安",
+        "authority": "media",
+        "description": "萬華驚悚情殺！科技男勒斃外籍女友 遺體藏公司冰櫃 | 太報 LINE TODAY"
+      },
+      {
+        "title": "百年前台灣學生怎麼上體育課？台中大同國小史料揭「屋頂做體操」",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5579730",
+        "pubDate": "Sat, 19 Sep 2026 23:15:31 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國立公共資訊圖書館即日起到明年2月21日，在總館3樓期刊區推出「Hey！我的馬索（Muscle）─誰在塑造你的身體？日治時期台灣的體育教育」特展，展覽國資圖珍藏的日文舊籍、舊報...…"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "泰籍女子赴台談分手遇害 男友涉殺人遭羈押 - Singtaousa",
+        "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQWFFvZWtvd0NEN19oTUJiODc4MUQ4TGRWVm4xaHdtQjVxekFGOUY0cUhHYllzMzZaT2E4RDI4M1RlWHFsMU1jN3hySHJrd1MwRm5jYmcxcVJ6NHdjUms5ckpSLVQzT0R3N3ItUlRKM2hvbGtFcmlsY1V5MlBTUUtPUkNxR1BaNzl4dGJmRGtOS1BhcFJnR3RRY0Etaw?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 17:52:34 GMT",
+        "source": "GN 殺人分屍",
+        "hint": "治安",
+        "authority": "media",
+        "description": "泰籍女子赴台談分手遇害 男友涉殺人遭羈押 Singtaousa"
+      },
+      {
+        "title": "泰女命案藏屍地點曝光！傳在台中七期「NTC國家商貿中心」 中檢聲押43歲吳男 - 記者爆料網",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFAweFp5TW1yVzBZTDZZdnJ6eXhjRHBHbkZyanV5aDhwdlktTndJX0lyNW0xLVpOSTRDbndRVnRxYVByajBrZzNoSHFVbXJoZw?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:45:00 GMT",
+        "source": "GN 命案兇殺",
+        "hint": "治安",
+        "authority": "media",
+        "description": "泰女命案藏屍地點曝光！傳在台中七期「NTC國家商貿中心」 中檢聲押43歲吳男 記者爆料網"
+      },
+      {
+        "title": "泰女慘遭勒斃藏屍冰櫃 中檢聲押台籍男友獲准",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5579701",
+        "pubDate": "Sun, 20 Sep 2026 00:22:18 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "首次上稿 21:13更新時間 00:22（收押） 43歲男子吳俊毅，涉嫌將36歲泰國籍女友亞思（音譯）勒斃，裝進30吋行李箱運往台中，藏在吳男任職科技公司（位於台中七期）...…"
+      },
+      {
+        "title": "復合無望！恐怖情人買冰櫃、行李箱 泰女慘遭勒斃棄屍",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5579513",
+        "pubDate": "Sun, 20 Sep 2026 00:18:16 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "43歲男子吳俊毅涉嫌將36歲泰國籍女友亞思（Arth）勒斃，裝進30吋行李箱運往台中，藏在他任職的科技公司（位於台中七期）冰櫃內，警方查出吳嫌事先購買冰櫃，確定復合無望又買行李...…"
+      },
+      {
+        "title": "【科學園區兇案！男遭同事「持刀刺左腹」送醫】 （#大表哥） - facebook.com",
+        "link": "https://news.google.com/rss/articles/CBMi2AJBVV95cUxOVHZESlVoSU00ZS1TZWZTZVZYTm1Xb1Z5YlNuQ2I4NmRrNWRaTnZoeWFBN0JvbW9HRG44NTNyYTExRjhPbGs2dmJrTnduMk5rTVlWSzltLW9EdjZlRk5mZEN1ckJ4Q2pkdEVXZ0NQMDNkb1ZBYzZDYU5zTUpFQmVLSlpaZExqSXhoRFhYdEttTE9icXFyVzRoQlRhQ1QzeV92a0dJM1BJd1NfdzhyRFZpNWozR21uVjc0VmZSMnFmZ0s4WlFsbFJyTHBhYndZU0lnczJaeWRkVnpYbWZzdWxBY2ZTOWZxZXdSMDdfeDl4VHVjZXF4TGVyVXlYYU1YcU01cTUwZGNEcWVGY2FhdklsY00wUVY0TUlKQkZpUWkwaE1rbE5pS2pCQy1zZjByal9BcVFNMjBpMm55UENza2UzRkFpWHYzYjNkNXd5cERiWDI4U3dENDRqOQ?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:15:51 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "【科學園區兇案！男遭同事「持刀刺左腹」送醫】 （#大表哥） facebook.com"
+      },
+      {
+        "title": "謝典霖遭羈押禁見她預言後果：恐引發大反彈- 政治 - 中時新聞網",
+        "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTFBKY2hJM0Mtd25fOUs3dkNlQjJCR2luWmRZTnBnZ0Z4NlA1SU8tUVZ4TFpxZ1dobjN1aEhhWURGR0JXWkw4ekpkeWxMUTNlTXZUcXJqdW80VGx0VnJjRE9HX3IydFNHeGY4LWljOTh3?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:02:26 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "謝典霖遭羈押禁見她預言後果：恐引發大反彈- 政治 中時新聞網"
+      },
+      {
+        "title": "傷害動物 男倒「水晶寶寶」害死20錦鯉 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE56dDVNeGl1aFNZYzVxWFBtWlZkQjNHaElOZ1UtQ2M1aGxwVVB6al9uQWNmZEtaZ2JyQjM3LWN2cW0xbkNxeHFwMTU3WUNldHRS0gFWQVVfeXFMTmQtaGQ0THBiYXNmc3I3VjA0anFJTXJBNW54WG9wX25wRU5XUjZsVlZ5UU1rSmVESk41WUJhRG1TLUN2aWZla3g2X2JFR3JkSTFvVjFpWkE?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:00:00 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "傷害動物 男倒「水晶寶寶」害死20錦鯉 UDN"
+      },
+      {
+        "title": "涉賄被羈押 謝典霖父子提抗告 控「政治恐怖」 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE83cUhXQU5HcGNyanBLTHkyUVZVUUc1N0s5VlZHTDdpcXBuNV8xX1J3dGhrRUtGY1R2cUVtRjA2MFhUWlBNMm9heUlrbnB1aFRN0gFWQVVfeXFMT1NFMHp4MHd3enBVRFU2SlAxdzF5VG5lblRSSDcyUHZlWFhtSUt1MURBSlBvbHQ2VU5IaklTXzFlVVkyd3ZUMFM5dEtiajFDV0RQb2hHaVE?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 16:00:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "涉賄被羈押 謝典霖父子提抗告 控「政治恐怖」 UDN"
+      },
+      {
+        "title": "攜華服肉粽店「坐」4天！台南貴婦「1原因」剩社工能談心",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5579765",
+        "pubDate": "Sat, 19 Sep 2026 23:48:30 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "70歲曾姓貴婦帶著數件套裝與家當，在24小時肉粽店「坐」4天，被網友誤認是霸位奧客PO網公審。據了解她相當孤獨，只剩社工能談心，經警方勸導，今天傍晚以巡邏車載回歸仁區租屋處。 ...…"
+      },
+      {
+        "title": "【#最新快訊 男捕魚溺水失蹤！搜救2小時尋獲死亡】 （#大表哥） - facebook.com",
+        "link": "https://news.google.com/rss/articles/CBMi8wJBVV95cUxPcmZoLWtOaGs1TWZCOVR6cnVmSHlsSG9maWFjMEpQcXVhczZET3VRbGM4WVRkSEkybG5QWjRlSVE4Qk5tcW1heVpYSmFJdUV4akF2bndpN3RGSlBVMm5BZC15SElYWDQ2SEFVc3E4SDVGdmI4UTNpNlN4Y1dnVEo4dVIyczg3Q205ZUpWaW5NMGtwVlFjTWVrR091aVY5VTFQRE00bV9HRVhPSVNJcTlkbW1BNnp5ZjVRTWwzSGZDemRYckdZNHVkUTEwQ2J6NDZaLTJ2UjM3TWpJak96aUctZWhiYVJnUXhZc3FQangyc2t3c0hYb0JXNnJVaDl2YWZ4R0xleXhLb204QWtxelhkR2RRQ1dleDFfaDZONGgteF9PUGF5akN4aF9yQ1NtcTNpeV9kSndxeU0wel8yTWU0RFJ6Wk1GNG5qOS10SXNOUlpqREFhV1lId3prVlZqV3NKRDRUWURaVTZmQTB5amdQSVNtMA?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:48:02 GMT",
+        "source": "GN 山難海難",
+        "hint": "災防",
+        "authority": "media",
+        "description": "【#最新快訊 男捕魚溺水失蹤！搜救2小時尋獲死亡】 （#大表哥） facebook.com"
+      },
+      {
+        "title": "恐怖情人西門町勒斃泰女！行李箱載回台中 「冰櫃藏屍6天」遭羈押禁見 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMiqANBVV95cUxNb3VpeDZMU1VULVc5LVkzMHp3cDVKanZ5dEt0Q01ISWNzb3NRakRFcDNVVkdudDItbEh6UGtpMUo0LXhONHR3WVNHZFhmOEZqaHI5alJkczFrQVpETEthRjk1Si1ya25CeUt4OWVyaTlfakM4SnFUYlJQbUVhQVp4b1YtUkJnUkhVNzZkOFdvMnJra0g1cGJmWjdTX1Zwa096aXZMUjFnMlFxOGhWcE5QalA2QjdkOWJGcGJrMUZTVXFWOHhaOXFoRlRaWF91S0diR0VpcXZaY0FlclNWaU9Rak9vUFVabm5jNlBtRjVuNmtUb1JHWjdqeDhIS1Z1cUJfZWpMRzd5bVVjNzBseHhwcXM4LVdocjZhYVV5LU15MjlWWS15ZVVaS29fV3AzMUxjUmlpNkEtQ0VPSDRlanY0SjM4a2NRdE40M2h5SkQtSWJLb3VZbE84QzlXTU8wY2M1LVlsX1RUbVhRLURhRDg3VktPand5OGRoeEJRVUVQaUZIdjlKZ2Nvdk96VG85dzVmQW1rZlhwX0UzSVZWdWYxY1EwakNraEV5?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:48:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "恐怖情人西門町勒斃泰女！行李箱載回台中 「冰櫃藏屍6天」遭羈押禁見 Yahoo新聞"
+      },
+      {
+        "title": "殺泰女藏冰櫃6天！恐怖情人遭羈押禁見 - 鏡週刊Mirror Media",
+        "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE53a2FBOUdFMWljRmdKVzBVMjJ0ampqX0hDbnNaOXV5MFRKMEdybGFONmxFSmhaMXFpcjJoX1dGcXRCZVYtQXJQRUNnNDViWmJyTUNpTlAxVnlzaHVx0gFiQVVfeXFMTi1MZGV1MXBuU0lJUnFVWGE0RUE0M2RNbUFMdVdxaHlpNlJpaERjRVVFLVpEZk14UW1ZR1Vzd3I2UGVuLTl0V2V6VU5BXzVpQk8tM0IyT0lBaGVaUlZMQXJ3X2c?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:43:00 GMT",
+        "source": "GN 跟蹤騷擾",
+        "hint": "治安",
+        "authority": "media",
+        "description": "殺泰女藏冰櫃6天！恐怖情人遭羈押禁見 鏡週刊Mirror Media"
+      },
+      {
+        "title": "毒鴛鴦通緝落網揭棄屍案！女嬰病逝裝水桶埋山區檢警預計下週四解剖| 焦點事件| 社會 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE51emZJcVBqUDVmTDJOd3NIMTd2RXh0ei1NNnRsSWhrMm5GYXRNb3NYaXk0MzA2NzhCejZtS3ktc0d1bEw2QWNsVXhPYVduWXRk?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:38:38 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "毒鴛鴦通緝落網揭棄屍案！女嬰病逝裝水桶埋山區檢警預計下週四解剖| 焦點事件| 社會 UDN"
+      },
+      {
+        "title": "竹市「金老爹」港式餐廳爆爭產憾事 孝子護母魂斷叔叔刀下",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5579763",
+        "pubDate": "Sat, 19 Sep 2026 23:36:54 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "新竹市知名港式點心餐廳「金老爹」去年爆發爭產，致少東命喪叔叔黃男刀下的悲劇，黃男兄嫂提出刑事附帶民事求償，新竹地院近日判黃男須各賠胞兄577萬多元、兄嫂423萬多元。 死...…"
+      },
+      {
+        "title": "毒蟲情侶落網家中孩子少1個 竟是養死1歲嬰裝桶棄屍林口山區 - ettoday.net",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9iQ2t5N2Fnb3hsQjhudEVLcENlcTBfYmd0MHdfWFhlWjM3engyQmFfU2xLanF4cFdvSEtVQUExSDI4VERrRGUxYWZMdzNTeG1mRVVYQ1kxbWtUS1lPOXfSAUtBVV95cUxOWjNjNGZFVGhlWnJuUmJ5R1RTczlUY1I4ZXpiT3VsMEdHS3V3Y3BWYmdHdk8zRWF3V3ItY3BQQmhQa1BUcExjNldSZU0?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:35:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "毒蟲情侶落網家中孩子少1個 竟是養死1歲嬰裝桶棄屍林口山區 ettoday.net"
+      },
+      {
+        "title": "謝典霖父子涉賄遭收押！鄭麗文探視鄭汝芬：留給選舉乾淨空間 - news.tvbs.com.tw",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5CVlJXeXE3YnpLMGNweGZhSjI5bVk4akFCejg0MGVKRGJsQlU0NC1WMzMzY0xHWExSSzlNRTZiNExZalFnaWN6dHFzYXVscjVzWjFr?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:34:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "謝典霖父子涉賄遭收押！鄭麗文探視鄭汝芬：留給選舉乾淨空間 news.tvbs.com.tw"
+      },
+      {
+        "title": "和美民宅失火…消防員傻眼 住警器領了7年沒安裝 - 自由時報",
+        "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5fZ0ZwT09WSVVSRVliVkR1d3pDOE5HN0tiQlJuM1d4QWFwLUN2MVJ0N1hqTWJQWi1hejVQSTZWZldaWUNsUVNQWi1pTjJsRWhKeEgzWUdINWl6ME1CSHZMc1Q1UFdRTWxi0gFuQVVfeXFMT0tSMjFwSXZ1WjQ4ZU1Ubkp6RXZ3eC03OWJMRWtLRllZeVpSbXFYOWR6WTdZNmpjVGZaWjdPNHlpazNmV3lpREpfWENvVFpNQWVhcGZmZU5SMGZWZ2NzVDRWQ2VuWjFDZGc4WFRNNVE?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:29:21 GMT",
+        "source": "GN 消防員傷亡",
+        "hint": "災防",
+        "authority": "media",
+        "description": "和美民宅失火…消防員傻眼 住警器領了7年沒安裝 自由時報"
+      },
+      {
+        "title": "討論牆 | 為4千元好友反目！男持刀追砍好友 居中喬債的竟是通緝犯 - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE5qM0R5cnp5Y2tMbVVidEt6Y1owUC1sQUFKZHE5UXVFNnpKQWVHSVI3TUMyTWdDN0hzZ2lkS1BmazRZejJ2aXVhUzVrSXFxVEU3RzR3ZWZuUk1WQ1VrUHpKMGVtOTQ?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:24:36 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "討論牆 | 為4千元好友反目！男持刀追砍好友 居中喬債的竟是通緝犯 LINE TODAY"
+      },
+      {
+        "title": "【#最新快訊 泰女來台遭殺害「遺體藏冰櫃」惡男收押】 （#大表哥） - facebook.com",
+        "link": "https://news.google.com/rss/articles/CBMi_gJBVV95cUxPay0wbXAxS1JTZGJkckFXbWF5RzJuUF9mQXFETnNpLW10cndpRmw0b3hvemt3eExBYXdOTUZrb2lTbWhZYkVzR3pFRUpUSzdVa3VhUVBlUUxGbWtoWW1vTmV3X2dVcU9Qc0tkSFotMEc5Z2RFNTVQRUlDbzJsaE1tWTdwQ1l1QzU0YU9vSVVoM1pRNGxtb3pscjNSem5kSXlNdHFWT19rYmM1OFZvellFbW9NSHlaOGFpWnh2WWhzNkRaMXpFZi14NWhIM1JVaHdXVlBraXVCSm9ILTgtMGJwaUgzY2Y0ejhYTTkwQnFGSzhQTl9mYUpVU1BNOFE5S25OY2Ita2d5R09EQkpyV2wxN0kxYi1iYWxoS3ZIcW1LRTFBVWRSR2dQTjAxdDRidXRPSHpkVHhjOHdEVm9ScmFRSUJsRDhUbkt6WmV0ZFhGOUxVbHBQclpldXlYS28yRGR5QmVvN0pMRzFYa3J1ajlHOGJtdnd6SzZKWlc4ZHNn?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:24:14 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "【#最新快訊 泰女來台遭殺害「遺體藏冰櫃」惡男收押】 （#大表哥） facebook.com"
+      },
+      {
+        "title": "富士山封山頻傳遇險事故 靜岡擬強制登山者申報 - on.cc東網",
+        "link": "https://news.google.com/rss/articles/CBMijwFBVV95cUxQeU9mYkRTcXluQ1Q1anNzaVJJQ0hZRjRhdUNlMHZ4Z3pzeWRlWnBWNHBWcHlueDRReWpua09neU1nVVhWTVJ1VGtLcVRiZTA5UmE4MUdraHFmU0dGVjFac0Z3MDVySk9KS1c2b2tLcjkzOHN1bXVRbGRMV2VpcmFaS0JwdjNxblA4OUtIX1NGRQ?oc=5",
+        "pubDate": "Sat, 19 Sep 2026 15:22:30 GMT",
+        "source": "GN 妨害自由恐嚇",
+        "hint": "治安",
+        "authority": "media",
+        "description": "富士山封山頻傳遇險事故 靜岡擬強制登山者申報 on.cc東網"
+      }
+    ]
+  }
+}
