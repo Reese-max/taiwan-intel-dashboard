@@ -4,7 +4,7 @@ name: PR 檢查
 # 不抓即時資料、不用 LLM secrets、不部署 —— 那些由 update-and-deploy.yml 的排程負責。
 on:
   pull_request:
-    branches: [main]
+    branches: [main, production]
 
 permissions:
   contents: read
@@ -36,3 +36,7 @@ jobs:
       # public/data 不進版控；需要候選資料的 build 由 pipeline-audit 在下載 artifact 後執行。
       - name: TypeScript 型別檢查
         run: npx tsc --noEmit
+
+      # 營運狀態契約（ops/operating-state.json 為 committed 檔，clean checkout 可驗）
+      - name: Operating-state 驗證
+        run: npm run ops:validate
