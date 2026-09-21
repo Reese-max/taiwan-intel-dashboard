@@ -306,7 +306,8 @@ describe("CLI end-to-end", () => {
     }
   });
 
-  it("真實 domestic.json 產出符合 schema 的 feed", () => {
+  // 需 gh-pages 資料快照；乾淨 checkout（無 public/data/）明確略過，不讓 PR gate 恆紅。
+  it.skipIf(!existsSync("public/data/domestic.json"))("真實 domestic.json 產出符合 schema 的 feed", () => {
     if (!existsSync("public/data/govintel-discovery.json")) {
       execFileSync("node", ["scripts/govintel-discovery.mjs"], { encoding: "utf8" });
     }
