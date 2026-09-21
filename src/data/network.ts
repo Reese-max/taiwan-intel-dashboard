@@ -94,6 +94,12 @@ export interface IntelNetwork {
   domestic: ScopeNetwork;
   international: ScopeNetwork;
   excluded?: { domestic: number; international: number };
+  // 人工更正 ledger（issue #44）重播稽核區段；無 ledger 時仍輸出空 report
+  overrides?: {
+    schemaVersion: number;
+    followUps?: { domestic?: unknown[]; international?: unknown[] };
+    report?: { applied?: unknown[]; skipped?: unknown[]; conflicts?: unknown[]; errors?: unknown[] };
+  };
 }
 
 export interface RelatedRef {

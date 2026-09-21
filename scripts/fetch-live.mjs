@@ -52,6 +52,7 @@ import {
   lastDomesticNormalizeSkippedBatches,
 } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
+import { curateNewsEvents, logCurationSummary } from "./lib/curation.mjs";
 import {
   formatNetworkContractErrors,
   NETWORK_FILE,
@@ -763,18 +764,24 @@ export async function run() {
   try {
     const domesticNews = domesticEvents.filter(isNewsLikeEvent);
     const intlNews = intlEvents.filter(isNewsLikeEvent);
+    // 人工更正 ledger（issue #44）：與 build-network.mjs 共用 curateNewsEvents，兩條路徑行為一致
+    const curated = curateNewsEvents({ domestic: domesticNews, international: intlNews });
+    const domesticNet = correlateEvents(curated.domestic, { corrections: curated.corrections.domestic });
+    const intlNet = correlateEvents(curated.international, { corrections: curated.corrections.international });
     network = {
       snapshotId: `cohort-${nowIso.slice(0, 10).replace(/-/g, "")}-${createHash("sha256").update(nowIso).digest("hex").slice(0, 8)}`,
       generatedAt: nowIso,
       rulesVersion: RULES_VERSION,
       scopeNote: "情報網僅含新聞類事件（RSS / tw-news），排除政府模板化統計資料",
-      domestic: correlateEvents(domesticNews),
-      international: correlateEvents(intlNews),
+      domestic: domesticNet,
+      international: intlNet,
       excluded: {
         domestic: domesticEvents.length - domesticNews.length,
         international: intlEvents.length - intlNews.length,
       },
+      overrides: curated.collectOverrides(),
     };
+    logCurationSummary(network.overrides);
     const contractErrors = validateNetworkContract(network);
     if (contractErrors.length) {
       throw new Error(`產物契約驗收失敗：\n${formatNetworkContractErrors(NETWORK_FILE, contractErrors)}`);
