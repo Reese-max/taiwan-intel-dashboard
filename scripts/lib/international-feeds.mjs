@@ -711,7 +711,7 @@ export const INTERNATIONAL_FEEDS = [
   { label: "Red Canary", url: "https://redcanary.com/feed", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "Volexity", url: "https://volexity.com/feed", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "Avast Decoded", url: "https://www.gendigital.com/blog/rss/v1/blogs/rss.xml/15299,15040,15041", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
-  { label: "Intezer", url: "https://intezer.com/feed/", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
+  { label: "Intezer", url: "https://research.intezer.com/index.xml", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "DoublePulsar (Kevin Beaumont)", url: "https://doublepulsar.com/feed", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "Troy Hunt", url: "https://www.troyhunt.com/rss/", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "A Few Thoughts on Cryptographic Engineering", url: "https://blog.cryptographyengineering.com/feed/", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
