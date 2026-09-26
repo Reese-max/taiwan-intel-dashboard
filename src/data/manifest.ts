@@ -69,3 +69,20 @@ export async function loadManifest(options?: { signal?: AbortSignal; manifestUrl
     return null;
   }
 }
+
+// 啟動期多個消費者（地圖 first-paint、refresh）共用同一次進行中的 manifest 抓取，避免重複請求；
+// 只去重 inflight，settled 後不保留結果 —— 快取與重試語意由各呼叫端自行管理。
+export function createManifestLoader(): (options?: {
+  signal?: AbortSignal;
+  manifestUrl?: string;
+}) => Promise<CohortManifest | null> {
+  let inflight: Promise<CohortManifest | null> | null = null;
+  return (options) => {
+    if (!inflight) {
+      inflight = loadManifest(options).finally(() => {
+        inflight = null;
+      });
+    }
+    return inflight;
+  };
+}

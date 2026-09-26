@@ -1,4 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
+import { createHash } from "node:crypto";
+
+const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
 async function showAllTime(page: Page): Promise<void> {
   await page.goto("/");
@@ -104,13 +107,33 @@ test("同事件候選：多來源卡片仍顯示待查證並保留原文核對�
   }));
   const empty = { nodes: [], edges: [], clusters: [], stats: {} };
   const net = {
+    snapshotId: "cohort-e2e-candidate",
     generatedAt: now,
     domestic: { ...empty, edges: [{ a: "candidate-a", b: "candidate-b", type: "same-incident", weight: 1.2, why: "同事件候選，仍需查證" }] },
     international: empty,
   };
-  await page.route("**/data/domestic.json", (route) => route.fulfill({ json: events }));
-  await page.route("**/data/domestic.map.json", (route) => route.fulfill({ json: events }));
-  await page.route("**/data/network.json", (route) => route.fulfill({ json: net }));
+  // cohort manifest 鎖定同版快照：stub 產物的 sha256 必須與 manifest 一致才會被晉級。
+  const eventsBody = JSON.stringify(events);
+  const netBody = JSON.stringify(net);
+  const manifest = {
+    manifestVersion: 1,
+    snapshotId: "cohort-e2e-candidate",
+    generatedAt: now,
+    rulesVersion: "correlate-v1",
+    scopes: {
+      domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+      international: { events: "international.json", map: "international.map.json", network: "network.json" },
+    },
+    files: {
+      "domestic.json": { path: "domestic.json", sha256: sha(eventsBody), bytes: eventsBody.length },
+      "domestic.map.json": { path: "domestic.map.json", sha256: sha(eventsBody), bytes: eventsBody.length },
+      "network.json": { path: "network.json", sha256: sha(netBody), bytes: netBody.length },
+    },
+  };
+  await page.route("**/data/manifest.json", (route) => route.fulfill({ json: manifest }));
+  await page.route("**/data/domestic.json", (route) => route.fulfill({ body: eventsBody, contentType: "application/json" }));
+  await page.route("**/data/domestic.map.json", (route) => route.fulfill({ body: eventsBody, contentType: "application/json" }));
+  await page.route("**/data/network.json", (route) => route.fulfill({ body: netBody, contentType: "application/json" }));
   await page.goto("/#scope=domestic&focus=candidate-a");
   await expect(page.locator("#eventlist .candidate-source-note")).toHaveCount(2, { timeout: 30_000 });
   await expect(page.locator("#eventlist .candidate-source-note").first()).toHaveText("多來源線索（2 個標記）·待查證");

@@ -104,7 +104,7 @@ export function filterEvents(events: IntelEvent[], opts: FilterOptions): IntelEv
 }
 
 import { computeSha256Hex } from "../utils/sha256";
-import type { CohortManifest } from "./manifest";
+import { loadManifest, type CohortManifest } from "./manifest";
 
 export interface LoadEventsOptions {
   manifest?: CohortManifest | null;
@@ -145,6 +145,9 @@ export async function loadMapEvents(scope: Scope, options?: LoadEventsOptions): 
   const expectedSha256 =
     options?.expectedSha256 ??
     (manifestFile ? options?.manifest?.files?.[manifestFile]?.sha256 : undefined);
+  // manifest 模式 fail-closed：具名檔沒有對應 hash 即契約不完整，不晉級無法驗證的產物。
+  // （scopes.*.sha256 是事件檔 hash，不是地圖檔的合法備援，不可借用。）
+  if (options?.manifest && !expectedSha256) return null;
 
   try {
     const res = await fetch(url, { signal: options?.signal });
@@ -163,4 +166,37 @@ export async function loadMapEvents(scope: Scope, options?: LoadEventsOptions): 
   } catch {
     return null;
   }
+}
+
+export interface FirstPaintMapOptions {
+  // 已鎖定的 manifest；給 undefined 才會走 fetchManifest/loadManifest 取得。
+  manifest?: CohortManifest | null;
+  // 呼叫端可注入共享的 manifest 抓取（如 createManifestLoader），避免開機重複請求。
+  fetchManifest?: () => Promise<CohortManifest | null>;
+  signal?: AbortSignal;
+}
+
+export interface FirstPaintMapResult {
+  events: IntelEvent[];
+  // 實際用於驗證的 manifest —— 呼叫端須核對其 snapshotId 仍為目前鎖定版本才晉級。
+  manifest: CohortManifest;
+}
+
+// 地圖 first-paint 的同版鎖定入口：必須先取得 cohort manifest，精簡點位檔以其具名檔案＋
+// SHA-256 驗證後才允許早繪。manifest 缺失、檔案 404、缺 hash 或 hash 不符一律回 null
+// （fail-closed，不晉級未驗證產物），呼叫端等完整 refresh 以已驗證的同版資料繪製。
+export async function loadFirstPaintMapEvents(
+  scope: Scope,
+  options?: FirstPaintMapOptions,
+): Promise<FirstPaintMapResult | null> {
+  const manifest =
+    options?.manifest !== undefined
+      ? options.manifest
+      : options?.fetchManifest
+        ? await options.fetchManifest()
+        : await loadManifest({ signal: options?.signal });
+  if (!manifest) return null;
+  const events = await loadMapEvents(scope, { manifest, signal: options?.signal });
+  if (!events) return null;
+  return { events, manifest };
 }
