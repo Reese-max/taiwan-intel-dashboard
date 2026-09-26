@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import YAML from "yaml";
 import {
   FETCH_MODE_CHOICES,
   resolveFetchMode,
@@ -181,6 +182,7 @@ describe("resolveFetchMode", () => {
 
   it("restores pipeline data and requires preview in the PR check", () => {
     const workflow = readFileSync(".github/workflows/deploy.yml", "utf8");
+    const jobs = YAML.parse(workflow).jobs;
     const refreshWorkflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
 
     expect(workflow).not.toMatch(/^  push:/m);
@@ -191,6 +193,15 @@ describe("resolveFetchMode", () => {
     expect(workflow).toContain("name: Deploy Preview");
     expect(workflow).not.toContain("- run: npm run build");
     expect(workflow.match(/apiToken: \$\{\{ secrets\.CLOUDFLARE_API_TOKEN \}\}/g)).toHaveLength(1);
+    expect(jobs["build-preview"].steps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);
+    expect(jobs["build-preview"].steps.some((step: { name?: string }) => step.name === "Upload checked preview artifact")).toBe(true);
+    expect(JSON.stringify(jobs["build-preview"])).not.toContain("CLOUDFLARE_API_TOKEN");
+    expect(jobs.check.needs).toBe("build-preview");
+    expect(jobs.check.if).toBe("${{ always() }}");
+    expect(jobs.check.steps.some((step: { name?: string }) => step.name === "Require validated build")).toBe(true);
+    expect(jobs.check.steps.some((step: { name?: string }) => step.name === "Download checked preview artifact")).toBe(true);
+    expect(jobs.check.steps.some((step: { uses?: string }) => step.uses?.startsWith("actions/checkout"))).toBe(false);
+    expect(jobs.check.steps.some((step: { run?: string }) => step.run?.includes("npm"))).toBe(false);
     expect(workflow).not.toContain("CF_REFRESH_TOKEN");
     expect(refreshWorkflow).toContain("apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}");
     expect(refreshWorkflow).not.toContain("CF_REFRESH_TOKEN");
