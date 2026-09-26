@@ -137,29 +137,35 @@ export async function loadEvents(scope: Scope, options?: LoadEventsOptions): Pro
   return (await res.json()) as IntelEvent[];
 }
 
-// 地圖 first-paint 精簡點：只含可定位事件與地圖/篩選所需欄位，體積遠小於完整 <scope>.json，
-// 讓地圖標點不必等完整事件即可先繪。載入失敗（如尚未產出或 hash 不符）回 null，呼叫端 fallback 至完整事件。
+// 地圖 first-paint 是效能最佳化，不是資料一致性的例外路徑。
+// 呼叫端沒有先鎖定 manifest，或 manifest 沒有該 map 產物的 hash 時，一律跳過早繪，
+// 交由後續已鎖定 cohort 的完整事件 refresh 繪圖，避免跨部署時短暫晉級舊快照。
 export async function loadMapEvents(scope: Scope, options?: LoadEventsOptions): Promise<IntelEvent[] | null> {
-  const manifestFile = options?.manifest?.scopes?.[scope]?.map;
-  const url = options?.url ?? (manifestFile ? `./data/${manifestFile}` : `./data/${scope}.map.json`);
-  const expectedSha256 =
-    options?.expectedSha256 ??
-    (manifestFile ? options?.manifest?.files?.[manifestFile]?.sha256 : undefined);
+  const manifest = options?.manifest;
+  if (!manifest) return null;
+
+  const manifestFile = manifest.scopes?.[scope]?.map;
+  if (!manifestFile) return null;
+
+  const expectedSha256 = options?.expectedSha256 ?? manifest.files?.[manifestFile]?.sha256;
+  if (!expectedSha256) return null;
+
+  const url = options?.url ?? `./data/${manifestFile}`;
 
   try {
     const res = await fetch(url, { signal: options?.signal });
     if (!res.ok) return null;
     if (typeof res.text === "function") {
       const text = await res.text();
-      if (expectedSha256 && globalThis.crypto?.subtle) {
-        const hash = await computeSha256Hex(text);
-        if (hash && hash !== expectedSha256) {
-          return null;
-        }
+      if (!globalThis.crypto?.subtle) return null;
+      const hash = await computeSha256Hex(text);
+      if (!hash || hash !== expectedSha256) {
+        return null;
       }
       return JSON.parse(text) as IntelEvent[];
     }
-    return (await res.json()) as IntelEvent[];
+    // 無法取得原始文字就無法驗證 manifest hash，因此 first-paint 不得晉級。
+    return null;
   } catch {
     return null;
   }
