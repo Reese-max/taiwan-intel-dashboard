@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import YAML from "yaml";
 import {
   FETCH_MODE_CHOICES,
   resolveFetchMode,
@@ -179,16 +180,28 @@ describe("resolveFetchMode", () => {
     expect(deployWorkflow).not.toMatch(/TWINKLE_(?:MCP|HUB)/);
   });
 
-  it("restores pipeline data once and deploys the checked artifact", () => {
+  it("restores pipeline data and requires preview in the PR check", () => {
     const workflow = readFileSync(".github/workflows/deploy.yml", "utf8");
+    const jobs = YAML.parse(workflow).jobs;
     const refreshWorkflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
 
+    expect(workflow).not.toMatch(/^  push:/m);
+    expect(workflow).not.toContain("deploy-production:");
     expect(workflow).toContain("ref: pipeline-state");
     expect(workflow).toContain("cp -f pipeline-state/data/*.json public/data/");
     expect(workflow).toContain("npm run check");
+    expect(workflow).toContain("name: Deploy Preview");
     expect(workflow).not.toContain("- run: npm run build");
-    expect(workflow.match(/name: deploy-dist-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/g)).toHaveLength(3);
-    expect(workflow.match(/apiToken: \$\{\{ secrets\.CLOUDFLARE_API_TOKEN \}\}/g)).toHaveLength(2);
+    expect(workflow.match(/apiToken: \$\{\{ secrets\.CLOUDFLARE_API_TOKEN \}\}/g)).toHaveLength(1);
+    expect(jobs["build-preview"].steps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);
+    expect(jobs["build-preview"].steps.some((step: { name?: string }) => step.name === "Upload checked preview artifact")).toBe(true);
+    expect(JSON.stringify(jobs["build-preview"])).not.toContain("CLOUDFLARE_API_TOKEN");
+    expect(jobs.check.needs).toBe("build-preview");
+    expect(jobs.check.if).toBe("${{ always() }}");
+    expect(jobs.check.steps.some((step: { name?: string }) => step.name === "Require validated build")).toBe(true);
+    expect(jobs.check.steps.some((step: { name?: string }) => step.name === "Download checked preview artifact")).toBe(true);
+    expect(jobs.check.steps.some((step: { uses?: string }) => step.uses?.startsWith("actions/checkout"))).toBe(false);
+    expect(jobs.check.steps.some((step: { run?: string }) => step.run?.includes("npm"))).toBe(false);
     expect(workflow).not.toContain("CF_REFRESH_TOKEN");
     expect(refreshWorkflow).toContain("apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}");
     expect(refreshWorkflow).not.toContain("CF_REFRESH_TOKEN");
