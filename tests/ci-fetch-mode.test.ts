@@ -223,6 +223,8 @@ describe("resolveFetchMode", () => {
     expect(refresh.on.push.paths).toContain(".github/workflows/update-and-deploy.yml");
     expect(refresh.on.push.paths).toContain("ops/approved-code.json");
     expect(refresh.on.schedule).toHaveLength(2);
+    expect(refresh.concurrency.group).toBe("pipeline-live-fetch");
+    expect(refresh.concurrency["cancel-in-progress"]).toBe("${{ github.event_name == 'push' }}");
     expect(refresh.jobs["build-approved"].steps.find((step: { name?: string }) =>
       step.name === "Checkout 核准的網站程式碼").with.ref).toBe("${{ steps.approved.outputs.sha }}");
   });
