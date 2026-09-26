@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-09-26T16:54:14.762Z",
+  "windowHours": 24,
+  "windowStart": "2026-09-25T16:54:14.762Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 886,
+    "accepted": 479,
+    "rejected": 407
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "反制中國「內政化」台灣問題 外交部深夜重申2758號決議不涉台",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5587232",
+        "pubDate": "Sun, 27 Sep 2026 00:17:07 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "第81屆聯合國大會在紐約聯合國總部舉行，今年正值聯大第2758號決議通過第55年，外交部昨（26）日深夜再次重申，該決議全文150字，隻字未提及台灣，是以未曾確認台灣是中國的一...…"
+      },
+      {
+        "title": "從台馬泰跨國代孕案看「生殖商品化」的道德與法律黑洞-節目 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5tUXg2TW96anBfNzNLdFpIQ3o5eFJycXZ6VWtjVjNwYzl0c0xUSDlmLXFxTDRrWHVkeGlXQUIxcWJNd0R2UHltaVVJUF83U2JiSWdMM1o2SDJMRzYwclE4Ug?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:08:52 GMT",
+        "source": "央廣 RTI 治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "從台馬泰跨國代孕案看「生殖商品化」的道德與法律黑洞-節目 rti.org.tw"
+      },
+      {
+        "title": "「洋流」對上萬安！中庄仔福德宮廟方挺沈伯洋 當面酸蔣萬安「選舉到了才來」",
+        "link": "https://newtalk.tw/news/view/2026-09-26/1062112",
+        "pubDate": "Sun, 27 Sep 2026 00:05:35 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 民進黨台北市長參選人沈伯洋與市長蔣萬安，26日晚間先後出席中庄仔福德宮福德正神聖誕千秋晚宴。兩人各自參拜、致詞及拜票，最後未碰面。廟方董事長林春裕致詞時表態支持沈伯洋，也當面向蔣萬安抱怨，蔣當上市長後較少出席廟方活動。沈伯洋晚間7時抵達時，已有支持者在場外等候。他沿途與民眾握手、接受歡迎，走完不到1 延伸閱讀： 蔣萬安遭質疑更改學歷 北市府：感謝立法院更新為正確翻譯 蔣萬安更改"
+      },
+      {
+        "title": "從預估兩千年縮短至幾十年，澳洲穀物基因庫大規模實測推翻種子保鮮期",
+        "link": "https://technews.tw/2026/09/27/scientists-identify-the-doomsday-seeds-that-could-last-the-longest/",
+        "pubDate": "Sat, 26 Sep 2026 16:00:08 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "提及基因保存，或許有人曾聽過位於挪威冷冽地底的「斯瓦爾巴全球種子庫」，但坐落於南半球的「澳洲穀物基因庫」（AG [&#8230;]"
+      },
+      {
+        "title": "靠法扶獲賠312萬不繳律師費 准強制執行 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1HVDJha1dxOGgyMW5BNHN2VHg1bEVnejVzcGhZWDFpSWw4LVpPY1RYSVRiajgtenJKRlRScjByelF6LVZWZmRBcTZzM2NhQnhO0gFWQVVfeXFMUC1wQnNwVFNwbmczLXBWei1JOElBSmV5WkFRRWJwM25PY19ZUG4xR1VwZy1HUUx2Q0s5M1RsTFk3VHhmVmZMVF9yLUJ2NzlydTNaMHBNeXc?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:00:00 GMT",
+        "source": "GN 妨害自由恐嚇",
+        "hint": "治安",
+        "authority": "media",
+        "description": "靠法扶獲賠312萬不繳律師費 准強制執行 UDN"
+      },
+      {
+        "title": "崔媽媽「二房東計畫」包租代管 幫無殼長者找家 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9GQTZQcFZaazhhcUJVdDROUXRTdXpUMUljYXJnQnFCSExJWVdUemR0QjlFWTFJWGtBWUtwcGZ0SDRpQmtpaG9kTUxJX1lfT3c20gFWQVVfeXFMTVg0R09HcU82STlSZ1ZuQm9LYloxMWZkenAtNU01UU8zaDBlUjBlb2xxX0ZuekdfSzJJVEs0STd3S0JWVGdwU2twdWJaeG5UVUFYLV9ubmc?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:00:00 GMT",
+        "source": "GN 租屋詐騙",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "崔媽媽「二房東計畫」包租代管 幫無殼長者找家 UDN"
+      },
+      {
+        "title": "僅7%房東 願無條件租給長者 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9yaFA2dlBSYThoM1R6cEduTHZDMnJadWVRdy1XSDdYQmtlQm5LdklFWEZXdjBiQjlhalM2WElJX25sSUVVRnRKSzVxLU5aaGdW0gFWQVVfeXFMUFJ4OTFSemVWOUUwWDVEUjdJMG9vVDhLUllaQmxnOGJVd2RKU3lKN2FQSnEyZm1DS3d2dkRpNUZsaEF5M1NzSWZsYm9abE5VT2VwRGJ5OEE?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:00:00 GMT",
+        "source": "GN 租屋詐騙",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "僅7%房東 願無條件租給長者 UDN"
+      },
+      {
+        "title": "新聞眼／長輩租房困境 居住不正義冰山一角 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9vemVsQWU5ODN6dVpORWNjU1FtZHFDMjN4UDY1X3dMc05feUZ6UkxoVTFCVmJ3MF9XWWJya0FveWFiUDBzSk1fYmY5dlBpQkpV0gFWQVVfeXFMTUl0QjFSZ2oteVR3TVIyeXUwYVhsam1nbzFtcHhhQXkzYkREckFFdWJ1Wmw5LVJYVnpDOUdPSnItdHRRZWJMcFFzc2d1bkZLM2xfYXhJOGc?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:00:00 GMT",
+        "source": "GN 租屋詐騙",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "新聞眼／長輩租房困境 居住不正義冰山一角 UDN"
+      },
+      {
+        "title": "狂！洋流、欣潮明早10點台中合體 今晚就有人衝審計新村",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5587207",
+        "pubDate": "Sat, 26 Sep 2026 23:52:07 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨台北市長參選人沈伯洋明天（27日）上午10點到台中，與民進黨市長參選人何欣純合體，「洋流會欣潮」地點審計新村今天深夜出現20多人，持洋流、純派及應援小物搖旗揮舞，有人笑問...…"
+      },
+      {
+        "title": "學習「海洋之母」珊瑚保育 高中生探訪墾丁、海生館當守護者",
+        "link": "https://news.ltn.com.tw/news/Pingtung/breakingnews/5587206",
+        "pubDate": "Sat, 26 Sep 2026 23:31:44 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "珊瑚產卵可說是海底奇幻世界，身為海洋中生產力最高、生物量最豐富的系統，卻極易受人為破壞，墾丁國家公園管理處連假舉辦「海洋之母：珊瑚保育培力營隊」，將高中學生引導入海生館的「後場...…"
+      },
+      {
+        "title": "平日神隱、中秋限定！台中賣場木炭「珍惜生命」大反差謎因揭曉",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5586954",
+        "pubDate": "Sat, 26 Sep 2026 23:25:11 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「木炭去哪了？」平日到賣場想買一包木炭，常如闖關般得先找店員、甚至問上一輪才有著落，但中秋節一到，木炭卻像「季節限定」般突然現身上架，直接把一袋袋木炭裝進大型紅色塑膠箱，擺在入...…"
+      },
+      {
+        "title": "耳公Satellite-生活篇：144-節目 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5BVW9kNl8zZElmY2RsZ1RwelhyOWhsMlo1dnBTbVQwMkIyV2oyamxIVWQya3hfZS1Zb1Nxd01sYmQ4Z0xKdmd4dnFpdDItYjRMMXV4VkdmVmJsY19QYUt1Yg?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 15:19:12 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "耳公Satellite-生活篇：144-節目 rti.org.tw"
+      },
+      {
+        "title": "最低工資審議會終拍板 明年基本工資破3萬升至3.09萬元、時薪205元 巴拉圭總統：排除台灣是聯合國污點 貝尼亞聯大演說 挺台參與國際 - rti.org.tw",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1GWV9oRWZyRHhlWGFTejY0cXFmUDBaLWkzcFp4NVp2UFNBNjhFNWh0NkdUTlc3bXJXQVdnallNWFJxU0hWMU5JNHRLbnktRGdRNlg4WE5ZZWZyNnY0enVYcg?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 15:03:22 GMT",
+        "source": "央廣 RTI 治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "最低工資審議會終拍板 明年基本工資破3萬升至3.09萬元、時薪205元 巴拉圭總統：排除台灣是聯合國污點 貝尼亞聯大演說 挺台參與國際 rti.org.tw"
+      },
+      {
+        "title": "告五人加場票明午12點開賣 售票系統出包「將錯就對」延後一週",
+        "link": "https://www.mirrormedia.mg/story/20260926-90ent-230208",
+        "pubDate": "Sat, 26 Sep 2026 23:02:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "波蘭修道院遭烏男持刀攻擊釀1死 反烏情緒恐再度升溫 - 民視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9CVWRvREhoVVhCcV9JdjRtbmhBOVh2UkJ6SHVzVTVneXAzRDV1RVJCNllrVHpHcTN2Skw3a0tXQmRvdEJwVzg0eDRxT05Id1dvRThhT1VXX2ZfS28yU3ZKNA?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 15:00:20 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "波蘭修道院遭烏男持刀攻擊釀1死 反烏情緒恐再度升溫 民視新聞網"
+      },
+      {
+        "title": "海洋大學十大傑出校友出爐 「追稅悍將」朱家崎入列",
+        "link": "https://news.ltn.com.tw/news/Keelung/breakingnews/5587119",
+        "pubDate": "Sat, 26 Sep 2026 22:56:11 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國立台灣海洋大學今年傑出校友遴選出爐，10位跨領域精英脫穎而出，包括被譽為「追稅悍將」的台灣高等檢察署高雄檢察分署檢察長朱家崎、主導「二次能源轉型」的經濟部能源署署長吳志偉、還...…"
+      },
+      {
+        "title": "泰民壓軸現身露腹肌賞月 〈Guilty〉撩衣舞一跳全場尖叫",
+        "link": "https://www.mirrormedia.mg/story/20260926-90ent-224122",
+        "pubDate": "Sat, 26 Sep 2026 22:41:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "沈伯洋喊「明天台中見」何欣純神問為何大家只提醒她「這件事」",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5587189",
+        "pubDate": "Sat, 26 Sep 2026 22:40:06 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨台北市長參選人沈伯洋「洋流」，明（27日）將席捲台中、與民進黨市長參選人何欣純「欣潮」合體，今沈晚沈伯洋在他的社群平台喊「明天台中見」，釣出身為東道主的何欣純現身頗有「微...…"
+      },
+      {
+        "title": "舒力基增強為中颱！北轉往日本衝 飛沖繩留意班機動態",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5587193",
+        "pubDate": "Sat, 26 Sep 2026 22:36:08 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "舒力基颱風今晚（26日）增強為中度颱風，北轉往日本南方海面前進，沖繩等地的天氣也會受影響；明天台灣東半部沿海含蘭嶼、綠島，以及恆春半島有長浪發生。 舒力基颱風在今晚8點增...…"
+      },
+      {
+        "title": "漢子有情 新北市長侯友宜返鄉挺黃嫈珺",
+        "link": "https://news.ltn.com.tw/news/ChiayiCounty/breakingnews/5587162",
+        "pubDate": "Sat, 26 Sep 2026 22:32:38 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "曾是民進黨籍的嘉義縣議員黃嫈珺，在新北市長侯友宜參選總統返鄉造勢時，因為與父親前省諮議員黃文峯的同學侯友宜同框，遭民進黨停權黨紀處分憤而退黨。這次以無黨籍轉戰朴子市長，侯友宜繼...…"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "快訊／北市大安工地深夜大火！蔣萬安：地下3樓搶救難度較高 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE8wZEZSZ3hZT2F5WUJoeVlLMmVZVXFVUzJ5R0xIaW9tY3ZralNHTVozdllZUXA1UllzaHhIRUV5Vmx3WUNPVG5QanpuaGhDWHRlNnRRbjFraVRmZFJCT2fSAUtBVV95cUxNendsU1dDaG9oNFNjWWlTWTNrSGJGYTdxX2JndlBUdUk0d3ZTRU5US2tKVmFUZFFCYWlkR3o0WlhEeTNwSllYSHhsWTQ?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:17:00 GMT",
+        "source": "GN 火警氣爆",
+        "hint": "災防",
+        "authority": "media",
+        "description": "快訊／北市大安工地深夜大火！蔣萬安：地下3樓搶救難度較高 ETtoday新聞雲"
+      },
+      {
+        "title": "大安都更工地深夜竄火！39車102人搶救濃煙恐飄北市4區、雙和| 社會萬象| 社會 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1Ld1MtaXNTUjJUOXlONnFUQzQ1MUd6OVpiaGxtZnBlSzN2d1E3WG9Gbzh4NTdqZVpHWi1lSlJlUmM4V3ZuRkdaMmdZbE5fc2Nu?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:10:26 GMT",
+        "source": "GN 火警氣爆",
+        "hint": "災防",
+        "authority": "media",
+        "description": "大安都更工地深夜竄火！39車102人搶救濃煙恐飄北市4區、雙和| 社會萬象| 社會 UDN"
+      },
+      {
+        "title": "尋父不成竟買汽油燒家門男子落網又被搜出毒品遭羈押| 焦點事件| 社會 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5nMUFoRGQxTXdYZThfNGpZVmV2ZU5zb2Rnano5Qk1hRVkzcnRJaG5xVVV6dlFjRUctczltWUZlR01vOWY3VkpsYS0tNzJxMzd1?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:10:25 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "尋父不成竟買汽油燒家門男子落網又被搜出毒品遭羈押| 焦點事件| 社會 UDN"
+      },
+      {
+        "title": "專家：數位跟騷 網路成為戰場 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFB0OXRWU0dORjVJa3AxVXRZNmN1RFg5aURRc2dKYm5Wcm4tQXZaUHpDN0NsWmpxMDN2Wmo2QXdpbDBpS2hXRkJPdmxsUjM3RkZqWGYw0gFYQVVfeXFMTjZQcDN1T004YWlCQ0IxdXljUmNjX0tRQ1JsWENzTXlTRWVDM09ZZ05Za0ZpNDBxOTdGY1lfbllDNjl2ZDBYZzBwU2FTeE9WcTgzU3FPbFNRMA?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:06:33 GMT",
+        "source": "GN 跟蹤騷擾",
+        "hint": "治安",
+        "authority": "media",
+        "description": "專家：數位跟騷 網路成為戰場 UDN"
+      },
+      {
+        "title": "關鍵人物／阿志：小玲促成跟騷法 像小天使 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFBIcHU5Q1dKVUwxUDZtelNsb3BOa01FaTF0bjZEVWltbEpwbXVXUG1FYnRDNVRuN3UxcWVpbnRQOUZVQ3QyZzEwenRKR3VUb1NKTUhN0gFYQVVfeXFMTktRWTI3Yk1vczdPakNJUUswTU9wSWVQRHFBRDhWcGh2SGtmOWE0SGV4S1hiYXpwMlRwT2ZYRGFneGcxamxwZnhON0V4LUpYWVhDLVBGdHVZSA?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:06:17 GMT",
+        "source": "GN 跟蹤騷擾",
+        "hint": "治安",
+        "authority": "media",
+        "description": "關鍵人物／阿志：小玲促成跟騷法 像小天使 UDN"
+      },
+      {
+        "title": "跟騷命案 一道拖痕留下遺憾 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFB5VHlNTDZTekJ0Ql9NemZuelVwa3VVQVRETE5iQVpodmFvaG9IbDRpck5sbU5wdkhMbGFSa00wTEtfeHc0ZTg1cVk2SHR2eGRFVE1v0gFYQVVfeXFMT3E2WUZoNE1vUmowU0lPTERKbFRpSXNFTkZ2SjVDWjlEVjI2TmhjZmhJWTlsLUl0cy1OMnNQcWZGckVlbGRjbm56TXBaandRZWVKMGwyXzIycw?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:05:04 GMT",
+        "source": "GN 跟蹤騷擾",
+        "hint": "治安",
+        "authority": "media",
+        "description": "跟騷命案 一道拖痕留下遺憾 UDN"
+      },
+      {
+        "title": "亞謹諾國際機場查獲毒品 三名菲律賓人被捕 - United News Ph",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFBKX2xMNlFYZzRMZnlKLU9FTEJSQWxIMlZLREtqbU9Vb3hTRExqOG5aRnVPV0RycUdseFZFeGZyanVRZWNiWmFfdUNQTDlKd3JfcVkxTzd3YURVcl9ibFE?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:04:52 GMT",
+        "source": "GN 毒品查獲",
+        "hint": "治安",
+        "authority": "media",
+        "description": "亞謹諾國際機場查獲毒品 三名菲律賓人被捕 United News Ph"
+      },
+      {
+        "title": "通緝犯持外國護照 進出台灣多年 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBud0ZSNTNYTnVrV0xlckVseVZMVUU2Sm9wR1h3am5mLTZyV3FhbGR3YVlnOXRmVHh2MlBjbXUwbUhJU01QSjRrMF9IaEh3M2pu0gFWQVVfeXFMT01hclJVYWZBOGRmdElCVDhDMmFSTV9ab3JBOGdPcTVTUGR4WUZvVUhabzMyaUlKam9nNXlRZzB1RHUwdzU3LU42SXJDSUhfam9jODNFY2c?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 16:00:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "通緝犯持外國護照 進出台灣多年 UDN"
+      },
+      {
+        "title": "希臘雅典衛城附近建築物倒塌 爆炸疑氣體洩漏致四人昏迷 - 巴士的報",
+        "link": "https://news.google.com/rss/articles/CBMi1wJBVV95cUxNUzV6R2NILWdqdTNZSzJLaXBseDVvOEpFdktNbUZ3WXcxTlY1YVFDTnQyNmJCN2Fja1UtMzhnUkNfemFYVkFKektvbHdRN2xWcWk0YndYRm4zUHM0dzV5bjJhVm1VblhxTG41NnVtTE1mVlgzeEdiUlQ4X2lxamE2RlRjR0NJOGpPR3lMOHFkT0dmT0p2MXFsOEg2dzdqX0VNbm5IdEdURk1nS0dtLXROV2doOXptWnpHOXMzaU1WMVZ5MU5XYkxBQ0VfQjRYSHY5NzhhWHNHZE9uNUpfWXlQeVdpdTFZYkRmNFBkY0FSdHA5NUpockdaVFJlNEh0YUd3ZEIzeFU4QzN6MkNkdC10QTVnSHVadDJGTnV5SE4xUVA0UUEyam1aYlRSMHZsNUtKY3Z3UDhDemlIMXhpNFFHaFBIcmtTRGJXTEdoME1QSXlDTDZQampv?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 15:54:05 GMT",
+        "source": "GN 消防員傷亡",
+        "hint": "災防",
+        "authority": "media",
+        "description": "希臘雅典衛城附近建築物倒塌 爆炸疑氣體洩漏致四人昏迷 巴士的報"
+      },
+      {
+        "title": "燒烤店公安專題2-2》10年來風管、排油煙管釀災最多 拒入不合格場所",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5586697",
+        "pubDate": "Sat, 26 Sep 2026 23:45:15 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "據消防署、各地消防局統計，燒肉等餐飲店近10年來，五大起火原因依序為風管、排油煙管堆積油垢、顧客烹飪不當或油漬過多、木炭或炭火處理不慎（非烹調區）、爐具（瓦斯、電力設備）故障，...…"
+      },
+      {
+        "title": "燒烤店公安專題2-1》中秋連假湧人潮 「人命優先」立即避難保命要訣",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5586692",
+        "pubDate": "Sat, 26 Sep 2026 23:45:05 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "中秋節國人喜愛烤肉賞月，而新北市三重區連鎖燒烤店「燒肉Smile」才剛發生火警，相關場所安全引起關注。據公司、商業相關登記，初估台灣地區燒肉、炭火燒烤餐廳、個人燒肉店及火鍋店數...…"
+      },
+      {
+        "title": "【70歲老婦勸別喝酒 遭2男「集體性侵」慘死！拖行50m棄屍】 （#大表哥） - facebook.com",
+        "link": "https://news.google.com/rss/articles/CBMi-gJBVV95cUxNSG45M2trdFd6blpNLThyeWRqYW9Id0ljU29McG5pQ2lpS2NxUE9GSHREaDRJVXB2OEVnb0JnWmFCOVNXUjg1RnNXc0luVmNtYm1YUHhsT0FCeGItbG5SVjVmTzhvcURUUEhSR1U3X0dRUWFyc3V6UXR6WmRBTnZnUnJRa0NuX0RTV05kcDctMTNtYzZMb053eGR3SGNERjF3ZldXaW8zdGRnZzFSY3prZlJIS1d0b0VvQkJEcWhrbnRwOHU2OEpQdmJZaFhmXzYxbEc4bVZOS3ZuXy1kbVZDaWt6ZUZ0TTJIWUdpbDI2QWpwbUtDUmx3STUteDk5R2pWbFBCVEN3aGoxdkhGYkZUQVRiSElMTlA1UmpPNk5hbEVQbi0xcHBtMFNwWDRIRURIRkljdnR2NWNDcFBwSDFOZVRnZmpVOHlDdFA1a2kwUmt6VndmZWNRNFdhbEZyNk5sNHJJX0hqS3EwNVB6d0xwUzEtTWNNTVpaVmc?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 15:36:19 GMT",
+        "source": "GN 殺人分屍",
+        "hint": "治安",
+        "authority": "media",
+        "description": "【70歲老婦勸別喝酒 遭2男「集體性侵」慘死！拖行50m棄屍】 （#大表哥） facebook.com"
+      },
+      {
+        "title": "北市大安區工地火警蔣萬安：雙北6區留意空品| 社會萬象| 社會 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE54djFlOE03ckVBV0g1bGtTY2ZhRUZZTGlFblRfRFM3cXlUOHZsVy0teWJtWkM1THZ4UFpwMm9SanYtX05HWEo1eG1xTVVxeVQx?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 15:08:42 GMT",
+        "source": "GN 火警氣爆",
+        "hint": "災防",
+        "authority": "media",
+        "description": "北市大安區工地火警蔣萬安：雙北6區留意空品| 社會萬象| 社會 UDN"
+      },
+      {
+        "title": "北市都更工地晚間大火！「火舌從B3衝出」濃煙狂竄 消防員灌救中 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9qT0thMVRBUDMybVZfVmx0R1R2OGJycFpzVkxFeXRUMlQyNGxXX3JENDZlOTZxaUZNUExnY2hfaUJYU2swbmdSQUZHTmdBdVgwZ0d2OEtMakRINk9Ic1HSAUtBVV95cUxNVElQSkF0OUhIUHdMbGhfdF9DVk9ZSElDTGFYY0lRTlk2VkliclhvN3MtaEw5c3pLdTZwOTRjYXVGdXBmd3VkU3hMekE?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 15:00:00 GMT",
+        "source": "GN 火警氣爆",
+        "hint": "災防",
+        "authority": "media",
+        "description": "北市都更工地晚間大火！「火舌從B3衝出」濃煙狂竄 消防員灌救中 ETtoday新聞雲"
+      },
+      {
+        "title": "南非發現第十具女屍 警方調查連環兇殺案 - 巴士的報",
+        "link": "https://news.google.com/rss/articles/CBMivwJBVV95cUxNbGpXbVJLWjZLVWpPaE9Ed1ctc3I5SVE2STZHOUhaRnc3cGVKUldEdkYySlRhZDhzdmtaYzYyUm1kT21nQUNBTEZIV3BtUGgwMUd5SFA2bkR6SzlZN1EtSGNnSTlMT0Y1SUU5WUlkc1pnRk5VRy1JYWN2dVhIeldoQlJUNnNnWFdaem9MV0JIc19Ja281cXEzZU8xOGhNXzMxN3g1aDExUmp6bU02bkptYWxDZUVyMDY2Z09ZanVTLUxxMm9OdGFRZ0k1Xy10YWJIUHdxb3FxQ0w1Z1FSWUkxdmFrc2k0TzVrSVJKdEVsaWxaeF9wSUJraDh1dDVKaUo3bWJQNHlLb0FLYTZ4THdFQ1BUZUhVUnhKZ3pocDZqR3BWRm13OXBVeXlBbmVtemlnYzBTUTRjTWlXQWdvQlZn?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 14:50:41 GMT",
+        "source": "GN 命案兇殺",
+        "hint": "治安",
+        "authority": "media",
+        "description": "南非發現第十具女屍 警方調查連環兇殺案 巴士的報"
+      },
+      {
+        "title": "多倫多東區住宅火警 住戶自行疏散 - singtao.ca",
+        "link": "https://news.google.com/rss/articles/CBMinAJBVV95cUxQak83LUZHTzhXQ0l6REpYazZJYS16YS0yVnQ5UjZhUmN0NVkxWS1YRlVmOFliNEd4VUFpbW0zUTlSYkRKS2wxZTFCb1Z0U3ZkOUw5M2xxUURTbXdMZkJjQVdGSEk5amY2ZTNxeU9FQ3ozcHFmQml5cjRLcjNmY1luc19vdGR2VFJOdzVzWjdsVUpZTlJiTjlObE0zeVlSMElFR0hLSkJrV0pSdkdqblp5Qi1Wc0NNZWZJWlRvUWRxdXVvYzB0ZUYxRkFEbDY0bHY1b0FaS1VIb2FVVnR0OUpudDVPYWVYUWpNeFlEWUlQMnpxV3VUSlNXRlBwUVZPY2stZ2JpTDRJSFlUR2ttUmgwTnNIV2hNZnRvdjhSedIBjAFBVV95cUxNZFEzeDBtNTRablNib2NUVVVlWWVyUTkxX0Jvd3ZWTlgwQm54Q3lkMVY2akJaOEdYcjVOd3AxVWsxVGc0TDNFVTJ2UTl2ZUhTM2Vpb1dsZTRqWU1jUFIwU25ZbG1BTG90YXQ3MXVoYlhCOEVLREhibTY3Q2J4WlJYR2p5OTRFZGx3UEFGcg?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 14:48:45 GMT",
+        "source": "GN 消防員傷亡",
+        "hint": "災防",
+        "authority": "media",
+        "description": "多倫多東區住宅火警 住戶自行疏散 singtao.ca"
+      },
+      {
+        "title": "台北樂業街住宅工地暗夜失火 火舌濃煙直竄畫面曝",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5587186",
+        "pubDate": "Sat, 26 Sep 2026 22:47:27 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北市大安區樂業街一處興建中的集合住宅工地今晚失火警，現場竄出濃濃黑煙。台北市消防局獲報立即派遣人車灌救，目前無人受困。 據了解，火警地點全坤建設的建築工地，起火點位於地...…"
+      },
+      {
+        "title": "南市府食安會報強化食安管理 跨局處合作守護市民健康 - 台灣民眾電子報",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE9xNGhqZHR4a1dtQklnUm9icmhTNWZjbW4zN2Y4ck9kMDZZRGg2QkpMLVNJclJ5TXNlR3BickZKeXJHSnh0NXNxVw?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 14:30:19 GMT",
+        "source": "GN 食安黑心",
+        "hint": "食安",
+        "authority": "media",
+        "description": "南市府食安會報強化食安管理 跨局處合作守護市民健康 台灣民眾電子報"
+      },
+      {
+        "title": "找不到老父竟縱火燒屋 高雄37歲男落網再搜到毒品",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5587160",
+        "pubDate": "Sat, 26 Sep 2026 22:13:25 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄市鼓山區華泰路1棟民宅24日深夜發生火警，警、消勘察現場疑似遭人潑灑汽油縱火，並循線逮到縱火的屋主兒子蔣男（37歲），查出當日與70歲父親發生口角，憤而於1樓屋外縱火，蔣男...…"
+      },
+      {
+        "title": "鼓山民宅縱火案！逆子與父親口角竟朝自家放火 藏超商遭逮收押 - 中時新聞網",
+        "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9kOUNZM1paOFVHWmNKdHFyV3Atd0w2UDVVMnhwZXhESzlKSmFFcjRyN3dZdjFwbktPV3RfYUZ4TGZIbV9rcWI5Rl9ZNWdXR1N3WTEwRFNBWUlLR2VSWnVIUDg5aldJTEwycmJrT2FR?oc=5",
+        "pubDate": "Sat, 26 Sep 2026 14:09:13 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "鼓山民宅縱火案！逆子與父親口角竟朝自家放火 藏超商遭逮收押 中時新聞網"
+      }
+    ]
+  }
+}
