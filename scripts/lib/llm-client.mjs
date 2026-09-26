@@ -105,7 +105,20 @@ export async function chatVia(c, messages, maxTokens, temperature) {
   const terminal = terminalFailures.get(endpoint);
   if (terminal) throw new Error(terminal);
   const gate = gateFor(c);
-  const body = JSON.stringify({ model: c.model, messages, max_tokens: maxTokens, temperature });
+  const body = JSON.stringify({
+    model: c.model,
+    messages,
+    max_tokens: maxTokens,
+    temperature,
+    // NVIDIA's hosted Super model defaults to full reasoning. JSON extraction
+    // needs the final answer, and bulk normalization cannot wait for long traces.
+    ...(c.name === "fallback" && c.model === "nvidia/nemotron-3-super-120b-a12b"
+      ? { reasoning_effort: "none" }
+      : {}),
+    // The NVIDIA endpoint documents streaming as its default; this client
+    // consumes a single JSON completion rather than server-sent events.
+    stream: false,
+  });
   await gate.acquire();
   try {
     const previousFailure = terminalFailures.get(endpoint);

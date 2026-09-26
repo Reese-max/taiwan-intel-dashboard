@@ -117,5 +117,11 @@ describe("primary→fallback LLM 備援（C1）", () => {
     ]);
     expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).model).toBe("dedicated-summary-model");
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).model).toBe("nvidia/nemotron-3-super-120b-a12b");
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({ stream: false });
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).not.toHaveProperty("reasoning_effort");
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toMatchObject({
+      reasoning_effort: "none",
+      stream: false,
+    });
   });
 });

@@ -30,6 +30,10 @@ describe("refresh watchdog decision", () => {
   it("requests one backup dispatch when the publication is stale and no run is recent", () => {
     expect(decideRefreshWatchdog({ now: NOW, generatedAt: generatedAt(120), runs: [run(100)], state: "DEGRADED" }))
       .toMatchObject({ action: "dispatch", reason: "canonical-stale-and-no-recent-run", ageMinutes: 120 });
+    expect(decideRefreshWatchdog({ now: NOW, generatedAt: generatedAt(50), runs: [run(100)], state: "DEGRADED" }).action)
+      .toBe("skip");
+    expect(decideRefreshWatchdog({ now: NOW, generatedAt: generatedAt(51), runs: [run(100)], state: "DEGRADED" }).action)
+      .toBe("dispatch");
   });
 
   it("fails closed for missing or future publication timestamps", () => {

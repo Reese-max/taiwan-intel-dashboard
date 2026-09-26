@@ -9,7 +9,7 @@ import { loadContract } from "./operating-state.mjs";
 export const EXPECTED_REPO = "Reese-max/taiwan-intel-dashboard";
 export const PROVENANCE_URL = "https://taiwan-intel-dashboard.pages.dev/data/provenance.json";
 export const WORKFLOW_NAME = "update-and-deploy.yml";
-export const MAX_AGE_MINUTES = 75;
+export const MAX_AGE_MINUTES = 50;
 export const RUN_COOLDOWN_MINUTES = 45;
 const ACTIVE_STATUSES = new Set(["queued", "in_progress", "waiting", "pending", "requested"]);
 

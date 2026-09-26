@@ -172,6 +172,9 @@ describe("resolveFetchMode", () => {
     expect(workflow).toContain("NVIDIA_MODEL: nvidia/nemotron-3-super-120b-a12b");
     expect(workflow).toContain("LLM_FALLBACK_BASE_URL: https://integrate.api.nvidia.com/v1");
     expect(workflow).toContain("LLM_FALLBACK_MODEL: nvidia/nemotron-3-super-120b-a12b");
+    expect(workflow).toContain('LLM_FALLBACK_TIMEOUT_MS: "45000"');
+    expect(workflow).toContain('INTL_NORMALIZE_BUDGET_MS: "600000"');
+    expect(workflow).toContain('DOMESTIC_NORMALIZE_BUDGET_MS: "300000"');
     expect(workflow).toContain("SUMMARY_BASE_URL: ${{ secrets.SUMMARY_BASE_URL }}");
     expect(workflow).toContain("SUMMARY_MODEL: ${{ secrets.SUMMARY_MODEL }}");
   });
@@ -222,6 +225,12 @@ describe("resolveFetchMode", () => {
     expect(refresh.on.schedule).toHaveLength(2);
     expect(refresh.jobs["build-approved"].steps.find((step: { name?: string }) =>
       step.name === "Checkout 核准的網站程式碼").with.ref).toBe("${{ steps.approved.outputs.sha }}");
+  });
+
+  it("checks publication freshness four times per hour when GitHub schedules are delayed", () => {
+    const watchdog = YAML.parse(readFileSync(".github/workflows/refresh-watchdog.yml", "utf8"));
+    expect(watchdog.on.schedule.map((entry: { cron: string }) => entry.cron))
+      .toEqual(["8,23,38,53 * * * *"]);
   });
 
   it("gates source freshness and the generated coverage matrix before deploy", () => {
