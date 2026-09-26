@@ -169,8 +169,9 @@ describe("resolveFetchMode", () => {
     const workflow = readFileSync(".github/workflows/pipeline-fetch.yml", "utf8");
     expect(workflow).toContain("LLM_FALLBACK_API_KEY: ${{ secrets.NVIDIA_API_KEY }}");
     expect(workflow).toContain("NVIDIA_BASE_URL: https://integrate.api.nvidia.com/v1");
+    expect(workflow).toContain("NVIDIA_MODEL: nvidia/nemotron-3-super-120b-a12b");
     expect(workflow).toContain("LLM_FALLBACK_BASE_URL: https://integrate.api.nvidia.com/v1");
-    expect(workflow).toContain("LLM_FALLBACK_MODEL: openai/gpt-oss-120b");
+    expect(workflow).toContain("LLM_FALLBACK_MODEL: nvidia/nemotron-3-super-120b-a12b");
     expect(workflow).toContain("SUMMARY_BASE_URL: ${{ secrets.SUMMARY_BASE_URL }}");
     expect(workflow).toContain("SUMMARY_MODEL: ${{ secrets.SUMMARY_MODEL }}");
   });
