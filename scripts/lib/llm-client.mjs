@@ -160,29 +160,52 @@ export async function chatVia(c, messages, maxTokens, temperature) {
   }
 }
 
-// 編排：summary profile 先試摘要端點（如免費 NVIDIA）；空或失敗則退回 primary（付費 MiniMax）補上，
-// 確保摘要永遠完整、又能在 NVIDIA 成功時省成本。其餘 profile 直走對應端點。
+// 編排：summary profile 先試自訂摘要端點，失敗時再試獨立備援與 primary。
+// 不改寫自訂 provider 的 model；NVIDIA 備援使用自己的已核准模型。
 export async function chat(messages, { maxTokens = 1024, temperature = 0.3, profile = "primary" } = {}) {
   const c = profileCfg(profile);
   const primary = profileCfg("primary");
   const hasFallback = profile === "summary" && c.name !== primary.name;
-  // primary 的備援：LLM_FALLBACK_* 有配置才啟用（profileCfg 未配置時回 primary，以 name 判斷）。
-  const fb = profile === "primary" ? profileCfg("fallback") : null;
-  const hasPrimaryFallback = !!fb && fb.name === "fallback";
+  // LLM_FALLBACK_* 與 summary profile 分開配置，避免用 NVIDIA model 覆蓋其他供應商。
+  const fb = profile === "primary" || profile === "summary" ? profileCfg("fallback") : null;
+  const hasPrimaryFallback = profile === "primary" && fb?.name === "fallback";
+  const hasSummaryFallback = profile === "summary" && fb?.name === "fallback"
+    && (c.base !== fb.base || c.model !== fb.model || c.key !== fb.key);
   const viaFallback = async (why) => {
-    const warning = `primary LLM ${why}，改走 fallback 端點（${fb.model || fb.base}）`;
+    const warning = `${profile} LLM ${why}，改走 fallback 端點（${fb.model || fb.base}）`;
     if (!warnedFallbacks.has(warning)) {
       console.warn(warning);
       warnedFallbacks.add(warning);
     }
     return chatVia(fb, messages, maxTokens, temperature);
   };
+  const trySummaryFallback = async (why) => {
+    if (!hasSummaryFallback) return "";
+    try {
+      return await viaFallback(why);
+    } catch (e) {
+      const warning = `summary fallback 失敗（${String(e?.message || e).slice(0, 120)}）`;
+      if (!warnedFallbacks.has(warning)) {
+        console.warn(warning);
+        warnedFallbacks.add(warning);
+      }
+      return "";
+    }
+  };
   try {
     const out = await chatVia(c, messages, maxTokens, temperature);
+    if (!out && hasSummaryFallback) {
+      const alternate = await trySummaryFallback("摘要端點空輸出");
+      if (alternate) return alternate;
+    }
     if (!out && hasFallback) return await chatVia(primary, messages, maxTokens, temperature);
     if (!out && hasPrimaryFallback) return await viaFallback("空輸出（推理截斷）");
     return out;
   } catch (e) {
+    if (hasSummaryFallback) {
+      const alternate = await trySummaryFallback(`摘要端點失敗（${String(e?.message || e).slice(0, 120)}）`);
+      if (alternate) return alternate;
+    }
     if (hasFallback) return await chatVia(primary, messages, maxTokens, temperature);
     if (hasPrimaryFallback) return await viaFallback(`失敗（${String(e?.message || e).slice(0, 120)}）`);
     throw e;

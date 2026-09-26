@@ -91,7 +91,9 @@ jobs:
           SUMMARY_LLM: ${{ secrets.SUMMARY_LLM }}
           SUMMARY_API_KEY: ${{ secrets.SUMMARY_API_KEY }}
           SUMMARY_BASE_URL: ${{ secrets.SUMMARY_BASE_URL }}
-          SUMMARY_MODEL: openai/gpt-oss-120b
+          # Keep a dedicated summary provider's configured model. If it retires,
+          # llm-client tries the separately configured NVIDIA fallback model.
+          SUMMARY_MODEL: ${{ secrets.SUMMARY_MODEL }}
           SUMMARY_MAX_CONCURRENCY: ${{ secrets.SUMMARY_MAX_CONCURRENCY }}
           SUMMARY_TIMEOUT_MS: ${{ secrets.SUMMARY_TIMEOUT_MS }}
           SUMMARY_MAX_RETRIES: ${{ secrets.SUMMARY_MAX_RETRIES }}

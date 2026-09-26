@@ -23,6 +23,7 @@ describe("primary→fallback LLM 備援（C1）", () => {
   const KEYS = [
     "LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL", "NVIDIA_API_KEY", "LLM_MAX_RETRIES",
     "LLM_FALLBACK_API_KEY", "LLM_FALLBACK_BASE_URL", "LLM_FALLBACK_MODEL", "LLM_FALLBACK_MAX_RETRIES",
+    "SUMMARY_API_KEY", "SUMMARY_BASE_URL", "SUMMARY_MODEL", "SUMMARY_LLM",
   ];
   const saved: Record<string, string | undefined> = {};
   beforeEach(() => {
@@ -92,5 +93,29 @@ describe("primary→fallback LLM 備援（C1）", () => {
     expect(await chat([{ role: "user", content: "再次測試" }])).toBe("備援成功");
     expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("primary-expired"))).toHaveLength(1);
     expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("fallback-circuit"))).toHaveLength(2);
+  });
+
+  it("保留獨立摘要模型；摘要端點 410 時改用 NVIDIA 備援模型", async () => {
+    process.env.SUMMARY_API_KEY = "dedicated-summary-key";
+    process.env.SUMMARY_BASE_URL = "https://summary-retired-20260926.test/v1";
+    process.env.SUMMARY_MODEL = "dedicated-summary-model";
+    process.env.LLM_FALLBACK_API_KEY = "working-fallback-key";
+    process.env.LLM_FALLBACK_BASE_URL = "https://summary-fallback-20260926.test/v1";
+    process.env.LLM_FALLBACK_MODEL = "openai/gpt-oss-120b";
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn(async (url: string, _options?: RequestInit) =>
+      String(url).includes("summary-retired")
+        ? new Response("retired model", { status: 410 })
+        : okCompletion("摘要備援成功"),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await chat([{ role: "user", content: "摘要測試" }], { profile: "summary" })).toBe("摘要備援成功");
+    expect(fetchMock.mock.calls.map((call) => String(call[0]))).toEqual([
+      "https://summary-retired-20260926.test/v1/chat/completions",
+      "https://summary-fallback-20260926.test/v1/chat/completions",
+    ]);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).model).toBe("dedicated-summary-model");
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).model).toBe("openai/gpt-oss-120b");
   });
 });

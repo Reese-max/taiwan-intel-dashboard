@@ -183,13 +183,22 @@ describe("resolveFetchMode", () => {
   it("requires a preview for code PRs and deploys scheduled data with the pinned code", () => {
     const workflow = YAML.parse(readFileSync(".github/workflows/deploy.yml", "utf8"));
     const refresh = YAML.parse(readFileSync(".github/workflows/update-and-deploy.yml", "utf8"));
+    const previewBuildSteps = workflow.jobs["build-preview"].steps;
     const checkSteps = workflow.jobs.check.steps;
     const buildSteps = refresh.jobs["build-approved"].steps;
     const deploySteps = refresh.jobs.deploy.steps;
 
     expect(workflow.on.push).toBeUndefined();
-    expect(checkSteps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);
+    expect(previewBuildSteps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);
+    expect(previewBuildSteps.some((step: { name?: string }) => step.name === "Upload checked preview artifact")).toBe(true);
+    expect(JSON.stringify(workflow.jobs["build-preview"])).not.toContain("CLOUDFLARE_API_TOKEN");
+    expect(workflow.jobs.check.needs).toBe("build-preview");
+    expect(workflow.jobs.check.if).toBe("${{ always() }}");
+    expect(checkSteps.some((step: { name?: string }) => step.name === "Require validated build")).toBe(true);
+    expect(checkSteps.some((step: { name?: string }) => step.name === "Download checked preview artifact")).toBe(true);
     expect(checkSteps.some((step: { name?: string }) => step.name === "Deploy Preview")).toBe(true);
+    expect(checkSteps.some((step: { uses?: string }) => step.uses?.startsWith("actions/checkout"))).toBe(false);
+    expect(checkSteps.some((step: { run?: string }) => step.run?.includes("npm"))).toBe(false);
     expect(buildSteps.find((step: { name?: string }) => step.name === "Checkout 核准的網站程式碼").with.ref)
       .toBe("${{ steps.approved.outputs.sha }}");
     expect(buildSteps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);
