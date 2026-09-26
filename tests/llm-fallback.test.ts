@@ -21,7 +21,7 @@ const okCompletion = (content: string) =>
 
 describe("primary→fallback LLM 備援（C1）", () => {
   const KEYS = [
-    "LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL", "NVIDIA_API_KEY", "LLM_MAX_RETRIES",
+    "LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL", "NVIDIA_API_KEY", "NVIDIA_BASE_URL", "NVIDIA_MODEL", "LLM_MAX_RETRIES",
     "LLM_FALLBACK_API_KEY", "LLM_FALLBACK_BASE_URL", "LLM_FALLBACK_MODEL", "LLM_FALLBACK_MAX_RETRIES",
     "SUMMARY_API_KEY", "SUMMARY_BASE_URL", "SUMMARY_MODEL", "SUMMARY_LLM",
   ];
@@ -100,7 +100,7 @@ describe("primary→fallback LLM 備援（C1）", () => {
     process.env.SUMMARY_BASE_URL = "https://summary-retired-20260926.test/v1";
     process.env.SUMMARY_MODEL = "dedicated-summary-model";
     process.env.LLM_FALLBACK_API_KEY = "working-fallback-key";
-    process.env.LLM_FALLBACK_BASE_URL = "https://summary-fallback-20260926.test/v1";
+    process.env.LLM_FALLBACK_BASE_URL = "https://integrate.api.nvidia.com/v1";
     process.env.LLM_FALLBACK_MODEL = "nvidia/nemotron-3-super-120b-a12b";
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const fetchMock = vi.fn(async (url: string, _options?: RequestInit) =>
@@ -113,13 +113,33 @@ describe("primary→fallback LLM 備援（C1）", () => {
     expect(await chat([{ role: "user", content: "摘要測試" }], { profile: "summary" })).toBe("摘要備援成功");
     expect(fetchMock.mock.calls.map((call) => String(call[0]))).toEqual([
       "https://summary-retired-20260926.test/v1/chat/completions",
-      "https://summary-fallback-20260926.test/v1/chat/completions",
+      "https://integrate.api.nvidia.com/v1/chat/completions",
     ]);
     expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).model).toBe("dedicated-summary-model");
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).model).toBe("nvidia/nemotron-3-super-120b-a12b");
     expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({ stream: false });
     expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).not.toHaveProperty("reasoning_effort");
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toMatchObject({
+      reasoning_effort: "none",
+      stream: false,
+    });
+  });
+
+  it("共用 NVIDIA 摘要設定也關閉 Super 長推理", async () => {
+    process.env.SUMMARY_LLM = "true";
+    delete process.env.SUMMARY_API_KEY;
+    delete process.env.SUMMARY_BASE_URL;
+    delete process.env.SUMMARY_MODEL;
+    process.env.NVIDIA_API_KEY = "summary-key";
+    process.env.NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
+    process.env.NVIDIA_MODEL = "nvidia/nemotron-3-super-120b-a12b";
+    const fetchMock = vi.fn(async () => okCompletion("摘要完成"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await chat([{ role: "user", content: "摘要測試" }], { profile: "summary" })).toBe("摘要完成");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({
+      model: "nvidia/nemotron-3-super-120b-a12b",
       reasoning_effort: "none",
       stream: false,
     });
