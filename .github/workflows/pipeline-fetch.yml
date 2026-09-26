@@ -83,15 +83,15 @@ jobs:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           NVIDIA_BASE_URL: ${{ secrets.NVIDIA_BASE_URL }}
           # The previous secret-selected model returned HTTP 410 (retired) on 2026-09-25.
-          # Repository variables allow a reviewed future change without exposing keys.
-          NVIDIA_MODEL: ${{ vars.NVIDIA_MODEL || 'openai/gpt-oss-120b' }}
+          # Change the model through a reviewed workflow PR when the provider rotates it.
+          NVIDIA_MODEL: openai/gpt-oss-120b
           LLM_FALLBACK_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           LLM_FALLBACK_BASE_URL: ${{ secrets.NVIDIA_BASE_URL }}
-          LLM_FALLBACK_MODEL: ${{ vars.NVIDIA_MODEL || 'openai/gpt-oss-120b' }}
+          LLM_FALLBACK_MODEL: openai/gpt-oss-120b
           SUMMARY_LLM: ${{ secrets.SUMMARY_LLM }}
           SUMMARY_API_KEY: ${{ secrets.SUMMARY_API_KEY }}
           SUMMARY_BASE_URL: ${{ secrets.SUMMARY_BASE_URL }}
-          SUMMARY_MODEL: ${{ vars.SUMMARY_MODEL || 'openai/gpt-oss-120b' }}
+          SUMMARY_MODEL: openai/gpt-oss-120b
           SUMMARY_MAX_CONCURRENCY: ${{ secrets.SUMMARY_MAX_CONCURRENCY }}
           SUMMARY_TIMEOUT_MS: ${{ secrets.SUMMARY_TIMEOUT_MS }}
           SUMMARY_MAX_RETRIES: ${{ secrets.SUMMARY_MAX_RETRIES }}

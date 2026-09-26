@@ -169,7 +169,7 @@ describe("resolveFetchMode", () => {
     const workflow = readFileSync(".github/workflows/pipeline-fetch.yml", "utf8");
     expect(workflow).toContain("LLM_FALLBACK_API_KEY: ${{ secrets.NVIDIA_API_KEY }}");
     expect(workflow).toContain("LLM_FALLBACK_BASE_URL: ${{ secrets.NVIDIA_BASE_URL }}");
-    expect(workflow).toContain("LLM_FALLBACK_MODEL: ${{ vars.NVIDIA_MODEL || 'openai/gpt-oss-120b' }}");
+    expect(workflow).toContain("LLM_FALLBACK_MODEL: openai/gpt-oss-120b");
   });
 
   it("does not inject Twinkle MCP credentials into fetch or deploy workflows", () => {
