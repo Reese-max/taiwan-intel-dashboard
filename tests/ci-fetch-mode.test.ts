@@ -195,6 +195,8 @@ describe("resolveFetchMode", () => {
     expect(buildSteps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);
     expect(deploySteps.find((step: { name?: string }) => step.name === "下載核准版本網站").with.name)
       .toContain("approved-dist-");
+    expect(deploySteps.find((step: { name?: string }) => step.name === "Checkout 原始碼").with.ref)
+      .toBe("${{ needs['build-approved'].outputs.approved_sha }}");
     expect(deploySteps.find((step: { name?: string }) => step.name === "部署到 Cloudflare Pages").with.command)
       .toContain("pages deploy dist");
   });
