@@ -1,14 +1,15 @@
 name: Deploy
 
 on:
-  push:
-    branches: [production]
   pull_request:
     branches: [main, production]
 
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - name: Restore pipeline state
@@ -26,36 +27,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - name: Upload checked site
-        uses: actions/upload-artifact@v4
-        with:
-          name: deploy-dist-${{ github.run_id }}-${{ github.run_attempt }}
-          path: dist
-          retention-days: 1
-          if-no-files-found: error
-
-  deploy-preview:
-    needs: check
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download checked site
-        uses: actions/download-artifact@v4
-        with:
-          name: deploy-dist-${{ github.run_id }}-${{ github.run_attempt }}
-          path: dist
       - name: Deploy Preview
         id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name taiwan-intel-dashboard --branch ${{ github.head_ref }}
+          accountId: "03d40efd3c60181edea80af8d927ddc1"
+          command: pages deploy dist --project-name taiwan-intel-dashboard --branch pr-${{ github.event.number }}
       - name: Comment Preview URL
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
@@ -68,21 +48,3 @@ jobs:
                 body: `🔗 **Preview:** ${url}`
               });
             }
-
-  deploy-production:
-    needs: check
-    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download checked site
-        uses: actions/download-artifact@v4
-        with:
-          name: deploy-dist-${{ github.run_id }}-${{ github.run_attempt }}
-          path: dist
-      - name: Deploy Production
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name taiwan-intel-dashboard --branch main

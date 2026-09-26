@@ -16,7 +16,7 @@ const runCli = (dataDir: string, extraArgs: string[] = []) => {
   try {
     const out = execFileSync(
       process.execPath,
-      ["scripts/audit-summary.mjs", `--data-dir=${dataDir}`, ...extraArgs],
+      ["scripts/audit-summary.mjs", `--data-dir=${dataDir}`, "--no-annotations", ...extraArgs],
       { encoding: "utf8" }
     );
     return { code: 0, out };
