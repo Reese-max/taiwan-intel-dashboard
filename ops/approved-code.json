@@ -1,4 +1,4 @@
 {
-  "sha": "4521d46411a2944fea446ce90f6f83ab3506a0f0",
-  "note": "Current production bundle source before the 2026-09-26 release-gate repair"
+  "sha": "45cb16863068c482fb7b5ed522038af28b1a5d40",
+  "note": "Approved 2026-09-26 repair release after PR #53 checks and preview"
 }
