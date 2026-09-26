@@ -20,6 +20,17 @@ export function isDeterministicFallback(text) {
   return text.includes(FALLBACK_SIGNATURE) || text.includes("AI 摘要暫時無法生成");
 }
 
+// Reject visible reasoning traces and unexpectedly long or English-only model
+// output before it can be mislabeled as a finished Chinese narrative.
+export function isUsableNarrative(text) {
+  if (typeof text !== "string" || isPlaceholder(text) || isDeterministicFallback(text)) return false;
+  const value = text.trim();
+  if (value.length > 600 || /<\/?think\b|^(?:analysis|reasoning|we need to|let'?s think)\b/i.test(value)) return false;
+  const han = (value.match(/[\u3400-\u9fff]/g) || []).length;
+  const latin = (value.match(/[a-z]/gi) || []).length;
+  return han > 0 && (latin < 40 || latin <= han * 2);
+}
+
 // 有事件證據但 LLM 無法取得有效敘述時的確定性統計備援。
 export function deterministicBrief(label, events) {
   const list = Array.isArray(events) ? events : [];
@@ -85,6 +96,18 @@ export function auditSummary({
           code: "empty-brief-with-evidence",
           field,
           reason: `${label}有 ${count} 筆事件，但摘要為「${SUMMARY_PLACEHOLDER}」或空白（無敘述且無備援）`,
+        });
+      } else if (isDegraded && !isDeterministicFallback(text)) {
+        failures.push({
+          code: "degraded-brief-without-fallback",
+          field,
+          reason: `${label}摘要標記降級，但未提供可辨識的系統統計備援`,
+        });
+      } else if (!isDegraded && !isUsableNarrative(text)) {
+        failures.push({
+          code: "invalid-ai-brief",
+          field,
+          reason: `${label}AI 摘要含推理痕跡、過長或不是可用的繁體中文敘述`,
         });
       } else if (isDegraded) {
         if (requireNarrative) {

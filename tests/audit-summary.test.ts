@@ -8,6 +8,7 @@ import {
   deterministicBrief,
   isDeterministicFallback,
   isPlaceholder,
+  isUsableNarrative,
   SUMMARY_PLACEHOLDER,
 } from "../scripts/lib/summary-quality.mjs";
 import { countIncidentsFromFile } from "../scripts/audit-summary.mjs";
@@ -173,6 +174,31 @@ describe("summary quality & semantic audit gate (Issue #18)", () => {
     const r2 = auditSummary({ summary, domesticCount: 5, internationalCount: 3, requireNarrative: true });
     expect(r2.ok).toBe(true);
     expect(r2.failures).toHaveLength(0);
+  });
+
+  it("拒絕誤標成功的模型推理文字與未標明的降級內容", () => {
+    const leaked = "We need to produce a concise Chinese summary. " + "Analyze the events before answering. ".repeat(25);
+    expect(isUsableNarrative(leaked)).toBe(false);
+    expect(isUsableNarrative("今日國內以警政查緝詐欺車手為主，交通路況大致良好。")).toBe(true);
+    expect(isUsableNarrative("A short English summary.")).toBe(false);
+
+    const result = auditSummary({
+      summary: {
+        domestic: "今日國內以警政查緝詐欺車手為主，交通路況大致良好。",
+        international: leaked,
+        degraded: { domestic: false, international: false },
+      },
+      domesticCount: 5,
+      internationalCount: 3,
+    });
+    expect(result.ok).toBe(false);
+    expect(result.failures.map((f) => f.code)).toContain("invalid-ai-brief");
+
+    const falseDegraded = auditSummary({
+      summary: { domestic: leaked, degraded: { domestic: true } },
+      domesticCount: 1,
+    });
+    expect(falseDegraded.failures.map((f) => f.code)).toContain("degraded-brief-without-fallback");
   });
 
   it("邊界情境：summary.json 缺失時依事件存在與否決定成敗", () => {
