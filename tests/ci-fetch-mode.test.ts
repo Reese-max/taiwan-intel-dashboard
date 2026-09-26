@@ -210,6 +210,16 @@ describe("resolveFetchMode", () => {
       .toContain("pages deploy dist");
   });
 
+  it("refreshes data after a reviewed pipeline or approved-code merge", () => {
+    const refresh = YAML.parse(readFileSync(".github/workflows/update-and-deploy.yml", "utf8"));
+    expect(refresh.on.push.branches).toEqual(["main"]);
+    expect(refresh.on.push.paths).toContain(".github/workflows/update-and-deploy.yml");
+    expect(refresh.on.push.paths).toContain("ops/approved-code.json");
+    expect(refresh.on.schedule).toHaveLength(2);
+    expect(refresh.jobs["build-approved"].steps.find((step: { name?: string }) =>
+      step.name === "Checkout 核准的網站程式碼").with.ref).toBe("${{ steps.approved.outputs.sha }}");
+  });
+
   it("gates source freshness and the generated coverage matrix before deploy", () => {
     const workflow = readFileSync(".github/workflows/pipeline-audit.yml", "utf8");
     expect(workflow).toContain("npm run audit:source-freshness");

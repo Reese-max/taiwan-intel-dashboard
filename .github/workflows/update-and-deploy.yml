@@ -1,6 +1,14 @@
 name: 更新資料並部署
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/update-and-deploy.yml"
+      - ".github/workflows/pipeline-fetch.yml"
+      - ".github/workflows/pipeline-audit.yml"
+      - "scripts/**"
+      - "ops/approved-code.json"
   schedule:
     - cron: "17,47 * * * *" # 每30分鐘 :17/:47 → 全部小時來源
     - cron: "30 18 * * *" # 每日 18:30 UTC ≈ 02:30 台北 → full refresh
