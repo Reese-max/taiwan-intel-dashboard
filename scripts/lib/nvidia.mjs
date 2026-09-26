@@ -14,7 +14,7 @@ import { eventIdFor, slug } from "./event-id.mjs";
 export { eventIdFor } from "./event-id.mjs";
 
 import { chat, extractJson, llmModel, respondedModel } from "./llm-client.mjs";
-import { deterministicBrief, isPlaceholder } from "./summary-quality.mjs";
+import { deterministicBrief, isUsableNarrative } from "./summary-quality.mjs";
 export { llmModel, respondedModel } from "./llm-client.mjs";
 
 const CATEGORIES = ["地緣政治", "治安", "反詐", "協尋", "災害", "資安", "金融", "其他"];
@@ -792,7 +792,7 @@ async function briefEvents(label, events, instruction, maxTokens = 2048) {
     .join("\n");
   const ask = async () => {
     try {
-      return (
+      const output = (
         (await chat(
           [
             { role: "system", content: "你是情報儀表板的分析助理，用繁體中文寫精煉的情勢摘要。" },
@@ -801,6 +801,7 @@ async function briefEvents(label, events, instruction, maxTokens = 2048) {
           { maxTokens, temperature: 0.4, profile: "summary" }
         )) || ""
       ).trim();
+      return isUsableNarrative(output) ? output : "";
     } catch {
       return "";
     }
@@ -877,14 +878,15 @@ export async function summarize({ domestic = [], international = [], clusters = 
       trend = "";
     }
   }
+  if (!isUsableNarrative(trend)) trend = "";
 
   // Issue #18：有事件時 LLM 空回應不得寫「（暫無資料）」——改用誠實的統計備援。
   // 真正無事件為正常空狀態（degraded=false）。
   const domesticHasEvents = domestic.length > 0;
   const intlHasEvents = international.length > 0;
 
-  const domValid = dom && !isPlaceholder(dom);
-  const intlValid = intl && !isPlaceholder(intl);
+  const domValid = isUsableNarrative(dom);
+  const intlValid = isUsableNarrative(intl);
 
   const domesticText = domValid ? dom : (domesticHasEvents ? deterministicBrief("國內事件", domestic) : "（暫無資料）");
   const internationalText = intlValid ? intl : (intlHasEvents ? deterministicBrief("國際事件", international) : "（暫無資料）");
@@ -938,7 +940,7 @@ export async function summarizeClusters(clusters, domestic, topN = Number(proces
           ],
           { maxTokens: 1500, temperature: 0.4, profile: "summary" }
         );
-        return [c.id, (t || "").trim()];
+        return [c.id, isUsableNarrative(t) ? t.trim() : ""];
       } catch {
         return [c.id, ""];
       }
