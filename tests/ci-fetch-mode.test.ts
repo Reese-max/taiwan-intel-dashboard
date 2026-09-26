@@ -224,6 +224,12 @@ describe("resolveFetchMode", () => {
       step.name === "Checkout 核准的網站程式碼").with.ref).toBe("${{ steps.approved.outputs.sha }}");
   });
 
+  it("checks publication freshness four times per hour when GitHub schedules are delayed", () => {
+    const watchdog = YAML.parse(readFileSync(".github/workflows/refresh-watchdog.yml", "utf8"));
+    expect(watchdog.on.schedule.map((entry: { cron: string }) => entry.cron))
+      .toEqual(["8,23,38,53 * * * *"]);
+  });
+
   it("gates source freshness and the generated coverage matrix before deploy", () => {
     const workflow = readFileSync(".github/workflows/pipeline-audit.yml", "utf8");
     expect(workflow).toContain("npm run audit:source-freshness");
