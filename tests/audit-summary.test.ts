@@ -179,6 +179,9 @@ describe("summary quality & semantic audit gate (Issue #18)", () => {
   it("拒絕誤標成功的模型推理文字與未標明的降級內容", () => {
     const leaked = "We need to produce a concise Chinese summary. " + "Analyze the events before answering. ".repeat(25);
     expect(isUsableNarrative(leaked)).toBe(false);
+    expect(isUsableNarrative("Let's analyze the events. 今日國際情勢值得觀察。")).toBe(false);
+    expect(isUsableNarrative("### Analysis\n今日國際情勢值得觀察。")).toBe(false);
+    expect(isUsableNarrative("<analysis>先思考</analysis>今日國際情勢值得觀察。")).toBe(false);
     expect(isUsableNarrative("今日國內以警政查緝詐欺車手為主，交通路況大致良好。")).toBe(true);
     expect(isUsableNarrative("A short English summary.")).toBe(false);
 

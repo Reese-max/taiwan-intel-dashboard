@@ -25,7 +25,8 @@ export function isDeterministicFallback(text) {
 export function isUsableNarrative(text) {
   if (typeof text !== "string" || isPlaceholder(text) || isDeterministicFallback(text)) return false;
   const value = text.trim();
-  if (value.length > 600 || /<\/?think\b|^(?:analysis|reasoning|we need to|let'?s think)\b/i.test(value)) return false;
+  const reasoningPrefix = /^(?:#{1,6}\s*)?(?:analysis|reasoning|thoughts?|thinking|we (?:need to|should|must)|i (?:need to|should|will)|let(?:'s| us| me) (?:think|analy[sz]e))\b/i;
+  if (value.length > 600 || /<\/?(?:think|analysis|reasoning)\b[^>]*>/i.test(value) || reasoningPrefix.test(value)) return false;
   const han = (value.match(/[\u3400-\u9fff]/g) || []).length;
   const latin = (value.match(/[a-z]/gi) || []).length;
   return han > 0 && (latin < 40 || latin <= han * 2);
