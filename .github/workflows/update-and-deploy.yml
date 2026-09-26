@@ -162,6 +162,24 @@ jobs:
           DEPLOY_BASE_URL: https://taiwan-intel-dashboard.pages.dev
         run: node scripts/smoke-deployed.mjs
 
+  next-refresh:
+    needs: [operating-state, fetch, audit, build-approved, save-state, deploy]
+    if: ${{ always() && !cancelled() && needs['operating-state'].result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 排程延遲時接力觸發下一輪資料更新
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/dispatch-next-refresh.mjs
+
   notify:
     needs: [operating-state, fetch, save-state, audit, build-approved, deploy]
     if: ${{ always() && (failure() || cancelled()) }}
