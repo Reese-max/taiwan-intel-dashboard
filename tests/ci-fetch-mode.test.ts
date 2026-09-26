@@ -229,6 +229,16 @@ describe("resolveFetchMode", () => {
       step.name === "Checkout 核准的網站程式碼").with.ref).toBe("${{ steps.approved.outputs.sha }}");
   });
 
+  it("continues updates when GitHub schedule events do not arrive", () => {
+    const refresh = YAML.parse(readFileSync(".github/workflows/update-and-deploy.yml", "utf8"));
+    const next = refresh.jobs["next-refresh"];
+    expect(next.needs).toContain("deploy");
+    expect(next.if).toContain("!cancelled()");
+    expect(next.permissions).toMatchObject({ actions: "write", contents: "read" });
+    expect(next.steps.some((step: { run?: string }) => step.run === "node scripts/dispatch-next-refresh.mjs"))
+      .toBe(true);
+  });
+
   it("checks publication freshness four times per hour when GitHub schedules are delayed", () => {
     const watchdog = YAML.parse(readFileSync(".github/workflows/refresh-watchdog.yml", "utf8"));
     expect(watchdog.on.schedule.map((entry: { cron: string }) => entry.cron))
