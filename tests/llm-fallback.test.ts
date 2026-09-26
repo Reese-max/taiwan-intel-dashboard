@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
 import { normalizeInternational, intlNormalizeFailed } from "../scripts/lib/nvidia.mjs";
+// @ts-expect-error — JS ESM module without types
+import { chat } from "../scripts/lib/llm-client.mjs";
 
 const item = (i: number) => ({
   title: `備援測試标题完全相異第${i}號`,
@@ -19,8 +21,9 @@ const okCompletion = (content: string) =>
 
 describe("primary→fallback LLM 備援（C1）", () => {
   const KEYS = [
-    "LLM_API_KEY", "NVIDIA_API_KEY", "LLM_MAX_RETRIES",
+    "LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL", "NVIDIA_API_KEY", "LLM_MAX_RETRIES",
     "LLM_FALLBACK_API_KEY", "LLM_FALLBACK_BASE_URL", "LLM_FALLBACK_MODEL", "LLM_FALLBACK_MAX_RETRIES",
+    "SUMMARY_API_KEY", "SUMMARY_BASE_URL", "SUMMARY_MODEL", "SUMMARY_LLM",
   ];
   const saved: Record<string, string | undefined> = {};
   beforeEach(() => {
@@ -69,5 +72,50 @@ describe("primary→fallback LLM 備援（C1）", () => {
     const out = await normalizeInternational(Array.from({ length: 5 }, (_, i) => item(i)), { max: 10, batchSize: 2, concurrency: 1 });
     expect(out).toEqual([]);
     expect(intlNormalizeFailed()).toBe(true);
+  });
+
+  it("401 憑證錯誤只請求主要端點一次；後續批次直接使用可用備援", async () => {
+    process.env.LLM_API_KEY = "expired-primary";
+    process.env.LLM_BASE_URL = "https://primary-expired-20260926.test/v1";
+    process.env.LLM_MODEL = "primary-model";
+    process.env.LLM_FALLBACK_API_KEY = "working-fallback";
+    process.env.LLM_FALLBACK_BASE_URL = "https://fallback-circuit.test/v1";
+    process.env.LLM_FALLBACK_MODEL = "working-model";
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn(async (url: string) =>
+      String(url).includes("primary-expired")
+        ? new Response("invalid api key", { status: 401 })
+        : okCompletion("備援成功"),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await chat([{ role: "user", content: "測試" }])).toBe("備援成功");
+    expect(await chat([{ role: "user", content: "再次測試" }])).toBe("備援成功");
+    expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("primary-expired"))).toHaveLength(1);
+    expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("fallback-circuit"))).toHaveLength(2);
+  });
+
+  it("保留獨立摘要模型；摘要端點 410 時改用 NVIDIA 備援模型", async () => {
+    process.env.SUMMARY_API_KEY = "dedicated-summary-key";
+    process.env.SUMMARY_BASE_URL = "https://summary-retired-20260926.test/v1";
+    process.env.SUMMARY_MODEL = "dedicated-summary-model";
+    process.env.LLM_FALLBACK_API_KEY = "working-fallback-key";
+    process.env.LLM_FALLBACK_BASE_URL = "https://summary-fallback-20260926.test/v1";
+    process.env.LLM_FALLBACK_MODEL = "openai/gpt-oss-120b";
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn(async (url: string, _options?: RequestInit) =>
+      String(url).includes("summary-retired")
+        ? new Response("retired model", { status: 410 })
+        : okCompletion("摘要備援成功"),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await chat([{ role: "user", content: "摘要測試" }], { profile: "summary" })).toBe("摘要備援成功");
+    expect(fetchMock.mock.calls.map((call) => String(call[0]))).toEqual([
+      "https://summary-retired-20260926.test/v1/chat/completions",
+      "https://summary-fallback-20260926.test/v1/chat/completions",
+    ]);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).model).toBe("dedicated-summary-model");
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).model).toBe("openai/gpt-oss-120b");
   });
 });

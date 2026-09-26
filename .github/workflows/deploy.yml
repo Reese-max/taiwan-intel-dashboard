@@ -1,21 +1,24 @@
 name: Deploy
 
 on:
-  push:
-    branches: [production]
   pull_request:
     branches: [main, production]
 
 jobs:
-  check:
+  build-preview:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Restore pipeline state
         uses: actions/checkout@v4
         with:
           ref: pipeline-state
           path: pipeline-state
+          persist-credentials: false
       - name: Restore deploy data
         run: |
           mkdir -p public/data
@@ -26,63 +29,59 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - name: Upload checked site
+      - name: Upload checked preview artifact
         uses: actions/upload-artifact@v4
         with:
-          name: deploy-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          name: preview-dist-${{ github.run_id }}-${{ github.run_attempt }}
           path: dist
           retention-days: 1
           if-no-files-found: error
 
-  deploy-preview:
-    needs: check
-    if: github.event_name == 'pull_request'
+  check:
+    needs: build-preview
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      actions: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - name: Download checked site
+      - name: Require validated build
+        env:
+          BUILD_RESULT: ${{ needs['build-preview'].result }}
+        run: test "$BUILD_RESULT" = "success"
+      - name: Download checked preview artifact
         uses: actions/download-artifact@v4
         with:
-          name: deploy-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          name: preview-dist-${{ github.run_id }}-${{ github.run_attempt }}
           path: dist
       - name: Deploy Preview
         id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name taiwan-intel-dashboard --branch ${{ github.head_ref }}
+          accountId: "03d40efd3c60181edea80af8d927ddc1"
+          command: pages deploy dist --project-name taiwan-intel-dashboard --branch pr-${{ github.event.number }}
+      - name: Verify Preview
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          test -n "$PREVIEW_URL"
+          curl --fail --silent --show-error --location --retry 4 --retry-all-errors --retry-delay 3 --max-time 15 "$PREVIEW_URL/" -o /dev/null
+          curl --fail --silent --show-error --location --retry 4 --retry-all-errors --retry-delay 3 --max-time 15 "$PREVIEW_URL/data/provenance.json" -o /dev/null
+          curl --fail --silent --show-error --location --retry 4 --retry-all-errors --retry-delay 3 --max-time 15 "$PREVIEW_URL/data/summary.json" -o /dev/null
       - name: Comment Preview URL
+        continue-on-error: true
         uses: actions/github-script@v7
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.deployment-url }}
         with:
           script: |
-            const url = '${{ steps.deploy.outputs.deployment-url }}';
+            const url = process.env.PREVIEW_URL;
             if (url) {
-              github.rest.issues.createComment({
+              await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: `🔗 **Preview:** ${url}`
               });
             }
-
-  deploy-production:
-    needs: check
-    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download checked site
-        uses: actions/download-artifact@v4
-        with:
-          name: deploy-dist-${{ github.run_id }}-${{ github.run_attempt }}
-          path: dist
-      - name: Deploy Production
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name taiwan-intel-dashboard --branch main

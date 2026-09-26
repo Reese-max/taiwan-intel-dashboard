@@ -83,6 +83,12 @@ export function makeGate(max) {
 export const llmGates = {};
 export const gateFor = (c) => (llmGates[c.name] ||= makeGate(c.maxConc));
 
+// Credentials rejected by a provider and retired models cannot recover within one fetch run.
+// Remember the failed endpoint/model so hundreds of normalization batches do not repeat them.
+const terminalFailures = new Map();
+const warnedFallbacks = new Set();
+const endpointId = (c) => `${c.name}\u0000${c.base}\u0000${c.model}`;
+
 // 對單一端點發請求（含並發閘 / 逾時 / 重試）。回空字串＝推理被截斷無有效輸出。
 // LLM（MiniMax 等陸系模型）偶發輸出簡體字，prompt 要求繁體仍會洩漏（實例：summary.json「微软」）。
 // 在唯一輸出瓶頸點統一 cn→tw 字級轉換；OpenCC 只映射 CJK 字元，不影響 JSON 結構與 ASCII。
@@ -95,10 +101,15 @@ export function toTraditional(text) {
 
 export async function chatVia(c, messages, maxTokens, temperature) {
   if (!c.key) throw new Error("缺少 API key（LLM_API_KEY / NVIDIA_API_KEY / SUMMARY_API_KEY）");
+  const endpoint = endpointId(c);
+  const terminal = terminalFailures.get(endpoint);
+  if (terminal) throw new Error(terminal);
   const gate = gateFor(c);
   const body = JSON.stringify({ model: c.model, messages, max_tokens: maxTokens, temperature });
   await gate.acquire();
   try {
+    const previousFailure = terminalFailures.get(endpoint);
+    if (previousFailure) throw new Error(previousFailure);
     for (let attempt = 0; ; attempt++) {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), c.timeout);
@@ -115,7 +126,13 @@ export async function chatVia(c, messages, maxTokens, temperature) {
           await sleep(Number.isFinite(ra) && ra > 0 ? ra * 1000 : 1000 * 2 ** attempt);
           continue;
         }
-        if (!res.ok) throw new Error(`LLM HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        if (!res.ok) {
+          const message = `LLM HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`;
+          if (res.status === 401 || res.status === 410) {
+            terminalFailures.set(endpoint, `LLM HTTP ${res.status}: provider configuration requires repair`);
+          }
+          throw new Error(message);
+        }
         const json = await res.json();
         // 記下實際回應的模型名（誠實 provenance）；端點未回則維持上次/設定值。
         if (typeof json.model === "string" && json.model) lastRespondedModel = json.model;
@@ -143,25 +160,52 @@ export async function chatVia(c, messages, maxTokens, temperature) {
   }
 }
 
-// 編排：summary profile 先試摘要端點（如免費 NVIDIA）；空或失敗則退回 primary（付費 MiniMax）補上，
-// 確保摘要永遠完整、又能在 NVIDIA 成功時省成本。其餘 profile 直走對應端點。
+// 編排：summary profile 先試自訂摘要端點，失敗時再試獨立備援與 primary。
+// 不改寫自訂 provider 的 model；NVIDIA 備援使用自己的已核准模型。
 export async function chat(messages, { maxTokens = 1024, temperature = 0.3, profile = "primary" } = {}) {
   const c = profileCfg(profile);
   const primary = profileCfg("primary");
   const hasFallback = profile === "summary" && c.name !== primary.name;
-  // primary 的備援：LLM_FALLBACK_* 有配置才啟用（profileCfg 未配置時回 primary，以 name 判斷）。
-  const fb = profile === "primary" ? profileCfg("fallback") : null;
-  const hasPrimaryFallback = !!fb && fb.name === "fallback";
+  // LLM_FALLBACK_* 與 summary profile 分開配置，避免用 NVIDIA model 覆蓋其他供應商。
+  const fb = profile === "primary" || profile === "summary" ? profileCfg("fallback") : null;
+  const hasPrimaryFallback = profile === "primary" && fb?.name === "fallback";
+  const hasSummaryFallback = profile === "summary" && fb?.name === "fallback"
+    && (c.base !== fb.base || c.model !== fb.model || c.key !== fb.key);
   const viaFallback = async (why) => {
-    console.warn(`primary LLM ${why}，改走 fallback 端點（${fb.model || fb.base}）`);
+    const warning = `${profile} LLM ${why}，改走 fallback 端點（${fb.model || fb.base}）`;
+    if (!warnedFallbacks.has(warning)) {
+      console.warn(warning);
+      warnedFallbacks.add(warning);
+    }
     return chatVia(fb, messages, maxTokens, temperature);
+  };
+  const trySummaryFallback = async (why) => {
+    if (!hasSummaryFallback) return "";
+    try {
+      return await viaFallback(why);
+    } catch (e) {
+      const warning = `summary fallback 失敗（${String(e?.message || e).slice(0, 120)}）`;
+      if (!warnedFallbacks.has(warning)) {
+        console.warn(warning);
+        warnedFallbacks.add(warning);
+      }
+      return "";
+    }
   };
   try {
     const out = await chatVia(c, messages, maxTokens, temperature);
+    if (!out && hasSummaryFallback) {
+      const alternate = await trySummaryFallback("摘要端點空輸出");
+      if (alternate) return alternate;
+    }
     if (!out && hasFallback) return await chatVia(primary, messages, maxTokens, temperature);
     if (!out && hasPrimaryFallback) return await viaFallback("空輸出（推理截斷）");
     return out;
   } catch (e) {
+    if (hasSummaryFallback) {
+      const alternate = await trySummaryFallback(`摘要端點失敗（${String(e?.message || e).slice(0, 120)}）`);
+      if (alternate) return alternate;
+    }
     if (hasFallback) return await chatVia(primary, messages, maxTokens, temperature);
     if (hasPrimaryFallback) return await viaFallback(`失敗（${String(e?.message || e).slice(0, 120)}）`);
     throw e;

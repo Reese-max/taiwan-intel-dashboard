@@ -2,7 +2,7 @@ name: 更新資料並部署
 
 on:
   schedule:
-    - cron: "5,35 * * * *" # 每30分鐘 :05/:35 → 全部小時來源
+    - cron: "17,47 * * * *" # 每30分鐘 :17/:47 → 全部小時來源
     - cron: "30 18 * * *" # 每日 18:30 UTC ≈ 02:30 台北 → full refresh
   workflow_dispatch:
     inputs:
@@ -21,7 +21,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  operating-state:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node scripts/operating-state.mjs guard-schedule
+
   fetch:
+    needs: operating-state
     permissions:
       contents: read
     uses: ./.github/workflows/pipeline-fetch.yml
@@ -32,7 +44,7 @@ jobs:
     secrets: inherit
 
   save-state:
-    needs: fetch
+    needs: [fetch, audit, build-approved]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -60,23 +72,72 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/pipeline-audit.yml
-    with:
-      publish_dist: true
+
+  build-approved:
+    needs: [fetch, audit]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      approved_sha: ${{ steps.approved.outputs.sha }}
+    steps:
+      - name: Checkout 原始碼
+        uses: actions/checkout@v4
+
+      - name: 讀取核准的網站程式碼版本
+        id: approved
+        run: node scripts/approved-code.mjs --github-output="$GITHUB_OUTPUT"
+
+      - name: Checkout 核准的網站程式碼
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.approved.outputs.sha }}
+          path: approved-site
+
+      - name: 安裝 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: approved-site/package-lock.json
+
+      - name: 安裝核准版本相依
+        working-directory: approved-site
+        run: npm ci
+
+      - name: 下載已稽核資料
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-data-${{ github.run_id }}-${{ github.run_attempt }}
+          path: approved-site/public/data
+
+      - name: 驗收核准版本與本輪資料並建置網站
+        working-directory: approved-site
+        run: npm run check
+
+      - name: 保存核准版本網站
+        uses: actions/upload-artifact@v4
+        with:
+          name: approved-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: approved-site/dist
+          retention-days: 1
+          if-no-files-found: error
 
   deploy:
-    needs: [fetch, save-state, audit]
-    if: ${{ always() && needs.fetch.result == 'success' && needs.save-state.result == 'success' && needs.audit.result == 'success' }}
+    needs: [save-state, build-approved]
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Checkout 原始碼
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs['build-approved'].outputs.approved_sha }}
 
-      - name: 下載已稽核網站
+      - name: 下載核准版本網站
         uses: actions/download-artifact@v4
         with:
-          name: pipeline-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          name: approved-dist-${{ github.run_id }}-${{ github.run_attempt }}
           path: dist
 
       - name: 部署到 Cloudflare Pages
@@ -92,7 +153,7 @@ jobs:
         run: node scripts/smoke-deployed.mjs
 
   notify:
-    needs: [fetch, save-state, audit, deploy]
+    needs: [operating-state, fetch, save-state, audit, build-approved, deploy]
     if: ${{ always() && (failure() || cancelled()) }}
     runs-on: ubuntu-latest
     permissions: {}
@@ -105,7 +166,7 @@ jobs:
           if [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ]; then
             curl -s -m 15 -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
               -d chat_id="$TG_CHAT" \
-              --data-urlencode text="⚠️ taiwan-intel-dashboard run ${{ github.run_id }}（fetch=${{ needs.fetch.result }}、state=${{ needs.save-state.result }}、audit=${{ needs.audit.result }}、deploy=${{ needs.deploy.result }}）— https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" || true
+              --data-urlencode text="⚠️ taiwan-intel-dashboard run ${{ github.run_id }}（guard=${{ needs['operating-state'].result }}、fetch=${{ needs.fetch.result }}、audit=${{ needs.audit.result }}、build=${{ needs['build-approved'].result }}、state=${{ needs['save-state'].result }}、deploy=${{ needs.deploy.result }}）— https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" || true
           else
             echo "TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID 未設定，跳過通知"
           fi

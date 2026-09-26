@@ -1,0 +1,28 @@
+name: 更新排程備援檢查
+
+on:
+  schedule:
+    - cron: "23,53 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: refresh-watchdog
+  cancel-in-progress: false
+
+jobs:
+  check-and-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 檢查 canonical 新鮮度並在必要時補觸發
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/refresh-watchdog.mjs --dispatch

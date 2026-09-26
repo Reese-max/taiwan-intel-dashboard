@@ -2,11 +2,11 @@
 
 聚合台灣國內外多源公開資料，以 LLM 正規化、風險評級、關聯分析，呈現為互動式情報視覺化網站。
 
-- 狀態：**降級運作中**（排程與 canonical 持續運作中，依 [ops/operating-state.json](ops/operating-state.json) 標記為未完成受控復原收據之降級狀態）
+- 狀態：**降級運作中**（依 [ops/operating-state.json](ops/operating-state.json) 標記；資料新鮮度與來源健康須以線上 provenance 和最近排程紀錄確認）
 - 網址：<https://taiwan-intel-dashboard.pages.dev>
 - 營運狀態契約：[`ops/operating-state.json`](ops/operating-state.json)｜[`docs/operations/operating-state.md`](docs/operations/operating-state.md)
 - 復原程序：[`docs/operations/pause-and-restore.md`](docs/operations/pause-and-restore.md)
-- 技術棧：Vite + Vanilla TypeScript + Leaflet（唯一 runtime 依賴）｜資料層 Node.js ESM 腳本｜LLM 走 OpenAI 相容端點（現用 MiniMax-M2）｜部署 Cloudflare Pages｜CI GitHub Actions
+- 技術棧：Vite + Vanilla TypeScript + Leaflet｜資料層 Node.js ESM 腳本｜LLM 走 OpenAI 相容端點｜部署 Cloudflare Pages｜CI GitHub Actions
 
 ## 資料管線（`scripts/fetch-live.mjs` 主控，`--sources=` 選擇）
 
@@ -39,10 +39,12 @@
 
 > 目前 workflow 依 [ops/operating-state.json](ops/operating-state.json) 規範運作；正式轉為完全運作（ACTIVE）前須補齊受控復原收據。
 
-- 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+gdelt+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver 增量
+- 每 30 分（:17/:47）：cwa+police+missing+twnews+rss+gdelt+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver 增量；另有獨立備援檢查在正式資料逾 75 分鐘且無近期執行時補觸發
 - 每日 18:30 UTC（台北 02:30）：上述來源加上 cdc、tfda 的 exclusive 重建
 - 手動 `workflow_dispatch`：`mode` 選來源組合；`renorm_intl=true` 忽略國際快取全量重評（緊急用；平時靠 `INTL_RECALIBRATE_DAYS` 3 天生命週期自然換血）
 - Cloudflare 發佈後會再讀取 canonical `provenance.json`／`domain-coverage.json`，並確認已移除的查詢頁與 API 路由回傳 404。
+- 資料更新使用 [`ops/approved-code.json`](ops/approved-code.json) 固定的網站程式碼版本；程式碼發布須走 [發布程序](docs/operations/release-gate.md) 並取得負責人核准。
+- AI 端點失效時會保留標記的統計備援；需由管理者更新失效的 GitHub Actions 憑證／模型設定，再以實際排程驗證 AI 摘要恢復。
 
 ## 本地開發
 
