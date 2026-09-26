@@ -112,7 +112,8 @@ export async function chatVia(c, messages, maxTokens, temperature) {
     temperature,
     // NVIDIA's hosted Super model defaults to full reasoning. JSON extraction
     // needs the final answer, and bulk normalization cannot wait for long traces.
-    ...(c.name === "fallback" && c.model === "nvidia/nemotron-3-super-120b-a12b"
+    ...(c.model === "nvidia/nemotron-3-super-120b-a12b"
+      && c.base?.replace(/\/$/, "") === "https://integrate.api.nvidia.com/v1"
       ? { reasoning_effort: "none" }
       : {}),
     // The NVIDIA endpoint documents streaming as its default; this client
