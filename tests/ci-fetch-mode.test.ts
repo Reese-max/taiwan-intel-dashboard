@@ -172,6 +172,9 @@ describe("resolveFetchMode", () => {
     expect(workflow).toContain("NVIDIA_MODEL: nvidia/nemotron-3-super-120b-a12b");
     expect(workflow).toContain("LLM_FALLBACK_BASE_URL: https://integrate.api.nvidia.com/v1");
     expect(workflow).toContain("LLM_FALLBACK_MODEL: nvidia/nemotron-3-super-120b-a12b");
+    expect(workflow).toContain('LLM_FALLBACK_TIMEOUT_MS: "45000"');
+    expect(workflow).toContain('INTL_NORMALIZE_BUDGET_MS: "600000"');
+    expect(workflow).toContain('DOMESTIC_NORMALIZE_BUDGET_MS: "300000"');
     expect(workflow).toContain("SUMMARY_BASE_URL: ${{ secrets.SUMMARY_BASE_URL }}");
     expect(workflow).toContain("SUMMARY_MODEL: ${{ secrets.SUMMARY_MODEL }}");
   });
