@@ -101,7 +101,7 @@ describe("primary→fallback LLM 備援（C1）", () => {
     process.env.SUMMARY_MODEL = "dedicated-summary-model";
     process.env.LLM_FALLBACK_API_KEY = "working-fallback-key";
     process.env.LLM_FALLBACK_BASE_URL = "https://summary-fallback-20260926.test/v1";
-    process.env.LLM_FALLBACK_MODEL = "openai/gpt-oss-120b";
+    process.env.LLM_FALLBACK_MODEL = "nvidia/nemotron-3-super-120b-a12b";
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const fetchMock = vi.fn(async (url: string, _options?: RequestInit) =>
       String(url).includes("summary-retired")
@@ -116,6 +116,6 @@ describe("primary→fallback LLM 備援（C1）", () => {
       "https://summary-fallback-20260926.test/v1/chat/completions",
     ]);
     expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).model).toBe("dedicated-summary-model");
-    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).model).toBe("openai/gpt-oss-120b");
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).model).toBe("nvidia/nemotron-3-super-120b-a12b");
   });
 });

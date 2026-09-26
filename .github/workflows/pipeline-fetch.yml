@@ -84,12 +84,12 @@ jobs:
           # Match the reviewed model to NVIDIA's public hosted API. The old
           # secret-selected endpoint returned HTTP 410 in the live 2026-09-26 run.
           NVIDIA_BASE_URL: https://integrate.api.nvidia.com/v1
-          # The previous secret-selected model returned HTTP 410 (retired) on 2026-09-25.
-          # Change the model through a reviewed workflow PR when the provider rotates it.
-          NVIDIA_MODEL: openai/gpt-oss-120b
+          # NVIDIA's API returned HTTP 410 for gpt-oss-120b on 2026-09-26;
+          # the active Nemotron endpoint returned HTTP 401 for a deliberately invalid test key.
+          NVIDIA_MODEL: nvidia/nemotron-3-super-120b-a12b
           LLM_FALLBACK_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           LLM_FALLBACK_BASE_URL: https://integrate.api.nvidia.com/v1
-          LLM_FALLBACK_MODEL: openai/gpt-oss-120b
+          LLM_FALLBACK_MODEL: nvidia/nemotron-3-super-120b-a12b
           SUMMARY_LLM: ${{ secrets.SUMMARY_LLM }}
           SUMMARY_API_KEY: ${{ secrets.SUMMARY_API_KEY }}
           SUMMARY_BASE_URL: ${{ secrets.SUMMARY_BASE_URL }}
