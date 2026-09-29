@@ -15,7 +15,7 @@ import { createHash } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
+import { correlateEvents, getCorrelationSettings, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { enumerateCandidatePairs, LOCATION_SCHEMA, PAIR_SCHEMA } from "./lib/ground-truth-relations.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -141,6 +141,7 @@ export async function runSample(argv = process.argv.slice(2)) {
       generatedFrom: args.input,
       sourceSha256: createHash("sha256").update(inputBytes).digest("hex"),
       networkSha256,
+      correlationSettings: getCorrelationSettings(),
       cohortFile: basename(cohortPath),
       cohortSha256: createHash("sha256").update(cohortBytes).digest("hex"),
       cohortCount: cohort.length,

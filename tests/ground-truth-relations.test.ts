@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { gzipSync, gunzipSync } from "node:zlib";
+import { spawnSync } from "node:child_process";
 import { join, relative } from "node:path";
 
 // @ts-expect-error — JS ESM module without types
@@ -19,7 +20,7 @@ import {
   diffBenchmarkReports,
 } from "../scripts/lib/ground-truth-relations.mjs";
 // @ts-expect-error — JS ESM module without types
-import { correlateEvents } from "../scripts/lib/correlate.mjs";
+import { correlateEvents, getCorrelationSettings } from "../scripts/lib/correlate.mjs";
 // @ts-expect-error — JS ESM module without types
 import { runBenchmark } from "../scripts/ground-truth-benchmark.mjs";
 // @ts-expect-error — JS ESM module without types
@@ -71,6 +72,7 @@ function writeReplaySnapshot(dir: string, events: any[], contexts = events) {
     cohortFile: "events.cohort.json.gz",
     cohortSha256: createHash("sha256").update(cohort).digest("hex"),
     cohortCount: events.length,
+    correlationSettings: getCorrelationSettings(),
     count: contexts.length,
     events: contexts,
   }));
@@ -333,6 +335,23 @@ describe("benchmark CLI report", () => {
       writeFileSync(join(dir, "pairs.jsonl"), JSON.stringify(pairRow()) + "\n");
       const input = relative(process.cwd(), dir);
       expect(() => runBenchmark([`--events=${input}/events.json`, `--pairs=${input}/pairs.jsonl`])).toThrow(/cohort SHA-256 mismatch/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("固定資料集拒絕不同的 correlation 環境設定", () => {
+    const dir = mkdtempSync(join(process.cwd(), ".ground-truth-test-"));
+    try {
+      writeReplaySnapshot(dir, [ev({ id: "a" }), ev({ id: "b" })]);
+      writeFileSync(join(dir, "pairs.jsonl"), JSON.stringify(pairRow()) + "\n");
+      const input = relative(process.cwd(), dir);
+      const changedBlocklist = getCorrelationSettings().sameEntityUnionBlocklist.length ? "" : "依托咪酯";
+      const child = spawnSync(process.execPath, [
+        "scripts/ground-truth-benchmark.mjs", `--events=${input}/events.json`, `--pairs=${input}/pairs.jsonl`,
+      ], { cwd: process.cwd(), env: { ...process.env, SAME_ENTITY_UNION_BLOCKLIST: changedBlocklist }, encoding: "utf8" });
+      expect(child.status).not.toBe(0);
+      expect(child.stderr).toMatch(/correlation settings differ from pinned snapshot settings/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

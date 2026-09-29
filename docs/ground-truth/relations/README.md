@@ -17,6 +17,8 @@ same-event precision/recall、false merge、missed relation、location-role/prec
 兩份事件檔必須一起固定 SHA；runner 驗證壓縮 cohort 的 SHA-256 和候選事件內容，
 再從**完整 cohort** 重建網路，避免省略未標註的橋接事件。只保留 correlation／標註必要欄位，
 不複製完整新聞全文；若任一新聞摘要超過 300 字，sampler 會拒絕不忠實的截斷重播。
+manifest 也記錄抽樣時實際生效的 correlation 環境設定（cluster 門檻與同名實體 blocklist）；
+重播設定不同時 runner 直接拒絕計分，避免把環境變化誤判為規則改善。
 首版候選從 `pipeline-state` commit `1960451f621d344f4a35cf16bcf3ab5fcff99207` 的
 `data/domestic.json`/`data/network.json` 產生；`events-v1.json` 另記兩份輸入的 SHA-256。
 共 150 組 pair（75 已連線/同群、37 同區未連線、38 跨區同名地點）與 40 個獨立抽樣的地點候選，

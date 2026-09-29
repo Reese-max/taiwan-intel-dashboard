@@ -2,7 +2,16 @@
   "schema": "ground-truth-events/1",
   "generatedFrom": "public/data/domestic.json",
   "sourceSha256": "55c95d6acbfe4f864c6794a352024573efa95f74773ed38d8448f7445da8b6da",
-  "networkSha256": "b5806f4fd87ec4eae7e2b7ebbffa1fe61aa1486fca368240a8a39fe98c4785ff",
+  "networkSha256": "fffd206d7bf13f4d0efcf113c601aee7db7e2c9fe3cc83498724100fdb73490d",
+  "correlationSettings": {
+    "clusterIncoherentDominantShare": 0.5,
+    "clusterIncoherentCategoryEntropy": 1.5,
+    "clusterIncoherentTopicRatio": 0.4,
+    "sameEntityUnionBlocklist": [
+      "依托咪酯",
+      "幼兒園"
+    ]
+  },
   "cohortFile": "events-v1.cohort.json.gz",
   "cohortSha256": "70491c66f9c45ebfa802c53612ac0a52183772e080c537a21010eb57f5e5268a",
   "cohortCount": 5583,

@@ -15,7 +15,7 @@ import { createHash } from "node:crypto";
 import { gunzipSync } from "node:zlib";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
+import { correlateEvents, getCorrelationSettings, isNewsLikeEvent } from "./lib/correlate.mjs";
 import {
   computeLocationMetrics,
   computeRelationMetrics,
@@ -32,6 +32,9 @@ function loadReplayEvents(snapshot, snapshotPath) {
       typeof snapshot.cohortFile !== "string" || basename(snapshot.cohortFile) !== snapshot.cohortFile ||
       !/^[a-f0-9]{64}$/.test(snapshot.cohortSha256 || "")) {
     throw new Error("Benchmark snapshot must reference a versioned full-cohort replay file");
+  }
+  if (JSON.stringify(snapshot.correlationSettings) !== JSON.stringify(getCorrelationSettings())) {
+    throw new Error("Benchmark correlation settings differ from pinned snapshot settings");
   }
   const cohortPath = join(dirname(snapshotPath), snapshot.cohortFile);
   const bytes = readFileSync(cohortPath);
@@ -85,7 +88,7 @@ export function runBenchmark(argv = process.argv.slice(2)) {
   const pairs = loadLabeledJsonl(readFileSync(join(ROOT, args.pairs), "utf8"), validatePairRow);
   const report = {
     schema: "ground-truth-report/1",
-    inputs: { pairs: args.pairs, locations: args.locations || null, events: args.events, cohortFile: snapshotRaw.cohortFile, cohortSha256: snapshotRaw.cohortSha256, sourceSha256: snapshotRaw.sourceSha256 },
+    inputs: { pairs: args.pairs, locations: args.locations || null, events: args.events, cohortFile: snapshotRaw.cohortFile, cohortSha256: snapshotRaw.cohortSha256, sourceSha256: snapshotRaw.sourceSha256, correlationSettings: snapshotRaw.correlationSettings },
     counts: {
       events: events.length,
       pairs: pairs.rows.length,
