@@ -147,6 +147,47 @@ describe("fetch-rss fallback", () => {
     expect(result.items[0].sourceUrl).toBe(fallbackUrl);
   });
 
+  it("主 URL 回傳空 RSS 時使用有近期文章的備援", async () => {
+    const fallbackUrl = "https://news.google.com/rss/search?q=site%3Arti.org.tw";
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response("<rss><channel></channel></rss>", { status: 200 }))
+      .mockResolvedValueOnce(new Response(xml, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRssItems({ feeds: [{ ...feed, fallbackUrl }], perFeed: 5, timeoutMs: 100, retryDelayMs: 0 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.feedStatus[0]).toMatchObject({ ok: true, count: 1, fallback: true, primaryError: "no recent items", gn: true });
+    expect(result.items[0].sourceUrl).toBe(fallbackUrl);
+  });
+
+  it("主站與備援都空時不虛報來源成功有資料", async () => {
+    const fallbackUrl = "https://news.google.com/rss/search?q=site%3Arti.org.tw";
+    const fetchMock = vi.fn(async () => new Response("<rss><channel></channel></rss>", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRssItems({ feeds: [{ ...feed, fallbackUrl }], perFeed: 5, timeoutMs: 100, retryDelayMs: 0 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.feedStatus[0]).toMatchObject({ ok: true, count: 0 });
+    expect(result.feedStatus[0].fallback).toBeUndefined();
+    expect(result.items).toEqual([]);
+  });
+
+  it("主 URL 403 且備援空時保留主站錯誤", async () => {
+    const fallbackUrl = "https://news.google.com/rss/search?q=site%3Arti.org.tw";
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response("forbidden", { status: 403 }))
+      .mockResolvedValueOnce(new Response("<rss><channel></channel></rss>", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRssItems({ feeds: [{ ...feed, fallbackUrl }], perFeed: 5, timeoutMs: 100, retryDelayMs: 0 });
+
+    expect(result.feedStatus[0].ok).toBe(false);
+    expect(result.feedStatus[0].error).toContain("HTTP 403");
+    expect(result.feedStatus[0].error).toContain("no recent items");
+  });
+
   it("主 URL 403 且 fallback 502 重試一次仍失敗時回報兩段錯誤", async () => {
     const fallbackUrl = "https://news.google.com/rss/search?q=site%3Arti.org.tw";
     const fetchMock = vi

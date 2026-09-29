@@ -8,6 +8,7 @@ const TEMP_DIR = join(process.cwd(), "temp-test-manifest");
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   if (existsSync(TEMP_DIR)) rmSync(TEMP_DIR, { recursive: true, force: true });
 });
 
@@ -118,6 +119,39 @@ describe("Cohort Manifest (Work package D2)", () => {
     // loadMapEvents 必須 fail-safe 回傳 null
     const mapResult = await loadMapEvents("domestic", { manifest });
     expect(mapResult).toBeNull();
+  });
+
+  it("無 crypto.subtle 時事件、地圖及情報網皆不接受未驗證的同版產物", async () => {
+    const { loadEvents, loadMapEvents } = await import("../src/data/loader");
+    const { loadNetwork } = await import("../src/data/network");
+    const manifest: CohortManifest = {
+      manifestVersion: 1,
+      snapshotId: "cohort-s2",
+      generatedAt: "2026-09-17T00:00:00.000Z",
+      rulesVersion: "correlate-v1",
+      scopes: {
+        domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+        international: { events: "international.json", map: "international.map.json", network: "network.json" },
+      },
+      files: {
+        "domestic.json": { path: "domestic.json", sha256: "expected-events", bytes: 2 },
+        "domestic.map.json": { path: "domestic.map.json", sha256: "expected-map", bytes: 2 },
+      },
+    };
+    vi.stubGlobal("crypto", {});
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      text: async () => "[]",
+    } as Response);
+
+    await expect(loadEvents("domestic", { manifest })).rejects.toThrow(/SHA-256 無法驗證/);
+    expect(await loadMapEvents("domestic", { manifest })).toBeNull();
+    const network = await loadNetwork("domestic", {
+      expectedSnapshotId: "cohort-s2",
+      expectedSha256: "expected-network",
+    });
+    expect(network.state).toBe("error");
+    expect(network.error).toMatch(/SHA-256 無法驗證/);
   });
 
   it("loadNetwork 在 manifest 期待 snapshotId 但 response 缺少 snapshotId 時 fail-closed", async () => {

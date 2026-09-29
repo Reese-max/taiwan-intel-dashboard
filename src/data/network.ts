@@ -266,10 +266,17 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   let net: IntelNetwork;
   if (typeof res.text === "function") {
     rawText = await res.text();
-    if (options.expectedSha256 && globalThis.crypto?.subtle) {
-      const hash = await computeSha256Hex(rawText);
-      if (hash && hash !== options.expectedSha256) {
-        const errorMsg = `情報網 SHA-256 不符 (期望 ${options.expectedSha256}，實收 ${hash})`;
+    if (options.expectedSha256) {
+      let hash = "";
+      try {
+        hash = await computeSha256Hex(rawText);
+      } catch {
+        // Digest failure must not promote bytes that the manifest cannot verify.
+      }
+      if (!hash || hash !== options.expectedSha256) {
+        const errorMsg = hash
+          ? `情報網 SHA-256 不符 (期望 ${options.expectedSha256}，實收 ${hash})`
+          : "情報網 SHA-256 無法驗證";
         if (previous) return NetworkIndex.createStale(previous, errorMsg);
         return NetworkIndex.createError(errorMsg);
       }
@@ -282,6 +289,11 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
       return NetworkIndex.createError(errorMsg);
     }
   } else {
+    if (options.expectedSha256) {
+      const errorMsg = "情報網 SHA-256 無法驗證";
+      if (previous) return NetworkIndex.createStale(previous, errorMsg);
+      return NetworkIndex.createError(errorMsg);
+    }
     try {
       net = (await res.json()) as IntelNetwork;
     } catch (err: unknown) {
@@ -325,4 +337,3 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   const hasData = (scopeNet.edges?.length ?? 0) > 0 || (scopeNet.clusters?.length ?? 0) > 0 || (scopeNet.nodes?.length ?? 0) > 0;
   return hasData ? NetworkIndex.createReady(scopeNet, meta) : NetworkIndex.createEmpty(meta);
 }
-

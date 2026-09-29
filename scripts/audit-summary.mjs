@@ -53,6 +53,7 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
     const domesticCount = countIncidentsFromFile(join(dataDir, "domestic.json"));
     const internationalCount = countIncidentsFromFile(join(dataDir, "international.json"));
     const requireNarrative = hasFlag("require-narrative") || hasFlag("strict");
+    const annotate = !hasFlag("no-annotations");
 
     const report = auditSummary({
       summary,
@@ -67,7 +68,7 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
 
     if (!report.ok) {
       for (const failure of report.failures) {
-        console.error(`::error title=AI 摘要語意閘門::${failure.reason}`);
+        if (annotate) console.error(`::error title=AI 摘要語意閘門::${failure.reason}`);
       }
       console.error(`SUMMARY_AUDIT_FAIL ${report.failures.map((f) => f.reason).join("；")}`);
       process.exit(1);
@@ -77,7 +78,8 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
       `SUMMARY_AUDIT_OK AI 摘要語意完整性檢查通過（國內事件 ${domesticCount}，國際事件 ${internationalCount}${report.warnings.length ? `，含 ${report.warnings.length} 項警告` : ""}）`,
     );
   } catch (err) {
-    console.error(`::error title=AI 摘要審計異常::${err.message}`);
+    if (!hasFlag("no-annotations")) console.error(`::error title=AI 摘要審計異常::${err.message}`);
+    else console.error(`SUMMARY_AUDIT_ERROR ${err.message}`);
     process.exit(1);
   }
 }

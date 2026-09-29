@@ -41,6 +41,7 @@ function manifestFor(mapSha256: string): CohortManifest {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("地圖 first-paint 同版鎖定（loadFirstPaintMapEvents）", () => {
@@ -78,6 +79,29 @@ describe("地圖 first-paint 同版鎖定（loadFirstPaintMapEvents）", () => {
 
     const result = await loadFirstPaintMapEvents("domestic", { manifest });
     expect(result).toBeNull();
+  });
+
+  it("瀏覽器沒有 crypto.subtle 時不晉級 map bytes", async () => {
+    const mapBody = JSON.stringify(slimEvents);
+    const manifest = manifestFor(sha(mapBody));
+    vi.stubGlobal("crypto", {});
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      text: async () => mapBody,
+    } as Response);
+
+    expect(await loadFirstPaintMapEvents("domestic", { manifest })).toBeNull();
+  });
+
+  it("無法讀取原始 map bytes 時不以已解析 JSON 冒充 hash 驗證", async () => {
+    const mapBody = JSON.stringify(slimEvents);
+    const manifest = manifestFor(sha(mapBody));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => slimEvents,
+    } as Response);
+
+    expect(await loadFirstPaintMapEvents("domestic", { manifest })).toBeNull();
   });
 
   it("manifest 具名 map 檔 404 時回 null", async () => {

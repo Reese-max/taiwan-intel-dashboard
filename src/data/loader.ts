@@ -126,14 +126,16 @@ export async function loadEvents(scope: Scope, options?: LoadEventsOptions): Pro
   if (!res.ok) throw new Error(`載入 ${scope}.json 失敗: ${res.status}`);
   if (typeof res.text === "function") {
     const text = await res.text();
-    if (expectedSha256 && globalThis.crypto?.subtle) {
+    if (expectedSha256) {
       const hash = await computeSha256Hex(text);
-      if (hash && hash !== expectedSha256) {
+      if (!hash) throw new Error("事件資料 SHA-256 無法驗證");
+      if (hash !== expectedSha256) {
         throw new Error(`事件資料 SHA-256 不符 (期望 ${expectedSha256}，實收 ${hash})`);
       }
     }
     return JSON.parse(text) as IntelEvent[];
   }
+  if (expectedSha256) throw new Error("事件資料 SHA-256 無法驗證");
   return (await res.json()) as IntelEvent[];
 }
 
@@ -154,14 +156,13 @@ export async function loadMapEvents(scope: Scope, options?: LoadEventsOptions): 
     if (!res.ok) return null;
     if (typeof res.text === "function") {
       const text = await res.text();
-      if (expectedSha256 && globalThis.crypto?.subtle) {
+      if (expectedSha256) {
         const hash = await computeSha256Hex(text);
-        if (hash && hash !== expectedSha256) {
-          return null;
-        }
+        if (!hash || hash !== expectedSha256) return null;
       }
       return JSON.parse(text) as IntelEvent[];
     }
+    if (expectedSha256) return null;
     return (await res.json()) as IntelEvent[];
   } catch {
     return null;

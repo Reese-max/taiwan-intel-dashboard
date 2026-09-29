@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from "node:fs";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync, copyFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -306,18 +306,33 @@ describe("CLI end-to-end", () => {
     }
   });
 
-  it("真實 domestic.json 產出符合 schema 的 feed", () => {
-    if (!existsSync("public/data/govintel-discovery.json")) {
-      execFileSync("node", ["scripts/govintel-discovery.mjs"], { encoding: "utf8" });
-    }
-    const feed = JSON.parse(readFileSync("public/data/govintel-discovery.json", "utf8"));
-    expect(feed.schema_version).toBe(1);
-    expect(["ACTIVE", "DEGRADED", "RESTORING", "PAUSED"]).toContain(feed.operating_state);
-    expect(feed.stale).toBe(feed.operating_state !== "ACTIVE");
-    for (const it2 of feed.items) {
-      expect(it2.discovery_id).toMatch(/^gd-[0-9a-f]{16}$/);
-      expect(["official", "media"]).toContain(it2.authority);
-      expect(it2.original_source_identity || it2.source_url).toBeTruthy();
+  it("domestic.json 快照產出符合 schema 的 feed（有正式資料時驗正式資料）", () => {
+    const realSnapshot = join("public", "data", "domestic.json");
+    const hasRealSnapshot = existsSync(realSnapshot);
+    const input = hasRealSnapshot ? realSnapshot : join("tests", "fixtures", "govintel-domestic.json");
+    const dir = mkdtempSync(join(tmpdir(), "disc-snapshot-"));
+    try {
+      copyFileSync(input, join(dir, "domestic.json"));
+      execFileSync("node", ["scripts/govintel-discovery.mjs"], {
+        env: {
+          ...process.env,
+          DISCOVERY_DATA_DIR: dir,
+          DISCOVERY_NOW: hasRealSnapshot ? new Date().toISOString() : NOW.toISOString(),
+        },
+        encoding: "utf8",
+      });
+      const feed = JSON.parse(readFileSync(join(dir, "govintel-discovery.json"), "utf8"));
+      expect(feed.schema_version).toBe(1);
+      expect(["ACTIVE", "DEGRADED", "RESTORING", "PAUSED"]).toContain(feed.operating_state);
+      expect(feed.stale).toBe(feed.operating_state !== "ACTIVE");
+      if (!hasRealSnapshot) expect(feed.items.length).toBeGreaterThan(0);
+      for (const it2 of feed.items) {
+        expect(it2.discovery_id).toMatch(/^gd-[0-9a-f]{16}$/);
+        expect(["official", "media"]).toContain(it2.authority);
+        expect(it2.original_source_identity || it2.source_url).toBeTruthy();
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });
