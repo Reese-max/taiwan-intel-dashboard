@@ -2,7 +2,10 @@
   "schema": "ground-truth-events/1",
   "generatedFrom": "public/data/domestic.json",
   "sourceSha256": "55c95d6acbfe4f864c6794a352024573efa95f74773ed38d8448f7445da8b6da",
-  "networkSha256": "fffd206d7bf13f4d0efcf113c601aee7db7e2c9fe3cc83498724100fdb73490d",
+  "networkSha256": "b5806f4fd87ec4eae7e2b7ebbffa1fe61aa1486fca368240a8a39fe98c4785ff",
+  "cohortFile": "events-v1.cohort.json.gz",
+  "cohortSha256": "70491c66f9c45ebfa802c53612ac0a52183772e080c537a21010eb57f5e5268a",
+  "cohortCount": 5583,
   "count": 279,
   "events": [
     {
@@ -43,6 +46,7 @@
         "沈伯洋",
         "金華國中"
       ],
+      "aiTopic": "金華國中餐飲食安爭議與官方澄清",
       "source": {
         "name": "匯流新聞網",
         "type": "news-rss",
@@ -67,6 +71,7 @@
       "aiEntities": [
         "萬瑞快速道路"
       ],
+      "aiTopic": "臺62線小貨車單車事故",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -93,6 +98,7 @@
         "蔣萬安",
         "金華國中"
       ],
+      "aiTopic": "金華國中營養午餐食安質疑事件",
       "source": {
         "name": "自由時報 地方",
         "type": "news-rss",
@@ -116,6 +122,7 @@
       "aiEntities": [
         "Lara梁心頤"
       ],
+      "aiTopic": "梁心頤音樂作品侵權起訴案",
       "source": {
         "name": "ETtoday星光雲| ETtoday新聞雲",
         "type": "news-rss",
@@ -140,6 +147,7 @@
       "aiEntities": [
         "前女友"
       ],
+      "aiTopic": "臺中金融男當街殺前女友案",
       "source": {
         "name": "UDN",
         "type": "news-rss",
@@ -165,6 +173,7 @@
         "虎尾交流道",
         "警車"
       ],
+      "aiTopic": "雲林臺78卡車爆胎連環撞擊事故",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -186,6 +195,7 @@
       "lng": 120.6736,
       "locationPrecision": "city",
       "locationNote": "依新聞地區推論，非精準事發地址",
+      "aiTopic": "臺中男當街砍殺前女友案",
       "source": {
         "name": "TVBS新聞網",
         "type": "news-rss",
@@ -210,6 +220,7 @@
         "緬甸詐騙園區",
         "美容師"
       ],
+      "aiTopic": "緬甸詐騙園區人口販運案",
       "source": {
         "name": "AM730",
         "type": "news-rss",
@@ -236,6 +247,7 @@
         "大湖抽水站",
         "檢方"
       ],
+      "aiTopic": "國中生戲水溺水身亡",
       "source": {
         "name": "Newtalk 社會",
         "type": "news-rss",
@@ -262,6 +274,7 @@
         "李四川",
         "新北市退休警察人員協會"
       ],
+      "aiTopic": "侯友宜李四川聯袂出席新北退警活動",
       "source": {
         "name": "自由時報 地方",
         "type": "news-rss",
@@ -288,6 +301,7 @@
         "新黨",
         "北檢"
       ],
+      "aiTopic": "新黨告發民進黨雙姝食安與學歷爭議",
       "source": {
         "name": "Yahoo新聞",
         "type": "news-rss",
@@ -314,6 +328,7 @@
         "新大樓",
         "據點"
       ],
+      "aiTopic": "緬甸電詐園區擴張與招募",
       "source": {
         "name": "PChome Online 新聞",
         "type": "news-rss",
@@ -341,6 +356,7 @@
         "沈伯洋",
         "簡舒培"
       ],
+      "aiTopic": "金華國中營養午餐爭議與責任歸屬",
       "source": {
         "name": "newtalk 社會",
         "type": "news-rss",
@@ -368,6 +384,7 @@
         "食安",
         "中央社"
       ],
+      "aiTopic": "金華國中校長回應午餐爭議",
       "source": {
         "name": "中央社 CNA",
         "type": "news-rss",
@@ -392,6 +409,7 @@
       "aiEntities": [
         "湖內"
       ],
+      "aiTopic": "湖內溺水13歲童死亡案",
       "source": {
         "name": "Life 生活網",
         "type": "news-rss",
@@ -418,6 +436,7 @@
         "黃啟清",
         "簡舒培"
       ],
+      "aiTopic": "金華國中營養午餐爭議及校長回應",
       "source": {
         "name": "中央社 地方",
         "type": "news-rss",
@@ -442,6 +461,7 @@
         "美容師",
         "KK園區"
       ],
+      "aiTopic": "美容師詐騙送女子至KK園區案",
       "source": {
         "name": "hk01.com",
         "type": "news-rss",
@@ -492,6 +512,7 @@
         "板橋",
         "第一線員警"
       ],
+      "aiTopic": "企業慰問基層警察加菜金捐贈",
       "source": {
         "name": "蕃新聞",
         "type": "news-rss",
@@ -519,6 +540,7 @@
         "沈伯洋",
         "簡舒培"
       ],
+      "aiTopic": "金華國中營養午餐爭議",
       "source": {
         "name": "newtalk 社會",
         "type": "news-rss",
@@ -543,6 +565,7 @@
         "交通部",
         "警政署"
       ],
+      "aiTopic": "毒駕肇因統計納入違規行為",
       "source": {
         "name": "UDN",
         "type": "news-rss",
@@ -569,6 +592,7 @@
         "陳菁徽",
         "沈伯洋"
       ],
+      "aiTopic": "金華國中食安爭議與官員應對",
       "source": {
         "name": "chinatimes.com",
         "type": "news-rss",
@@ -592,6 +616,7 @@
       "aiEntities": [
         "司法院"
       ],
+      "aiTopic": "行賄司法院貪汙案",
       "source": {
         "name": "UDN",
         "type": "news-rss",
@@ -617,6 +642,7 @@
         "蘆洲捷運三民高中站",
         "蘆洲警分局"
       ],
+      "aiTopic": "新北三民高中站街頭毆打事件",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -641,6 +667,7 @@
       "aiEntities": [
         "沈伯洋"
       ],
+      "aiTopic": "臺北兒童虐待防護條例建議",
       "source": {
         "name": "大纪元",
         "type": "news-rss",
@@ -667,6 +694,7 @@
         "基隆",
         "槍毒"
       ],
+      "aiTopic": "汐止砍傷強押案警追緝槍毒",
       "source": {
         "name": "聯合影音",
         "type": "news-rss",
@@ -693,6 +721,7 @@
         "中亞牧羊犬",
         "瑞豐夜市"
       ],
+      "aiTopic": "食安爭議與亞運佳績同時發生",
       "source": {
         "name": "dailyview.tw",
         "type": "news-rss",
@@ -717,6 +746,7 @@
       "aiEntities": [
         "保護令"
       ],
+      "aiTopic": "父親違反保護令虐待女兒遊街案",
       "source": {
         "name": "Newtalk新聞",
         "type": "news-rss",
@@ -744,6 +774,7 @@
         "簡舒培",
         "金華國中"
       ],
+      "aiTopic": "食安事件被指為製造恐慌",
       "source": {
         "name": "中時新聞網",
         "type": "news-rss",
@@ -768,6 +799,7 @@
         "張俊傑",
         "剪鐶組織"
       ],
+      "aiTopic": "剪鐶組織擴大及中秋連假逮捕案",
       "source": {
         "name": "Yahoo新聞",
         "type": "news-rss",
@@ -792,6 +824,7 @@
       "aiEntities": [
         "汐止"
       ],
+      "aiTopic": "汐止當街擄人砍傷案",
       "source": {
         "name": "tw.news.yahoo.com",
         "type": "news-rss",
@@ -818,6 +851,7 @@
         "童綜合醫院",
         "梁文傑"
       ],
+      "aiTopic": "醫院院長就職典禮",
       "source": {
         "name": "自由時報 地方",
         "type": "news-rss",
@@ -842,6 +876,7 @@
       "aiEntities": [
         "羅東夜市"
       ],
+      "aiTopic": "羅東夜市彈珠臺攤位凌晨火警",
       "source": {
         "name": "Newtalk新聞",
         "type": "news-rss",
@@ -866,6 +901,7 @@
       "aiEntities": [
         "衛福部"
       ],
+      "aiTopic": "三重女童遭羞辱遊街兒虐案",
       "source": {
         "name": "太報 TaiSounds",
         "type": "news-rss",
@@ -890,6 +926,7 @@
         "妙瓦底",
         "緬甸"
       ],
+      "aiTopic": "緬甸妙瓦底電詐園區擴張",
       "source": {
         "name": "香港01",
         "type": "news-rss",
@@ -917,6 +954,7 @@
         "簡舒培",
         "金華國中"
       ],
+      "aiTopic": "金華國中小卷食安爭議",
       "source": {
         "name": "TVBS新聞網",
         "type": "news-rss",
@@ -943,6 +981,7 @@
         "基隆廟口",
         "51歲男"
       ],
+      "aiTopic": "汐止擄人砍傷丟包案",
       "source": {
         "name": "壹蘋新聞網",
         "type": "news-rss",
@@ -967,6 +1006,7 @@
       "aiEntities": [
         "中壢警分局龍興派出所"
       ],
+      "aiTopic": "老人迷途獲警暖心護送平安返家",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -988,6 +1028,7 @@
       "lng": 120.8214,
       "locationPrecision": "city",
       "locationNote": "依新聞地區推論，非精準事發地址",
+      "aiTopic": "出獄不久再砍人二審改判無期徒刑",
       "source": {
         "name": "壹蘋新聞網",
         "type": "news-rss",
@@ -1016,6 +1057,7 @@
         "沈伯洋",
         "蔣萬安"
       ],
+      "aiTopic": "金華國中營養午餐食安爭議",
       "source": {
         "name": "newtalk 社會",
         "type": "news-rss",
@@ -1041,6 +1083,7 @@
         "蔣萬安",
         "金華國中"
       ],
+      "aiTopic": "金華國中營養午餐食安問題與市府回應",
       "source": {
         "name": "ftvnews.com.tw",
         "type": "news-rss",
@@ -1067,6 +1110,7 @@
         "劉姓男子",
         "郭姓男子"
       ],
+      "aiTopic": "卡米地潑糞事件涉跨境鎮壓",
       "source": {
         "name": "Newtalk 社會",
         "type": "news-rss",
@@ -1091,6 +1135,7 @@
       "aiEntities": [
         "金華國中"
       ],
+      "aiTopic": "金華國中食安爭議與政治操弄",
       "source": {
         "name": "LINE TODAY",
         "type": "news-rss",
@@ -1116,6 +1161,7 @@
         "蔡玉真",
         "張淑娟"
       ],
+      "aiTopic": "名人爆料誹謗刑事責任案",
       "source": {
         "name": "今周刊",
         "type": "news-rss",
@@ -1137,6 +1183,7 @@
       "lng": 121.4628,
       "locationPrecision": "city",
       "locationNote": "依新聞地區推論，非精準事發地址",
+      "aiTopic": "新北當街擄人救出肉票案",
       "source": {
         "name": "鏡週刊Mirror Media",
         "type": "news-rss",
@@ -1163,6 +1210,7 @@
         "劉姓男子",
         "郭姓男子"
       ],
+      "aiTopic": "卡米地俱樂部遭潑穢物跨境指使案",
       "source": {
         "name": "中央社 社會",
         "type": "news-rss",
@@ -1187,6 +1235,7 @@
         "卡米地",
         "習近平"
       ],
+      "aiTopic": "卡米地相聲反諷習近平被潑糞案",
       "source": {
         "name": "UDN",
         "type": "news-rss",
@@ -1211,6 +1260,7 @@
         "天水圍",
         "黑幫"
       ],
+      "aiTopic": "天水圍黑幫鬥毆賣太空油案",
       "source": {
         "name": "hk01.com",
         "type": "news-rss",
@@ -1231,6 +1281,7 @@
       "lat": null,
       "lng": null,
       "locationPrecision": "unknown",
+      "aiTopic": "消防人員考核要點廢止",
       "source": {
         "name": "nfa.gov.tw",
         "type": "news-rss",
@@ -1257,6 +1308,7 @@
         "基隆",
         "毒品"
       ],
+      "aiTopic": "汐止擄人勒贖兼毒品案",
       "source": {
         "name": "ETtoday新聞雲",
         "type": "news-rss",
@@ -1282,6 +1334,7 @@
         "女童",
         "羞辱紙板"
       ],
+      "aiTopic": "新北街頭虐童遊街羞辱案",
       "source": {
         "name": "壹蘋新聞網",
         "type": "news-rss",
@@ -1306,6 +1359,7 @@
       "aiEntities": [
         "金華國中"
       ],
+      "aiTopic": "金華國中食安疑雲澄清",
       "source": {
         "name": "上報Up Media",
         "type": "news-rss",
@@ -1333,6 +1387,7 @@
         "透天民宅",
         "消防人員"
       ],
+      "aiTopic": "臺中西屯透天民宅深夜火災救援",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -1359,6 +1414,7 @@
         "詹凌瑀",
         "食安"
       ],
+      "aiTopic": "金華國中食安爭議被指政治化選戰工具",
       "source": {
         "name": "tw.news.yahoo.com",
         "type": "news-rss",
@@ -1383,6 +1439,7 @@
         "金管會",
         "李同榮"
       ],
+      "aiTopic": "金管會監管四貸同堂金融創新",
       "source": {
         "name": "經濟日報",
         "type": "news-rss",
@@ -1428,6 +1485,7 @@
         "金華國中",
         "黃啟清"
       ],
+      "aiTopic": "金華國中營養午餐食安爭議",
       "source": {
         "name": "Newtalk 社會",
         "type": "news-rss",
@@ -1453,6 +1511,7 @@
         "金華國中",
         "北市教育局"
       ],
+      "aiTopic": "金華國中食安爭議與教育局說法一致",
       "source": {
         "name": "CTWANT",
         "type": "news-rss",
@@ -1497,6 +1556,7 @@
       "aiEntities": [
         "鼓山區美術東七街"
       ],
+      "aiTopic": "毒品駕駛導致單車事故案",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -1586,6 +1646,7 @@
         "攔沙壩",
         "二仁溪"
       ],
+      "aiTopic": "國中生戲水失蹤遺體尋獲",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1612,6 +1673,7 @@
         "黃啟清",
         "簡舒培"
       ],
+      "aiTopic": "金華國中午餐爭議校長說明",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1633,6 +1695,7 @@
       "lng": 121.4628,
       "locationPrecision": "city",
       "locationNote": "依新聞地區推論，非精準事發地址",
+      "aiTopic": "三重父親虐待女兒遊街羞辱案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1657,6 +1720,7 @@
       "aiEntities": [
         "15歲哥哥"
       ],
+      "aiTopic": "三重女童遭兄父逼掛辱罵牌遊街案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1682,6 +1746,7 @@
         "新北市三重",
         "衛福部"
       ],
+      "aiTopic": "父親羞辱女童遊街違反保護令案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1707,6 +1772,7 @@
         "蔡玉真",
         "晶華酒店"
       ],
+      "aiTopic": "周玉蔻晶華滾床單誹謗案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1731,6 +1797,7 @@
       "aiEntities": [
         "美術東七街"
       ],
+      "aiTopic": "高雄毒駕自撞案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1756,6 +1823,7 @@
         "卡米地俱樂部",
         "新莊"
       ],
+      "aiTopic": "卡米地俱樂部被潑糞案中國人士指使",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1782,6 +1850,7 @@
         "基隆廟口夜市",
         "左手撕裂傷"
       ],
+      "aiTopic": "汐止當街擄人砍傷案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1807,6 +1876,7 @@
         "基隆廟口夜市",
         "黃姓男子"
       ],
+      "aiTopic": "新北汐止持槍押人並砍傷案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1833,6 +1903,7 @@
         "公園路",
         "消防局"
       ],
+      "aiTopic": "羅東夜市彈珠臺攤位凌晨火警",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1880,6 +1951,7 @@
         "美術東七街",
         "K他命"
       ],
+      "aiTopic": "毒駕自撞電桿查獲毒品案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1904,6 +1976,7 @@
       "aiEntities": [
         "44歲男子"
       ],
+      "aiTopic": "女童遭父親羞辱遊街案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -1924,6 +1997,7 @@
       "lat": null,
       "lng": null,
       "locationPrecision": "unknown",
+      "aiTopic": "依託咪酯煙彈販毒案",
       "source": {
         "name": "singtao.ca",
         "type": "news-rss",
@@ -1990,6 +2064,7 @@
         "小鳳",
         "法院"
       ],
+      "aiTopic": "霸佔前屋產判賠租金補償",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -2034,6 +2109,7 @@
         "小羊卡牌社",
         "北檢"
       ],
+      "aiTopic": "小羊卡牌社詐騙集資通緝案",
       "source": {
         "name": "Yahoo新聞",
         "type": "news-rss",
@@ -2059,6 +2135,7 @@
         "天道盟",
         "陳姓貴婦"
       ],
+      "aiTopic": "天道盟綁架砸墳逼賣地案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -2144,6 +2221,7 @@
       "aiEntities": [
         "星島新聞集團"
       ],
+      "aiTopic": "恐嚇信白色粉末案",
       "source": {
         "name": "singtao.ca",
         "type": "news-rss",
@@ -2374,6 +2452,7 @@
         "BMW",
         "肇事逃逸"
       ],
+      "aiTopic": "臺北忠孝東路BMW肇逃撞車事故",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -2401,6 +2480,7 @@
         "拒檢",
         "狂飆"
       ],
+      "aiTopic": "吸毒駕車拒檢逃逸遭逮案",
       "source": {
         "name": "UDN",
         "type": "news-rss",
@@ -2421,6 +2501,7 @@
       "lat": null,
       "lng": null,
       "locationPrecision": "unknown",
+      "aiTopic": "豪車衝撞人行道連環撞擊肇逃案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -2465,6 +2546,7 @@
       "aiEntities": [
         "新店客運"
       ],
+      "aiTopic": "公車遺留乘客陳屍案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -2489,6 +2571,7 @@
         "英美空軍基地",
         "川普"
       ],
+      "aiTopic": "英美空軍基地恐怖襲擊策畫案",
       "source": {
         "name": "UDN",
         "type": "news-rss",
@@ -2514,6 +2597,7 @@
         "金華國中",
         "校長"
       ],
+      "aiTopic": "金華國中食安事件校長公開道歉",
       "source": {
         "name": "mobile01.com",
         "type": "news-rss",
@@ -2537,6 +2621,7 @@
       "aiEntities": [
         "習近平"
       ],
+      "aiTopic": "南韓中餐廳取名『習近平』遭砸店 食材噴農藥",
       "source": {
         "name": "鏡週刊",
         "type": "news-rss",
@@ -2564,6 +2649,7 @@
         "鳳山區",
         "養生館"
       ],
+      "aiTopic": "高雄毒品債務糾紛致死案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -2591,6 +2677,7 @@
         "西門町",
         "北市警萬華分局"
       ],
+      "aiTopic": "小羊卡牌社捲款潛逃詐騙案",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -2639,6 +2726,7 @@
         "KTV",
         "襲警"
       ],
+      "aiTopic": "花蓮酒後混戰襲警案",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -2684,6 +2772,7 @@
       "aiEntities": [
         "養生館"
       ],
+      "aiTopic": "高雄養生館命案埋伏襲擊",
       "source": {
         "name": "鏡週刊",
         "type": "news-rss",
@@ -2710,6 +2799,7 @@
         "黃啟清",
         "北市教育局"
       ],
+      "aiTopic": "校園食安爭議與公開說明",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -2734,6 +2824,7 @@
       "aiEntities": [
         "新店客運"
       ],
+      "aiTopic": "公車內乘車內乘客遺體多日未發現案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -2818,6 +2909,7 @@
       "aiEntities": [
         "養生館"
       ],
+      "aiTopic": "高雄養生館持棍闖入命案",
       "source": {
         "name": "facebook.com",
         "type": "news-rss",
@@ -2864,6 +2956,7 @@
         "呂姓",
         "臉書"
       ],
+      "aiTopic": "假冒軍官詐騙索財18萬案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -2911,6 +3004,7 @@
         "莊姓",
         "林男"
       ],
+      "aiTopic": "高雄鳳山保泰路持刀棍兇殺案",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -2937,6 +3031,7 @@
         "公車後座",
         "新店客運"
       ],
+      "aiTopic": "乘客滯留公車三天猝死遺體腐敗",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -2962,6 +3057,7 @@
         "湖內區",
         "大湖抽水站"
       ],
+      "aiTopic": "國中生戲水溺水失聯事件",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3008,6 +3104,7 @@
         "樂業街",
         "安和分隊"
       ],
+      "aiTopic": "臺北消防員救火熱衰竭體溫41度送醫",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3036,6 +3133,7 @@
         "張博翔",
         "邱丞鴻"
       ],
+      "aiTopic": "基泰大直建築坍塌事故",
       "source": {
         "name": "自由時報 地方",
         "type": "news-rss",
@@ -3061,6 +3159,7 @@
         "基泰大直",
         "公辦都更"
       ],
+      "aiTopic": "基泰大直重災區重建協商卡關",
       "source": {
         "name": "自由時報 地方",
         "type": "news-rss",
@@ -3086,6 +3185,7 @@
         "新店區",
         "公車"
       ],
+      "aiTopic": "公車內乘客猝逝未被及時發現",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3110,6 +3210,7 @@
       "aiEntities": [
         "SPA館"
       ],
+      "aiTopic": "高雄SPA館命案致1死2傷",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3135,6 +3236,7 @@
         "安和分隊",
         "樂業街"
       ],
+      "aiTopic": "消防員救火熱衰竭送醫",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3160,6 +3262,7 @@
         "林森北路",
         "中山分局"
       ],
+      "aiTopic": "酒後鬧事衝車道阻礙交通",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3187,6 +3290,7 @@
         "圓山派出所",
         "林森北路"
       ],
+      "aiTopic": "酒醉失控衝車道警民衝突",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3212,6 +3316,7 @@
         "鳳山區",
         "崗山南街"
       ],
+      "aiTopic": "高雄鳳山區養生館深夜毆殺案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3237,6 +3342,7 @@
         "保泰路",
         "崗山南街"
       ],
+      "aiTopic": "高雄鳳山區街頭衝突致死案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3262,6 +3368,7 @@
         "鳳山區保泰路",
         "泰式養生館"
       ],
+      "aiTopic": "養生館持械闖入致死傷衝突案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3306,6 +3413,7 @@
       "aiEntities": [
         "新店公車"
       ],
+      "aiTopic": "新店公車乘客陳屍三日未發現案",
       "source": {
         "name": "民視新聞網",
         "type": "news-rss",
@@ -3333,6 +3441,7 @@
         "大直藏璽",
         "北市住都中心"
       ],
+      "aiTopic": "基泰大直倒塌災後都更招商進展",
       "source": {
         "name": "自由時報 地方",
         "type": "news-rss",
@@ -3358,6 +3467,7 @@
         "基泰大直",
         "受災戶"
       ],
+      "aiTopic": "基泰大直倒塌災後重建遲緩",
       "source": {
         "name": "自由時報",
         "type": "news-rss",
@@ -3400,6 +3510,7 @@
       "lng": 121.301,
       "locationPrecision": "city",
       "locationNote": "依新聞地區推論，非精準事發地址",
+      "aiTopic": "持安非他命赤腳狂奔被查獲",
       "source": {
         "name": "民安救護車",
         "type": "news-rss",
@@ -3447,6 +3558,7 @@
         "華工六路90巷口",
         "吳姓騎士"
       ],
+      "aiTopic": "花蓮機車騎士撞曳引車受傷案",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -3475,6 +3587,7 @@
         "分隔島",
         "警方"
       ],
+      "aiTopic": "吸毒後駕車撞分隔島拒送醫雙毒陽性案",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -3496,6 +3609,7 @@
       "lng": 121.301,
       "locationPrecision": "city",
       "locationNote": "依新聞地區推論，非精準事發地址",
+      "aiTopic": "赤腳狂奔持安非他命被查獲案",
       "source": {
         "name": "pbs.npa.gov.tw",
         "type": "news-rss",
@@ -3521,6 +3635,7 @@
         "高姓男子",
         "新店客運"
       ],
+      "aiTopic": "公車內突發倒臥身亡事件",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -3566,6 +3681,7 @@
       "aiEntities": [
         "樂業街"
       ],
+      "aiTopic": "臺北樂業街大火消防員熱衰竭",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3592,6 +3708,7 @@
         "博愛座",
         "高姓男子"
       ],
+      "aiTopic": "新店客運公車乘客滯留車上3天離奇死亡",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3617,6 +3734,7 @@
         "LINE",
         "臨床心理學會"
       ],
+      "aiTopic": "假冒學會理事長詐騙LINE群組案",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -3684,6 +3802,7 @@
         "蔣萬安",
         "立法院"
       ],
+      "aiTopic": "蔣萬安學歷爭議及遊錫堃回應",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3708,6 +3827,7 @@
       "aiEntities": [
         "太平路段"
       ],
+      "aiTopic": "臺74線3車連環撞事故",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3732,6 +3852,7 @@
         "烏隆他尼府",
         "便利商店"
       ],
+      "aiTopic": "泰國超商店員全裸陳屍性侵殺害案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3755,6 +3876,7 @@
       "aiEntities": [
         "中警"
       ],
+      "aiTopic": "毒品咖啡偽裝販售案",
       "source": {
         "name": "新華報導",
         "type": "news-rss",
@@ -3822,6 +3944,7 @@
         "工地",
         "消防人員"
       ],
+      "aiTopic": "北市樂業街工地大火消防救災案",
       "source": {
         "name": "三立新聞網SETN.com",
         "type": "news-rss",
@@ -3866,6 +3989,7 @@
       "aiEntities": [
         "公車"
       ],
+      "aiTopic": "新店公車陳屍案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3892,6 +4016,7 @@
         "沈伯洋",
         "何欣純"
       ],
+      "aiTopic": "臺中人夜聚審計新村參與洋流欣潮合體",
       "source": {
         "name": "自由時報 地方",
         "type": "news-rss",
@@ -3917,6 +4042,7 @@
         "新店區",
         "公車司機"
       ],
+      "aiTopic": "新店公車遺體未發現案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3941,6 +4067,7 @@
       "aiEntities": [
         "新店客運"
       ],
+      "aiTopic": "新北新店公車內男子陳屍案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3966,6 +4093,7 @@
         "新店區",
         "公車"
       ],
+      "aiTopic": "新店公車男性死亡腐敗案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -3990,6 +4118,7 @@
       "aiEntities": [
         "松山機場"
       ],
+      "aiTopic": "松山機場旅客過安檢後猝死",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -4014,6 +4143,7 @@
       "aiEntities": [
         "新店區"
       ],
+      "aiTopic": "公車遺體多日未被發現案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -4040,6 +4170,7 @@
         "中正路",
         "新莊路"
       ],
+      "aiTopic": "新莊毒駕自撞事故安非他命陽性",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -4065,6 +4196,7 @@
         "元保宮",
         "沈伯洋"
       ],
+      "aiTopic": "臺中元保宮演唱會警力維持秩序",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -4090,6 +4222,7 @@
         "沈伯洋",
         "何欣純"
       ],
+      "aiTopic": "沈伯洋何欣純臺中合體造勢",
       "source": {
         "name": "自由時報 地方",
         "type": "news-rss",
@@ -4116,6 +4249,7 @@
         "陳佩琪",
         "民眾黨"
       ],
+      "aiTopic": "柯文哲政治獻金案二審及妻子申冤行動",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -4163,6 +4297,7 @@
         "中正路",
         "新莊路"
       ],
+      "aiTopic": "新莊區毒駕自撞事故",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -4183,6 +4318,7 @@
       "lat": null,
       "lng": null,
       "locationPrecision": "unknown",
+      "aiTopic": "健身中心更衣房偷拍鏡頭案",
       "source": {
         "name": "on.cc東網",
         "type": "news-rss",
@@ -4210,6 +4346,7 @@
         "元保宮",
         "審計新村"
       ],
+      "aiTopic": "沈伯洋何欣純臺中合體造勢事件",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -4257,6 +4394,7 @@
         "建管處",
         "消防員"
       ],
+      "aiTopic": "樂業街工地火災事故",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -4281,6 +4419,7 @@
       "aiEntities": [
         "蔣萬安"
       ],
+      "aiTopic": "臺北市大安工地火災",
       "source": {
         "name": "鏡週刊Mirror Media",
         "type": "news-rss",
@@ -4306,6 +4445,7 @@
         "大安都更工地",
         "雙和"
       ],
+      "aiTopic": "都更工地深夜火警濃煙擴散",
       "source": {
         "name": "UDN",
         "type": "news-rss",
@@ -4368,6 +4508,7 @@
       "lng": 121.5637,
       "locationPrecision": "city",
       "locationNote": "依新聞地區推論，非精準事發地址",
+      "aiTopic": "萬華棋牌社職業賭場突襲案",
       "source": {
         "name": "中天新聞網",
         "type": "news-rss",
@@ -4392,6 +4533,7 @@
       "aiEntities": [
         "教保員"
       ],
+      "aiTopic": "北市托兒所兒童虐待案",
       "source": {
         "name": "Yahoo新聞",
         "type": "news-rss",
@@ -4417,6 +4559,7 @@
         "何秀綿",
         "竹南鎮長選舉"
       ],
+      "aiTopic": "苗栗竹南鎮長選舉賄選羈押案",
       "source": {
         "name": "hakkatv.org.tw",
         "type": "news-rss",
@@ -4522,6 +4665,7 @@
       "aiEntities": [
         "早餐店"
       ],
+      "aiTopic": "新北新莊早餐店火警警消搶救",
       "source": {
         "name": "LINE TODAY",
         "type": "news-rss",
@@ -4562,6 +4706,7 @@
       "lat": null,
       "lng": null,
       "locationPrecision": "unknown",
+      "aiTopic": "違規騎士拒檢逃逸連環通緝案",
       "source": {
         "name": "Yahoo新聞",
         "type": "news-rss",
@@ -4586,6 +4731,7 @@
       "aiEntities": [
         "蔣萬安"
       ],
+      "aiTopic": "蔣萬安學歷造假爭議",
       "source": {
         "name": "自由時報 地方",
         "type": "news-rss",
@@ -4671,6 +4817,7 @@
       "aiEntities": [
         "員警"
       ],
+      "aiTopic": "違規騎士自曝通緝查獲毒品",
       "source": {
         "name": "g4.village.tw",
         "type": "news-rss",
@@ -4738,6 +4885,7 @@
         "簡舒培",
         "金華國中"
       ],
+      "aiTopic": "蔣萬安護教育局控沈伯洋簡舒培認知作戰",
       "source": {
         "name": "NOWnews今日新聞",
         "type": "news-rss",
@@ -4783,6 +4931,7 @@
         "大三元棋牌社",
         "萬華分局"
       ],
+      "aiTopic": "萬華棋牌社地下賭場查獲",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -4809,6 +4958,7 @@
         "都更工地B3",
         "環保局"
       ],
+      "aiTopic": "北市大安區都更工地深夜火災",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -4834,6 +4984,7 @@
         "許淑華",
         "蔣萬安"
       ],
+      "aiTopic": "北市幼兒園虐童案及政治人物回應壓力",
       "source": {
         "name": "Yahoo新聞",
         "type": "news-rss",
@@ -4899,6 +5050,7 @@
       "aiEntities": [
         "幼兒園"
       ],
+      "aiTopic": "臺北市幼兒園虐童案",
       "source": {
         "name": "太報 TaiSounds",
         "type": "news-rss",
@@ -4964,6 +5116,7 @@
         "何秀綿",
         "苗栗竹南鎮長選舉"
       ],
+      "aiTopic": "竹南鎮長選舉賄選案人員遭羈押",
       "source": {
         "name": "蕃新聞",
         "type": "news-rss",
@@ -4987,6 +5140,7 @@
       "aiEntities": [
         "工程行"
       ],
+      "aiTopic": "中秋夜工程行老闆持刀砍人",
       "source": {
         "name": "Yahoo新聞",
         "type": "news-rss",
@@ -5030,6 +5184,7 @@
       "aiEntities": [
         "幼兒園"
       ],
+      "aiTopic": "幼兒園虐童家長報復案",
       "source": {
         "name": "Yahoo新聞",
         "type": "news-rss",
@@ -5094,6 +5249,7 @@
       "aiEntities": [
         "薛楷莉"
       ],
+      "aiTopic": "薛楷莉判決未入監通緝",
       "source": {
         "name": "Yahoo新聞",
         "type": "news-rss",
@@ -5118,6 +5274,7 @@
       "aiEntities": [
         "新竹高鐵站"
       ],
+      "aiTopic": "機車安全帽遭惡意汙染事件",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -5142,6 +5299,7 @@
         "何秀綿",
         "司法"
       ],
+      "aiTopic": "何秀綿涉賄選被羈押案",
       "source": {
         "name": "中時新聞網",
         "type": "news-rss",
@@ -5166,6 +5324,7 @@
         "何秀綿",
         "葉忠倫"
       ],
+      "aiTopic": "何秀綿涉賄案收押與政治爭議",
       "source": {
         "name": "news.ltn.com.tw",
         "type": "news-rss",
@@ -5254,6 +5413,7 @@
         "鄉民代表",
         "石墩"
       ],
+      "aiTopic": "中秋拜票途中車禍翻車",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -5278,6 +5438,7 @@
         "東山服務區",
         "國道3號"
       ],
+      "aiTopic": "東山服務區婦人獨宿帳篷身亡案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -5323,6 +5484,7 @@
         "高雄高等行政法院",
         "高雄黃姓男子"
       ],
+      "aiTopic": "高雄酒測0.22撞車免罰",
       "source": {
         "name": "自由時報 社會",
         "type": "news-rss",
@@ -5389,6 +5551,7 @@
         "國際線行李整理區",
         "三軍總醫院松山分院"
       ],
+      "aiTopic": "松山機場赴日旅客突發倒地不治",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -5409,6 +5572,7 @@
       "lat": null,
       "lng": null,
       "locationPrecision": "unknown",
+      "aiTopic": "希臘旅遊地命案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -5453,6 +5617,7 @@
       "aiEntities": [
         "妻子"
       ],
+      "aiTopic": "新北板橋家暴酒瓶毆妻案",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -5479,6 +5644,7 @@
         "詐騙集團",
         "80多歲老翁"
       ],
+      "aiTopic": "臺灣女子赴日本詐騙金塊未遂被捕",
       "source": {
         "name": "Yahoo奇摩 社會",
         "type": "news-rss",
@@ -5687,6 +5853,7 @@
       "aiEntities": [
         "竹南鎮"
       ],
+      "aiTopic": "竹南鎮長參選人賄選案",
       "source": {
         "name": "匯流新聞網",
         "type": "news-rss",
@@ -5755,6 +5922,7 @@
         "女兒",
         "臉書"
       ],
+      "aiTopic": "竹南鎮長候選人賄選遭羈押",
       "source": {
         "name": "記者爆料網",
         "type": "news-rss",
@@ -5817,6 +5985,7 @@
       "lng": 120.8214,
       "locationPrecision": "city",
       "locationNote": "依新聞地區推論，非精準事發地址",
+      "aiTopic": "苗栗竹南鎮長候選人賄選案",
       "source": {
         "name": "記者爆料網",
         "type": "news-rss",

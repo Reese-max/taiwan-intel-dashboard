@@ -11,7 +11,9 @@
 // --baseline 時輸出逐指標 before/after diff（改善/退化方向）。
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { createHash } from "node:crypto";
+import { gunzipSync } from "node:zlib";
+import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import {
@@ -24,6 +26,34 @@ import {
 } from "./lib/ground-truth-relations.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+function loadReplayEvents(snapshot, snapshotPath) {
+  if (snapshot?.schema !== "ground-truth-events/1" || !Array.isArray(snapshot.events) ||
+      typeof snapshot.cohortFile !== "string" || basename(snapshot.cohortFile) !== snapshot.cohortFile ||
+      !/^[a-f0-9]{64}$/.test(snapshot.cohortSha256 || "")) {
+    throw new Error("Benchmark snapshot must reference a versioned full-cohort replay file");
+  }
+  const cohortPath = join(dirname(snapshotPath), snapshot.cohortFile);
+  const bytes = readFileSync(cohortPath);
+  const digest = createHash("sha256").update(bytes).digest("hex");
+  if (digest !== snapshot.cohortSha256) throw new Error("Benchmark replay cohort SHA-256 mismatch");
+  const cohort = JSON.parse(gunzipSync(bytes).toString("utf8"));
+  if (cohort?.schema !== "ground-truth-cohort/1" || !Array.isArray(cohort.events)) {
+    throw new Error("Unsupported benchmark replay cohort schema");
+  }
+  const events = cohort.events.filter(isNewsLikeEvent);
+  if (events.length !== cohort.count || events.length !== snapshot.cohortCount || snapshot.count !== snapshot.events.length) {
+    throw new Error("Benchmark replay cohort or candidate count mismatch");
+  }
+  const byId = new Map(events.map((event) => [event.id, event]));
+  if (byId.size !== events.length) throw new Error("Duplicate event ID in benchmark replay cohort");
+  for (const context of snapshot.events) {
+    if (JSON.stringify(byId.get(context.id)) !== JSON.stringify(context)) {
+      throw new Error(`Candidate event ${context.id} differs from benchmark replay cohort`);
+    }
+  }
+  return { events, cohortPath };
+}
 
 export function parseArgs(argv) {
   const args = { pairs: "", locations: "", events: "", baseline: "", out: "" };
@@ -47,14 +77,15 @@ export function runBenchmark(argv = process.argv.slice(2)) {
     return null;
   }
 
-  const snapshotRaw = JSON.parse(readFileSync(join(ROOT, args.events), "utf8"));
-  const events = (Array.isArray(snapshotRaw) ? snapshotRaw : snapshotRaw.events || []).filter(isNewsLikeEvent);
+  const snapshotPath = join(ROOT, args.events);
+  const snapshotRaw = JSON.parse(readFileSync(snapshotPath, "utf8"));
+  const { events } = loadReplayEvents(snapshotRaw, snapshotPath);
   const net = correlateEvents(events);
 
   const pairs = loadLabeledJsonl(readFileSync(join(ROOT, args.pairs), "utf8"), validatePairRow);
   const report = {
     schema: "ground-truth-report/1",
-    inputs: { pairs: args.pairs, locations: args.locations || null, events: args.events },
+    inputs: { pairs: args.pairs, locations: args.locations || null, events: args.events, cohortFile: snapshotRaw.cohortFile, cohortSha256: snapshotRaw.cohortSha256, sourceSha256: snapshotRaw.sourceSha256 },
     counts: {
       events: events.length,
       pairs: pairs.rows.length,

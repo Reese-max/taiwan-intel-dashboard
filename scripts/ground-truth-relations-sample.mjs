@@ -12,21 +12,25 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { dirname, join } from "node:path";
+import { gzipSync } from "node:zlib";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { enumerateCandidatePairs, LOCATION_SCHEMA, PAIR_SCHEMA } from "./lib/ground-truth-relations.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-// 快照只留標註與重播所需欄位——不存全文、不存個資
-const SNAPSHOT_FIELDS = ["id", "title", "region", "timestamp", "category", "scope", "riskLevel", "summary", "lat", "lng", "locationPrecision", "locationRole", "locationNote", "entities", "aiEntities"];
+// 快照只留標註與重播所需欄位——不存全文、不存個資。
+// correlateEvents 的輸入欄位必須完整保留，否則重播的邊／群集會與抽樣時不同。
+const SNAPSHOT_FIELDS = ["id", "title", "region", "timestamp", "category", "scope", "riskLevel", "summary", "lat", "lng", "locationPrecision", "locationRole", "locationNote", "entities", "aiEntities", "aiTopic"];
 
 function snapshotEvent(e) {
   const out = {};
   for (const key of SNAPSHOT_FIELDS) if (e[key] !== undefined) out[key] = e[key];
-  // 摘要是標註上下文所需，但只留前 300 字——不複製完整新聞全文（issue #43 規則）
-  if (typeof out.summary === "string" && out.summary.length > 300) out.summary = `${out.summary.slice(0, 300)}…`;
+  // 摘要超過界限時拒絕產生不忠實的 replay，也避免複製可能受版權限制的全文。
+  if (typeof out.summary === "string" && out.summary.length > 300) {
+    throw new Error(`Event ${e.id} summary exceeds 300 characters; cannot preserve correlation input safely`);
+  }
   if (e?.source) {
     out.source = { name: e.source.name, type: e.source.type, datasetId: e.source.datasetId, recordRef: e.source.recordRef, fetchedAt: e.source.fetchedAt };
   }
@@ -40,6 +44,7 @@ export function parseArgs(argv) {
     ledger: join(ROOT, "curation/correlation-overrides.jsonl"),
     out: "",
     eventsOut: "",
+    cohortOut: "",
     locationsOut: "",
     max: 200,
     maxLocations: 40,
@@ -52,6 +57,7 @@ export function parseArgs(argv) {
     else if (arg.startsWith("--ledger=")) args.ledger = arg.slice("--ledger=".length);
     else if (arg.startsWith("--out=")) args.out = arg.slice("--out=".length);
     else if (arg.startsWith("--events-out=")) args.eventsOut = arg.slice("--events-out=".length);
+    else if (arg.startsWith("--cohort-out=")) args.cohortOut = arg.slice("--cohort-out=".length);
     else if (arg.startsWith("--locations-out=")) args.locationsOut = arg.slice("--locations-out=".length);
     else if (arg.startsWith("--max=")) args.max = Number(arg.slice("--max=".length));
     else if (arg.startsWith("--max-locations=")) args.maxLocations = Number(arg.slice("--max-locations=".length));
@@ -66,13 +72,17 @@ export function parseArgs(argv) {
 export async function runSample(argv = process.argv.slice(2)) {
   const args = parseArgs(argv);
   if (args.help) {
-    console.log("Usage: node scripts/ground-truth-relations-sample.mjs [--input=...] [--network=...] [--ledger=...] [--out=...] [--events-out=...] [--locations-out=...] [--max=200] [--max-locations=40] [--seed=43]");
+    console.log("Usage: node scripts/ground-truth-relations-sample.mjs [--input=...] [--network=...] [--ledger=...] [--out=...] [--events-out=...] [--cohort-out=...] [--locations-out=...] [--max=200] [--max-locations=40] [--seed=43]");
     return { pairs: [], stats: {} };
   }
   const date = args.date || new Date().toISOString().slice(0, 10).replaceAll("-", "");
   const outPath = args.out || `docs/ground-truth/relations/pairs-${date}.jsonl`;
   const eventsPath = args.eventsOut || `docs/ground-truth/relations/events-${date}.json`;
+  const cohortPath = args.cohortOut || eventsPath.replace(/\.json$/, ".cohort.json.gz");
   const locationsPath = args.locationsOut || `docs/ground-truth/relations/locations-${date}-candidates.jsonl`;
+  if (dirname(join(ROOT, cohortPath)) !== dirname(join(ROOT, eventsPath))) {
+    throw new Error("--cohort-out must be in the same directory as --events-out");
+  }
 
   const inputBytes = readFileSync(join(ROOT, args.input));
   const input = JSON.parse(inputBytes.toString("utf8"));
@@ -109,9 +119,6 @@ export async function runSample(argv = process.argv.slice(2)) {
     if (decision) row.ledgerDecision = decision;
   }
 
-  mkdirSync(dirname(join(ROOT, outPath)), { recursive: true });
-  writeFileSync(join(ROOT, outPath), pairs.map((r) => JSON.stringify(r)).join("\n") + (pairs.length ? "\n" : ""), "utf8");
-
   // 地點候選獨立從完整輸入抽樣，避免只覆蓋關聯候選已引用的事件。
   const locationSelections = events
     .filter((event) => event.id)
@@ -119,7 +126,13 @@ export async function runSample(argv = process.argv.slice(2)) {
     .sort((a, b) => a.score.localeCompare(b.score) || a.event.id.localeCompare(b.event.id))
     .slice(0, args.maxLocations);
   const referenced = new Set([...pairs.flatMap((p) => [p.a, p.b]), ...locationSelections.map(({ event }) => event.id)]);
-  const snapshot = events.filter((e) => referenced.has(e.id)).map(snapshotEvent);
+  const cohort = events.map(snapshotEvent);
+  const snapshot = cohort.filter((e) => referenced.has(e.id));
+  const cohortBytes = gzipSync(Buffer.from(JSON.stringify({ schema: "ground-truth-cohort/1", count: cohort.length, events: cohort }), "utf8"), { level: 9, mtime: 0 });
+  mkdirSync(dirname(join(ROOT, outPath)), { recursive: true });
+  writeFileSync(join(ROOT, outPath), pairs.map((r) => JSON.stringify(r)).join("\n") + (pairs.length ? "\n" : ""), "utf8");
+  mkdirSync(dirname(join(ROOT, cohortPath)), { recursive: true });
+  writeFileSync(join(ROOT, cohortPath), cohortBytes);
   mkdirSync(dirname(join(ROOT, eventsPath)), { recursive: true });
   writeFileSync(
     join(ROOT, eventsPath),
@@ -128,6 +141,9 @@ export async function runSample(argv = process.argv.slice(2)) {
       generatedFrom: args.input,
       sourceSha256: createHash("sha256").update(inputBytes).digest("hex"),
       networkSha256,
+      cohortFile: basename(cohortPath),
+      cohortSha256: createHash("sha256").update(cohortBytes).digest("hex"),
+      cohortCount: cohort.length,
       count: snapshot.length,
       events: snapshot,
     }, null, 2) + "\n",
@@ -162,9 +178,10 @@ export async function runSample(argv = process.argv.slice(2)) {
   };
   console.log(`候選 pair ${stats.pairs} 筆（schema ${PAIR_SCHEMA}）→ ${outPath}`);
   console.log(`事件快照 ${snapshot.length} 筆 → ${eventsPath}`);
+  console.log(`重播 cohort ${cohort.length} 筆 → ${cohortPath}`);
   console.log(`地點候選 ${locationCandidates.length} 筆（schema ${LOCATION_SCHEMA}）→ ${locationsPath}`);
   console.log(`來源分佈 ${JSON.stringify(stats.bySource)}；ledger 命中 ${stats.ledgerTagged} 筆`);
-  return { pairs, locationCandidates, stats, outPath, eventsPath, locationsPath };
+  return { pairs, locationCandidates, stats, outPath, eventsPath, cohortPath, locationsPath };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

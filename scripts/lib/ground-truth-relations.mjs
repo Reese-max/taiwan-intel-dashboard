@@ -362,18 +362,16 @@ export function computeRelationMetrics(rows, net) {
 export function computeLocationMetrics(rows, events) {
   const humanRows = (rows || []).filter((r) => r?.labeledBy === "human");
   const byId = new Map((events || []).filter((e) => e && e.id).map((e) => [e.id, e]));
+  for (const row of humanRows) {
+    if (!byId.has(row.event)) throw new Error(`Location references event ${row.event} absent from benchmark snapshot`);
+  }
   const acc = () => ({ correct: 0, total: 0 });
   const role = acc();
   const precision = acc();
   const region = acc();
   let unknown = 0;
-  let missing = 0;
   for (const row of humanRows) {
     const event = byId.get(row.event);
-    if (!event) {
-      missing += 1;
-      continue;
-    }
     const isUnknown = row.locationRole === "unknown" || row.locationPrecision === "unknown";
     if (isUnknown) unknown += 1;
     // unknown 標籤表示「人工無法判定」——不計成錯誤也不計成成功
@@ -394,7 +392,7 @@ export function computeLocationMetrics(rows, events) {
   return {
     labeled: humanRows.length,
     draftsExcluded: (rows || []).length - humanRows.length,
-    missingEvent: missing,
+    missingEvent: 0,
     role: { ...role, accuracy: rate(role) },
     precision: { ...precision, accuracy: rate(precision) },
     region: { ...region, accuracy: rate(region) },

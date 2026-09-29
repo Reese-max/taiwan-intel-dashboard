@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { gzipSync, gunzipSync } from "node:zlib";
 import { join, relative } from "node:path";
 
 // @ts-expect-error — JS ESM module without types
@@ -59,6 +61,19 @@ function pairRow(over: Record<string, unknown> = {}) {
     labeledBy: "human",
     ...over,
   };
+}
+
+function writeReplaySnapshot(dir: string, events: any[], contexts = events) {
+  const cohort = gzipSync(Buffer.from(JSON.stringify({ schema: "ground-truth-cohort/1", count: events.length, events })), { level: 9, mtime: 0 });
+  writeFileSync(join(dir, "events.cohort.json.gz"), cohort);
+  writeFileSync(join(dir, "events.json"), JSON.stringify({
+    schema: "ground-truth-events/1",
+    cohortFile: "events.cohort.json.gz",
+    cohortSha256: createHash("sha256").update(cohort).digest("hex"),
+    cohortCount: events.length,
+    count: contexts.length,
+    events: contexts,
+  }));
 }
 
 describe("validatePairRow / validateLocationRow", () => {
@@ -266,13 +281,18 @@ describe("computeLocationMetrics", () => {
     const m = computeLocationMetrics(rows, [ev({ id: "e1", locationRole: "incident", locationPrecision: "city", region: "高雄市" })]);
     expect(m).toMatchObject({ labeled: 1, draftsExcluded: 1, unknownRate: 0, role: { accuracy: 1 }, precision: { accuracy: 1 } });
   });
+
+  it("人工地點標註的事件若不在重播 cohort，拒絕計分", () => {
+    const row = { schema: "location-labels/1", event: "missing", locationRole: "incident", locationPrecision: "city", region: "高雄市", evidence: "x", labeledAt: "2026-09-17T00:00:00Z", labeledBy: "human" };
+    expect(() => computeLocationMetrics([row], [ev({ id: "a" })])).toThrow(/event missing absent from benchmark snapshot/);
+  });
 });
 
 describe("benchmark CLI report", () => {
   it("--out 建立目錄且同一固定快照產出位元相同的報告", () => {
     const dir = mkdtempSync(join(process.cwd(), ".ground-truth-test-"));
     try {
-      writeFileSync(join(dir, "events.json"), JSON.stringify([ev({ id: "a" }), ev({ id: "b" })]));
+      writeReplaySnapshot(dir, [ev({ id: "a" }), ev({ id: "b" })]);
       writeFileSync(join(dir, "pairs.jsonl"), JSON.stringify(pairRow()) + "\n");
       const input = relative(process.cwd(), dir);
       const args = [`--events=${input}/events.json`, `--pairs=${input}/pairs.jsonl`, `--out=${input}/nested/report.json`];
@@ -280,6 +300,39 @@ describe("benchmark CLI report", () => {
       const first = readFileSync(join(dir, "nested", "report.json"), "utf8");
       runBenchmark(args);
       expect(readFileSync(join(dir, "nested", "report.json"), "utf8")).toBe(first);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("重播完整 cohort，保留未標註橋接事件造成的 A-C 群集", () => {
+    const dir = mkdtempSync(join(process.cwd(), ".ground-truth-test-"));
+    try {
+      const a = ev({ id: "a", region: "高雄市", title: "甲公司查獲詐騙", aiEntities: ["甲公司"] });
+      const bridge = ev({ id: "bridge", region: "臺南市", title: "中介案件", aiEntities: ["甲公司", "乙公司"] });
+      const c = ev({ id: "c", region: "臺北市", title: "乙公司追查車手", aiEntities: ["乙公司"] });
+      const full = correlateEvents([a, bridge, c]);
+      expect(full.edges.map((edge: any) => [edge.a, edge.b])).toEqual([["a", "bridge"], ["bridge", "c"]]);
+      expect(full.clusters[0].members).toEqual(["a", "bridge", "c"]);
+      writeReplaySnapshot(dir, [a, bridge, c], [a, c]);
+      writeFileSync(join(dir, "pairs.jsonl"), JSON.stringify(pairRow({ b: "c" })) + "\n");
+      const input = relative(process.cwd(), dir);
+      const report = runBenchmark([`--events=${input}/events.json`, `--pairs=${input}/pairs.jsonl`]);
+      expect(report.relation.sameEvent).toMatchObject({ tp: 1, recall: 1 });
+      expect(report.counts.events).toBe(3);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("重播 cohort SHA 不符時拒絕計分", () => {
+    const dir = mkdtempSync(join(process.cwd(), ".ground-truth-test-"));
+    try {
+      writeReplaySnapshot(dir, [ev({ id: "a" }), ev({ id: "b" })]);
+      writeFileSync(join(dir, "events.cohort.json.gz"), "corrupt");
+      writeFileSync(join(dir, "pairs.jsonl"), JSON.stringify(pairRow()) + "\n");
+      const input = relative(process.cwd(), dir);
+      expect(() => runBenchmark([`--events=${input}/events.json`, `--pairs=${input}/pairs.jsonl`])).toThrow(/cohort SHA-256 mismatch/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -305,11 +358,28 @@ describe("candidate sampler", () => {
       ];
       await runSample(args);
       const first = readFileSync(join(dir, "locations.jsonl"), "utf8");
+      const cohortFirst = readFileSync(join(dir, "snapshot.cohort.json.gz"));
       const rows = first.trim().split("\n").map((line) => JSON.parse(line));
       expect(rows).toHaveLength(2);
       expect(rows[0]).toMatchObject({ schema: "location-labels/1", locationRole: "", locationPrecision: "", labeledBy: "", sourceIdentity: expect.stringContaining("example.com") });
       await runSample(args);
       expect(readFileSync(join(dir, "locations.jsonl"), "utf8")).toBe(first);
+      expect(readFileSync(join(dir, "snapshot.cohort.json.gz"))).toEqual(cohortFirst);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("過長新聞摘要拒絕截斷重播，也不留下部分候選輸出", async () => {
+    const dir = mkdtempSync(join(process.cwd(), ".ground-truth-sample-test-"));
+    try {
+      const input = relative(process.cwd(), dir);
+      writeFileSync(join(dir, "source.json"), JSON.stringify([ev({ id: "a", summary: "甲".repeat(301) })]));
+      await expect(runSample([
+        `--input=${input}/source.json`, `--out=${input}/pairs.jsonl`,
+        `--events-out=${input}/snapshot.json`, `--locations-out=${input}/locations.jsonl`,
+      ])).rejects.toThrow(/summary exceeds 300 characters/);
+      expect(existsSync(join(dir, "pairs.jsonl"))).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -335,7 +405,32 @@ describe("candidate sampler", () => {
       expect(result.pairs).toHaveLength(0);
       expect(result.locationCandidates).toHaveLength(2);
       expect(snapshot.events).toHaveLength(2);
+      expect(snapshot.cohortCount).toBe(3);
       expect(new Set(snapshot.events.map(({ id }: { id: string }) => id))).toEqual(new Set(result.locationCandidates.map(({ event }: { event: string }) => event)));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("抽樣重播完整保留 aiTopic，僅此線索建立的 edge 不會消失", async () => {
+    const dir = mkdtempSync(join(process.cwd(), ".ground-truth-sample-test-"));
+    try {
+      const input = relative(process.cwd(), dir);
+      const events = [
+        ev({ id: "a", title: "航班調整", aiTopic: "共同議題甲" }),
+        ev({ id: "b", title: "港區開發", aiTopic: "共同議題甲" }),
+      ];
+      expect(correlateEvents(events).edges).toEqual([expect.objectContaining({ type: "same-topic" })]);
+      writeFileSync(join(dir, "source.json"), JSON.stringify(events));
+      await runSample([
+        `--input=${input}/source.json`, `--out=${input}/pairs.jsonl`,
+        `--events-out=${input}/snapshot.json`, `--locations-out=${input}/locations.jsonl`,
+        "--max=1", "--max-locations=1", "--seed=43",
+      ]);
+      const snapshot = JSON.parse(readFileSync(join(dir, "snapshot.json"), "utf8"));
+      const cohort = JSON.parse(gunzipSync(readFileSync(join(dir, snapshot.cohortFile))).toString("utf8"));
+      expect(cohort.events.map(({ aiTopic }: { aiTopic: string }) => aiTopic)).toEqual(["共同議題甲", "共同議題甲"]);
+      expect(correlateEvents(cohort.events).edges).toEqual(correlateEvents(events).edges);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
