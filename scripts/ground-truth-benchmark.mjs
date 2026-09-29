@@ -10,7 +10,7 @@
 // location role/precision accuracy、uncertain rate；並依 family 分 tuning/holdout。
 // --baseline 時輸出逐指標 before/after diff（改善/退化方向）。
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
@@ -54,9 +54,14 @@ export function runBenchmark(argv = process.argv.slice(2)) {
   const pairs = loadLabeledJsonl(readFileSync(join(ROOT, args.pairs), "utf8"), validatePairRow);
   const report = {
     schema: "ground-truth-report/1",
-    generatedAt: new Date().toISOString(),
     inputs: { pairs: args.pairs, locations: args.locations || null, events: args.events },
-    counts: { events: events.length, pairs: pairs.rows.length, unlabeledPairs: pairs.unlabeled.length },
+    counts: {
+      events: events.length,
+      pairs: pairs.rows.length,
+      humanPairs: pairs.rows.filter((row) => row.labeledBy === "human").length,
+      draftPairs: pairs.rows.filter((row) => row.labeledBy !== "human").length,
+      unlabeledPairs: pairs.unlabeled.length,
+    },
     relation: computeRelationMetrics(pairs.rows, net),
     errors: { pairs: pairs.errors, locations: [] },
   };
@@ -66,12 +71,15 @@ export function runBenchmark(argv = process.argv.slice(2)) {
     report.location = computeLocationMetrics(locations.rows, events);
     report.errors.locations = locations.errors;
     report.counts.locations = locations.rows.length;
+    report.counts.humanLocations = report.location.labeled;
+    report.counts.draftLocations = report.location.draftsExcluded;
+    report.counts.unlabeledLocations = locations.unlabeled.length;
   }
 
   const totalErrors = report.errors.pairs.length + report.errors.locations.length;
   const r = report.relation;
   console.log(
-    `ground-truth benchmark：pairs ${report.counts.pairs}（evaluated ${r.evaluated}，uncertain ${r.uncertain}，待標註 ${report.counts.unlabeledPairs}）` +
+    `ground-truth benchmark：pairs ${report.counts.pairs}（human ${report.counts.humanPairs}，draft ${report.counts.draftPairs}，evaluated ${r.evaluated}，uncertain ${r.uncertain}，待標註 ${report.counts.unlabeledPairs}）` +
       `｜same-event P=${fmt(r.sameEvent.precision)} R=${fmt(r.sameEvent.recall)}` +
       `｜falseMerge ${r.falseMerge.count}（rate ${fmt(r.falseMerge.rate)}）` +
       `｜missedRelation ${r.missedRelation.count}（rate ${fmt(r.missedRelation.rate)}）`,

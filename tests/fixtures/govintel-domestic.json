@@ -1,0 +1,47 @@
+[
+  {
+    "id": "fixture-news-1",
+    "title": "合成治安事件",
+    "region": "台北市",
+    "lat": 25.03,
+    "lng": 121.56,
+    "timestamp": "2026-09-16T09:00:00Z",
+    "category": "治安",
+    "scope": "domestic",
+    "riskLevel": "medium",
+    "summary": "僅供測試的合成摘要",
+    "locationPrecision": "city",
+    "source": {
+      "name": "測試媒體",
+      "type": "news-rss",
+      "datasetId": "fixture-tw-news",
+      "recordRef": "https://example.org/news/fixture-1",
+      "fetchedAt": "2026-09-16T09:30:00Z",
+      "publisherName": "測試媒體",
+      "ingestMethod": "direct-rss",
+      "sourceConfidence": "verified"
+    }
+  },
+  {
+    "id": "fixture-official-1",
+    "title": "合成災防警示",
+    "region": "新北市",
+    "lat": 25.01,
+    "lng": 121.46,
+    "timestamp": "2026-09-16T10:00:00Z",
+    "category": "災防",
+    "scope": "domestic",
+    "riskLevel": "low",
+    "summary": "僅供測試的官方來源摘要",
+    "locationPrecision": "city",
+    "source": {
+      "name": "測試官方資料",
+      "type": "gov-open-data",
+      "datasetId": "fixture-official",
+      "recordRef": "https://example.org/official/fixture-1",
+      "fetchedAt": "2026-09-16T10:30:00Z",
+      "ingestMethod": "direct-api",
+      "sourceConfidence": "verified"
+    }
+  }
+]

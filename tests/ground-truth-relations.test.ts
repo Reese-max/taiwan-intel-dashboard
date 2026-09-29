@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join, relative } from "node:path";
 
 // @ts-expect-error — JS ESM module without types
 import {
@@ -7,6 +9,7 @@ import {
   LOCATION_PRECISIONS,
   validatePairRow,
   validateLocationRow,
+  loadLabeledJsonl,
   assignSplit,
   enumerateCandidatePairs,
   computeRelationMetrics,
@@ -15,6 +18,10 @@ import {
 } from "../scripts/lib/ground-truth-relations.mjs";
 // @ts-expect-error — JS ESM module without types
 import { correlateEvents } from "../scripts/lib/correlate.mjs";
+// @ts-expect-error — JS ESM module without types
+import { runBenchmark } from "../scripts/ground-truth-benchmark.mjs";
+// @ts-expect-error — JS ESM module without types
+import { runSample } from "../scripts/ground-truth-relations-sample.mjs";
 
 function ev(over: Record<string, unknown> = {}): any {
   return {
@@ -60,8 +67,10 @@ describe("validatePairRow / validateLocationRow", () => {
     expect(validatePairRow(pairRow({ a: "" }))).toBe("invalid-pair");
     expect(validatePairRow(pairRow({ a: "b", b: "b" }))).toBe("invalid-pair"); // 自環
     expect(validatePairRow(pairRow({ family: "" }))).toBe("missing-family");
+    expect(validatePairRow(pairRow({ labeledBy: "" }))).toBe("invalid-labeledBy");
     expect(validatePairRow(pairRow({ evidence: "" }))).toBe("missing-evidence");
     expect(validatePairRow(pairRow({ labeledBy: "agent-draft" }))).toBeNull(); // 允許但下游可分開計
+    expect(validatePairRow(pairRow({ labeledBy: "agent-draft", family: "" }))).toBeNull();
     expect(validatePairRow(pairRow({ labeledAt: "not-a-date" }))).toBe("invalid-labeledAt");
     expect(validatePairRow({ ...pairRow(), schema: "relation-pairs/0" })).toBe("unsupported-schema");
   });
@@ -81,8 +90,20 @@ describe("validatePairRow / validateLocationRow", () => {
     expect(validateLocationRow({ ...row, locationRole: "somewhere" })).toBe("invalid-locationRole");
     expect(validateLocationRow({ ...row, locationPrecision: "approx" })).toBe("invalid-locationPrecision");
     expect(validateLocationRow({ ...row, evidence: "" })).toBe("missing-evidence");
+    expect(validateLocationRow({ ...row, labeledBy: "" })).toBe("invalid-labeledBy");
     expect(LOCATION_ROLES.has("agency")).toBe(true);
     expect(LOCATION_PRECISIONS.has("county-center")).toBe(true);
+  });
+});
+
+describe("unlabeled candidates", () => {
+  it("pair/location 候選的空人工欄位保留待標註，不偷用系統推測", () => {
+    const pairCandidate = { ...pairRow(), label: "", family: "", suggestedFamily: "single:a+single:b", evidence: "", labeledAt: "", labeledBy: "" };
+    const locationCandidate = { schema: "location-labels/1", event: "a", locationRole: "", locationPrecision: "", region: "", evidence: "", labeledAt: "", labeledBy: "", suggestedLocationRole: "incident" };
+    const pairs = loadLabeledJsonl(JSON.stringify(pairCandidate), validatePairRow);
+    const locations = loadLabeledJsonl(JSON.stringify(locationCandidate), validateLocationRow);
+    expect(pairs).toMatchObject({ rows: [], errors: [], unlabeled: [expect.objectContaining({ family: "" })] });
+    expect(locations).toMatchObject({ rows: [], errors: [], unlabeled: [expect.objectContaining({ locationRole: "" })] });
   });
 });
 
@@ -110,10 +131,11 @@ describe("enumerateCandidatePairs — 抽樣涵蓋未連線候選", () => {
     expect(found.has("a|b")).toBe(true); // 已連線 pair
     // a-c 同縣市但未連線 → 漏連候選應被枚舉
     expect(found.has("a|c")).toBe(true);
-    // 每筆帶 family 與 autoRelation 標記
+    // 系統 family 只做提示；人工確認前不得影響 split。
     const ab = pairs.find((p: any) => key(p.a, p.b) === "a|b");
     expect(ab.autoRelation).toBeTruthy();
-    expect(typeof ab.family).toBe("string");
+    expect(ab.family).toBe("");
+    expect(typeof ab.suggestedFamily).toBe("string");
   });
 });
 
@@ -150,6 +172,35 @@ describe("computeRelationMetrics", () => {
     const missed = computeRelationMetrics([pairRow({ b: "c", label: "follow_up" })], net2);
     expect(missed.missedRelation.count).toBe(1);
   });
+
+  it("九筆正確分開的 follow_up 也進 false-merge 分母", () => {
+    const rows = [pairRow({ label: "follow_up" })];
+    const edges = [];
+    for (let i = 0; i < 9; i += 1) {
+      rows.push(pairRow({ a: `x${i}`, b: `y${i}`, family: `family-${i}`, label: "follow_up" }));
+      edges.push({ a: `x${i}`, b: `y${i}`, type: "follow-up" });
+    }
+    const result = computeRelationMetrics(rows, { clusters: [{ id: "merged", members: ["a", "b"] }], edges });
+    expect(result.falseMerge).toMatchObject({ count: 1, rate: 0.1 });
+    expect(result.missedRelation.count).toBe(0);
+  });
+
+  it("agent-draft 不得改變人工 precision/recall，並分開計數", () => {
+    const result = computeRelationMetrics([
+      pairRow(),
+      pairRow({ a: "a", b: "c", family: "", label: "different_event", labeledBy: "agent-draft" }),
+    ], { clusters: [{ id: "merged", members: ["a", "b", "c"] }], edges: [] });
+    expect(result.sameEvent.precision).toBe(1);
+    expect(result.evaluated).toBe(1);
+    expect(result.draftsExcluded).toBe(1);
+  });
+
+  it("同一已確認故事的相關 pair 若 family 不一致就拒絕切分", () => {
+    expect(() => computeRelationMetrics([
+      pairRow({ a: "a", b: "b", family: "story-1" }),
+      pairRow({ a: "a", b: "c", family: "story-2", label: "follow_up" }),
+    ], { clusters: [], edges: [] })).toThrow(/Conflicting human story families for event a/);
+  });
 });
 
 describe("computeLocationMetrics", () => {
@@ -168,6 +219,63 @@ describe("computeLocationMetrics", () => {
     expect(m.precision.correct).toBe(1); // e2 precision 對、e1 city≠exact 錯
     expect(m.precision.total).toBe(2);
     expect(m.unknownRate).toBeCloseTo(0.5); // e2 role 是 unknown → 1/2
+  });
+
+  it("agent-draft 地點不進 accuracy/unknownRate", () => {
+    const rows = [
+      { schema: "location-labels/1", event: "e1", locationRole: "incident", locationPrecision: "city", region: "高雄市", evidence: "x", labeledAt: "2026-09-17T00:00:00Z", labeledBy: "human" },
+      { schema: "location-labels/1", event: "e1", locationRole: "agency", locationPrecision: "unknown", region: "臺北市", evidence: "x", labeledAt: "2026-09-17T00:00:00Z", labeledBy: "agent-draft" },
+    ];
+    const m = computeLocationMetrics(rows, [ev({ id: "e1", locationRole: "incident", locationPrecision: "city", region: "高雄市" })]);
+    expect(m).toMatchObject({ labeled: 1, draftsExcluded: 1, unknownRate: 0, role: { accuracy: 1 }, precision: { accuracy: 1 } });
+  });
+});
+
+describe("benchmark CLI report", () => {
+  it("--out 建立目錄且同一固定快照產出位元相同的報告", () => {
+    const dir = mkdtempSync(join(process.cwd(), ".ground-truth-test-"));
+    try {
+      writeFileSync(join(dir, "events.json"), JSON.stringify([ev({ id: "a" }), ev({ id: "b" })]));
+      writeFileSync(join(dir, "pairs.jsonl"), JSON.stringify(pairRow()) + "\n");
+      const input = relative(process.cwd(), dir);
+      const args = [`--events=${input}/events.json`, `--pairs=${input}/pairs.jsonl`, `--out=${input}/nested/report.json`];
+      runBenchmark(args);
+      const first = readFileSync(join(dir, "nested", "report.json"), "utf8");
+      runBenchmark(args);
+      expect(readFileSync(join(dir, "nested", "report.json"), "utf8")).toBe(first);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("candidate sampler", () => {
+  it("產出固定 2 筆地點候選，人工欄位留空且重跑位元相同", async () => {
+    const dir = mkdtempSync(join(process.cwd(), ".ground-truth-sample-test-"));
+    try {
+      const input = relative(process.cwd(), dir);
+      writeFileSync(join(dir, "events.json"), JSON.stringify([
+        ev({ id: "a", region: "高雄市" }),
+        ev({ id: "b", region: "高雄市" }),
+        ev({ id: "c", region: "高雄市" }),
+      ]));
+      const args = [
+        `--input=${input}/events.json`,
+        `--out=${input}/pairs.jsonl`,
+        `--events-out=${input}/snapshot.json`,
+        `--locations-out=${input}/locations.jsonl`,
+        "--max=3", "--max-locations=2", "--seed=43",
+      ];
+      await runSample(args);
+      const first = readFileSync(join(dir, "locations.jsonl"), "utf8");
+      const rows = first.trim().split("\n").map((line) => JSON.parse(line));
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toMatchObject({ schema: "location-labels/1", locationRole: "", locationPrecision: "", labeledBy: "", sourceIdentity: expect.stringContaining("example.com") });
+      await runSample(args);
+      expect(readFileSync(join(dir, "locations.jsonl"), "utf8")).toBe(first);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

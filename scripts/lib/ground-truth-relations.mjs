@@ -42,7 +42,8 @@ export function validatePairRow(row) {
   if (row.schema !== PAIR_SCHEMA) return "unsupported-schema";
   if (typeof row.a !== "string" || !row.a || typeof row.b !== "string" || !row.b || row.a === row.b) return "invalid-pair";
   if (!RELATION_LABELS.has(row.label)) return "unknown-label";
-  if (typeof row.family !== "string" || !row.family.trim()) return "missing-family";
+  if (row.labeledBy !== "human" && row.labeledBy !== "agent-draft") return "invalid-labeledBy";
+  if (row.labeledBy === "human" && (typeof row.family !== "string" || !row.family.trim())) return "missing-family";
   if (typeof row.evidence !== "string" || !row.evidence.trim()) return "missing-evidence";
   if (typeof row.labeledAt !== "string" || !Number.isFinite(Date.parse(row.labeledAt))) return "invalid-labeledAt";
   return null;
@@ -54,13 +55,14 @@ export function validateLocationRow(row) {
   if (typeof row.event !== "string" || !row.event) return "invalid-event";
   if (!LOCATION_ROLES.has(row.locationRole)) return "invalid-locationRole";
   if (!LOCATION_PRECISIONS.has(row.locationPrecision)) return "invalid-locationPrecision";
+  if (row.labeledBy !== "human" && row.labeledBy !== "agent-draft") return "invalid-labeledBy";
   if (row.region != null && (typeof row.region !== "string" || !row.region.trim())) return "invalid-region";
   if (typeof row.evidence !== "string" || !row.evidence.trim()) return "missing-evidence";
   if (typeof row.labeledAt !== "string" || !Number.isFinite(Date.parse(row.labeledAt))) return "invalid-labeledAt";
   return null;
 }
 
-// 解析 jsonl 標註檔：合法進 rows；`label===""` 的候選進 unlabeled（待人工填，不算錯）；
+// 解析 jsonl 標註檔：合法進 rows；空 relation/location 標籤進 unlabeled（待人工填，不算錯）；
 // 不合法進 errors（附行號，不靜默）。
 export function loadLabeledJsonl(text, validate) {
   const rows = [];
@@ -78,16 +80,17 @@ export function loadLabeledJsonl(text, validate) {
         errors.push({ line: index + 1, error: "invalid-json" });
         return;
       }
-      if (row && row.label === "") {
-        // 未標註候選：只驗結構（schema/a/b/family），其餘欄位待人填
-        const structural =
-          !row || typeof row !== "object" || row.schema !== PAIR_SCHEMA
-            ? "unsupported-schema"
-            : typeof row.a !== "string" || !row.a || typeof row.b !== "string" || !row.b || row.a === row.b
-              ? "invalid-pair"
-              : typeof row.family !== "string" || !row.family.trim()
-                ? "missing-family"
-                : null;
+      if (row && (row.label === "" || (row.schema === LOCATION_SCHEMA && row.locationRole === ""))) {
+        // 未標註候選只驗 identity；family 與 location 判斷須由人工核對後填入。
+        const structural = row.schema === PAIR_SCHEMA
+          ? typeof row.a !== "string" || !row.a || typeof row.b !== "string" || !row.b || row.a === row.b
+            ? "invalid-pair"
+            : null
+          : row.schema === LOCATION_SCHEMA
+            ? typeof row.event !== "string" || !row.event
+              ? "invalid-event"
+              : null
+            : "unsupported-schema";
         if (structural) errors.push({ line: index + 1, error: structural });
         else {
           row._line = index + 1;
@@ -135,7 +138,8 @@ export function enumerateCandidatePairs(events, net, { maxPairs = 200, seed = 43
       schema: PAIR_SCHEMA,
       a,
       b,
-      family: fa === fb ? fa : `${fa}+${fb}`,
+      family: "",
+      suggestedFamily: fa === fb ? fa : `${fa}+${fb}`,
       autoRelation,
       candidateSource: source,
       label: "",
@@ -241,13 +245,13 @@ function relationMetricsFor(rows, net) {
       if (same) {
         fp += 1;
         examples.falseMerges.push(pairKeyOf(row.a, row.b));
-      } else if (row.label === "different_event") {
-        tn += 1;
-      } else if (hasLink) {
-        // follow_up：有邊未同群 = 命中（不計 tp/fp/tn）
       } else {
-        missed += 1;
-        examples.missedRelations.push(pairKeyOf(row.a, row.b));
+        // 每筆正確分開的 different_event/follow_up 都是 false-merge 分母。
+        tn += 1;
+        if (row.label === "follow_up" && !hasLink) {
+          missed += 1;
+          examples.missedRelations.push(pairKeyOf(row.a, row.b));
+        }
       }
     }
   }
@@ -269,18 +273,40 @@ function relationMetricsFor(rows, net) {
   };
 }
 
-// 每筆 row 需帶 family；split 由 family hash 決定（同 family 永遠同側）。
+// 已確認相關的 pair 若共享事件，必須使用同一人工核對的故事族群。
+// sampler 的 suggestedFamily 是系統推測，不能作為 holdout/tuning 分割依據。
+function assertRelatedFamilies(rows) {
+  const familyByEvent = new Map();
+  for (const row of rows) {
+    if (typeof row.family !== "string" || !row.family.trim()) {
+      throw new Error(`Missing human story family for ${pairKeyOf(row.a, row.b)}`);
+    }
+    if (!RELATED_LABELS.has(row.label)) continue;
+    for (const id of [row.a, row.b]) {
+      const existing = familyByEvent.get(id);
+      if (existing && existing !== row.family) {
+        throw new Error(`Conflicting human story families for event ${id}: ${existing} / ${row.family}`);
+      }
+      familyByEvent.set(id, row.family);
+    }
+  }
+}
+
+// split 只看人工標註的 family；非人工草稿完全不進 metrics。
 export function computeRelationMetrics(rows, net) {
-  const labeled = (rows || []).filter((r) => r && r.label);
+  const labeled = (rows || []).filter((r) => r?.labeledBy === "human" && RELATION_LABELS.has(r.label));
+  assertRelatedFamilies(labeled);
   const tuning = labeled.filter((r) => assignSplit(r.family) === "tuning");
   const holdout = labeled.filter((r) => assignSplit(r.family) === "holdout");
   return {
     ...relationMetricsFor(labeled, net),
+    draftsExcluded: (rows || []).filter((r) => r?.labeledBy !== "human").length,
     splits: { tuning: relationMetricsFor(tuning, net), holdout: relationMetricsFor(holdout, net) },
   };
 }
 
 export function computeLocationMetrics(rows, events) {
+  const humanRows = (rows || []).filter((r) => r?.labeledBy === "human");
   const byId = new Map((events || []).filter((e) => e && e.id).map((e) => [e.id, e]));
   const acc = () => ({ correct: 0, total: 0 });
   const role = acc();
@@ -288,7 +314,7 @@ export function computeLocationMetrics(rows, events) {
   const region = acc();
   let unknown = 0;
   let missing = 0;
-  for (const row of rows || []) {
+  for (const row of humanRows) {
     const event = byId.get(row.event);
     if (!event) {
       missing += 1;
@@ -312,12 +338,13 @@ export function computeLocationMetrics(rows, events) {
   }
   const rate = (x) => (x.total ? x.correct / x.total : null);
   return {
-    labeled: (rows || []).length,
+    labeled: humanRows.length,
+    draftsExcluded: (rows || []).length - humanRows.length,
     missingEvent: missing,
     role: { ...role, accuracy: rate(role) },
     precision: { ...precision, accuracy: rate(precision) },
     region: { ...region, accuracy: rate(region) },
-    unknownRate: (rows || []).length ? unknown / rows.length : null,
+    unknownRate: humanRows.length ? unknown / humanRows.length : null,
   };
 }
 

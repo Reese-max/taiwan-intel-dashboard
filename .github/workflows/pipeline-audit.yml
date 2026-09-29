@@ -44,8 +44,14 @@ jobs:
       - name: 檢查來源失敗、過期與覆蓋量告警
         run: npm run audit:source-health
 
+      - name: 檢查摘要語意完整性
+        run: npm run audit:summary
+
       - name: 執行測試
         run: npm test
+
+      - name: 警政週報資源輪替與重試測試
+        run: python3 -m unittest discover -s tests -p test_crime_weekly_parser.py
 
       - name: 建置靜態網站
         run: npm run build

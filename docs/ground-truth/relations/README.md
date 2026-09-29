@@ -8,6 +8,7 @@ same-event precision/recall、false merge、missed relation、location-role/prec
 | 檔案 | 內容 |
 |---|---|
 | `pairs-v1-candidates.jsonl` | sampler 產生的待標註候選（`label` 留空） |
+| `locations-v1-candidates.jsonl` | 40 個待人工核對的地點候選；系統判斷只列在 `suggested*` 欄位 |
 | `pairs-v1.jsonl` | **人工標註後**的 pair 資料集（metrics 的依據） |
 | `locations-v1.jsonl` | 地點標註（role/precision/region + evidence） |
 | `events-v1.json` | 被引用事件的 metadata 快照——固定此檔即可重播同一 benchmark |
@@ -21,9 +22,12 @@ same-event precision/recall、false merge、missed relation、location-role/prec
 # 1. 產候選（讀 public/data，需本機有資料快照）
 node scripts/ground-truth-relations-sample.mjs --max=150 \
   --out=docs/ground-truth/relations/pairs-v1-candidates.jsonl \
-  --events-out=docs/ground-truth/relations/events-v1.json
+  --events-out=docs/ground-truth/relations/events-v1.json \
+  --locations-out=docs/ground-truth/relations/locations-v1-candidates.jsonl \
+  --max-locations=40
 
-# 2. 人工逐行填標註：把候選複製/改名進 pairs-v1.jsonl，填 label/evidence/labeledAt/labeledBy
+# 2. 人工逐行填標註：把候選複製/改名進 pairs-v1.jsonl、locations-v1.jsonl，
+#    核對來源後填 label/family/locationRole/locationPrecision/region/evidence/labeledAt/labeledBy
 
 # 3. 跑 benchmark（對快照 deterministic）
 node scripts/ground-truth-benchmark.mjs \
@@ -43,9 +47,9 @@ node scripts/ground-truth-benchmark.mjs ... --baseline=report-before.json
 ```
 
 - `label`：`same_event` / `different_event` / `follow_up` / `same_original_report` / `uncertain`
-- `family`：同一案件的轉載/後續共享同一 family → 切分時不會散到 tuning/holdout 兩側（防洩漏）
+- `family`：**人工核對後**填入的故事族群 ID；候選中的 `family` 為空，`suggestedFamily` 是系統推測，絕不能直接作為切分依據。同一案件的轉載/後續須共享 ID；已標為相關且共享事件的 pair 若 family 不同，runner 會拒絕計分。標註者仍須核對未直接成對的同案報導，避免故事族群洩漏到 tuning/holdout 兩側。
 - `uncertain` 保留——不計入分母，只進 `uncertain` 計數；不強迫標註
-- `labeledBy`：`human` 才算 ground truth；AI 整理候選可標 `agent-draft`（報表可區分，不得冒充人工）
+- `labeledBy`：僅接受 `human`／`agent-draft`；只有 `human` 進入 ground-truth metrics，草稿另行計數。不得把 AI 推測寫成 `human`。
 - sampler 額外帶 `autoRelation`（系統當時的判斷）、`candidateSource`（`auto-edge`/`auto-cluster`/`same-region-unlinked`）、`ledgerDecision`（命中 #44 ledger 的 pair）
 
 ## location schema（`location-labels/1`）
@@ -56,6 +60,7 @@ node scripts/ground-truth-benchmark.mjs ... --baseline=report-before.json
 
 - `locationRole`/`locationPrecision` 值域同 `scripts/lib/geo-policy.mjs`
 - 標 `unknown` 表示人工無法判定——不計錯也不計對，進 `unknownRate`
+- `locations-v1-candidates.jsonl` 的標籤欄位留空；`suggested*` 與 `sourceIdentity` 只提供核對線索，不是人工 ground truth。
 
 ## 指標語意
 
@@ -70,6 +75,7 @@ node scripts/ground-truth-benchmark.mjs ... --baseline=report-before.json
 | `unknownRate` | 地點標註中 unknown 比例 |
 
 第一版只建立 baseline，不設硬性 gate——門檻由實際 baseline 與錯誤成本決定。
+目前 `pairs-v1.jsonl` 和 `locations-v1.jsonl` 是空檔，**尚無人工 baseline 或真實 precision/recall**。待人工標註、核對 story family、提交資料集 SHA 後才可產生並引用第一版數值。
 
 ## Hard negative 標註指引
 

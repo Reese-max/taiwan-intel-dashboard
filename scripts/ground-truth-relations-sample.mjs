@@ -10,10 +10,11 @@
 // relation 候選）。ledger 命中的 pair 打 ledgerDecision 標記。
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
-import { enumerateCandidatePairs, PAIR_SCHEMA } from "./lib/ground-truth-relations.mjs";
+import { enumerateCandidatePairs, LOCATION_SCHEMA, PAIR_SCHEMA } from "./lib/ground-truth-relations.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -38,7 +39,9 @@ export function parseArgs(argv) {
     ledger: join(ROOT, "curation/correlation-overrides.jsonl"),
     out: "",
     eventsOut: "",
+    locationsOut: "",
     max: 200,
+    maxLocations: 40,
     seed: 43,
     date: "",
   };
@@ -48,7 +51,9 @@ export function parseArgs(argv) {
     else if (arg.startsWith("--ledger=")) args.ledger = arg.slice("--ledger=".length);
     else if (arg.startsWith("--out=")) args.out = arg.slice("--out=".length);
     else if (arg.startsWith("--events-out=")) args.eventsOut = arg.slice("--events-out=".length);
+    else if (arg.startsWith("--locations-out=")) args.locationsOut = arg.slice("--locations-out=".length);
     else if (arg.startsWith("--max=")) args.max = Number(arg.slice("--max=".length));
+    else if (arg.startsWith("--max-locations=")) args.maxLocations = Number(arg.slice("--max-locations=".length));
     else if (arg.startsWith("--seed=")) args.seed = Number(arg.slice("--seed=".length));
     else if (arg.startsWith("--date=")) args.date = arg.slice("--date=".length);
     else if (arg === "--help" || arg === "-h") args.help = true;
@@ -60,12 +65,13 @@ export function parseArgs(argv) {
 export async function runSample(argv = process.argv.slice(2)) {
   const args = parseArgs(argv);
   if (args.help) {
-    console.log("Usage: node scripts/ground-truth-relations-sample.mjs [--input=...] [--network=...] [--ledger=...] [--out=...] [--events-out=...] [--max=200] [--seed=43]");
+    console.log("Usage: node scripts/ground-truth-relations-sample.mjs [--input=...] [--network=...] [--ledger=...] [--out=...] [--events-out=...] [--locations-out=...] [--max=200] [--max-locations=40] [--seed=43]");
     return { pairs: [], stats: {} };
   }
   const date = args.date || new Date().toISOString().slice(0, 10).replaceAll("-", "");
   const outPath = args.out || `docs/ground-truth/relations/pairs-${date}.jsonl`;
   const eventsPath = args.eventsOut || `docs/ground-truth/relations/events-${date}.json`;
+  const locationsPath = args.locationsOut || `docs/ground-truth/relations/locations-${date}-candidates.jsonl`;
 
   const input = JSON.parse(readFileSync(join(ROOT, args.input), "utf8"));
   const events = (Array.isArray(input) ? input : input.events || []).filter(isNewsLikeEvent);
@@ -110,16 +116,40 @@ export async function runSample(argv = process.argv.slice(2)) {
     "utf8",
   );
 
+  // 地點候選只帶系統建議；role/precision/region 必須由人工對來源核對。
+  const locationCandidates = snapshot
+    .map((event) => ({ event, score: createHash("sha256").update(`${args.seed}|${event.id}`).digest("hex") }))
+    .sort((a, b) => a.score.localeCompare(b.score) || a.event.id.localeCompare(b.event.id))
+    .slice(0, args.maxLocations)
+    .map(({ event }) => ({
+      schema: LOCATION_SCHEMA,
+      event: event.id,
+      locationRole: "",
+      locationPrecision: "",
+      region: "",
+      evidence: "",
+      labeledAt: "",
+      labeledBy: "",
+      sourceIdentity: event.source?.recordRef || null,
+      suggestedLocationRole: event.locationRole || null,
+      suggestedLocationPrecision: event.locationPrecision || null,
+      suggestedRegion: event.region || null,
+    }));
+  mkdirSync(dirname(join(ROOT, locationsPath)), { recursive: true });
+  writeFileSync(join(ROOT, locationsPath), locationCandidates.map((r) => JSON.stringify(r)).join("\n") + (locationCandidates.length ? "\n" : ""), "utf8");
+
   const stats = {
     events: events.length,
     pairs: pairs.length,
+    locations: locationCandidates.length,
     ledgerTagged: pairs.filter((p) => p.ledgerDecision).length,
     bySource: Object.fromEntries([...new Set(pairs.map((p) => p.candidateSource))].map((s) => [s, pairs.filter((p) => p.candidateSource === s).length])),
   };
   console.log(`候選 pair ${stats.pairs} 筆（schema ${PAIR_SCHEMA}）→ ${outPath}`);
   console.log(`事件快照 ${snapshot.length} 筆 → ${eventsPath}`);
+  console.log(`地點候選 ${locationCandidates.length} 筆（schema ${LOCATION_SCHEMA}）→ ${locationsPath}`);
   console.log(`來源分佈 ${JSON.stringify(stats.bySource)}；ledger 命中 ${stats.ledgerTagged} 筆`);
-  return { pairs, stats, outPath, eventsPath };
+  return { pairs, locationCandidates, stats, outPath, eventsPath, locationsPath };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
