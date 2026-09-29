@@ -71,6 +71,7 @@ node scripts/ground-truth-benchmark.mjs ... --baseline=report-before.json
 - 負例若跨越不同 split，保留在全體指標但不進 tuning/holdout 任一側，另計 `crossSplitExcluded`；因此標註者須核對每個事件的族群，不能只給 pair 一個任意群組 ID。
 - `uncertain` 保留——不計入分母，只進 `uncertain` 計數；不強迫標註
 - `labeledBy`：僅接受 `human`／`agent-draft`；只有 `human` 進入 ground-truth metrics，草稿另行計數。不得把 AI 推測寫成 `human`。
+- 每組無向 pair 僅能出現一次（`a-b` 與 `b-a` 視為同一組）；重複候選／標註會讓 runner 直接拒絕計分。
 - sampler 額外帶 `autoRelation`（系統當時的判斷）、`candidateSource`（`auto-edge`/`auto-cluster`/`same-region-unlinked`/`cross-region-local-entity`）、`ledgerDecision`（命中 #44 ledger 的 pair）。跨縣市同名道路等僅產生待審候選，絕不自動建邊。
 
 ## location schema（`location-labels/1`）
@@ -80,7 +81,8 @@ node scripts/ground-truth-benchmark.mjs ... --baseline=report-before.json
 ```
 
 - `locationRole`/`locationPrecision` 值域同 `scripts/lib/geo-policy.mjs`
-- 標 `unknown` 表示人工無法判定——不計錯也不計對，進 `unknownRate`
+- 人工 `region` 必填；無法查證時明寫 `unknown`，該欄不計 region accuracy 分母，並進 `unknownRate`。role／precision 的 `unknown` 同樣不計錯也不計對。
+- 同一事件只允許一筆地點候選／標註；重複會直接拒絕計分。
 - `locations-v1-candidates.jsonl` 從完整輸入事件獨立抽樣，標籤欄位留空；`suggested*` 與 `sourceIdentity` 只提供核對線索，不是人工 ground truth。審閱快照包含 pair 與 location 候選引用的聯集，指標則用完整重播 cohort 計算。人工標註的事件 ID 若不存在，runner 直接拒絕計分。
 
 ## 指標語意

@@ -112,6 +112,9 @@ describe("validatePairRow / validateLocationRow", () => {
     expect(validateLocationRow({ ...row, locationPrecision: "approx" })).toBe("invalid-locationPrecision");
     expect(validateLocationRow({ ...row, evidence: "" })).toBe("missing-evidence");
     expect(validateLocationRow({ ...row, labeledBy: "" })).toBe("invalid-labeledBy");
+    expect(validateLocationRow({ ...row, region: "" })).toBe("missing-region");
+    expect(validateLocationRow({ ...row, region: null })).toBe("missing-region");
+    expect(validateLocationRow({ ...row, region: "unknown" })).toBeNull();
     expect(LOCATION_ROLES.has("agency")).toBe(true);
     expect(LOCATION_PRECISIONS.has("county-center")).toBe(true);
   });
@@ -125,6 +128,18 @@ describe("unlabeled candidates", () => {
     const locations = loadLabeledJsonl(JSON.stringify(locationCandidate), validateLocationRow);
     expect(pairs).toMatchObject({ rows: [], errors: [], unlabeled: [expect.objectContaining({ familyA: "", familyB: "" })] });
     expect(locations).toMatchObject({ rows: [], errors: [], unlabeled: [expect.objectContaining({ locationRole: "" })] });
+  });
+});
+
+describe("annotation identity", () => {
+  it("reversed pair 與重複地點事件都拒絕計分，候選與正式標註也不能重複", () => {
+    const pair = pairRow();
+    const reversed = pairRow({ a: "b", b: "a" });
+    expect(() => loadLabeledJsonl(`${JSON.stringify(pair)}\n${JSON.stringify(reversed)}\n`, validatePairRow)).toThrow(/Duplicate annotation identity at line 2/);
+    const candidate = { ...pair, label: "", familyA: "", familyB: "", evidence: "", labeledAt: "", labeledBy: "" };
+    expect(() => loadLabeledJsonl(`${JSON.stringify(candidate)}\n${JSON.stringify(pair)}\n`, validatePairRow)).toThrow(/Duplicate annotation identity at line 2/);
+    const loc = { schema: "location-labels/1", event: "a", locationRole: "incident", locationPrecision: "exact", region: "高雄市", evidence: "x", labeledAt: "2026-09-17T00:00:00Z", labeledBy: "human" };
+    expect(() => loadLabeledJsonl(`${JSON.stringify(loc)}\n${JSON.stringify({ ...loc, locationRole: "agency" })}\n`, validateLocationRow)).toThrow(/Duplicate annotation identity at line 2/);
   });
 });
 
@@ -283,6 +298,14 @@ describe("computeLocationMetrics", () => {
     ];
     const m = computeLocationMetrics(rows, [ev({ id: "e1", locationRole: "incident", locationPrecision: "city", region: "高雄市" })]);
     expect(m).toMatchObject({ labeled: 1, draftsExcluded: 1, unknownRate: 0, role: { accuracy: 1 }, precision: { accuracy: 1 } });
+  });
+
+  it("明示 unknown region 的人工標註不進 region 準確率分母", () => {
+    const row = { schema: "location-labels/1", event: "e1", locationRole: "incident", locationPrecision: "exact", region: "unknown", evidence: "x", labeledAt: "2026-09-17T00:00:00Z", labeledBy: "human" };
+    expect(validateLocationRow(row)).toBeNull();
+    const m = computeLocationMetrics([row], [ev({ id: "e1", locationRole: "incident", locationPrecision: "exact", region: "臺北市" })]);
+    expect(m.region).toMatchObject({ total: 0, accuracy: null });
+    expect(m.unknownRate).toBe(1);
   });
 
   it("人工地點標註的事件若不在重播 cohort，拒絕計分", () => {

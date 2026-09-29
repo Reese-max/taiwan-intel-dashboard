@@ -60,6 +60,7 @@ export function validateLocationRow(row) {
   if (!LOCATION_ROLES.has(row.locationRole)) return "invalid-locationRole";
   if (!LOCATION_PRECISIONS.has(row.locationPrecision)) return "invalid-locationPrecision";
   if (row.labeledBy !== "human" && row.labeledBy !== "agent-draft") return "invalid-labeledBy";
+  if (row.labeledBy === "human" && (typeof row.region !== "string" || !row.region.trim())) return "missing-region";
   if (row.region != null && (typeof row.region !== "string" || !row.region.trim())) return "invalid-region";
   if (typeof row.evidence !== "string" || !row.evidence.trim()) return "missing-evidence";
   if (typeof row.labeledAt !== "string" || !Number.isFinite(Date.parse(row.labeledAt))) return "invalid-labeledAt";
@@ -72,6 +73,17 @@ export function loadLabeledJsonl(text, validate) {
   const rows = [];
   const unlabeled = [];
   const errors = [];
+  const seen = new Map();
+  const accept = (row, line, bucket) => {
+    const identity = row.schema === PAIR_SCHEMA
+      ? JSON.stringify([PAIR_SCHEMA, ...[row.a, row.b].sort()])
+      : JSON.stringify([LOCATION_SCHEMA, row.event]);
+    const firstLine = seen.get(identity);
+    if (firstLine !== undefined) throw new Error(`Duplicate annotation identity at line ${line} (first line ${firstLine})`);
+    seen.set(identity, line);
+    row._line = line;
+    bucket.push(row);
+  };
   String(text || "")
     .split(/\r?\n/)
     .forEach((line, index) => {
@@ -96,18 +108,12 @@ export function loadLabeledJsonl(text, validate) {
               : null
             : "unsupported-schema";
         if (structural) errors.push({ line: index + 1, error: structural });
-        else {
-          row._line = index + 1;
-          unlabeled.push(row);
-        }
+        else accept(row, index + 1, unlabeled);
         return;
       }
       const error = validate(row);
       if (error) errors.push({ line: index + 1, error });
-      else {
-        row._line = index + 1;
-        rows.push(row);
-      }
+      else accept(row, index + 1, rows);
     });
   return { rows, unlabeled, errors };
 }
@@ -372,7 +378,7 @@ export function computeLocationMetrics(rows, events) {
   let unknown = 0;
   for (const row of humanRows) {
     const event = byId.get(row.event);
-    const isUnknown = row.locationRole === "unknown" || row.locationPrecision === "unknown";
+    const isUnknown = row.locationRole === "unknown" || row.locationPrecision === "unknown" || row.region === "unknown";
     if (isUnknown) unknown += 1;
     // unknown 標籤表示「人工無法判定」——不計成錯誤也不計成成功
     if (row.locationRole !== "unknown") {
@@ -383,7 +389,7 @@ export function computeLocationMetrics(rows, events) {
       precision.total += 1;
       if (event.locationPrecision === row.locationPrecision) precision.correct += 1;
     }
-    if (row.region) {
+    if (row.region && row.region !== "unknown") {
       region.total += 1;
       if (event.region === row.region) region.correct += 1;
     }
