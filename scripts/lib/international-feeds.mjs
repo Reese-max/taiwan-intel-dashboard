@@ -1502,7 +1502,7 @@ const DIRECT_INTERNATIONAL_FEEDS = [
   { label: "Diario Médico", url: "https://diariomedico.com/feed", hint: "災害", tier: "expanded", topic: "health", topics: ["health"] },
 ];
 
-// These direct RSS endpoints intermittently return 403/404/405/502 from CI.
+// These direct RSS endpoints intermittently fail or return zero items in CI.
 // A 2026-09-29 probe found recent indexed articles for most of them. Keep
 // direct feeds first; fetch-rss marks a site-scoped Google News result as a
 // fallback and retains the primary error in provenance.
@@ -1516,6 +1516,11 @@ const SITE_FALLBACK_LABELS = new Set([
   "Natural Gas Intelligence", "Windpower Monthly", "Johns Hopkins Hub", "UC Santa Cruz News",
   "American Society for Microbiology", "Sciences et Avenir", "Sky & Telescope",
   "The Third Pole", "The Energy Mix", "BusinessGreen", "Redacción Médica",
+  "Data Center Knowledge", "GBHackers on Security", "Light Reading", "Telecoms.com",
+  "MarkTechPost", "AI Business", "Towards AI", "WealthManagement.com",
+  "Private Debt Investor", "PERE", "The Asset", "Seatrade Maritime News",
+  "Perfect Daily Grind", "Carbon Herald", "Farm Progress", "World Nuclear News",
+  "Space.com", "Anthropocene Magazine", "Cancer Network",
 ]);
 
 function siteFallbackUrl(url) {

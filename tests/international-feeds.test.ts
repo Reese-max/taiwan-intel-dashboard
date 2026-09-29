@@ -27,7 +27,7 @@ describe("international feed registry", () => {
 
   it("keeps blocked direct feeds first and declares site-scoped fallback URLs", () => {
     const blocked = INTERNATIONAL_FEEDS.filter((feed) => feed.fallbackUrl);
-    expect(blocked.length).toBeGreaterThanOrEqual(30);
+    expect(blocked.length).toBeGreaterThanOrEqual(50);
     for (const feed of blocked) {
       const fallback = new URL(feed.fallbackUrl);
       const sourceHost = new URL(feed.url).hostname.replace(/^www\./, "");
@@ -36,6 +36,8 @@ describe("international feed registry", () => {
       expect(feed.url).not.toContain("news.google.com");
     }
     expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Health Policy Watch")?.fallbackUrl).toBeTruthy();
+    expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Space.com")?.fallbackUrl).toBeTruthy();
+    expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Towards AI")?.fallbackUrl).toBeTruthy();
     expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "US DOJ Press Releases")?.fallbackUrl).toBeUndefined();
   });
 

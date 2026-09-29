@@ -396,18 +396,23 @@ async function fetchOne(feed, perFeed, timeoutMs, retryDelayMs = RSS_RETRY_DELAY
   };
 
   const primaryResult = await fetchWithRetries(feed);
-  if (primaryResult.ok || !feed.fallbackUrl) return primaryResult;
+  if ((primaryResult.ok && primaryResult.items.length) || !feed.fallbackUrl) return primaryResult;
 
   const fallbackResult = await fetchWithRetries({ ...feed, url: feed.fallbackUrl });
-  if (fallbackResult.ok) {
-    return { ...fallbackResult, fallback: true, primaryError: primaryResult.error };
+  const primaryError = primaryResult.ok ? "no recent items" : primaryResult.error;
+  if (fallbackResult.ok && fallbackResult.items.length) {
+    return { ...fallbackResult, fallback: true, primaryError };
   }
+
+  // An empty but valid feed remains empty when its site-scoped backup also
+  // has no recent items. Do not turn a failed primary into a false success.
+  if (primaryResult.ok) return primaryResult;
 
   return {
     ok: false,
     label: feed.label,
     advisory: feed.advisory || undefined,
-    error: `${primaryResult.error}；備援亦失敗：${fallbackResult.error}`,
+    error: `${primaryError}；備援亦失敗：${fallbackResult.ok ? "no recent items" : fallbackResult.error}`,
     items: [],
   };
 }
