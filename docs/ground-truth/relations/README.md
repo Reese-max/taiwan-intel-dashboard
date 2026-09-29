@@ -47,9 +47,18 @@ node scripts/ground-truth-benchmark.mjs \
   --events=docs/ground-truth/relations/events-v1.json \
   --out=report.json
 
+# 人工地點標註非空時，須另加 --location-predictions=<本次 location policy 輸出的事件 JSON>
+# 例如在同一批來源重新執行 ingestion 後的 public/data/domestic.json；不能拿固定 cohort 舊欄位計分。
+
 # 4. before/after：改規則後重跑並比對
 node scripts/ground-truth-benchmark.mjs ... --baseline=report-before.json
 ```
+
+地點 prediction 檔接受事件陣列或 `{ "events": [...] }`，須涵蓋每筆人工地點標註的事件 ID，
+並保留對應 `source.recordRef`（或 `sourceIdentity`）供身份比對。
+報告記錄事件 manifest、pair/location 標註與 prediction 的 SHA-256；before/after 只容許
+**prediction 輸出或演算法**改變。cohort、manifest、標註內容、correlation 設定或 report schema
+不同時拒絕比較。人工地點標註存在但沒有本次 prediction 時，runner 拒絕產生地點準確率。
 
 ## pair schema（`relation-pairs/1`）
 

@@ -26,11 +26,13 @@ import {
 } from "./lib/ground-truth-relations.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 function loadReplayEvents(snapshot, snapshotPath) {
   if (snapshot?.schema !== "ground-truth-events/1" || !Array.isArray(snapshot.events) ||
       typeof snapshot.cohortFile !== "string" || basename(snapshot.cohortFile) !== snapshot.cohortFile ||
-      !/^[a-f0-9]{64}$/.test(snapshot.cohortSha256 || "")) {
+      !/^[a-f0-9]{64}$/.test(snapshot.cohortSha256 || "") ||
+      !/^[a-f0-9]{64}$/.test(snapshot.sourceSha256 || "")) {
     throw new Error("Benchmark snapshot must reference a versioned full-cohort replay file");
   }
   if (JSON.stringify(snapshot.correlationSettings) !== JSON.stringify(getCorrelationSettings())) {
@@ -38,7 +40,7 @@ function loadReplayEvents(snapshot, snapshotPath) {
   }
   const cohortPath = join(dirname(snapshotPath), snapshot.cohortFile);
   const bytes = readFileSync(cohortPath);
-  const digest = createHash("sha256").update(bytes).digest("hex");
+  const digest = sha256(bytes);
   if (digest !== snapshot.cohortSha256) throw new Error("Benchmark replay cohort SHA-256 mismatch");
   const cohort = JSON.parse(gunzipSync(bytes).toString("utf8"));
   if (cohort?.schema !== "ground-truth-cohort/1" || !Array.isArray(cohort.events)) {
@@ -58,11 +60,52 @@ function loadReplayEvents(snapshot, snapshotPath) {
   return { events, cohortPath };
 }
 
+function loadLocationPredictions(bytes, humanRows, cohortEvents) {
+  if (!bytes) {
+    if (humanRows.length) throw new Error("Human location labels require --location-predictions from the current policy run");
+    return [];
+  }
+  const parsed = JSON.parse(bytes.toString("utf8"));
+  const predictions = Array.isArray(parsed) ? parsed : parsed?.events;
+  if (!Array.isArray(predictions)) throw new Error("Location predictions must be an event array or an object with events");
+  const byPredictionId = new Map();
+  for (const event of predictions) {
+    if (!event || typeof event.id !== "string" || !event.id || byPredictionId.has(event.id)) {
+      throw new Error("Location predictions contain a missing or duplicate event ID");
+    }
+    byPredictionId.set(event.id, event);
+  }
+  const byCohortId = new Map(cohortEvents.map((event) => [event.id, event]));
+  for (const row of humanRows) {
+    const original = byCohortId.get(row.event);
+    const predicted = byPredictionId.get(row.event);
+    if (!original) throw new Error(`Location references event ${row.event} absent from benchmark cohort`);
+    if (!predicted) throw new Error(`Current location predictions omit event ${row.event}`);
+    const expectedIdentity = original.source?.recordRef;
+    const actualIdentity = predicted.sourceIdentity || predicted.source?.recordRef;
+    if (!expectedIdentity || actualIdentity !== expectedIdentity) {
+      throw new Error(`Current location prediction identity mismatch for event ${row.event}`);
+    }
+  }
+  return predictions;
+}
+
+function assertBaselineCompatible(before, current) {
+  if (before?.schema !== "ground-truth-report/1") throw new Error("Unsupported baseline report schema");
+  // Prediction bytes may differ intentionally after a policy change; cohort, labels and replay settings may not.
+  for (const key of ["eventsSha256", "cohortSha256", "sourceSha256", "pairLabelsSha256", "locationLabelsSha256", "correlationSettings"]) {
+    if (JSON.stringify(before.inputs?.[key]) !== JSON.stringify(current.inputs?.[key]) || before.inputs?.[key] === undefined) {
+      throw new Error(`Baseline input mismatch: ${key}`);
+    }
+  }
+}
+
 export function parseArgs(argv) {
-  const args = { pairs: "", locations: "", events: "", baseline: "", out: "" };
+  const args = { pairs: "", locations: "", locationPredictions: "", events: "", baseline: "", out: "" };
   for (const arg of argv) {
     if (arg.startsWith("--pairs=")) args.pairs = arg.slice("--pairs=".length);
     else if (arg.startsWith("--locations=")) args.locations = arg.slice("--locations=".length);
+    else if (arg.startsWith("--location-predictions=")) args.locationPredictions = arg.slice("--location-predictions=".length);
     else if (arg.startsWith("--events=")) args.events = arg.slice("--events=".length);
     else if (arg.startsWith("--baseline=")) args.baseline = arg.slice("--baseline=".length);
     else if (arg.startsWith("--out=")) args.out = arg.slice("--out=".length);
@@ -75,20 +118,33 @@ export function parseArgs(argv) {
 export function runBenchmark(argv = process.argv.slice(2)) {
   const args = parseArgs(argv);
   if (args.help || !args.pairs || !args.events) {
-    console.log("Usage: node scripts/ground-truth-benchmark.mjs --pairs=<jsonl> --events=<snapshot.json> [--locations=<jsonl>] [--baseline=<json>] [--out=<json>]");
+    console.log("Usage: node scripts/ground-truth-benchmark.mjs --pairs=<jsonl> --events=<snapshot.json> [--locations=<jsonl> --location-predictions=<current-event-json>] [--baseline=<json>] [--out=<json>]");
     if (!args.help) process.exitCode = 1;
     return null;
   }
 
   const snapshotPath = join(ROOT, args.events);
-  const snapshotRaw = JSON.parse(readFileSync(snapshotPath, "utf8"));
+  const snapshotBytes = readFileSync(snapshotPath);
+  const snapshotRaw = JSON.parse(snapshotBytes.toString("utf8"));
   const { events } = loadReplayEvents(snapshotRaw, snapshotPath);
   const net = correlateEvents(events);
 
-  const pairs = loadLabeledJsonl(readFileSync(join(ROOT, args.pairs), "utf8"), validatePairRow);
+  const pairBytes = readFileSync(join(ROOT, args.pairs));
+  const pairs = loadLabeledJsonl(pairBytes.toString("utf8"), validatePairRow);
+  const locationBytes = args.locations ? readFileSync(join(ROOT, args.locations)) : null;
+  const locations = locationBytes ? loadLabeledJsonl(locationBytes.toString("utf8"), validateLocationRow) : null;
+  const predictionBytes = args.locationPredictions ? readFileSync(join(ROOT, args.locationPredictions)) : null;
+  const predictions = loadLocationPredictions(predictionBytes, (locations?.rows || []).filter((row) => row.labeledBy === "human"), events);
   const report = {
     schema: "ground-truth-report/1",
-    inputs: { pairs: args.pairs, locations: args.locations || null, events: args.events, cohortFile: snapshotRaw.cohortFile, cohortSha256: snapshotRaw.cohortSha256, sourceSha256: snapshotRaw.sourceSha256, correlationSettings: snapshotRaw.correlationSettings },
+    inputs: {
+      pairs: args.pairs, pairLabelsSha256: sha256(pairBytes),
+      locations: args.locations || null, locationLabelsSha256: locationBytes ? sha256(locationBytes) : null,
+      locationPredictions: args.locationPredictions || null, locationPredictionsSha256: predictionBytes ? sha256(predictionBytes) : null,
+      events: args.events, eventsSha256: sha256(snapshotBytes),
+      cohortFile: snapshotRaw.cohortFile, cohortSha256: snapshotRaw.cohortSha256,
+      sourceSha256: snapshotRaw.sourceSha256, correlationSettings: snapshotRaw.correlationSettings,
+    },
     counts: {
       events: events.length,
       pairs: pairs.rows.length,
@@ -100,14 +156,20 @@ export function runBenchmark(argv = process.argv.slice(2)) {
     errors: { pairs: pairs.errors, locations: [] },
   };
 
-  if (args.locations) {
-    const locations = loadLabeledJsonl(readFileSync(join(ROOT, args.locations), "utf8"), validateLocationRow);
-    report.location = computeLocationMetrics(locations.rows, events);
+  if (locations) {
+    report.location = computeLocationMetrics(locations.rows, predictions);
     report.errors.locations = locations.errors;
     report.counts.locations = locations.rows.length;
     report.counts.humanLocations = report.location.labeled;
     report.counts.draftLocations = report.location.draftsExcluded;
     report.counts.unlabeledLocations = locations.unlabeled.length;
+  }
+
+  if (args.baseline) {
+    const before = JSON.parse(readFileSync(join(ROOT, args.baseline), "utf8"));
+    assertBaselineCompatible(before, report);
+    const diffs = diffBenchmarkReports({ relation: before.relation, location: before.location }, { relation: report.relation, location: report.location });
+    report.diff = diffs.filter((d) => d.direction !== "unchanged");
   }
 
   const totalErrors = report.errors.pairs.length + report.errors.locations.length;
@@ -125,10 +187,7 @@ export function runBenchmark(argv = process.argv.slice(2)) {
   }
   if (totalErrors) console.warn(`標註檔有 ${totalErrors} 行被略過（詳見 report.errors）`);
 
-  if (args.baseline) {
-    const before = JSON.parse(readFileSync(join(ROOT, args.baseline), "utf8"));
-    const diffs = diffBenchmarkReports({ relation: before.relation, location: before.location }, { relation: report.relation, location: report.location });
-    report.diff = diffs.filter((d) => d.direction !== "unchanged");
+  if (report.diff) {
     for (const d of report.diff) {
       console.log(`  ${d.direction === "improved" ? "▲" : d.direction === "regressed" ? "▼" : "◆"} ${d.metric}: ${d.before} → ${d.after}`);
     }

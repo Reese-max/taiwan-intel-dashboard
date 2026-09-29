@@ -72,6 +72,7 @@ function writeReplaySnapshot(dir: string, events: any[], contexts = events) {
     cohortFile: "events.cohort.json.gz",
     cohortSha256: createHash("sha256").update(cohort).digest("hex"),
     cohortCount: events.length,
+    sourceSha256: createHash("sha256").update(JSON.stringify(events)).digest("hex"),
     correlationSettings: getCorrelationSettings(),
     count: contexts.length,
     events: contexts,
@@ -352,6 +353,61 @@ describe("benchmark CLI report", () => {
       ], { cwd: process.cwd(), env: { ...process.env, SAME_ENTITY_UNION_BLOCKLIST: changedBlocklist }, encoding: "utf8" });
       expect(child.status).not.toBe(0);
       expect(child.stderr).toMatch(/correlation settings differ from pinned snapshot settings/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("地點品質只計當前 policy 輸出，不能偷用固定 cohort 的舊欄位", () => {
+    const dir = mkdtempSync(join(process.cwd(), ".ground-truth-test-"));
+    try {
+      const original = ev({ id: "a", locationRole: "agency", locationPrecision: "city", region: "臺北市" });
+      writeReplaySnapshot(dir, [original]);
+      writeFileSync(join(dir, "pairs.jsonl"), "");
+      const label = { schema: "location-labels/1", event: "a", locationRole: "incident", locationPrecision: "exact", region: "高雄市", evidence: "https://example.com/proof", labeledAt: "2026-09-17T00:00:00Z", labeledBy: "human" };
+      writeFileSync(join(dir, "locations.jsonl"), JSON.stringify(label) + "\n");
+      const input = relative(process.cwd(), dir);
+      const args = [`--events=${input}/events.json`, `--pairs=${input}/pairs.jsonl`, `--locations=${input}/locations.jsonl`];
+      expect(() => runBenchmark(args)).toThrow(/require --location-predictions/);
+
+      const prediction = { id: "a", sourceIdentity: original.source.recordRef, locationRole: "agency", locationPrecision: "city", region: "臺北市" };
+      writeFileSync(join(dir, "predictions.json"), JSON.stringify([prediction]));
+      const before = runBenchmark([...args, `--location-predictions=${input}/predictions.json`, `--out=${input}/baseline.json`]);
+      expect(before.location.role.accuracy).toBe(0);
+      expect(before.inputs.locationPredictionsSha256).toMatch(/^[a-f0-9]{64}$/);
+
+      writeFileSync(join(dir, "predictions.json"), JSON.stringify([{ ...prediction, locationRole: "incident", locationPrecision: "exact", region: "高雄市" }]));
+      const after = runBenchmark([...args, `--location-predictions=${input}/predictions.json`, `--baseline=${input}/baseline.json`]);
+      expect(after.location.role.accuracy).toBe(1);
+      expect(after.diff).toContainEqual(expect.objectContaining({ metric: "location.role.accuracy", direction: "improved" }));
+      expect(after.inputs.locationPredictionsSha256).not.toBe(before.inputs.locationPredictionsSha256);
+
+      writeFileSync(join(dir, "locations.jsonl"), JSON.stringify({ ...label, evidence: "https://example.com/changed" }) + "\n");
+      expect(() => runBenchmark([...args, `--location-predictions=${input}/predictions.json`, `--baseline=${input}/baseline.json`])).toThrow(/Baseline input mismatch: locationLabelsSha256/);
+      writeFileSync(join(dir, "locations.jsonl"), JSON.stringify(label) + "\n");
+
+      writeFileSync(join(dir, "predictions.json"), JSON.stringify([{ ...prediction, sourceIdentity: "https://example.com/wrong" }]));
+      expect(() => runBenchmark([...args, `--location-predictions=${input}/predictions.json`])).toThrow(/prediction identity mismatch/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("before/after 對照拒絕同一路徑下已變動的標註與 cohort manifest", () => {
+    const dir = mkdtempSync(join(process.cwd(), ".ground-truth-test-"));
+    try {
+      writeReplaySnapshot(dir, [ev({ id: "a" }), ev({ id: "b" })]);
+      const pair = pairRow();
+      writeFileSync(join(dir, "pairs.jsonl"), JSON.stringify(pair) + "\n");
+      const input = relative(process.cwd(), dir);
+      const args = [`--events=${input}/events.json`, `--pairs=${input}/pairs.jsonl`, `--baseline=${input}/baseline.json`];
+      runBenchmark(args.filter((arg) => !arg.startsWith("--baseline=")).concat(`--out=${input}/baseline.json`));
+      writeFileSync(join(dir, "pairs.jsonl"), JSON.stringify({ ...pair, evidence: "https://example.com/changed" }) + "\n");
+      expect(() => runBenchmark(args)).toThrow(/Baseline input mismatch: pairLabelsSha256/);
+      writeFileSync(join(dir, "pairs.jsonl"), JSON.stringify(pair) + "\n");
+      const manifest = JSON.parse(readFileSync(join(dir, "events.json"), "utf8"));
+      writeFileSync(join(dir, "events.json"), JSON.stringify({ ...manifest, generatedFrom: "different-source" }));
+      expect(() => runBenchmark(args)).toThrow(/Baseline input mismatch: eventsSha256/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
