@@ -80,6 +80,37 @@ describe("Cohort Manifest (Work package D2)", () => {
     expect(loadedOffline).toBeNull();
   });
 
+  it("first-paint 未鎖定 manifest 時 fail-closed，舊 map 不得被 fetch 或晉級", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    const result = await loadMapEvents("domestic");
+
+    expect(result).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("first-paint manifest 缺少 map hash 時 fail-closed，不允許未驗證產物晉級", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const manifest: CohortManifest = {
+      manifestVersion: 1,
+      snapshotId: "cohort-s2",
+      generatedAt: "2026-09-17T00:00:00.000Z",
+      rulesVersion: "correlate-v1",
+      scopes: {
+        domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+        international: { events: "international.json", map: "international.map.json", network: "network.json" },
+      },
+      files: {},
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    const result = await loadMapEvents("domestic", { manifest });
+
+    expect(result).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("loadEvents 與 loadMapEvents 在 SHA-256 不符時拒絕晉級（防跨部署混 cohort）", async () => {
     const { loadEvents, loadMapEvents } = await import("../src/data/loader");
     const manifest: CohortManifest = {
