@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
+import { curateNewsEvents, logCurationSummary } from "./lib/curation.mjs";
 import {
   formatNetworkContractErrors,
   NETWORK_FILE,
@@ -36,9 +37,13 @@ function readEvents(name) {
   }
 }
 
-export function buildNetwork(domestic, international, nowIso, { snapshotId, rulesVersion = RULES_VERSION } = {}) {
+export function buildNetwork(domestic, international, nowIso, { snapshotId, rulesVersion = RULES_VERSION, ledgerPath } = {}) {
   const domesticNews = (domestic || []).filter(isNewsLikeEvent);
   const intlNews = (international || []).filter(isNewsLikeEvent);
+  // 人工更正 ledger（issue #44）：normalize→自動關聯 之間套用，重播結果掛在 overrides 區段
+  const curated = curateNewsEvents({ domestic: domesticNews, international: intlNews }, { ledgerPath });
+  const domesticNet = correlateEvents(curated.domestic, { corrections: curated.corrections.domestic });
+  const intlNet = correlateEvents(curated.international, { corrections: curated.corrections.international });
   const sid =
     snapshotId ||
     `cohort-${nowIso.slice(0, 10).replace(/-/g, "")}-${createHash("sha256").update(nowIso).digest("hex").slice(0, 8)}`;
@@ -47,12 +52,14 @@ export function buildNetwork(domestic, international, nowIso, { snapshotId, rule
     generatedAt: nowIso,
     rulesVersion,
     scopeNote: "情報網僅含新聞類事件（RSS / tw-news），排除政府模板化統計資料",
-    domestic: correlateEvents(domesticNews),
-    international: correlateEvents(intlNews),
+    domestic: domesticNet,
+    international: intlNet,
     excluded: {
       domestic: (domestic?.length || 0) - domesticNews.length,
       international: (international?.length || 0) - intlNews.length,
     },
+    // correlate 之後收集：被間接擋下的 same_event 已從 applied 移到 skipped
+    overrides: curated.collectOverrides(),
   };
 }
 
@@ -61,6 +68,7 @@ function main() {
   const international = readEvents("international.json");
   const nowIso = new Date().toISOString();
   const net = buildNetwork(domestic, international, nowIso);
+  logCurationSummary(net.overrides);
   const contractErrors = validateNetworkContract(net);
   if (contractErrors.length) {
     throw new Error(`產物契約驗收失敗：\n${formatNetworkContractErrors(NETWORK_FILE, contractErrors)}`);

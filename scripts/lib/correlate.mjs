@@ -263,10 +263,18 @@ function upsertEdge(map, aId, bId, type, weight, why) {
 }
 
 // 主函式：把事件串成關聯圖。
+// opts.corrections：resolveCuration() 的輸出——forbidden pair 抑制自動邊並阻擋
+// union（not_same_event）、forced pair 注入人工合併邊（same_event）。
 export function correlateEvents(events, opts = {}) {
   const list = (events || []).filter((e) => e && e.id);
   const sigs = list.map(extractSignals);
   const byId = new Map(sigs.map((s) => [s.id, s]));
+  const inScope = (key) => {
+    const [a, b] = key.split("|");
+    return byId.has(a) && byId.has(b);
+  };
+  const forbidden = new Set([...(opts.corrections?.forbidden ?? [])].filter(inScope));
+  const forced = new Set([...(opts.corrections?.forced ?? [])].filter(inScope));
   const edges = new Map();
 
   // ── Pass 1：同縣市區塊內、時間鄰近的配對（same-incident / same-topic）──
@@ -379,7 +387,26 @@ export function correlateEvents(events, opts = {}) {
     }
   }
 
-  const edgeList = [...edges.values()];
+  // ── 人工更正層（correction ledger）：先抑制再注入，進 union-find 前完成 ──
+  for (const key of forbidden) edges.delete(key);
+  const forcedPreviousEdges = new Map();
+  for (const key of forced) {
+    const [a, b] = key.split("|");
+    const prev = edges.get(key);
+    forcedPreviousEdges.set(key, prev ? { ...prev } : null);
+    upsertEdge(edges, a, b, "same-incident", 99, "人工更正：same_event");
+    const edge = edges.get(key);
+    // 強制更正必須成為 same-incident，即使舊候選剛好也是 weight 99。
+    edge.type = "same-incident";
+    edge.weight = 99;
+    if (prev) {
+      // 保留自動候選理由；只有原本就是自動 same-incident 邊時，才保留其自動證據資格。
+      if (!edge.why.includes(prev.why)) edge.why = `${edge.why}；自動候選：${prev.why}`;
+    }
+    edge.manual = !prev || prev.type !== "same-incident" || Boolean(prev.manual);
+  }
+
+  let edgeList = [...edges.values()];
 
   // ── 節點 degree（cluster label 也會用到）──
   const degree = new Map(sigs.map((s) => [s.id, 0]));
@@ -390,7 +417,7 @@ export function correlateEvents(events, opts = {}) {
   const eventsById = new Map(list.map((e) => [e.id, e]));
   const directEvidenceSourcesById = new Map(list.map((e) => [e.id, new Set()]));
   for (const edge of edgeList) {
-    if (edge.type !== "same-incident") continue;
+    if (edge.type !== "same-incident" || edge.manual) continue;
     const a = eventsById.get(edge.a);
     const b = eventsById.get(edge.b);
     const aSource = a?.source?.name;
@@ -425,7 +452,7 @@ export function correlateEvents(events, opts = {}) {
     const clusterDirectEvidenceIds = new Set();
     const evidenceSources = new Set();
     for (const edge of edgeList) {
-      if (edge.type !== "same-incident" || !memberIds.has(edge.a) || !memberIds.has(edge.b)) continue;
+      if (edge.type !== "same-incident" || edge.manual || !memberIds.has(edge.a) || !memberIds.has(edge.b)) continue;
       clusterDirectEvidenceIds.add(edge.a);
       clusterDirectEvidenceIds.add(edge.b);
       const aSource = eventsById.get(edge.a)?.source?.name;
@@ -497,17 +524,68 @@ export function correlateEvents(events, opts = {}) {
     const rb = find(b);
     if (ra !== rb) parent.set(ra, rb);
   };
+  // forbidden pair 的兩端若已分屬兩個即將合併的分量，此次 union 會把它們黏回去 → 阻擋。
+  // （含 forced 邊觸發的 union：人工 same_event 也不得間接重併 not_same_event。）
+  const joinsForbidden = (ra, rb) => {
+    for (const key of forbidden) {
+      const [x, y] = key.split("|");
+      const rx = find(x);
+      const ry = find(y);
+      if ((rx === ra && ry === rb) || (rx === rb && ry === ra)) return true;
+    }
+    return false;
+  };
   let skippedSameEntityUnionEdges = 0;
   for (const e of edgeList) {
     if (
       (e.type === "same-entity" && shouldUnionSameEntity(e)) ||
       (e.type === "same-incident" && e.weight >= CLUSTER_INCIDENT_MIN_WEIGHT)
     ) {
-      union(e.a, e.b);
+      const ra = find(e.a);
+      const rb = find(e.b);
+      if (ra !== rb && !joinsForbidden(ra, rb)) union(ra, rb);
     } else if (e.type === "same-entity") {
       skippedSameEntityUnionEdges++;
     }
   }
+  // forced 邊若被 forbidden 經第三事件間接擋下（union 被拒），它就不該留在圖裡宣稱合併——
+  // 移除邊並把該筆從 applied 移到 skipped，讓 overrides.report 與圖一致。
+  if (forced.size) {
+    const blocked = [...forced].filter((key) => {
+      const [a, b] = key.split("|");
+      return find(a) !== find(b);
+    });
+    if (blocked.length) {
+      const blockedSet = new Set(blocked);
+      edgeList = edgeList.flatMap((e) => {
+        const key = edgeKey(e.a, e.b);
+        if (!blockedSet.has(key)) return [e];
+        const previous = forcedPreviousEdges.get(key);
+        if (previous) return [previous];
+        degree.set(e.a, degree.get(e.a) - 1);
+        degree.set(e.b, degree.get(e.b) - 1);
+        return [];
+      });
+      const report = opts.corrections?.report;
+      if (report) {
+        for (const key of blocked) {
+          const index = report.applied.findIndex(
+            (item) => item.decision === "same_event" && [...item.ids].sort().join("|") === key,
+          );
+          const [entry] = index >= 0 ? report.applied.splice(index, 1) : [{ ids: key.split("|") }];
+          report.skipped.push({
+            decision: "same_event",
+            ids: entry.ids,
+            status: "needs_review",
+            reason: "blocked-by-not_same_event",
+            line: entry.line,
+            reviewedAt: entry.reviewedAt,
+          });
+        }
+      }
+    }
+  }
+
   const groups = new Map();
   for (const s of sigs) {
     const r = find(s.id);
