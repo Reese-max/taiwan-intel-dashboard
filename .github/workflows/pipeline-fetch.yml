@@ -77,9 +77,15 @@ jobs:
 
       - name: 抓取即時資料
         env:
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
-          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          # The legacy primary key now returns HTTP 401 in live runs. Use the
+          # already verified hosted model directly, with the same concurrency
+          # as the former fallback so normalization does not increase load.
+          LLM_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          LLM_BASE_URL: https://integrate.api.nvidia.com/v1
+          LLM_MODEL: nvidia/nemotron-3-super-120b-a12b
+          LLM_MAX_CONCURRENCY: "2"
+          LLM_TIMEOUT_MS: "45000"
+          LLM_MAX_RETRIES: "1"
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           # Match the reviewed model to NVIDIA's public hosted API. The old
           # secret-selected endpoint returned HTTP 410 in the live 2026-09-26 run.
@@ -93,15 +99,16 @@ jobs:
           # Bound provider stalls so routine data can reach publication even
           # when some AI enrichment batches must continue on the next run.
           LLM_FALLBACK_TIMEOUT_MS: "45000"
+          LLM_FALLBACK_MAX_RETRIES: "2"
           SUMMARY_LLM: ${{ secrets.SUMMARY_LLM }}
           SUMMARY_API_KEY: ${{ secrets.SUMMARY_API_KEY }}
           SUMMARY_BASE_URL: ${{ secrets.SUMMARY_BASE_URL }}
           # Keep a dedicated summary provider's configured model. If it retires,
           # llm-client tries the separately configured NVIDIA fallback model.
           SUMMARY_MODEL: ${{ secrets.SUMMARY_MODEL }}
-          SUMMARY_MAX_CONCURRENCY: ${{ secrets.SUMMARY_MAX_CONCURRENCY }}
-          SUMMARY_TIMEOUT_MS: ${{ secrets.SUMMARY_TIMEOUT_MS }}
-          SUMMARY_MAX_RETRIES: ${{ secrets.SUMMARY_MAX_RETRIES }}
+          SUMMARY_MAX_CONCURRENCY: "1"
+          SUMMARY_TIMEOUT_MS: "30000"
+          SUMMARY_MAX_RETRIES: "2"
           CWA_API_KEY: ${{ secrets.CWA_API_KEY }}
           INTERNATIONAL_FEED_TIER: ${{ steps.mode.outputs.international_feed_tier }}
           INTERNATIONAL_FEED_TOPIC: ${{ steps.mode.outputs.international_feed_topic }}

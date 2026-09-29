@@ -6,15 +6,24 @@ import io
 import json
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 import zipfile
 import xml.etree.ElementTree as ET
 
+DATASET_PAGE_URL = "https://data.gov.tw/dataset/13166"
 ZIP_URL = (
     "https://opdadm.moi.gov.tw/api/v1/no-auth/resource/api/dataset/"
     "6D9C7F00-3E4C-4FC7-BEDB-28D70FF96FEE/resource/"
-    "89963092-A657-4819-96CC-065EA9C8001D/download"
+    "2135CF37-2C60-494B-9286-C5AA44A7A957/download"
 )
+ZIP_URL_RE = re.compile(
+    r"https://opdadm\.moi\.gov\.tw/api/v1/no-auth/resource/api/dataset/"
+    r"6D9C7F00-3E4C-4FC7-BEDB-28D70FF96FEE/resource/"
+    r"[0-9A-Fa-f-]{36}/download"
+)
+USER_AGENT = "Mozilla/5.0 (compatible; TaiwanIntelDashboard/1.0)"
 CASE_TYPES = ["強盜", "搶奪", "強制性交", "汽車竊盜", "住宅竊盜", "毒品", "機車竊盜"]
 NS = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -90,8 +99,53 @@ def parse_table(rows: list[list[str]]) -> dict[str, int]:
     return current
 
 
+def fetch_bytes(url: str, *, timeout: int, limit: int) -> bytes:
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        data = response.read(limit + 1)
+    if len(data) > limit:
+        raise ValueError(f"resource exceeds {limit} bytes")
+    return data
+
+
+def discover_zip_url() -> str | None:
+    page = fetch_bytes(DATASET_PAGE_URL, timeout=20, limit=1_000_000).decode("utf-8", "replace")
+    match = ZIP_URL_RE.search(page)
+    return match.group(0) if match else None
+
+
+def download_zip() -> bytes:
+    # The portal rotates resource IDs. Prefer its current official link, while
+    # retaining the last verified link if the portal page itself is unavailable.
+    try:
+        discovered = discover_zip_url()
+    except (OSError, ValueError) as error:
+        print(f"dataset page unavailable: {error}", file=sys.stderr)
+        discovered = None
+    urls = list(dict.fromkeys(url for url in (discovered, ZIP_URL) if url))
+    last_error: Exception | None = None
+    for index, url in enumerate(urls):
+        attempts = 3 if index == 0 else 1
+        for attempt in range(attempts):
+            try:
+                data = fetch_bytes(url, timeout=30, limit=40_000_000)
+                if not data.startswith(b"PK"):
+                    raise ValueError("weekly crime resource is not a ZIP")
+                return data
+            except urllib.error.HTTPError as error:
+                last_error = error
+                transient = error.code == 429 or 500 <= error.code <= 599
+            except (urllib.error.URLError, TimeoutError, ValueError) as error:
+                last_error = error
+                transient = True
+            if not transient or attempt + 1 >= attempts:
+                break
+            time.sleep(2 ** attempt)
+    raise RuntimeError(f"weekly crime ZIP download failed (temporary failure): {last_error}")
+
+
 def main() -> int:
-    data = urllib.request.urlopen(ZIP_URL, timeout=90).read()
+    data = download_zip()
     outer = zipfile.ZipFile(io.BytesIO(data))
     ods_names = [name for name in outer.namelist() if name.lower().endswith(".ods")]
     if not ods_names:

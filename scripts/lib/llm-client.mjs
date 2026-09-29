@@ -83,11 +83,22 @@ export function makeGate(max) {
 export const llmGates = {};
 export const gateFor = (c) => (llmGates[c.name] ||= makeGate(c.maxConc));
 
+const sameProvider = (a, b) => a?.base?.replace(/\/$/, "") === b?.base?.replace(/\/$/, "")
+  && a?.model === b?.model && a?.key === b?.key;
+
 // Credentials rejected by a provider and retired models cannot recover within one fetch run.
 // Remember the failed endpoint/model so hundreds of normalization batches do not repeat them.
 const terminalFailures = new Map();
 const warnedFallbacks = new Set();
 const endpointId = (c) => `${c.name}\u0000${c.base}\u0000${c.model}`;
+
+export function retryDelayMs(status, retryAfter, attempt) {
+  const seconds = Number(retryAfter);
+  if (retryAfter != null && Number.isFinite(seconds) && seconds > 0) {
+    return Math.min(30_000, seconds * 1000);
+  }
+  return Math.min(30_000, (status === 429 ? 8_000 : 2_000) * 2 ** attempt);
+}
 
 // 對單一端點發請求（含並發閘 / 逾時 / 重試）。回空字串＝推理被截斷無有效輸出。
 // LLM（MiniMax 等陸系模型）偶發輸出簡體字，prompt 要求繁體仍會洩漏（實例：summary.json「微软」）。
@@ -136,8 +147,7 @@ export async function chatVia(c, messages, maxTokens, temperature) {
         });
         // 429 / 5xx 可重試（429 優先依 retry-after 退避）。
         if ((res.status === 429 || res.status >= 500) && attempt < c.retries) {
-          const ra = Number(res.headers.get("retry-after"));
-          await sleep(Number.isFinite(ra) && ra > 0 ? ra * 1000 : 1000 * 2 ** attempt);
+          await sleep(retryDelayMs(res.status, res.headers.get("retry-after"), attempt));
           continue;
         }
         if (!res.ok) {
@@ -179,12 +189,12 @@ export async function chatVia(c, messages, maxTokens, temperature) {
 export async function chat(messages, { maxTokens = 1024, temperature = 0.3, profile = "primary" } = {}) {
   const c = profileCfg(profile);
   const primary = profileCfg("primary");
-  const hasFallback = profile === "summary" && c.name !== primary.name;
+  const hasFallback = profile === "summary" && c.name !== primary.name && !sameProvider(c, primary);
   // LLM_FALLBACK_* 與 summary profile 分開配置，避免用 NVIDIA model 覆蓋其他供應商。
   const fb = profile === "primary" || profile === "summary" ? profileCfg("fallback") : null;
-  const hasPrimaryFallback = profile === "primary" && fb?.name === "fallback";
+  const hasPrimaryFallback = profile === "primary" && fb?.name === "fallback" && !sameProvider(c, fb);
   const hasSummaryFallback = profile === "summary" && fb?.name === "fallback"
-    && (c.base !== fb.base || c.model !== fb.model || c.key !== fb.key);
+    && !sameProvider(c, fb);
   const viaFallback = async (why) => {
     const warning = `${profile} LLM ${why}，改走 fallback 端點（${fb.model || fb.base}）`;
     if (!warnedFallbacks.has(warning)) {
