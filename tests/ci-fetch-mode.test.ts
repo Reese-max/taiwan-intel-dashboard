@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import YAML from "yaml";
 import {
   FETCH_MODE_CHOICES,
   resolveFetchMode,
@@ -10,7 +11,7 @@ import {
 
 describe("resolveFetchMode", () => {
   it("maps hourly cron to CWA + police + missing + Taiwan news + international RSS", () => {
-    const mode = resolveFetchMode({ schedule: "5 * * * *" });
+    const mode = resolveFetchMode({ schedule: "17,47 * * * *" });
     expect(mode.label).toBe("hourly");
     expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver");
     expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,police,missing,twnews --min-international-feeds=10 --min-international-raw=50");
@@ -167,8 +168,15 @@ describe("resolveFetchMode", () => {
   it("wires the existing NVIDIA credentials into the primary LLM fallback", () => {
     const workflow = readFileSync(".github/workflows/pipeline-fetch.yml", "utf8");
     expect(workflow).toContain("LLM_FALLBACK_API_KEY: ${{ secrets.NVIDIA_API_KEY }}");
-    expect(workflow).toContain("LLM_FALLBACK_BASE_URL: ${{ secrets.NVIDIA_BASE_URL }}");
-    expect(workflow).toContain("LLM_FALLBACK_MODEL: ${{ secrets.NVIDIA_MODEL }}");
+    expect(workflow).toContain("NVIDIA_BASE_URL: https://integrate.api.nvidia.com/v1");
+    expect(workflow).toContain("NVIDIA_MODEL: nvidia/nemotron-3-super-120b-a12b");
+    expect(workflow).toContain("LLM_FALLBACK_BASE_URL: https://integrate.api.nvidia.com/v1");
+    expect(workflow).toContain("LLM_FALLBACK_MODEL: nvidia/nemotron-3-super-120b-a12b");
+    expect(workflow).toContain('LLM_FALLBACK_TIMEOUT_MS: "45000"');
+    expect(workflow).toContain('INTL_NORMALIZE_BUDGET_MS: "600000"');
+    expect(workflow).toContain('DOMESTIC_NORMALIZE_BUDGET_MS: "300000"');
+    expect(workflow).toContain("SUMMARY_BASE_URL: ${{ secrets.SUMMARY_BASE_URL }}");
+    expect(workflow).toContain("SUMMARY_MODEL: ${{ secrets.SUMMARY_MODEL }}");
   });
 
   it("does not inject Twinkle MCP credentials into fetch or deploy workflows", () => {
@@ -179,19 +187,62 @@ describe("resolveFetchMode", () => {
     expect(deployWorkflow).not.toMatch(/TWINKLE_(?:MCP|HUB)/);
   });
 
-  it("restores pipeline data once and deploys the checked artifact", () => {
-    const workflow = readFileSync(".github/workflows/deploy.yml", "utf8");
-    const refreshWorkflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
+  it("requires a preview for code PRs and deploys scheduled data with the pinned code", () => {
+    const workflow = YAML.parse(readFileSync(".github/workflows/deploy.yml", "utf8"));
+    const refresh = YAML.parse(readFileSync(".github/workflows/update-and-deploy.yml", "utf8"));
+    const previewBuildSteps = workflow.jobs["build-preview"].steps;
+    const checkSteps = workflow.jobs.check.steps;
+    const buildSteps = refresh.jobs["build-approved"].steps;
+    const deploySteps = refresh.jobs.deploy.steps;
 
-    expect(workflow).toContain("ref: pipeline-state");
-    expect(workflow).toContain("cp -f pipeline-state/data/*.json public/data/");
-    expect(workflow).toContain("npm run check");
-    expect(workflow).not.toContain("- run: npm run build");
-    expect(workflow.match(/name: deploy-dist-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/g)).toHaveLength(3);
-    expect(workflow.match(/apiToken: \$\{\{ secrets\.CLOUDFLARE_API_TOKEN \}\}/g)).toHaveLength(2);
-    expect(workflow).not.toContain("CF_REFRESH_TOKEN");
-    expect(refreshWorkflow).toContain("apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}");
-    expect(refreshWorkflow).not.toContain("CF_REFRESH_TOKEN");
+    expect(workflow.on.push).toBeUndefined();
+    expect(previewBuildSteps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);
+    expect(previewBuildSteps.some((step: { name?: string }) => step.name === "Upload checked preview artifact")).toBe(true);
+    expect(JSON.stringify(workflow.jobs["build-preview"])).not.toContain("CLOUDFLARE_API_TOKEN");
+    expect(workflow.jobs.check.needs).toBe("build-preview");
+    expect(workflow.jobs.check.if).toBe("${{ always() }}");
+    expect(checkSteps.some((step: { name?: string }) => step.name === "Require validated build")).toBe(true);
+    expect(checkSteps.some((step: { name?: string }) => step.name === "Download checked preview artifact")).toBe(true);
+    expect(checkSteps.some((step: { name?: string }) => step.name === "Deploy Preview")).toBe(true);
+    expect(checkSteps.some((step: { uses?: string }) => step.uses?.startsWith("actions/checkout"))).toBe(false);
+    expect(checkSteps.some((step: { run?: string }) => step.run?.includes("npm"))).toBe(false);
+    expect(buildSteps.find((step: { name?: string }) => step.name === "Checkout 核准的網站程式碼").with.ref)
+      .toBe("${{ steps.approved.outputs.sha }}");
+    expect(buildSteps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);
+    expect(deploySteps.find((step: { name?: string }) => step.name === "下載核准版本網站").with.name)
+      .toContain("approved-dist-");
+    expect(deploySteps.find((step: { name?: string }) => step.name === "Checkout 原始碼").with.ref)
+      .toBe("${{ needs['build-approved'].outputs.approved_sha }}");
+    expect(deploySteps.find((step: { name?: string }) => step.name === "部署到 Cloudflare Pages").with.command)
+      .toContain("pages deploy dist");
+  });
+
+  it("refreshes data after a reviewed pipeline or approved-code merge", () => {
+    const refresh = YAML.parse(readFileSync(".github/workflows/update-and-deploy.yml", "utf8"));
+    expect(refresh.on.push.branches).toEqual(["main"]);
+    expect(refresh.on.push.paths).toContain(".github/workflows/update-and-deploy.yml");
+    expect(refresh.on.push.paths).toContain("ops/approved-code.json");
+    expect(refresh.on.schedule).toHaveLength(2);
+    expect(refresh.concurrency.group).toBe("pipeline-live-fetch");
+    expect(refresh.concurrency["cancel-in-progress"]).toBe("${{ github.event_name == 'push' }}");
+    expect(refresh.jobs["build-approved"].steps.find((step: { name?: string }) =>
+      step.name === "Checkout 核准的網站程式碼").with.ref).toBe("${{ steps.approved.outputs.sha }}");
+  });
+
+  it("continues updates when GitHub schedule events do not arrive", () => {
+    const refresh = YAML.parse(readFileSync(".github/workflows/update-and-deploy.yml", "utf8"));
+    const next = refresh.jobs["next-refresh"];
+    expect(next.needs).toContain("deploy");
+    expect(next.if).toContain("!cancelled()");
+    expect(next.permissions).toMatchObject({ actions: "write", contents: "read" });
+    expect(next.steps.some((step: { run?: string }) => step.run === "node scripts/dispatch-next-refresh.mjs"))
+      .toBe(true);
+  });
+
+  it("checks publication freshness four times per hour when GitHub schedules are delayed", () => {
+    const watchdog = YAML.parse(readFileSync(".github/workflows/refresh-watchdog.yml", "utf8"));
+    expect(watchdog.on.schedule.map((entry: { cron: string }) => entry.cron))
+      .toEqual(["8,23,38,53 * * * *"]);
   });
 
   it("gates source freshness and the generated coverage matrix before deploy", () => {
@@ -224,26 +275,17 @@ describe("resolveFetchMode", () => {
     }
   });
 
-  it("separates fetch, state persistence, audit, and deploy", () => {
-    const workflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
-    const fetchWorkflow = readFileSync(".github/workflows/pipeline-fetch.yml", "utf8");
-    const auditWorkflow = readFileSync(".github/workflows/pipeline-audit.yml", "utf8");
-    const state = workflow.match(/^  save-state:\r?\n[\s\S]*?(?=^  audit:)/m)?.[0] ?? "";
-    const audit = workflow.match(/^  audit:\r?\n[\s\S]*?(?=^  deploy:)/m)?.[0] ?? "";
-    const deploy = workflow.match(/^  deploy:\r?\n[\s\S]*?(?=^  notify:)/m)?.[0] ?? "";
-
-    expect(workflow).toContain("uses: ./.github/workflows/pipeline-fetch.yml");
-    expect(state).toContain("needs: fetch");
-    expect(state).toContain("contents: write");
-    expect(state).toContain("publish_branch: pipeline-state");
-    expect(audit).toContain("needs: fetch");
-    expect(audit).toContain("contents: read");
-    expect(audit).toContain("uses: ./.github/workflows/pipeline-audit.yml");
-    expect(deploy).toContain("needs: [fetch, save-state, audit]");
-    expect(deploy).toContain("needs.save-state.result == 'success'");
-    expect(deploy).toContain("needs.audit.result == 'success'");
-    expect(fetchWorkflow).not.toContain("contents: write");
-    expect(auditWorkflow).not.toContain("contents: write");
+  it("audits and builds candidate data before persisting state or deploying", () => {
+    const workflow = YAML.parse(readFileSync(".github/workflows/update-and-deploy.yml", "utf8"));
+    const jobs = workflow.jobs;
+    expect(jobs.fetch.needs).toBe("operating-state");
+    expect(jobs.audit.needs).toBe("fetch");
+    expect(jobs["build-approved"].needs).toEqual(["fetch", "audit"]);
+    expect(jobs["save-state"].needs).toEqual(["fetch", "audit", "build-approved"]);
+    expect(jobs.deploy.needs).toEqual(["save-state", "build-approved"]);
+    expect(jobs["save-state"].steps.some((step: { with?: { publish_branch?: string } }) =>
+      step.with?.publish_branch === "pipeline-state")).toBe(true);
+    expect(jobs.audit.uses).toBe("./.github/workflows/pipeline-audit.yml");
   });
 
   it("writes GitHub output for label, fetch args, and assertion args", () => {

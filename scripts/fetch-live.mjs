@@ -25,8 +25,10 @@ import {
   POLICE_NEW_PER_HOUR_FALLBACK,
   POLICE_TODAY_MINIMUM,
 } from "./lib/fetch-police.mjs";
+import { isTransientPoliceFailure, policeCarryoverEvidence } from "./lib/police-carryover.mjs";
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
 import { fetchGdelt } from "./lib/fetch-gdelt.mjs";
+import { gdeltRetryAt } from "./lib/gdelt-cooldown.mjs";
 import { googleNewsHealth } from "./lib/gn-health.mjs";
 import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
@@ -257,7 +259,18 @@ export async function run() {
       console.log(`警政署犯罪週報：${policeResult.events.length} 筆`);
     } catch (e) {
       status.police = { ok: false, error: e.message };
+      if (isTransientPoliceFailure(e)) {
+        const carryOver = policeCarryoverEvidence({
+          events: readOld("domestic.json"),
+          provenance: readJson("provenance.json", {}),
+          now: nowMs,
+        });
+        if (carryOver) status.police.carryOver = carryOver;
+      }
       console.error(`警政失敗：${e.message}`);
+      if (status.police.carryOver) {
+        console.warn(`警政週報暫時不可用，沿用 ${status.police.carryOver.count} 筆舊快照（上次成功 ${status.police.carryOver.lastSuccessAt}；標記 stale）`);
+      }
     }
   } else status.police = { skipped: true };
 
@@ -295,22 +308,41 @@ export async function run() {
 
       let gdelt = { ok: false, skipped: true, label: "GDELT Global News", items: [] };
       if (want("gdelt") && (intlCfg.topic === "all" || intlCfg.topic === "general")) {
-        try {
-          gdelt = await fetchGdelt();
+        const previousGdelt = readJson("provenance.json", {})?.pipeline?.gdelt;
+        const retryAt = gdeltRetryAt(previousGdelt, { now: nowMs });
+        if (retryAt) {
           status.gdelt = {
-            ok: true,
-            count: gdelt.items.length,
-            query: gdelt.query,
-            timespan: gdelt.timespan,
-            maxRecords: gdelt.maxRecords,
-            fetchedAt: gdelt.fetchedAt,
-            requestUrl: gdelt.requestUrl,
+            skipped: true,
+            reason: "GDELT HTTP 429 cooldown",
+            lastRateLimitAt: previousGdelt.lastRateLimitAt || previousGdelt.lastAttemptAt,
+            retryAt,
           };
-          console.log(`GDELT：${gdelt.items.length} 則原文`);
-        } catch (e) {
-          // GDELT 是補充訊號；API 限流或暫時失敗只告警，RSS 主線照常更新。
-          status.gdelt = { ok: false, error: e.message, label: "GDELT Global News" };
-          console.warn(`GDELT 失敗（補充來源，繼續部署）：${e.message}`);
+          console.warn(`GDELT 限流冷卻至 ${retryAt}，本輪由 RSS 主線更新`);
+        } else {
+          try {
+            gdelt = await fetchGdelt();
+            status.gdelt = {
+              ok: true,
+              count: gdelt.items.length,
+              query: gdelt.query,
+              timespan: gdelt.timespan,
+              maxRecords: gdelt.maxRecords,
+              fetchedAt: gdelt.fetchedAt,
+              lastAttemptAt: nowIso,
+              requestUrl: gdelt.requestUrl,
+            };
+            console.log(`GDELT：${gdelt.items.length} 則原文`);
+          } catch (e) {
+            // GDELT 是補充訊號；API 限流或暫時失敗只告警，RSS 主線照常更新。
+            status.gdelt = {
+              ok: false,
+              error: e.message,
+              label: "GDELT Global News",
+              lastAttemptAt: nowIso,
+              ...(/GDELT HTTP 429/i.test(e.message) ? { lastRateLimitAt: nowIso } : {}),
+            };
+            console.warn(`GDELT 失敗（補充來源，繼續部署）：${e.message}`);
+          }
         }
       } else {
         status.gdelt = { skipped: true, reason: want("gdelt") ? `topic=${intlCfg.topic}` : "未選取" };
@@ -331,8 +363,9 @@ export async function run() {
         : [];
       feedStatus = [...rssFeedStatus, ...gdeltFeedStatus];
       const okFeeds = feedStatus.filter((f) => f.ok && f.count).length;
+      const fallbackFeeds = feedStatus.filter((f) => f.ok && f.count && f.fallback === true).length;
       console.log(
-        `國際原文：${rawItems.length} 則（${okFeeds}/${feedStatus.length} 來源有回；${feedStatus
+        `國際原文：${rawItems.length} 則（${okFeeds}/${feedStatus.length} 來源有回，其中 ${fallbackFeeds} 個使用備援；${feedStatus
           .map((f) => `${f.label}:${f.ok ? f.count : "X"}`)
           .join(" ")}）`,
       );
@@ -391,6 +424,7 @@ export async function run() {
         rssRawCount: rss.items.length,
         gdeltRawCount: gdelt.ok ? gdelt.items.length : 0,
         okFeeds,
+        fallbackFeeds,
         totalFeeds: feedStatus.length,
         tier: intlCfg.tier,
         topic: intlCfg.topic,

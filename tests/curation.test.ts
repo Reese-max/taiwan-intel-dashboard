@@ -291,6 +291,41 @@ describe("resolveCuration + correlateEvents", () => {
     ]);
   });
 
+  it("blocked same_event restores its prior automatic edge instead of leaving weight 99", () => {
+    const a = ev({ id: "a", region: "高雄市", title: "鳳山分局破詐騙水房", source: { name: "來源A", type: "news-rss", recordRef: "https://example.com/a", fetchedAt: "" } });
+    const c = ev({ id: "c", region: "高雄市", title: "鳳山分局破詐騙水房", timestamp: "2026-06-20T11:00:00+08:00", source: { name: "來源C", type: "news-rss", recordRef: "https://example.com/c", fetchedAt: "" } });
+    const b = ev({ id: "b", region: "高雄市", title: "鳳山分局破詐騙水房", timestamp: "2026-06-20T12:00:00+08:00", source: { name: "來源B", type: "news-rss", recordRef: "https://example.com/b", fetchedAt: "" } });
+    const events = [a, c, b];
+    const automatic = correlateEvents(events);
+    const prior = automatic.edges.find((edge: any) => [edge.a, edge.b].sort().join("|") === "a|b");
+    expect(prior?.type).toBe("same-incident");
+
+    const resolution = resolveCuration([
+      pairRecord("same_event", a, b),
+      pairRecord("same_event", a, c),
+      pairRecord("not_same_event", b, c),
+    ], events);
+    const net = correlateEvents(events, { corrections: resolution });
+    const blocked = net.edges.find((edge: any) => [edge.a, edge.b].sort().join("|") === "a|b");
+
+    expect(blocked).toMatchObject({ type: prior.type, weight: prior.weight });
+    expect(blocked.weight).toBeLessThan(99);
+    expect(resolution.report.skipped).toContainEqual(
+      expect.objectContaining({ decision: "same_event", ids: ["a", "b"], reason: "blocked-by-not_same_event", status: "needs_review" }),
+    );
+  });
+
+  it("same_event over a weak automatic edge stays manual and adds no incident evidence", () => {
+    const [a, b] = clusterablePair();
+    const resolution = resolveCuration([pairRecord("same_event", a, b)], [a, b]);
+    const net = correlateEvents([a, b], { corrections: resolution });
+
+    expect(net.edges.find((edge: any) => [edge.a, edge.b].sort().join("|") === "a|b")?.manual).toBe(true);
+    expect(net.nodes.map((node: any) => node.sourceCount)).toEqual([0, 0]);
+    expect(net.clusters[0]?.sourceCount).toBe(0);
+    expect(net.clusters[0]?.evidenceSources).toEqual([]);
+  });
+
   it("follow_up 兩方向互斥 → conflict；同方向才輸出", () => {
     const [a, b] = clusterablePair();
     const fwd = pairRecord("follow_up", a, b);

@@ -25,6 +25,26 @@ describe("international feed registry", () => {
     expect(new Set(urls).size).toBe(urls.length);
   });
 
+  it("keeps blocked direct feeds first and declares site-scoped fallback URLs", () => {
+    const blocked = INTERNATIONAL_FEEDS.filter((feed) => feed.fallbackUrl);
+    expect(blocked.length).toBeGreaterThanOrEqual(50);
+    for (const feed of blocked) {
+      const fallback = new URL(feed.fallbackUrl);
+      const sourceHost = new URL(feed.url).hostname.replace(/^www\./, "");
+      expect(fallback.hostname).toBe("news.google.com");
+      expect(fallback.searchParams.get("q")).toBe(`site:${sourceHost} when:7d`);
+      expect(feed.url).not.toContain("news.google.com");
+    }
+    expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Health Policy Watch")?.fallbackUrl).toBeTruthy();
+    expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Space.com")?.fallbackUrl).toBeTruthy();
+    expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Towards AI")?.fallbackUrl).toBeTruthy();
+    expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Robohub")?.fallbackUrl).toBeTruthy();
+    const spanish = new URL(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Redacción Médica")!.fallbackUrl);
+    expect(spanish.searchParams.get("hl")).toBe("es-ES");
+    expect(spanish.searchParams.get("ceid")).toBe("ES:es");
+    expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "US DOJ Press Releases")?.fallbackUrl).toBeUndefined();
+  });
+
   it("exposes stable topic choices for manual international runs", () => {
     expect(INTERNATIONAL_TOPICS).toEqual([
       "general",

@@ -389,17 +389,21 @@ export function correlateEvents(events, opts = {}) {
 
   // ── 人工更正層（correction ledger）：先抑制再注入，進 union-find 前完成 ──
   for (const key of forbidden) edges.delete(key);
+  const forcedPreviousEdges = new Map();
   for (const key of forced) {
     const [a, b] = key.split("|");
     const prev = edges.get(key);
+    forcedPreviousEdges.set(key, prev ? { ...prev } : null);
     upsertEdge(edges, a, b, "same-incident", 99, "人工更正：same_event");
     const edge = edges.get(key);
+    // 強制更正必須成為 same-incident，即使舊候選剛好也是 weight 99。
+    edge.type = "same-incident";
+    edge.weight = 99;
     if (prev) {
-      // upsert 高權重整條覆蓋——把被蓋掉的自動證據脈絡併回，且不標 manual（自動邊本來就在）
+      // 保留自動候選理由；只有原本就是自動 same-incident 邊時，才保留其自動證據資格。
       if (!edge.why.includes(prev.why)) edge.why = `${edge.why}；自動候選：${prev.why}`;
-    } else {
-      edge.manual = true; // 純人工邊不計入跨源佐證統計
     }
+    edge.manual = !prev || prev.type !== "same-incident" || Boolean(prev.manual);
   }
 
   let edgeList = [...edges.values()];
@@ -448,7 +452,7 @@ export function correlateEvents(events, opts = {}) {
     const clusterDirectEvidenceIds = new Set();
     const evidenceSources = new Set();
     for (const edge of edgeList) {
-      if (edge.type !== "same-incident" || !memberIds.has(edge.a) || !memberIds.has(edge.b)) continue;
+      if (edge.type !== "same-incident" || edge.manual || !memberIds.has(edge.a) || !memberIds.has(edge.b)) continue;
       clusterDirectEvidenceIds.add(edge.a);
       clusterDirectEvidenceIds.add(edge.b);
       const aSource = eventsById.get(edge.a)?.source?.name;
@@ -553,13 +557,14 @@ export function correlateEvents(events, opts = {}) {
     });
     if (blocked.length) {
       const blockedSet = new Set(blocked);
-      edgeList = edgeList.filter((e) => {
-        if (e.manual && blockedSet.has(edgeKey(e.a, e.b))) {
-          degree.set(e.a, degree.get(e.a) - 1);
-          degree.set(e.b, degree.get(e.b) - 1);
-          return false;
-        }
-        return true;
+      edgeList = edgeList.flatMap((e) => {
+        const key = edgeKey(e.a, e.b);
+        if (!blockedSet.has(key)) return [e];
+        const previous = forcedPreviousEdges.get(key);
+        if (previous) return [previous];
+        degree.set(e.a, degree.get(e.a) - 1);
+        degree.set(e.b, degree.get(e.b) - 1);
+        return [];
       });
       const report = opts.corrections?.report;
       if (report) {
