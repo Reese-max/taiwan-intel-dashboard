@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
 async function showAllTime(page: Page): Promise<void> {
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.locator("#f-range").selectOption("");
   await expect(page.locator("#count")).not.toHaveText(/^0 則/, { timeout: 30_000 });
 }
@@ -140,4 +140,51 @@ test("同事件候選：多來源卡片仍顯示待查證並保留原文核對�
   await expect(page.locator("#eventlist .corroboration-chip")).toHaveCount(0);
   await expect(page.locator('#eventlist [data-id="candidate-a"] .event-decision')).toContainText("先查證原文再行動");
   await expect(page.locator('#eventlist [data-id="candidate-a"] .location-link')).toContainText("非案發點");
+});
+
+test("情報網載入中止時仍渲染事件與 KPI，且啟動請求共用同一 cohort", async ({ page }) => {
+  const now = new Date().toISOString();
+  const events = [{
+    id: "abort-safe-event", title: "合成測試事件", summary: "僅為測試。", region: "臺北市",
+    timestamp: now, category: "治安", scope: "domestic", riskLevel: "high",
+    lat: 25.03, lng: 121.56, locationPrecision: "city",
+    source: { name: "abort-safe-source", publisherName: "abort-safe-source", type: "news-rss", url: "https://example.test/news/1", fetchedAt: now },
+  }];
+  const empty = { nodes: [], edges: [], clusters: [], stats: {} };
+  const net = { snapshotId: "cohort-e2e-abort", generatedAt: now, domestic: empty, international: empty };
+  const eventsBody = JSON.stringify(events);
+  const netBody = JSON.stringify(net);
+  const manifest = {
+    manifestVersion: 1,
+    snapshotId: "cohort-e2e-abort",
+    generatedAt: now,
+    rulesVersion: "correlate-v1",
+    scopes: {
+      domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+      international: { events: "international.json", map: "international.map.json", network: "network.json" },
+    },
+    files: {
+      "domestic.json": { path: "domestic.json", sha256: sha(eventsBody), bytes: eventsBody.length },
+      "domestic.map.json": { path: "domestic.map.json", sha256: sha(eventsBody), bytes: eventsBody.length },
+      "network.json": { path: "network.json", sha256: sha(netBody), bytes: netBody.length },
+    },
+  };
+  let eventRequests = 0;
+  await page.route(/^https:\/\/(?:fonts\.googleapis\.com|fonts\.gstatic\.com)\//, (route) => route.abort());
+  await page.route("**/data/*.json", (route) => {
+    const filename = new URL(route.request().url()).pathname.split("/").pop();
+    if (filename === "manifest.json") return route.fulfill({ json: manifest });
+    if (filename === "domestic.json") {
+      eventRequests += 1;
+      return route.fulfill({ body: eventsBody, contentType: "application/json" });
+    }
+    if (filename === "domestic.map.json") return route.fulfill({ body: eventsBody, contentType: "application/json" });
+    if (filename === "network.json") return route.abort("failed");
+    return route.fulfill({ status: 404 });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#kpistrip")).not.toBeEmpty({ timeout: 30_000 });
+  await expect(page.locator('#eventlist [data-id="abort-safe-event"]')).toBeVisible({ timeout: 30_000 });
+  expect(eventRequests).toBe(1);
 });

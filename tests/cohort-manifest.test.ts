@@ -13,6 +13,31 @@ afterEach(() => {
 });
 
 describe("Cohort Manifest (Work package D2)", () => {
+  it("情報網 response body 中止時保留並繪製已成功載入的事件資料", async () => {
+    const { loadEvents } = await import("../src/data/loader");
+    const { loadNetwork } = await import("../src/data/network");
+    const events = [{ id: "event-kept", scope: "domestic", title: "保留事件" }];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      if (String(input).includes("network.json")) {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => {
+            throw new DOMException("The user aborted a request.", "AbortError");
+          },
+        } as Response;
+      }
+      return { ok: true, status: 200, text: async () => JSON.stringify(events) } as Response;
+    });
+
+    const [loadedEvents, network] = await Promise.all([loadEvents("domestic"), loadNetwork("domestic")]);
+
+    expect(loadedEvents.map((event) => event.id)).toEqual(["event-kept"]);
+    expect(network.state).toBe("error");
+    expect(network.error).toContain("逾時");
+  });
+
   it("建立 manifest 正確計算檔案雜湊與快照 ID", () => {
     mkdirSync(TEMP_DIR, { recursive: true });
     writeFileSync(join(TEMP_DIR, "domestic.json"), JSON.stringify([{ id: "e1" }, { id: "e2" }]));

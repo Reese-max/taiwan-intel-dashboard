@@ -393,6 +393,48 @@ document.getElementById("filter-sheet-close")?.addEventListener("click", () => s
 document.getElementById("filter-sheet-done")?.addEventListener("click", () => setMobileFilters(false));
 const cache: Partial<Record<Scope, IntelEvent[]>> = {};
 const netCache: Partial<Record<Scope, NetworkIndex>> = {};
+type CohortPair = [IntelEvent[], NetworkIndex];
+const cohortPairInflight: Partial<Record<Scope, { key: string; promise: Promise<CohortPair> }>> = {};
+
+function fetchCohortPair(scope: Scope, manifest: CohortManifest | null): Promise<CohortPair> {
+  const manifestEvents = manifest?.scopes?.[scope]?.events;
+  const eventsPath = manifestEvents ? `./data/${manifestEvents}` : `./data/${scope}.json`;
+  const expectedEventsHash =
+    manifest?.files?.[manifestEvents || ""]?.sha256 || manifest?.scopes?.[scope]?.sha256;
+  const manifestNetwork = manifest?.scopes?.[scope]?.network;
+  const networkPath = manifestNetwork ? `./data/${manifestNetwork}` : "./data/network.json";
+  const expectedNetworkHash = manifest?.files?.[manifestNetwork || "network.json"]?.sha256;
+  const key = JSON.stringify({ scope, snapshotId: manifest?.snapshotId ?? null, eventsPath, expectedEventsHash, networkPath, expectedNetworkHash });
+  const existing = cohortPairInflight[scope];
+  if (existing?.key === key) return existing.promise;
+
+  const promise: Promise<CohortPair> = Promise.all([
+    cache[scope] ??
+      loadEvents(scope, {
+        url: eventsPath,
+        expectedSha256: expectedEventsHash,
+      }),
+    netCache[scope] ??
+      loadNetwork(scope, {
+        networkUrl: networkPath,
+        expectedSnapshotId: manifest?.snapshotId,
+        expectedSha256: expectedNetworkHash,
+        previousIndex: netCache[scope],
+      }),
+  ]);
+  const entry = { key, promise };
+  cohortPairInflight[scope] = entry;
+  void promise.then(
+    () => {
+      if (cohortPairInflight[scope] === entry) delete cohortPairInflight[scope];
+    },
+    () => {
+      if (cohortPairInflight[scope] === entry) delete cohortPairInflight[scope];
+    },
+  );
+  return promise;
+}
+
 const triageAcked = loadTriageAcked();
 let triageStorageOk = true;
 let triageSortMode: TriageSortMode = "default";
@@ -611,37 +653,12 @@ async function refresh(): Promise<void> {
     if (requestId !== refreshRequestId) return;
   }
 
-  const fetchCohortPair = async (manifest: CohortManifest | null) => {
-    const manifestEvents = manifest?.scopes?.[s.scope]?.events;
-    const eventsPath = manifestEvents ? `./data/${manifestEvents}` : `./data/${s.scope}.json`;
-    const expectedEventsHash =
-      manifest?.files?.[manifestEvents || ""]?.sha256 || manifest?.scopes?.[s.scope]?.sha256;
-    const manifestNetwork = manifest?.scopes?.[s.scope]?.network;
-    const networkPath = manifestNetwork ? `./data/${manifestNetwork}` : "./data/network.json";
-    const expectedNetworkHash = manifest?.files?.[manifestNetwork || "network.json"]?.sha256;
-
-    return await Promise.all([
-      cache[s.scope] ??
-        loadEvents(s.scope, {
-          url: eventsPath,
-          expectedSha256: expectedEventsHash,
-        }),
-      netCache[s.scope] ??
-        loadNetwork(s.scope, {
-          networkUrl: networkPath,
-          expectedSnapshotId: manifest?.snapshotId,
-          expectedSha256: expectedNetworkHash,
-          previousIndex: netCache[s.scope],
-        }),
-    ]);
-  };
-
   // 事件與情報網兩支 fetch 並行（原本串行，第二支要等第一支完成才開始）。
   if (!cache[s.scope] || !netCache[s.scope]) {
     // 首載/切換 scope 時主資料尚未快取：顯示載入佔位（篩選變更走快取、不會閃爍）。
     if (!cache[s.scope]) eventList.innerHTML = `<p class="empty">情報載入中…</p>`;
     try {
-      let [ev, net] = await fetchCohortPair(cohortManifest);
+      let [ev, net] = await fetchCohortPair(s.scope, cohortManifest);
       if (requestId !== refreshRequestId) return;
 
       const isMismatch = net.error && /不符|缺少快照版本/i.test(net.error);
@@ -652,7 +669,7 @@ async function refresh(): Promise<void> {
         if (refreshedManifest) {
           cohortManifest = refreshedManifest;
           try {
-            [ev, net] = await fetchCohortPair(cohortManifest);
+            [ev, net] = await fetchCohortPair(s.scope, cohortManifest);
             if (requestId !== refreshRequestId) return;
           } catch {
             // 保持現狀
@@ -684,7 +701,7 @@ async function refresh(): Promise<void> {
         if (refreshedManifest) {
           cohortManifest = refreshedManifest;
           try {
-            const [ev, net] = await fetchCohortPair(cohortManifest);
+            const [ev, net] = await fetchCohortPair(s.scope, cohortManifest);
             if (requestId !== refreshRequestId) return;
             cache[s.scope] = ev;
             netCache[s.scope] = net;

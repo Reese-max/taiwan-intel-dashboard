@@ -64,6 +64,7 @@ const manifest = {
 
 test("部署競態：manifest 先於 map 請求；hash 不符的 S1 產物永不晉級", async ({ page }) => {
   const order: string[] = [];
+  await page.route(/^https:\/\/(?:fonts\.googleapis\.com|fonts\.gstatic\.com)\//, (route) => route.abort());
   await page.addInitScript(() => {
     // cluster bubble 是 DOM（divIcon）：記錄 S1 特有的「3」泡泡是否曾出現，
     // 即使之後被 refresh 重繪覆蓋也能抓到瞬間晉級。
@@ -77,29 +78,30 @@ test("部署競態：manifest 先於 map 請求；hash 不符的 S1 產物永不
     }).observe(document.documentElement, { childList: true, subtree: true });
   });
 
-  // catch-all 先註冊（Playwright 後註冊者優先），其餘 data/*.json 一律 404。
-  await page.route("**/data/*.json", (route) => route.fulfill({ status: 404 }));
-  await page.route("**/data/manifest.json", async (route) => {
-    order.push("manifest");
-    await new Promise((r) => setTimeout(r, 80)); // 放大競態視窗：未鎖定實作必讓 map 先到
-    await route.fulfill({ json: manifest });
+  await page.route("**/data/*.json", async (route) => {
+    const filename = new URL(route.request().url()).pathname.split("/").pop();
+    if (filename === "manifest.json") {
+      order.push("manifest");
+      await new Promise((r) => setTimeout(r, 80)); // 放大競態視窗：未鎖定實作必讓 map 先到
+      return route.fulfill({ json: manifest });
+    }
+    if (filename === "domestic.map.json") {
+      order.push("map");
+      return route.fulfill({ body: JSON.stringify(s1MapEvents), contentType: "application/json" });
+    }
+    if (filename === "domestic.json") {
+      order.push("events");
+      return route.fulfill({ body: s2EventsBody, contentType: "application/json" });
+    }
+    if (filename === "international.json") return route.fulfill({ json: [] });
+    if (filename === "network.json") return route.fulfill({ body: networkBody, contentType: "application/json" });
+    return route.fulfill({ status: 404 });
   });
-  await page.route("**/data/domestic.map.json", (route) => {
-    order.push("map");
-    return route.fulfill({ body: JSON.stringify(s1MapEvents), contentType: "application/json" });
-  });
-  await page.route("**/data/domestic.json", (route) => {
-    order.push("events");
-    return route.fulfill({ body: s2EventsBody, contentType: "application/json" });
-  });
-  await page.route("**/data/international.json", (route) => route.fulfill({ json: [] }));
-  await page.route("**/data/network.json", (route) =>
-    route.fulfill({ body: networkBody, contentType: "application/json" }),
-  );
 
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.locator("#eventlist > *").first()).toBeVisible({ timeout: 30_000 });
-  await expect(page.locator("#eventlist")).toContainText("s2-a");
+  await expect(page.locator("#eventlist")).toContainText("s2-a", { timeout: 30_000 });
+  await expect.poll(() => order, { timeout: 15_000 }).toContain("map");
 
   // manifest 必須在任何同版產物（events/map/network）之前完成請求。
   expect(order.indexOf("manifest")).toBe(0);
@@ -113,25 +115,25 @@ test("部署競態：manifest 先於 map 請求；hash 不符的 S1 產物永不
 
 test("深連結 scope：first-paint 以網址 scope 為準，不快取預設 domestic 產物", async ({ page }) => {
   const requested: string[] = [];
-  await page.route("**/data/*.json", (route) => route.fulfill({ status: 404 }));
-  await page.route("**/data/manifest.json", (route) => route.fulfill({ json: manifest }));
-  await page.route("**/data/domestic.map.json", (route) => {
-    requested.push("domestic.map");
-    return route.fulfill({ body: s2MapBody, contentType: "application/json" });
+  await page.route(/^https:\/\/(?:fonts\.googleapis\.com|fonts\.gstatic\.com)\//, (route) => route.abort());
+  await page.route("**/data/*.json", (route) => {
+    const filename = new URL(route.request().url()).pathname.split("/").pop();
+    if (filename === "manifest.json") return route.fulfill({ json: manifest });
+    if (filename === "domestic.map.json") {
+      requested.push("domestic.map");
+      return route.fulfill({ body: s2MapBody, contentType: "application/json" });
+    }
+    if (filename === "international.map.json") {
+      requested.push("international.map");
+      return route.fulfill({ body: s2MapBody, contentType: "application/json" });
+    }
+    if (filename === "domestic.json") return route.fulfill({ body: s2EventsBody, contentType: "application/json" });
+    if (filename === "international.json") return route.fulfill({ json: [] });
+    if (filename === "network.json") return route.fulfill({ body: networkBody, contentType: "application/json" });
+    return route.fulfill({ status: 404 });
   });
-  await page.route("**/data/international.map.json", (route) => {
-    requested.push("international.map");
-    return route.fulfill({ body: s2MapBody, contentType: "application/json" });
-  });
-  await page.route("**/data/domestic.json", (route) =>
-    route.fulfill({ body: s2EventsBody, contentType: "application/json" }),
-  );
-  await page.route("**/data/international.json", (route) => route.fulfill({ json: [] }));
-  await page.route("**/data/network.json", (route) =>
-    route.fulfill({ body: networkBody, contentType: "application/json" }),
-  );
 
-  await page.goto("/#scope=international");
+  await page.goto("/#scope=international", { waitUntil: "domcontentloaded" });
   // first-paint 應請求 international.map.json，且絕不碰 domestic.map.json。
   await expect.poll(() => requested, { timeout: 15_000 }).toContain("international.map");
   await page.waitForTimeout(300);

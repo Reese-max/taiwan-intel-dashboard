@@ -231,6 +231,16 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   const url = options.networkUrl ?? "./data/network.json";
   const timeoutMs = options.timeoutMs ?? NETWORK_FETCH_TIMEOUT_MS;
   const previous = options.previousIndex && options.previousIndex.state !== "error" ? options.previousIndex : null;
+  const failed = (err: unknown, describe: (reason: string) => string): NetworkIndex => {
+    const reason = err instanceof Error ? err.message : String(err);
+    const isTimeout =
+      (err instanceof DOMException && err.name === "TimeoutError") ||
+      (err instanceof Error && /timeout|aborted/i.test(`${err.name} ${err.message}`));
+    const errorMsg = isTimeout
+      ? `載入情報網逾時 (超過 ${Math.round(timeoutMs / 1000)} 秒)`
+      : describe(reason);
+    return previous ? NetworkIndex.createStale(previous, errorMsg) : NetworkIndex.createError(errorMsg);
+  };
 
   let res: Response;
   try {
@@ -243,14 +253,7 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
 
     res = await fetch(url, { signal });
   } catch (err: unknown) {
-    const isTimeout =
-      (err instanceof DOMException && err.name === "TimeoutError") ||
-      (err instanceof Error && /timeout|aborted/i.test(err.message));
-    const errorMsg = isTimeout
-      ? `載入情報網逾時 (超過 ${Math.round(timeoutMs / 1000)} 秒)`
-      : `網路連線異常: ${err instanceof Error ? err.message : String(err)}`;
-    if (previous) return NetworkIndex.createStale(previous, errorMsg);
-    return NetworkIndex.createError(errorMsg);
+    return failed(err, (reason) => `網路連線異常: ${reason}`);
   }
 
   if (!res.ok) {
@@ -265,7 +268,14 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   let rawText: string | null = null;
   let net: IntelNetwork;
   if (typeof res.text === "function") {
-    rawText = await res.text();
+    try {
+      // AbortSignal also governs response body consumption, not only response headers.
+      // Convert a slow/truncated body into relation error state so Promise.all consumers
+      // can still render the independently loaded event data.
+      rawText = await res.text();
+    } catch (err: unknown) {
+      return failed(err, (reason) => `讀取情報網失敗: ${reason}`);
+    }
     if (options.expectedSha256) {
       let hash = "";
       try {
@@ -297,9 +307,7 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
     try {
       net = (await res.json()) as IntelNetwork;
     } catch (err: unknown) {
-      const errorMsg = `情報網資料格式錯誤 (JSON 無法解析: ${err instanceof Error ? err.message : String(err)})`;
-      if (previous) return NetworkIndex.createStale(previous, errorMsg);
-      return NetworkIndex.createError(errorMsg);
+      return failed(err, (reason) => `情報網資料格式錯誤 (JSON 無法解析: ${reason})`);
     }
   }
 
