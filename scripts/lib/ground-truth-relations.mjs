@@ -11,6 +11,7 @@
 // `ledgerDecision` 標記並照常按 family 切分——不會全部沉到 holdout（report 分開計數）。
 
 import { createHash } from "node:crypto";
+import { extractSignals, isLocalPlace } from "./correlate.mjs";
 
 export const PAIR_SCHEMA = "relation-pairs/1";
 export const LOCATION_SCHEMA = "location-labels/1";
@@ -43,7 +44,10 @@ export function validatePairRow(row) {
   if (typeof row.a !== "string" || !row.a || typeof row.b !== "string" || !row.b || row.a === row.b) return "invalid-pair";
   if (!RELATION_LABELS.has(row.label)) return "unknown-label";
   if (row.labeledBy !== "human" && row.labeledBy !== "agent-draft") return "invalid-labeledBy";
-  if (row.labeledBy === "human" && (typeof row.family !== "string" || !row.family.trim())) return "missing-family";
+  if (row.labeledBy === "human" && row.label !== "uncertain") {
+    if (typeof row.familyA !== "string" || !row.familyA.trim() || typeof row.familyB !== "string" || !row.familyB.trim()) return "missing-endpoint-family";
+    if (RELATED_LABELS.has(row.label) && row.familyA !== row.familyB) return "related-family-mismatch";
+  }
   if (typeof row.evidence !== "string" || !row.evidence.trim()) return "missing-evidence";
   if (typeof row.labeledAt !== "string" || !Number.isFinite(Date.parse(row.labeledAt))) return "invalid-labeledAt";
   return null;
@@ -81,7 +85,7 @@ export function loadLabeledJsonl(text, validate) {
         return;
       }
       if (row && (row.label === "" || (row.schema === LOCATION_SCHEMA && row.locationRole === ""))) {
-        // 未標註候選只驗 identity；family 與 location 判斷須由人工核對後填入。
+        // 未標註候選只驗 identity；endpoint family 與 location 判斷須由人工核對後填入。
         const structural = row.schema === PAIR_SCHEMA
           ? typeof row.a !== "string" || !row.a || typeof row.b !== "string" || !row.b || row.a === row.b
             ? "invalid-pair"
@@ -128,20 +132,22 @@ export function enumerateCandidatePairs(events, net, { maxPairs = 200, seed = 43
 
   const seen = new Set();
   const out = [];
-  const push = (a, b, autoRelation, source) => {
+  const push = (a, b, autoRelation, source, matchedEntity = null) => {
     if (a === b || !byId.has(a) || !byId.has(b)) return;
     const key = pairKeyOf(a, b);
     if (seen.has(key)) return;
     seen.add(key);
-    const [fa, fb] = [familyOf(a), familyOf(b)].sort();
     out.push({
       schema: PAIR_SCHEMA,
       a,
       b,
-      family: "",
-      suggestedFamily: fa === fb ? fa : `${fa}+${fb}`,
+      familyA: "",
+      familyB: "",
+      suggestedFamilyA: familyOf(a),
+      suggestedFamilyB: familyOf(b),
       autoRelation,
       candidateSource: source,
+      ...(matchedEntity ? { matchedEntity } : {}),
       label: "",
       evidence: "",
       labeledAt: "",
@@ -185,16 +191,47 @@ export function enumerateCandidatePairs(events, net, { maxPairs = 200, seed = 43
     }
   }
 
+  // 不同縣市同名道路/車站等，是區域消歧的 hard negative 候選，絕不直接建關聯。
+  // 沿用 correlation 的實體抽取，但每個實體最多 24 事件、最多 100 個實體以界定成本。
+  const vagueRegions = new Set(["全國", "未知", "", "—", "-", "全球", "國際", "海外", "臺灣", "台灣"]);
+  const byLocalEntity = new Map();
+  for (const event of byId.values()) {
+    const signals = extractSignals(event);
+    if (vagueRegions.has(signals.region)) continue;
+    for (const entity of signals.entities) {
+      if (!isLocalPlace(entity)) continue;
+      if (!byLocalEntity.has(entity)) byLocalEntity.set(entity, []);
+      byLocalEntity.get(entity).push({ id: event.id, region: signals.region });
+    }
+  }
+  const entityScore = (entity) => hashString(`${seed}|${entity}`);
+  const entityNames = [...byLocalEntity.keys()].sort((a, b) => entityScore(a) - entityScore(b) || a.localeCompare(b)).slice(0, 100);
+  for (const entity of entityNames) {
+    const group = byLocalEntity.get(entity)
+      .sort((a, b) => hashString(`${seed}|${entity}|${a.id}`) - hashString(`${seed}|${entity}|${b.id}`) || a.id.localeCompare(b.id))
+      .slice(0, 24);
+    for (let i = 0; i < group.length; i += 1) {
+      for (let j = i + 1; j < group.length; j += 1) {
+        if (group[i].region !== group[j].region) push(group[i].id, group[j].id, null, "cross-region-local-entity", entity);
+      }
+    }
+  }
+
   // deterministic 抽樣：seed+pair key 打分散值後排序截斷；auto-edge/cluster 候選優先保留一半額度
   const scored = out.map((row) => ({
     row,
     score: hashString(`${seed}|${pairKeyOf(row.a, row.b)}`),
   }));
   scored.sort((x, y) => x.score - y.score || (pairKeyOf(x.row.a, x.row.b) < pairKeyOf(y.row.a, y.row.b) ? -1 : 1));
-  const auto = scored.filter((s) => s.row.candidateSource !== "same-region-unlinked");
-  const unlinked = scored.filter((s) => s.row.candidateSource === "same-region-unlinked");
-  const autoQuota = Math.ceil(maxPairs / 2);
-  return [...auto.slice(0, autoQuota), ...unlinked.slice(0, maxPairs - Math.min(auto.length, autoQuota))].map((s) => s.row);
+  const auto = scored.filter((s) => s.row.candidateSource === "auto-edge" || s.row.candidateSource === "auto-cluster");
+  const sameRegion = scored.filter((s) => s.row.candidateSource === "same-region-unlinked");
+  const crossRegion = scored.filter((s) => s.row.candidateSource === "cross-region-local-entity");
+  const autoTake = Math.min(auto.length, Math.ceil(maxPairs / 2));
+  const crossTake = Math.min(crossRegion.length, Math.ceil((maxPairs - autoTake) / 2));
+  const selected = [...auto.slice(0, autoTake), ...crossRegion.slice(0, crossTake)];
+  const remaining = [...sameRegion, ...auto.slice(autoTake), ...crossRegion.slice(crossTake)]
+    .sort((a, b) => a.score - b.score || pairKeyOf(a.row.a, a.row.b).localeCompare(pairKeyOf(b.row.a, b.row.b)));
+  return [...selected, ...remaining.slice(0, Math.max(0, maxPairs - selected.length))].map((s) => s.row);
 }
 
 // ── metrics ──────────────────────────────────────────────────────────────────
@@ -275,32 +312,49 @@ function relationMetricsFor(rows, net) {
 
 // 已確認相關的 pair 若共享事件，必須使用同一人工核對的故事族群。
 // sampler 的 suggestedFamily 是系統推測，不能作為 holdout/tuning 分割依據。
-function assertRelatedFamilies(rows) {
+function assertHumanFamilies(rows) {
   const familyByEvent = new Map();
   for (const row of rows) {
-    if (typeof row.family !== "string" || !row.family.trim()) {
-      throw new Error(`Missing human story family for ${pairKeyOf(row.a, row.b)}`);
+    const families = [row.familyA, row.familyB];
+    if (row.label === "uncertain" && families.some((family) => typeof family !== "string" || !family.trim())) continue;
+    if (families.some((family) => typeof family !== "string" || !family.trim())) {
+      throw new Error(`Missing human endpoint families for ${pairKeyOf(row.a, row.b)}`);
     }
-    if (!RELATED_LABELS.has(row.label)) continue;
-    for (const id of [row.a, row.b]) {
+    if (RELATED_LABELS.has(row.label) && row.familyA !== row.familyB) {
+      throw new Error(`Related pair has conflicting story families: ${pairKeyOf(row.a, row.b)}`);
+    }
+    for (const [id, family] of [[row.a, row.familyA], [row.b, row.familyB]]) {
       const existing = familyByEvent.get(id);
-      if (existing && existing !== row.family) {
-        throw new Error(`Conflicting human story families for event ${id}: ${existing} / ${row.family}`);
+      if (existing && existing !== family) {
+        throw new Error(`Conflicting human story families for event ${id}: ${existing} / ${family}`);
       }
-      familyByEvent.set(id, row.family);
+      familyByEvent.set(id, family);
     }
   }
 }
 
-// split 只看人工標註的 family；非人工草稿完全不進 metrics。
+// split 同時看兩端的人工 family；跨 split 的 negative 只進全體 metrics，不洩漏到任一側。
 export function computeRelationMetrics(rows, net) {
   const labeled = (rows || []).filter((r) => r?.labeledBy === "human" && RELATION_LABELS.has(r.label));
-  assertRelatedFamilies(labeled);
-  const tuning = labeled.filter((r) => assignSplit(r.family) === "tuning");
-  const holdout = labeled.filter((r) => assignSplit(r.family) === "holdout");
+  const validIds = new Set((net?.nodes || []).map((node) => node.id));
+  for (const row of labeled) {
+    for (const id of [row.a, row.b]) {
+      if (!validIds.has(id)) throw new Error(`Pair references event ${id} absent from benchmark snapshot`);
+    }
+  }
+  assertHumanFamilies(labeled);
+  const splitFor = (row) => {
+    if (!row.familyA || !row.familyB) return null;
+    const a = assignSplit(row.familyA);
+    return a === assignSplit(row.familyB) ? a : null;
+  };
+  const tuning = labeled.filter((r) => splitFor(r) === "tuning");
+  const holdout = labeled.filter((r) => splitFor(r) === "holdout");
   return {
     ...relationMetricsFor(labeled, net),
     draftsExcluded: (rows || []).filter((r) => r?.labeledBy !== "human").length,
+    crossSplitExcluded: labeled.filter((r) => r.label !== "uncertain" && splitFor(r) === null).length,
+    uncertainUnassigned: labeled.filter((r) => r.label === "uncertain" && splitFor(r) === null).length,
     splits: { tuning: relationMetricsFor(tuning, net), holdout: relationMetricsFor(holdout, net) },
   };
 }

@@ -51,7 +51,8 @@ function pairRow(over: Record<string, unknown> = {}) {
     schema: "relation-pairs/1",
     a: "a",
     b: "b",
-    family: "fam-1",
+    familyA: "fam-1",
+    familyB: "fam-1",
     label: "same_event",
     evidence: "https://example.com/proof",
     labeledAt: "2026-09-17T00:00:00Z",
@@ -66,11 +67,13 @@ describe("validatePairRow / validateLocationRow", () => {
     expect(validatePairRow(pairRow({ label: "same_thing" }))).toBe("unknown-label");
     expect(validatePairRow(pairRow({ a: "" }))).toBe("invalid-pair");
     expect(validatePairRow(pairRow({ a: "b", b: "b" }))).toBe("invalid-pair"); // 自環
-    expect(validatePairRow(pairRow({ family: "" }))).toBe("missing-family");
+    expect(validatePairRow(pairRow({ familyA: "" }))).toBe("missing-endpoint-family");
+    expect(validatePairRow(pairRow({ familyB: "other" }))).toBe("related-family-mismatch");
     expect(validatePairRow(pairRow({ labeledBy: "" }))).toBe("invalid-labeledBy");
     expect(validatePairRow(pairRow({ evidence: "" }))).toBe("missing-evidence");
     expect(validatePairRow(pairRow({ labeledBy: "agent-draft" }))).toBeNull(); // 允許但下游可分開計
-    expect(validatePairRow(pairRow({ labeledBy: "agent-draft", family: "" }))).toBeNull();
+    expect(validatePairRow(pairRow({ labeledBy: "agent-draft", familyA: "", familyB: "" }))).toBeNull();
+    expect(validatePairRow(pairRow({ label: "uncertain", familyA: "", familyB: "" }))).toBeNull();
     expect(validatePairRow(pairRow({ labeledAt: "not-a-date" }))).toBe("invalid-labeledAt");
     expect(validatePairRow({ ...pairRow(), schema: "relation-pairs/0" })).toBe("unsupported-schema");
   });
@@ -98,11 +101,11 @@ describe("validatePairRow / validateLocationRow", () => {
 
 describe("unlabeled candidates", () => {
   it("pair/location 候選的空人工欄位保留待標註，不偷用系統推測", () => {
-    const pairCandidate = { ...pairRow(), label: "", family: "", suggestedFamily: "single:a+single:b", evidence: "", labeledAt: "", labeledBy: "" };
+    const pairCandidate = { ...pairRow(), label: "", familyA: "", familyB: "", suggestedFamilyA: "single:a", suggestedFamilyB: "single:b", evidence: "", labeledAt: "", labeledBy: "" };
     const locationCandidate = { schema: "location-labels/1", event: "a", locationRole: "", locationPrecision: "", region: "", evidence: "", labeledAt: "", labeledBy: "", suggestedLocationRole: "incident" };
     const pairs = loadLabeledJsonl(JSON.stringify(pairCandidate), validatePairRow);
     const locations = loadLabeledJsonl(JSON.stringify(locationCandidate), validateLocationRow);
-    expect(pairs).toMatchObject({ rows: [], errors: [], unlabeled: [expect.objectContaining({ family: "" })] });
+    expect(pairs).toMatchObject({ rows: [], errors: [], unlabeled: [expect.objectContaining({ familyA: "", familyB: "" })] });
     expect(locations).toMatchObject({ rows: [], errors: [], unlabeled: [expect.objectContaining({ locationRole: "" })] });
   });
 });
@@ -134,8 +137,19 @@ describe("enumerateCandidatePairs — 抽樣涵蓋未連線候選", () => {
     // 系統 family 只做提示；人工確認前不得影響 split。
     const ab = pairs.find((p: any) => key(p.a, p.b) === "a|b");
     expect(ab.autoRelation).toBeTruthy();
-    expect(ab.family).toBe("");
-    expect(typeof ab.suggestedFamily).toBe("string");
+    expect(ab.familyA).toBe("");
+    expect(ab.familyB).toBe("");
+    expect(typeof ab.suggestedFamilyA).toBe("string");
+    expect(typeof ab.suggestedFamilyB).toBe("string");
+  });
+
+  it("不同縣市同名道路進入獨立 hard-negative 候選層，不自動連邊", () => {
+    const a = ev({ id: "road-a", region: "臺北市", title: "中山路追撞事故", source: { name: "A", type: "news-rss", recordRef: "https://example.com/road-a" } });
+    const b = ev({ id: "road-b", region: "高雄市", title: "中山路行人跌倒", source: { name: "B", type: "news-rss", recordRef: "https://example.com/road-b" } });
+    const net = correlateEvents([a, b]);
+    expect(net.edges).toHaveLength(0);
+    const pairs = enumerateCandidatePairs([a, b], net, { maxPairs: 10, seed: 7 });
+    expect(pairs).toEqual([expect.objectContaining({ a: "road-a", b: "road-b", candidateSource: "cross-region-local-entity", matchedEntity: "中山路", autoRelation: null })]);
   });
 });
 
@@ -151,7 +165,7 @@ describe("computeRelationMetrics", () => {
       pairRow({ a: "a", b: "b", label: "same_event" }),          // TP：真併群
       pairRow({ a: "a", b: "c", label: "different_event" }),     // FP：a-c 被併同群 → false merge
       pairRow({ a: "c", b: "d", label: "different_event" }),     // TN
-      pairRow({ a: "c", b: "d", family: "fam-9", label: "uncertain" }), // 不計入分母
+      pairRow({ a: "c", b: "d", familyA: "", familyB: "", label: "uncertain" }), // 不計入分母
     ];
     const metrics = computeRelationMetrics(rows, net);
     expect(metrics.sameEvent.tp).toBe(1);
@@ -177,10 +191,11 @@ describe("computeRelationMetrics", () => {
     const rows = [pairRow({ label: "follow_up" })];
     const edges = [];
     for (let i = 0; i < 9; i += 1) {
-      rows.push(pairRow({ a: `x${i}`, b: `y${i}`, family: `family-${i}`, label: "follow_up" }));
+      rows.push(pairRow({ a: `x${i}`, b: `y${i}`, familyA: `family-${i}`, familyB: `family-${i}`, label: "follow_up" }));
       edges.push({ a: `x${i}`, b: `y${i}`, type: "follow-up" });
     }
-    const result = computeRelationMetrics(rows, { clusters: [{ id: "merged", members: ["a", "b"] }], edges });
+    const nodes = ["a", "b", ...edges.flatMap((edge) => [edge.a, edge.b])].map((id) => ({ id }));
+    const result = computeRelationMetrics(rows, { nodes, clusters: [{ id: "merged", members: ["a", "b"] }], edges });
     expect(result.falseMerge).toMatchObject({ count: 1, rate: 0.1 });
     expect(result.missedRelation.count).toBe(0);
   });
@@ -188,8 +203,8 @@ describe("computeRelationMetrics", () => {
   it("agent-draft 不得改變人工 precision/recall，並分開計數", () => {
     const result = computeRelationMetrics([
       pairRow(),
-      pairRow({ a: "a", b: "c", family: "", label: "different_event", labeledBy: "agent-draft" }),
-    ], { clusters: [{ id: "merged", members: ["a", "b", "c"] }], edges: [] });
+      pairRow({ a: "a", b: "c", familyA: "", familyB: "", label: "different_event", labeledBy: "agent-draft" }),
+    ], { nodes: [{ id: "a" }, { id: "b" }, { id: "c" }], clusters: [{ id: "merged", members: ["a", "b", "c"] }], edges: [] });
     expect(result.sameEvent.precision).toBe(1);
     expect(result.evaluated).toBe(1);
     expect(result.draftsExcluded).toBe(1);
@@ -197,9 +212,31 @@ describe("computeRelationMetrics", () => {
 
   it("同一已確認故事的相關 pair 若 family 不一致就拒絕切分", () => {
     expect(() => computeRelationMetrics([
-      pairRow({ a: "a", b: "b", family: "story-1" }),
-      pairRow({ a: "a", b: "c", family: "story-2", label: "follow_up" }),
-    ], { clusters: [], edges: [] })).toThrow(/Conflicting human story families for event a/);
+      pairRow({ a: "a", b: "b", familyA: "story-1", familyB: "story-1" }),
+      pairRow({ a: "a", b: "c", familyA: "story-2", familyB: "story-2", label: "follow_up" }),
+    ], { nodes: [{ id: "a" }, { id: "b" }, { id: "c" }], clusters: [], edges: [] })).toThrow(/Conflicting human story families for event a/);
+  });
+
+  it("跨 tuning/holdout 的 different_event 保留全體指標，但不放進任一 split", () => {
+    const first = "story-a";
+    const second = ["story-b", "story-c", "story-d", "story-e"].find((family) => assignSplit(family) !== assignSplit(first));
+    expect(second).toBeDefined();
+    const rows = [
+      pairRow({ a: "a", b: "b", familyA: first, familyB: first }),
+      pairRow({ a: "c", b: "d", familyA: second, familyB: second }),
+      pairRow({ a: "a", b: "c", familyA: first, familyB: second, label: "different_event" }),
+    ];
+    const net = { nodes: ["a", "b", "c", "d"].map((id) => ({ id })), clusters: [{ id: "ab", members: ["a", "b"] }, { id: "cd", members: ["c", "d"] }], edges: [] };
+    const m = computeRelationMetrics(rows, net);
+    expect(m.evaluated).toBe(3);
+    expect(m.crossSplitExcluded).toBe(1);
+    expect(m.splits.tuning.evaluated + m.splits.holdout.evaluated).toBe(2);
+  });
+
+  it("pair 事件 ID 不在重播快照時拒絕計分", () => {
+    expect(() => computeRelationMetrics([
+      pairRow({ a: "a", b: "missing", familyA: "fam-a", familyB: "fam-b", label: "different_event" }),
+    ], { nodes: [{ id: "a" }], clusters: [], edges: [] })).toThrow(/event missing absent from benchmark snapshot/);
   });
 });
 
@@ -273,6 +310,32 @@ describe("candidate sampler", () => {
       expect(rows[0]).toMatchObject({ schema: "location-labels/1", locationRole: "", locationPrecision: "", labeledBy: "", sourceIdentity: expect.stringContaining("example.com") });
       await runSample(args);
       expect(readFileSync(join(dir, "locations.jsonl"), "utf8")).toBe(first);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("沒有任何 relation pair 時仍從全部事件抽地點並存入重播快照", async () => {
+    const dir = mkdtempSync(join(process.cwd(), ".ground-truth-sample-test-"));
+    try {
+      const input = relative(process.cwd(), dir);
+      const events = [
+        ev({ id: "a", region: "臺北市", title: "機場航班調整" }),
+        ev({ id: "b", region: "高雄市", title: "港區貨輪到港" }),
+        ev({ id: "c", region: "花蓮縣", title: "山區道路整修" }),
+      ];
+      writeFileSync(join(dir, "events.json"), JSON.stringify(events));
+      writeFileSync(join(dir, "network.json"), JSON.stringify({ nodes: events.map(({ id }) => ({ id })), edges: [], clusters: [] }));
+      const result = await runSample([
+        `--input=${input}/events.json`, `--network=${input}/network.json`,
+        `--out=${input}/pairs.jsonl`, `--events-out=${input}/snapshot.json`,
+        `--locations-out=${input}/locations.jsonl`, "--max=3", "--max-locations=2", "--seed=43",
+      ]);
+      const snapshot = JSON.parse(readFileSync(join(dir, "snapshot.json"), "utf8"));
+      expect(result.pairs).toHaveLength(0);
+      expect(result.locationCandidates).toHaveLength(2);
+      expect(snapshot.events).toHaveLength(2);
+      expect(new Set(snapshot.events.map(({ id }: { id: string }) => id))).toEqual(new Set(result.locationCandidates.map(({ event }: { event: string }) => event)));
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

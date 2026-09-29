@@ -7,7 +7,8 @@
 //
 // 輸出 pair 候選（label 留空給人工填）+ 被引用事件的 metadata 快照（固定 SHA 可重播）。
 // 候選涵蓋：已連線邊、同群無邊成員（false merge 高風險）、同縣市未連線 pair（missed
-// relation 候選）。ledger 命中的 pair 打 ledgerDecision 標記。
+// relation 候選），另有跨縣市同名地點 hard negatives。地點候選從完整輸入獨立抽樣。
+// ledger 命中的 pair 打 ledgerDecision 標記。
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -73,12 +74,16 @@ export async function runSample(argv = process.argv.slice(2)) {
   const eventsPath = args.eventsOut || `docs/ground-truth/relations/events-${date}.json`;
   const locationsPath = args.locationsOut || `docs/ground-truth/relations/locations-${date}-candidates.jsonl`;
 
-  const input = JSON.parse(readFileSync(join(ROOT, args.input), "utf8"));
+  const inputBytes = readFileSync(join(ROOT, args.input));
+  const input = JSON.parse(inputBytes.toString("utf8"));
   const events = (Array.isArray(input) ? input : input.events || []).filter(isNewsLikeEvent);
 
   let net;
+  let networkSha256 = null;
   if (args.network) {
-    const existing = JSON.parse(readFileSync(join(ROOT, args.network), "utf8"));
+    const networkBytes = readFileSync(join(ROOT, args.network));
+    networkSha256 = createHash("sha256").update(networkBytes).digest("hex");
+    const existing = JSON.parse(networkBytes.toString("utf8"));
     net = existing.domestic || existing; // 支援整份 network.json 或單 scope
   } else {
     net = correlateEvents(events);
@@ -107,20 +112,30 @@ export async function runSample(argv = process.argv.slice(2)) {
   mkdirSync(dirname(join(ROOT, outPath)), { recursive: true });
   writeFileSync(join(ROOT, outPath), pairs.map((r) => JSON.stringify(r)).join("\n") + (pairs.length ? "\n" : ""), "utf8");
 
-  const referenced = new Set(pairs.flatMap((p) => [p.a, p.b]));
+  // 地點候選獨立從完整輸入抽樣，避免只覆蓋關聯候選已引用的事件。
+  const locationSelections = events
+    .filter((event) => event.id)
+    .map((event) => ({ event, score: createHash("sha256").update(`${args.seed}|${event.id}`).digest("hex") }))
+    .sort((a, b) => a.score.localeCompare(b.score) || a.event.id.localeCompare(b.event.id))
+    .slice(0, args.maxLocations);
+  const referenced = new Set([...pairs.flatMap((p) => [p.a, p.b]), ...locationSelections.map(({ event }) => event.id)]);
   const snapshot = events.filter((e) => referenced.has(e.id)).map(snapshotEvent);
   mkdirSync(dirname(join(ROOT, eventsPath)), { recursive: true });
   writeFileSync(
     join(ROOT, eventsPath),
-    JSON.stringify({ schema: "ground-truth-events/1", generatedFrom: args.input, count: snapshot.length, events: snapshot }, null, 2) + "\n",
+    JSON.stringify({
+      schema: "ground-truth-events/1",
+      generatedFrom: args.input,
+      sourceSha256: createHash("sha256").update(inputBytes).digest("hex"),
+      networkSha256,
+      count: snapshot.length,
+      events: snapshot,
+    }, null, 2) + "\n",
     "utf8",
   );
 
   // 地點候選只帶系統建議；role/precision/region 必須由人工對來源核對。
-  const locationCandidates = snapshot
-    .map((event) => ({ event, score: createHash("sha256").update(`${args.seed}|${event.id}`).digest("hex") }))
-    .sort((a, b) => a.score.localeCompare(b.score) || a.event.id.localeCompare(b.event.id))
-    .slice(0, args.maxLocations)
+  const locationCandidates = locationSelections
     .map(({ event }) => ({
       schema: LOCATION_SCHEMA,
       event: event.id,

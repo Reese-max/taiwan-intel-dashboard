@@ -137,7 +137,7 @@ function normalizeRegion(value) {
 }
 
 // 路段、車站、校園、院區等名稱需要區域消歧；組織名稱仍可提供跨地線索。
-function isLocalPlace(entity) {
+export function isLocalPlace(entity) {
   return /(?:路|街|大道|夜市|車站|轉運站|機場|醫院|分院|總院|大學|國中|國小|園區|校區|分校)$/.test(entity);
 }
 
