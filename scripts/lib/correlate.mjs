@@ -40,6 +40,16 @@ const SAME_ENTITY_UNION_BLOCKLIST = (() => {
   return new Set(values.map((s) => s.trim()).filter(Boolean));
 })();
 
+// 回報此模組載入時實際生效的設定，供固定資料集驗證重播環境。
+export function getCorrelationSettings() {
+  return {
+    clusterIncoherentDominantShare: CLUSTER_INCOHERENT_DOMINANT_SHARE,
+    clusterIncoherentCategoryEntropy: CLUSTER_INCOHERENT_CATEGORY_ENTROPY,
+    clusterIncoherentTopicRatio: CLUSTER_INCOHERENT_TOPIC_RATIO,
+    sameEntityUnionBlocklist: [...SAME_ENTITY_UNION_BLOCKLIST].sort(),
+  };
+}
+
 // 案類關鍵詞 → 標準標籤（跨來源用同一套語彙，與 news-bulk 一致取向）。
 const LEXICON = [
   [/詐騙|詐欺|車手|假投資|假交友|人頭帳戶|洗錢|假檢警|假冒|盜刷|釣魚/, "詐欺"],
@@ -137,7 +147,7 @@ function normalizeRegion(value) {
 }
 
 // 路段、車站、校園、院區等名稱需要區域消歧；組織名稱仍可提供跨地線索。
-function isLocalPlace(entity) {
+export function isLocalPlace(entity) {
   return /(?:路|街|大道|夜市|車站|轉運站|機場|醫院|分院|總院|大學|國中|國小|園區|校區|分校)$/.test(entity);
 }
 
