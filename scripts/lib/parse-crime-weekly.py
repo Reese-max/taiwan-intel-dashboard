@@ -135,13 +135,13 @@ def download_zip() -> bytes:
             except urllib.error.HTTPError as error:
                 last_error = error
                 transient = error.code == 429 or 500 <= error.code <= 599
-            except (urllib.error.URLError, TimeoutError) as error:
+            except (urllib.error.URLError, TimeoutError, ValueError) as error:
                 last_error = error
                 transient = True
             if not transient or attempt + 1 >= attempts:
                 break
             time.sleep(2 ** attempt)
-    raise RuntimeError(f"weekly crime ZIP download failed: {last_error}")
+    raise RuntimeError(f"weekly crime ZIP download failed (temporary failure): {last_error}")
 
 
 def main() -> int:

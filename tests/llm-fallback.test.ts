@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // @ts-expect-error — JS ESM module without types
 import { normalizeInternational, intlNormalizeFailed } from "../scripts/lib/nvidia.mjs";
 // @ts-expect-error — JS ESM module without types
-import { chat } from "../scripts/lib/llm-client.mjs";
+import { chat, chatVia, retryDelayMs } from "../scripts/lib/llm-client.mjs";
 
 const item = (i: number) => ({
   title: `備援測試标题完全相異第${i}號`,
@@ -166,6 +166,29 @@ describe("primary→fallback LLM 備援（C1）", () => {
 
     await expect(chat([{ role: "user", content: "primary" }])).rejects.toThrow("LLM HTTP 503");
     await expect(chat([{ role: "user", content: "summary" }], { profile: "summary" })).rejects.toThrow("LLM HTTP 503");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("429 遵守 Retry-After 並重試摘要請求；缺少標頭時採較長退避", async () => {
+    expect(retryDelayMs(429, null, 0)).toBe(8_000);
+    expect(retryDelayMs(429, null, 1)).toBe(16_000);
+    expect(retryDelayMs(503, null, 0)).toBe(2_000);
+    expect(retryDelayMs(429, "120", 0)).toBe(30_000);
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response("rate limited", { status: 429, headers: { "retry-after": "0.001" } }))
+      .mockResolvedValueOnce(okCompletion("摘要已恢復"));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await chatVia({
+      name: "retry-summary-test",
+      base: "https://retry-summary-20260929.test/v1",
+      key: "test-key",
+      model: "test-model",
+      maxConc: 1,
+      timeout: 1000,
+      retries: 2,
+    }, [{ role: "user", content: "摘要" }], 256, 0.3);
+    expect(result).toBe("摘要已恢復");
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

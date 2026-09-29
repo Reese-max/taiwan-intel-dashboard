@@ -38,11 +38,19 @@ class CrimeWeeklyDownloadTests(unittest.TestCase):
         fetch.assert_called_once()
         self.assertEqual(fetch.call_args.args[0], parser.ZIP_URL)
 
-    def test_rejects_non_zip_response(self):
+    def test_non_zip_200_retries_then_uses_verified_resource(self):
+        current = parser.ZIP_URL.replace("2135CF37-2C60-494B-9286-C5AA44A7A957", "12345678-1234-1234-1234-123456789ABC")
+        with patch.object(parser, "discover_zip_url", return_value=current), patch.object(
+            parser, "fetch_bytes", side_effect=[b"<html>blocked</html>"] * 3 + [b"PK\x03\x04archive"]
+        ) as fetch, patch.object(parser.time, "sleep"):
+            self.assertEqual(parser.download_zip(), b"PK\x03\x04archive")
+        self.assertEqual([call.args[0] for call in fetch.call_args_list], [current] * 3 + [parser.ZIP_URL])
+
+    def test_non_zip_200_without_valid_fallback_is_transient_failure(self):
         with patch.object(parser, "discover_zip_url", return_value=parser.ZIP_URL), patch.object(
             parser, "fetch_bytes", return_value=b"<html>blocked</html>"
-        ):
-            with self.assertRaisesRegex(ValueError, "not a ZIP"):
+        ), patch.object(parser.time, "sleep"):
+            with self.assertRaisesRegex(RuntimeError, "temporary failure.*not a ZIP"):
                 parser.download_zip()
 
 

@@ -92,6 +92,14 @@ const terminalFailures = new Map();
 const warnedFallbacks = new Set();
 const endpointId = (c) => `${c.name}\u0000${c.base}\u0000${c.model}`;
 
+export function retryDelayMs(status, retryAfter, attempt) {
+  const seconds = Number(retryAfter);
+  if (retryAfter != null && Number.isFinite(seconds) && seconds > 0) {
+    return Math.min(30_000, seconds * 1000);
+  }
+  return Math.min(30_000, (status === 429 ? 8_000 : 2_000) * 2 ** attempt);
+}
+
 // 對單一端點發請求（含並發閘 / 逾時 / 重試）。回空字串＝推理被截斷無有效輸出。
 // LLM（MiniMax 等陸系模型）偶發輸出簡體字，prompt 要求繁體仍會洩漏（實例：summary.json「微软」）。
 // 在唯一輸出瓶頸點統一 cn→tw 字級轉換；OpenCC 只映射 CJK 字元，不影響 JSON 結構與 ASCII。
@@ -139,8 +147,7 @@ export async function chatVia(c, messages, maxTokens, temperature) {
         });
         // 429 / 5xx 可重試（429 優先依 retry-after 退避）。
         if ((res.status === 429 || res.status >= 500) && attempt < c.retries) {
-          const ra = Number(res.headers.get("retry-after"));
-          await sleep(Number.isFinite(ra) && ra > 0 ? ra * 1000 : 1000 * 2 ** attempt);
+          await sleep(retryDelayMs(res.status, res.headers.get("retry-after"), attempt));
           continue;
         }
         if (!res.ok) {
