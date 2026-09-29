@@ -1521,16 +1521,22 @@ const SITE_FALLBACK_LABELS = new Set([
   "Private Debt Investor", "PERE", "The Asset", "Seatrade Maritime News",
   "Perfect Daily Grind", "Carbon Herald", "Farm Progress", "World Nuclear News",
   "Space.com", "Anthropocene Magazine", "Cancer Network",
+  "Robohub",
 ]);
 
-function siteFallbackUrl(url) {
-  const hostname = new URL(url).hostname.replace(/^www\./, "");
+function siteFallbackUrl(feed) {
+  const hostname = new URL(feed.url).hostname.replace(/^www\./, "");
   const query = encodeURIComponent(`site:${hostname} when:7d`);
-  return `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`;
+  // Google News' English index omits recent Redacción Médica articles even
+  // though its Spanish index returns them. Keep the same site restriction.
+  const locale = feed.label === "Redacción Médica"
+    ? { hl: "es-ES", gl: "ES", ceid: "ES:es" }
+    : { hl: "en-US", gl: "US", ceid: "US:en" };
+  return `https://news.google.com/rss/search?q=${query}&hl=${locale.hl}&gl=${locale.gl}&ceid=${locale.ceid}`;
 }
 
 export const INTERNATIONAL_FEEDS = DIRECT_INTERNATIONAL_FEEDS.map((feed) =>
-  SITE_FALLBACK_LABELS.has(feed.label) ? { ...feed, fallbackUrl: siteFallbackUrl(feed.url) } : feed,
+  SITE_FALLBACK_LABELS.has(feed.label) ? { ...feed, fallbackUrl: siteFallbackUrl(feed) } : feed,
 );
 
 export const INTERNATIONAL_TOPICS = ["general", "police", "cyber", "disaster", "health", "humanitarian", "finance"];

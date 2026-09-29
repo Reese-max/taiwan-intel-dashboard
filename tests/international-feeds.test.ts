@@ -38,6 +38,10 @@ describe("international feed registry", () => {
     expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Health Policy Watch")?.fallbackUrl).toBeTruthy();
     expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Space.com")?.fallbackUrl).toBeTruthy();
     expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Towards AI")?.fallbackUrl).toBeTruthy();
+    expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Robohub")?.fallbackUrl).toBeTruthy();
+    const spanish = new URL(INTERNATIONAL_FEEDS.find((feed) => feed.label === "Redacción Médica")!.fallbackUrl);
+    expect(spanish.searchParams.get("hl")).toBe("es-ES");
+    expect(spanish.searchParams.get("ceid")).toBe("ES:es");
     expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "US DOJ Press Releases")?.fallbackUrl).toBeUndefined();
   });
 
