@@ -1,4 +1,4 @@
-export const INTERNATIONAL_FEEDS = [
+const DIRECT_INTERNATIONAL_FEEDS = [
   { label: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml", hint: "地緣政治", tier: "core", topic: "general", topics: ["general"] },
   { label: "NPR World", url: "https://feeds.npr.org/1004/rss.xml", hint: "災害", tier: "core", topic: "general", topics: ["general", "disaster", "humanitarian"] },
   { label: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml", hint: "地緣政治", tier: "core", topic: "general", topics: ["general"] },
@@ -1501,6 +1501,32 @@ export const INTERNATIONAL_FEEDS = [
   { label: "Redacción Médica", url: "https://www.redaccionmedica.com/rss.xml", hint: "災害", tier: "expanded", topic: "health", topics: ["health"] },
   { label: "Diario Médico", url: "https://diariomedico.com/feed", hint: "災害", tier: "expanded", topic: "health", topics: ["health"] },
 ];
+
+// These direct RSS endpoints intermittently return 403/404/405/502 from CI.
+// A 2026-09-29 probe found recent indexed articles for most of them. Keep
+// direct feeds first; fetch-rss marks a site-scoped Google News result as a
+// fallback and retains the primary error in provenance.
+const SITE_FALLBACK_LABELS = new Set([
+  "Health Policy Watch", "Telecompetitor", "All About Circuits", "Electropages",
+  "Electronic Specifier", "Electronics Weekly", "9to5Linux", "RCR Wireless News",
+  "The Sequence", "Dataconomy", "Marcus on AI", "Property Week", "Funds Europe",
+  "Money Marketing", "Trade Finance Global", "Borsen-Zeitung", "World Cargo News",
+  "Air Cargo News", "Railway Gazette International", "RailFreight.com", "RailTech.com",
+  "Future Farming", "Daily Coffee News", "Drovers", "Grainews", "International Mining",
+  "Natural Gas Intelligence", "Windpower Monthly", "Johns Hopkins Hub", "UC Santa Cruz News",
+  "American Society for Microbiology", "Sciences et Avenir", "Sky & Telescope",
+  "The Third Pole", "The Energy Mix", "BusinessGreen", "Redacción Médica",
+]);
+
+function siteFallbackUrl(url) {
+  const hostname = new URL(url).hostname.replace(/^www\./, "");
+  const query = encodeURIComponent(`site:${hostname} when:7d`);
+  return `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`;
+}
+
+export const INTERNATIONAL_FEEDS = DIRECT_INTERNATIONAL_FEEDS.map((feed) =>
+  SITE_FALLBACK_LABELS.has(feed.label) ? { ...feed, fallbackUrl: siteFallbackUrl(feed.url) } : feed,
+);
 
 export const INTERNATIONAL_TOPICS = ["general", "police", "cyber", "disaster", "health", "humanitarian", "finance"];
 

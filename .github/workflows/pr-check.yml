@@ -33,6 +33,9 @@ jobs:
       - name: 單元測試
         run: npm test
 
+      - name: 警政週報資源輪替與重試測試
+        run: python3 -m unittest discover -s tests -p test_crime_weekly_parser.py
+
       # public/data 不進版控；需要候選資料的 build 由 pipeline-audit 在下載 artifact 後執行。
       - name: TypeScript 型別檢查
         run: npx tsc --noEmit

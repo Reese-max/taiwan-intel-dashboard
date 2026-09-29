@@ -144,4 +144,28 @@ describe("primary→fallback LLM 備援（C1）", () => {
       stream: false,
     });
   });
+
+  it("同一供應商被配置為 primary、summary、fallback 時不重複打失敗端點", async () => {
+    const base = "https://single-provider-20260929.test/v1";
+    process.env.LLM_API_KEY = "same-key";
+    process.env.LLM_BASE_URL = base;
+    process.env.LLM_MODEL = "same-model";
+    process.env.LLM_FALLBACK_API_KEY = "same-key";
+    process.env.LLM_FALLBACK_BASE_URL = base;
+    process.env.LLM_FALLBACK_MODEL = "same-model";
+    process.env.LLM_FALLBACK_MAX_RETRIES = "0";
+    process.env.SUMMARY_LLM = "true";
+    delete process.env.SUMMARY_API_KEY;
+    delete process.env.SUMMARY_BASE_URL;
+    delete process.env.SUMMARY_MODEL;
+    process.env.NVIDIA_API_KEY = "same-key";
+    process.env.NVIDIA_BASE_URL = base;
+    process.env.NVIDIA_MODEL = "same-model";
+    const fetchMock = vi.fn(async () => new Response("provider unavailable", { status: 503 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(chat([{ role: "user", content: "primary" }])).rejects.toThrow("LLM HTTP 503");
+    await expect(chat([{ role: "user", content: "summary" }], { profile: "summary" })).rejects.toThrow("LLM HTTP 503");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
