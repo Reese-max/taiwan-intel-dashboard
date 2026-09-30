@@ -2,6 +2,7 @@
 // 前端零計算（關聯在抓取階段算好），這裡只做 O(E) 建索引與查詢。
 import type { Scope } from "../types/event";
 import { computeSha256Hex } from "../utils/sha256";
+import type { CohortManifest } from "./manifest";
 
 export type EdgeType = "same-incident" | "same-entity" | "same-topic";
 
@@ -218,6 +219,8 @@ export class NetworkIndex {
 }
 
 export interface LoadNetworkOptions {
+  // null 表示無法鎖定 manifest；只允許未傳此選項的 legacy 呼叫略過 cohort 驗證。
+  manifest?: CohortManifest | null;
   signal?: AbortSignal;
   timeoutMs?: number;
   previousIndex?: NetworkIndex | null;
@@ -228,9 +231,25 @@ export interface LoadNetworkOptions {
 
 // 載入並建索引；明確區分 ready、empty、error、stale。
 export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}): Promise<NetworkIndex> {
-  const url = options.networkUrl ?? "./data/network.json";
+  const manifestFile = options.manifest?.scopes?.[scope]?.network;
+  const url = options.networkUrl ?? (manifestFile ? `./data/${manifestFile}` : "./data/network.json");
+  const expectedSha256 = options.expectedSha256 ?? options.manifest?.files?.[manifestFile || ""]?.sha256;
+  const expectedSnapshotId = options.expectedSnapshotId ?? options.manifest?.snapshotId;
   const timeoutMs = options.timeoutMs ?? NETWORK_FETCH_TIMEOUT_MS;
   const previous = options.previousIndex && options.previousIndex.state !== "error" ? options.previousIndex : null;
+  const failed = (err: unknown, describe: (reason: string) => string): NetworkIndex => {
+    const reason = err instanceof Error ? err.message : String(err);
+    const isTimeout =
+      (err instanceof DOMException && err.name === "TimeoutError") ||
+      (err instanceof Error && /timeout|aborted/i.test(`${err.name} ${err.message}`));
+    const errorMsg = isTimeout
+      ? `載入情報網逾時 (超過 ${Math.round(timeoutMs / 1000)} 秒)`
+      : describe(reason);
+    return previous ? NetworkIndex.createStale(previous, errorMsg) : NetworkIndex.createError(errorMsg);
+  };
+  if (options.manifest === null || (options.manifest && !expectedSha256)) {
+    return failed(new Error("情報網缺少 SHA-256，無法驗證"), (reason) => reason);
+  }
 
   let res: Response;
   try {
@@ -243,14 +262,7 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
 
     res = await fetch(url, { signal });
   } catch (err: unknown) {
-    const isTimeout =
-      (err instanceof DOMException && err.name === "TimeoutError") ||
-      (err instanceof Error && /timeout|aborted/i.test(err.message));
-    const errorMsg = isTimeout
-      ? `載入情報網逾時 (超過 ${Math.round(timeoutMs / 1000)} 秒)`
-      : `網路連線異常: ${err instanceof Error ? err.message : String(err)}`;
-    if (previous) return NetworkIndex.createStale(previous, errorMsg);
-    return NetworkIndex.createError(errorMsg);
+    return failed(err, (reason) => `網路連線異常: ${reason}`);
   }
 
   if (!res.ok) {
@@ -265,11 +277,25 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   let rawText: string | null = null;
   let net: IntelNetwork;
   if (typeof res.text === "function") {
-    rawText = await res.text();
-    if (options.expectedSha256 && globalThis.crypto?.subtle) {
-      const hash = await computeSha256Hex(rawText);
-      if (hash && hash !== options.expectedSha256) {
-        const errorMsg = `情報網 SHA-256 不符 (期望 ${options.expectedSha256}，實收 ${hash})`;
+    try {
+      // AbortSignal also governs response body consumption, not only response headers.
+      // Convert a slow/truncated body into relation error state so Promise.all consumers
+      // can still render the independently loaded event data.
+      rawText = await res.text();
+    } catch (err: unknown) {
+      return failed(err, (reason) => `讀取情報網失敗: ${reason}`);
+    }
+    if (expectedSha256) {
+      let hash = "";
+      try {
+        hash = await computeSha256Hex(rawText);
+      } catch {
+        // Digest failure must not promote bytes that the manifest cannot verify.
+      }
+      if (!hash || hash !== expectedSha256) {
+        const errorMsg = hash
+          ? `情報網 SHA-256 不符 (期望 ${expectedSha256}，實收 ${hash})`
+          : "情報網 SHA-256 無法驗證";
         if (previous) return NetworkIndex.createStale(previous, errorMsg);
         return NetworkIndex.createError(errorMsg);
       }
@@ -282,12 +308,15 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
       return NetworkIndex.createError(errorMsg);
     }
   } else {
+    if (expectedSha256) {
+      const errorMsg = "情報網 SHA-256 無法驗證";
+      if (previous) return NetworkIndex.createStale(previous, errorMsg);
+      return NetworkIndex.createError(errorMsg);
+    }
     try {
       net = (await res.json()) as IntelNetwork;
     } catch (err: unknown) {
-      const errorMsg = `情報網資料格式錯誤 (JSON 無法解析: ${err instanceof Error ? err.message : String(err)})`;
-      if (previous) return NetworkIndex.createStale(previous, errorMsg);
-      return NetworkIndex.createError(errorMsg);
+      return failed(err, (reason) => `情報網資料格式錯誤 (JSON 無法解析: ${reason})`);
     }
   }
 
@@ -297,14 +326,14 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
     return NetworkIndex.createError(errorMsg);
   }
 
-  if (options.expectedSnapshotId) {
+  if (expectedSnapshotId) {
     if (!net.snapshotId || !net.snapshotId.trim()) {
-      const errorMsg = `情報網缺少快照版本 (期望 ${options.expectedSnapshotId}，實收無版本)`;
+      const errorMsg = `情報網缺少快照版本 (期望 ${expectedSnapshotId}，實收無版本)`;
       if (previous) return NetworkIndex.createStale(previous, errorMsg);
-      return NetworkIndex.createError(errorMsg, { snapshotId: options.expectedSnapshotId });
+      return NetworkIndex.createError(errorMsg, { snapshotId: expectedSnapshotId });
     }
-    if (net.snapshotId !== options.expectedSnapshotId) {
-      const errorMsg = `情報網快照版本不符 (期望 ${options.expectedSnapshotId}，實收 ${net.snapshotId})`;
+    if (net.snapshotId !== expectedSnapshotId) {
+      const errorMsg = `情報網快照版本不符 (期望 ${expectedSnapshotId}，實收 ${net.snapshotId})`;
       if (previous) return NetworkIndex.createStale(previous, errorMsg);
       return NetworkIndex.createError(errorMsg, { snapshotId: net.snapshotId });
     }
@@ -325,4 +354,3 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   const hasData = (scopeNet.edges?.length ?? 0) > 0 || (scopeNet.clusters?.length ?? 0) > 0 || (scopeNet.nodes?.length ?? 0) > 0;
   return hasData ? NetworkIndex.createReady(scopeNet, meta) : NetworkIndex.createEmpty(meta);
 }
-

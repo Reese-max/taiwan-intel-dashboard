@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { filterEvents } from "../src/data/loader";
 import type { IntelEvent } from "../src/types/event";
 
@@ -165,5 +165,49 @@ describe("explainOutOfFilter", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("loadEvents / loadMapEvents 有界載入", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // 永不回應的 fetch（尊重 abort signal）：沒有預設逾時時 loadEvents 會永久等待，
+  // 讓 main.ts 的 cohortPairInflight 去重快取被一筆不 settle 的請求佔住，連手動重試都失效。
+  const hangUntilAborted = () =>
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          const signal = (init as RequestInit | undefined)?.signal;
+          signal?.addEventListener("abort", () =>
+            reject(signal.reason ?? new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+
+  it("loadEvents 逾時後 reject（TimeoutError），不永久佔住呼叫端", async () => {
+    const { loadEvents } = await import("../src/data/loader");
+    hangUntilAborted();
+    const err = await loadEvents("domestic", { timeoutMs: 5 }).then(
+      () => null,
+      (e: unknown) => e as DOMException,
+    );
+    expect(err?.name).toBe("TimeoutError");
+  });
+
+  it("loadMapEvents 逾時後 fail-soft 回 null，不把等待丟給 first-paint", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    hangUntilAborted();
+    await expect(loadMapEvents("domestic", { timeoutMs: 5 })).resolves.toBeNull();
+  });
+
+  it("呼叫端 signal abort 時 loadEvents 立即放棄，不等預設逾時", async () => {
+    const { loadEvents } = await import("../src/data/loader");
+    hangUntilAborted();
+    const controller = new AbortController();
+    const promise = loadEvents("domestic", { signal: controller.signal, timeoutMs: 60_000 });
+    controller.abort();
+    await expect(promise).rejects.toThrow();
   });
 });
