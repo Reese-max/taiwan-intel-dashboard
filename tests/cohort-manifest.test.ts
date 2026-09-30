@@ -13,6 +13,42 @@ afterEach(() => {
 });
 
 describe("Cohort Manifest (Work package D2)", () => {
+  it.each(["events", "network"])("manifest 缺少 %s hash 時拒收產物", async (kind) => {
+    const { loadEvents } = await import("../src/data/loader");
+    const { loadNetwork } = await import("../src/data/network");
+    const manifest: CohortManifest = {
+      manifestVersion: 1, snapshotId: "cohort-s2", generatedAt: "2026-09-17T00:00:00.000Z", rulesVersion: "correlate-v1",
+      scopes: {
+        domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+        international: { events: "international.json", map: "international.map.json", network: "network.json" },
+      },
+      files: {},
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(kind === "events" ? [] : {
+      snapshotId: manifest.snapshotId, generatedAt: manifest.generatedAt,
+      domestic: { nodes: [], edges: [], clusters: [], stats: {} },
+    })));
+
+    if (kind === "events") {
+      await expect(loadEvents("domestic", { manifest })).rejects.toThrow(/SHA-256/);
+    } else {
+      const net = await loadNetwork("domestic", { manifest });
+      expect(net.state).toBe("error");
+      expect(net.error).toMatch(/SHA-256/);
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("明示 manifest 不可用時停用關聯，不走未驗證的 legacy 載入", async () => {
+    const { loadNetwork } = await import("../src/data/network");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      snapshotId: "unverified", domestic: { nodes: [], edges: [], clusters: [], stats: {} },
+    })));
+    const network = await loadNetwork("domestic", { manifest: null });
+    expect(network.state).toBe("error");
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("情報網 response body 中止時保留並繪製已成功載入的事件資料", async () => {
     const { loadEvents } = await import("../src/data/loader");
     const { loadNetwork } = await import("../src/data/network");

@@ -408,19 +408,10 @@ function fetchCohortPair(scope: Scope, manifest: CohortManifest | null): Promise
   const existing = cohortPairInflight[scope];
   if (existing?.key === key) return existing.promise;
 
+  // 完整 pair 的快取由 refresh 使用；重載時兩份都須依本次 manifest 驗證。
   const promise: Promise<CohortPair> = Promise.all([
-    cache[scope] ??
-      loadEvents(scope, {
-        url: eventsPath,
-        expectedSha256: expectedEventsHash,
-      }),
-    netCache[scope] ??
-      loadNetwork(scope, {
-        networkUrl: networkPath,
-        expectedSnapshotId: manifest?.snapshotId,
-        expectedSha256: expectedNetworkHash,
-        previousIndex: netCache[scope],
-      }),
+    loadEvents(scope, { manifest }),
+    loadNetwork(scope, { manifest }),
   ]);
   const entry = { key, promise };
   cohortPairInflight[scope] = entry;
@@ -649,8 +640,9 @@ async function refresh(): Promise<void> {
   // 同步載入小型靜態 manifest（僅首載或重新整理時），鎖定同版快照；
   // 與地圖 first-paint 共用同一次 inflight 抓取，避免開機重複請求。
   if (!cohortManifest) {
-    cohortManifest = await fetchManifestOnce();
+    const manifest = await fetchManifestOnce();
     if (requestId !== refreshRequestId) return;
+    cohortManifest = manifest;
   }
 
   // 事件與情報網兩支 fetch 並行（原本串行，第二支要等第一支完成才開始）。
@@ -667,18 +659,21 @@ async function refresh(): Promise<void> {
         const refreshedManifest = await loadManifest();
         if (requestId !== refreshRequestId) return;
         if (refreshedManifest) {
-          cohortManifest = refreshedManifest;
           try {
-            [ev, net] = await fetchCohortPair(s.scope, cohortManifest);
+            const pair = await fetchCohortPair(s.scope, refreshedManifest);
             if (requestId !== refreshRequestId) return;
+            [ev, net] = pair;
+            // 事件驗證完成才換鎖；失敗後的關聯重試仍須使用舊事件的 manifest。
+            cohortManifest = refreshedManifest;
           } catch {
             // 保持現狀
           }
         }
       }
+      if (requestId !== refreshRequestId) return;
 
       if (net.error && /不符|缺少快照版本/i.test(net.error)) {
-        if (cache[s.scope] && netCache[s.scope]?.state !== "error") {
+        if (cache[s.scope] && netCache[s.scope] && netCache[s.scope]?.state !== "error") {
           // 保留先前一致快取
         } else {
           cache[s.scope] = ev;
@@ -699,10 +694,10 @@ async function refresh(): Promise<void> {
         const refreshedManifest = await loadManifest();
         if (requestId !== refreshRequestId) return;
         if (refreshedManifest) {
-          cohortManifest = refreshedManifest;
           try {
-            const [ev, net] = await fetchCohortPair(s.scope, cohortManifest);
+            const [ev, net] = await fetchCohortPair(s.scope, refreshedManifest);
             if (requestId !== refreshRequestId) return;
+            cohortManifest = refreshedManifest;
             cache[s.scope] = ev;
             netCache[s.scope] = net;
           } catch {
@@ -710,6 +705,7 @@ async function refresh(): Promise<void> {
           }
         }
       }
+      if (requestId !== refreshRequestId) return;
 
       // 主資料 fetch 失敗：無既有快取時顯示可重試錯誤卡，不留白、不中斷（不 throw）。
       if (!cache[s.scope]) {
@@ -723,6 +719,11 @@ async function refresh(): Promise<void> {
         return;
       }
       // 有舊快取則沿用，靜默續繪
+      if (!netCache[s.scope]) {
+        netCache[s.scope] = NetworkIndex.createError("事件快照更新失敗，已停用關聯並保留先前新聞");
+        // 舊事件尚未通過目前 manifest 驗證；後續篩選也不能單獨晉級新版關聯。
+        netAutoRetried[s.scope] = 1;
+      }
     }
   }
 
@@ -730,12 +731,8 @@ async function refresh(): Promise<void> {
   if (netCache[s.scope]?.state === "error" && (netAutoRetried[s.scope] ?? 0) < 1) {
     netAutoRetried[s.scope] = 1;
     try {
-      const manifestNetwork = cohortManifest?.scopes?.[s.scope]?.network;
       const retriedNet = await loadNetwork(s.scope, {
-        networkUrl: manifestNetwork ? `./data/${manifestNetwork}` : "./data/network.json",
-        expectedSnapshotId: cohortManifest?.snapshotId,
-        expectedSha256: cohortManifest?.files?.[manifestNetwork || "network.json"]?.sha256,
-        previousIndex: netCache[s.scope],
+        manifest: cohortManifest,
       });
       if (requestId !== refreshRequestId) return;
       netCache[s.scope] = retriedNet;

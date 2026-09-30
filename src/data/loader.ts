@@ -121,6 +121,7 @@ export async function loadEvents(scope: Scope, options?: LoadEventsOptions): Pro
     (manifestFile
       ? options?.manifest?.files?.[manifestFile]?.sha256 || options?.manifest?.scopes?.[scope]?.sha256
       : undefined);
+  if (options?.manifest && !expectedSha256) throw new Error("事件資料缺少 SHA-256，無法驗證");
 
   const res = await fetch(url, { signal: options?.signal });
   if (!res.ok) throw new Error(`載入 ${scope}.json 失敗: ${res.status}`);
