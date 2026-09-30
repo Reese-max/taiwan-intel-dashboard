@@ -256,6 +256,9 @@
         <button type="button" class="arc-toggle off" data-arc-type="same-topic" onclick="toggleArcType('same-topic')">
           <i class="arc-chip" style="background:#00c8ff;"></i>同題情勢（弱關聯）
         </button>
+        <button type="button" class="arc-toggle active" data-arc-type="follow-up" onclick="toggleArcType('follow-up')">
+          <i class="arc-chip" style="background:#7bd88f;"></i>後續報導（人工更正）
+        </button>
       </div>
       <div class="net-switch">
         <label><input id="toggle-weak-arcs" type="checkbox" onchange="setShowWeakArcs(this.checked)"> 顯示同題弱關聯線</label>
@@ -349,10 +352,10 @@ const NET_ARC_MAX = 600;  // 情報網弧線上限（效能；超出依關聯強
 const NET_WEAK_ARC_MAX = 350; // 弱關聯另設上限，避免同題線一開就變毛球。
 
 const LEVEL_COLOR = { critical: '#ff4444', warning: '#ffc107', info: '#00c8ff', normal: '#44ff88' };
-// 情報網弧線配色（依關聯型別）：佐證=琥珀、共享實體=紫、弱關聯=青。
-const ARC_COLOR = { 'same-incident': '#ffc107', 'same-entity': '#b388ff', 'same-topic': '#00c8ff' };
-const ARC_TYPE_LABEL = { 'same-incident': '同事件候選（待查證）', 'same-entity': '共享實體', 'same-topic': '同題情勢（弱關聯）' };
-const ARC_TYPE_ENABLED = { 'same-incident': true, 'same-entity': true, 'same-topic': false };
+// 情報網弧線配色（依關聯型別）：佐證=琥珀、共享實體=紫、弱關聯=青、人工更正後續報導=綠。
+const ARC_COLOR = { 'same-incident': '#ffc107', 'same-entity': '#b388ff', 'same-topic': '#00c8ff', 'follow-up': '#7bd88f' };
+const ARC_TYPE_LABEL = { 'same-incident': '同事件候選（待查證）', 'same-entity': '共享實體', 'same-topic': '同題情勢（弱關聯）', 'follow-up': '後續報導（人工更正）' };
+const ARC_TYPE_ENABLED = { 'same-incident': true, 'same-entity': true, 'same-topic': false, 'follow-up': true };
 const LEVEL_LABEL = { critical: '高威脅', warning: '需關注', info: '一般情資', normal: '已解除' };
 const RISK_TO_LEVEL = { critical: 'critical', high: 'warning', medium: 'info', low: 'normal' };
 
@@ -938,6 +941,7 @@ function updateNetLegend() {
     `<div>${chip(ARC_COLOR['same-incident'], ARC_TYPE_LABEL['same-incident'], byType('same-incident'))}</div>` +
     `<div>${chip(ARC_COLOR['same-entity'], ARC_TYPE_LABEL['same-entity'], byType('same-entity'))}</div>` +
     `<div>${chip(ARC_COLOR['same-topic'], ARC_TYPE_LABEL['same-topic'], byType('same-topic'))}</div>` +
+    `<div>${chip(ARC_COLOR['follow-up'], ARC_TYPE_LABEL['follow-up'], byType('follow-up'))}</div>` +
     (arcMinWeight > 0 ? `<div style="color:#5a7a9a;margin-top:3px;">已套用強度門檻 ≥ ${Number(arcMinWeight).toFixed(1)}</div>` : '') +
     (s.hiddenNational ? `<div style="color:#5a7a9a;margin-top:3px;">另 ${s.hiddenNational} 條全國性關聯未在圖上</div>` : '');
 }

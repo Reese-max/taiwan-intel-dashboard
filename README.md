@@ -35,6 +35,8 @@
 
 完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」。移除第三方 MCP 後，採購、司法、空品、停車、經濟等原 MCP 來源不再刷新，待改成官方直連後再恢復。
 
+情報網人工更正：維護者確認過的錯誤關聯／地點角色／後續關係記於 [`docs/curation/correlation-overrides.jsonl`](docs/curation/correlation-overrides.jsonl)（JSONL、隨程式碼 review）；每次 rebuild 自動重放，來源內容或規則版本變動時記錄自動轉 `needs_review`（fail closed），矛盾記錄全部標 `conflict` 不套用。格式與流程見 [`docs/curation/README.md`](docs/curation/README.md)。
+
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
 > 目前 workflow 依 [ops/operating-state.json](ops/operating-state.json) 規範運作；正式轉為完全運作（ACTIVE）前須補齊受控復原收據。
@@ -67,6 +69,7 @@ npm run audit:data-size        # 資料檔尺寸（Cloudflare Pages 單檔 25MiB
 npm run audit:network-quality  # 情報網品質
 npm run audit:source-freshness # 結構化來源成功時間與更新頻率健康閘門
 npm run audit:coverage         # scope/category 每日涵蓋矩陣一致性
+npm run audit:curation         # 人工更正 ledger：逐筆套用狀態（conflict/invalid → 失敗）
 npm run report:news-sources    # 新聞來源漏斗貢獻報表
 ```
 
@@ -84,6 +87,7 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 
 ## 文件索引
 
+- `docs/curation/` — 人工更正 ledger（關聯覆寫的格式、狀態與流程）
 - `docs/operations/` — 線上暫停、驗證與復原程序
 - `docs/specs/` — 設計/規格（含 2026-07-03 強化與可持續性計畫）
 - `docs/plans/` — 實作計畫

@@ -18,7 +18,7 @@ function makeScope(prefix: string, events: number) {
     stats: {
       events,
       edges: 0,
-      byType: { "same-incident": 0, "same-entity": 0, "same-topic": 0 },
+      byType: { "same-incident": 0, "same-entity": 0, "same-topic": 0, "follow-up": 0 },
       clusters: 0,
       largestCluster: 0,
     },
@@ -66,6 +66,44 @@ describe("network artifact contract", () => {
     const errors = validateNetworkContract(makeNetwork(0, 0));
 
     expect(errors).toContain("非空覆蓋量不足：domestic.stats.events + international.stats.events = 0，至少需要 1 筆事件");
+  });
+
+  it("接受人工更正產物：follow-up 邊、origin 欄位與 curation 審計區塊", () => {
+    const network = makeNetwork(2, 0);
+    network.domestic.stats.edges = 1;
+    network.domestic.stats.byType["follow-up"] = 1;
+    network.domestic.edges = [
+      {
+        a: "d-0",
+        b: "d-1",
+        type: "follow-up",
+        weight: 1.0,
+        why: "人工更正：後續報導（cur-1）",
+        origin: "manual",
+        decision: "follow_up",
+        curationId: "cur-1",
+        from: "d-0",
+        to: "d-1",
+      },
+    ];
+    network.domestic.curation = {
+      entries: 1,
+      applied: 1,
+      needsReview: 0,
+      conflicts: 0,
+      invalid: 0,
+      removedAutoEdges: 0,
+      vetoedUnions: 0,
+      vetoes: [],
+      decisions: [{ id: "cur-1", decision: "follow_up", subjects: ["d-0", "d-1"], status: "applied", note: null }],
+    };
+    expect(validateNetworkContract(network)).toEqual([]);
+
+    (network.domestic.edges[0] as any).origin = "crowd";
+    (network.domestic.curation.decisions[0] as any).status = "guessed";
+    const errors = validateNetworkContract(network);
+    expect(errors).toContain("scope domestic.edges[0].origin：存在時必須是 auto／manual");
+    expect(errors).toContain("scope domestic.curation.decisions[0].status：必須是 applied／needs_review／conflict／invalid");
   });
 
   it("拒絕最低 schema、統計數不一致與非法 JSON 欄位", () => {

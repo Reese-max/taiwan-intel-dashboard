@@ -1,0 +1,33 @@
+# 人工更正 Ledger（curation ledger）— correlation overrides，每行一筆 JSON 記錄。
+#
+# 目的：維護者對「錯誤關聯／地點角色／後續關係」做出明確更正後，該決策在每一次
+# pipeline rebuild（build-network 與 fetch-live）仍持續生效，避免已確認錯誤復發。
+# 套用順序：自動候選邊 → ledger overrides → union/cluster → network.json。
+#
+# 記錄格式（JSONL，欄位缺一不可；# 開頭為註解、空行略過）：
+#   {
+#     "schemaVersion": 1,
+#     "id": "cur-<日期>-<短述>",            // 人工記錄 id（審計用）
+#     "decision": "not_same_event|same_event|location_correction|follow_up",
+#     "subjects": ["<eventId>", "<eventId>"],  // 穩定 event id（twnews-*／intl-*），
+#                                            //   不可用自由文字標題；location_correction 僅 1 個
+#     "expect": { "<eventId>": "<sha256hex>" },// fingerprintEvent() 指紋，
+#                                            //   上游內容改變 → 自動轉 needs_review
+#     "reason": "<為何這樣判斷>",
+#     "evidence": "<可追溯的證據連結或出處，勿存原文全文>",
+#     "reviewedAt": "<ISO8601>",
+#     "rulesVersion": "correlate-v1",      // 與 scripts/lib/manifest.mjs RULES_VERSION 對齊；
+#                                        //   規則改版 → 自動轉 needs_review
+#     "benchmark": "none|tuning|holdout"   // 選填；預設 none。#43 benchmark 僅引用
+#                                        //   明確標記 tuning/holdout 的記錄
+#   }
+#   location_correction 另需 "patch": { region?, locationRole?, locationPrecision?, lat?, lng? }
+#   follow_up 的 subjects 順序＝方向：[較早報導, 後續報導]
+#
+# 產生 expect 指紋（需先跑一次 fetch-live 產生 public/data/*.json）：
+#   node scripts/curation-ledger.mjs fingerprint <eventId> [<eventId>...]
+# 審核／檢查 ledger 狀態：
+#   node scripts/curation-ledger.mjs check        （或 npm run audit:curation）
+#
+# 治理紅線：相互矛盾的 override 全部 fail closed（標 conflict、不套用）；記錄只經
+# 一般 code/data review（本檔走 PR）；不得存 secrets、個資或完整文章原文。

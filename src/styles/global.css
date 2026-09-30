@@ -2382,6 +2382,10 @@ body.layout-compact .col-list {
 .edge-same-topic {
   stroke: #38cdf5;
 }
+.edge-follow-up {
+  stroke: #7bd88f;
+  stroke-dasharray: 5 3;
+}
 .rg-node {
   stroke: rgba(8, 12, 23, 0.85);
   stroke-width: 1.5;
@@ -2455,6 +2459,9 @@ body.layout-compact .col-list {
 }
 .rg-legend i.edge-same-topic {
   background: #38cdf5;
+}
+.rg-legend i.edge-follow-up {
+  background: #7bd88f;
 }
 /* 關聯網 Slice 1：曲線邊繪入動畫、中心發光、標籤描邊、命中區 */
 .rg-edge {
