@@ -415,6 +415,9 @@ export function correlateEvents(events, opts = {}) {
     }
   }
   // follow_up：有向人工更正邊（from = 較早報導 → to = 後續報導）；不參與群集合併。
+  for (const { from, to } of curation.followUps) {
+    if (edges.delete(edgeKey(from, to))) removedAutoEdges++;
+  }
   const manualFollowUps = curation.followUps.map(({ from, to, recordId, reason }) => ({
     a: from,
     b: to,
@@ -554,10 +557,10 @@ export function correlateEvents(events, opts = {}) {
     if (ra !== rb) parent.set(ra, rb);
   };
   let skippedSameEntityUnionEdges = 0;
-  // not_same_event 的 cannot-link 傳遞約束：即使 A、B 各自與 C 有邊，若 ledger 判定
-  // A×B 不同案，A 與 B 不得透過 C（或任何中繼）落入同一群集——已確認錯誤不再復發。
+  // 不同案／續報的 cannot-link 傳遞約束：A、B 不得透過第三者的自動邊再併同群。
   const blockedAdj = new Map();
-  for (const { a, b } of curation.blockedPairs) {
+  const separatedPairs = [...curation.blockedPairs, ...curation.followUps.map(({ from, to }) => ({ a: from, b: to }))];
+  for (const { a, b } of separatedPairs) {
     if (!blockedAdj.has(a)) blockedAdj.set(a, new Set());
     if (!blockedAdj.has(b)) blockedAdj.set(b, new Set());
     blockedAdj.get(a).add(b);
@@ -578,7 +581,9 @@ export function correlateEvents(events, opts = {}) {
     }
     return false;
   };
-  for (const e of edgeList) {
+  // 人工同案先固定分量，再處理自動候選，避免自動 union 搶先占用 cannot-link 約束。
+  const unionEdges = [...edgeList].sort((a, b) => Number(b.origin === "manual") - Number(a.origin === "manual"));
+  for (const e of unionEdges) {
     if (
       (e.type === "same-entity" && shouldUnionSameEntity(e)) ||
       (e.type === "same-incident" && e.weight >= CLUSTER_INCIDENT_MIN_WEIGHT)

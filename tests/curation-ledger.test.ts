@@ -95,6 +95,31 @@ describe("curation ledger — 解析", () => {
 });
 
 describe("fingerprintEvent — 來源版本指紋", () => {
+  it("[PR68 regression] reviewed evidence changes become needs_review, while fetch time alone remains valid", () => {
+    const events = autoPair();
+    const record = rec({ expect: expectOf(events) });
+    const changes = [
+      { summary: "原文更正：另一起案件" },
+      { category: "司法" },
+      { lat: 25.03, lng: 121.56 },
+      { locationRole: "agency" },
+      { locationPrecision: "exact" },
+      { locationNote: "機關所在地" },
+      { locationSourceBasis: "官方更正座標" },
+      { aiEntities: ["不同組織"] },
+      { aiTopic: "另一事件" },
+      { source: { ...events[0].source, recordRef: "https://example.invalid/changed" } },
+    ];
+    for (const change of changes) {
+      const changed = [{ ...events[0], ...change }, events[1]];
+      const result = resolveCurationLedger([record], changed);
+      expect(result.decisions[0], JSON.stringify(change)).toMatchObject({ status: "needs_review", note: "fingerprint_mismatch" });
+      expect(result.blockedPairs).toEqual([]);
+    }
+    const fetched = events.map((e) => ({ ...e, source: { ...e.source, fetchedAt: "2026-10-01T00:00:00Z" } }));
+    expect(resolveCurationLedger([record], fetched).decisions[0].status).toBe("applied");
+  });
+
   it("同一事件指紋穩定；關鍵欄位改變則指紋改變", () => {
     const a = ev({ id: "twnews-aa", title: "信義分局破案" });
     expect(fingerprintEvent(a)).toBe(fingerprintEvent({ ...a }));
@@ -106,6 +131,38 @@ describe("fingerprintEvent — 來源版本指紋", () => {
 });
 
 describe("resolveCurationLedger — 驗證與狀態", () => {
+  it("[PR68 regression] transitive manual contradictions fail closed without affecting unrelated decisions", () => {
+    const events = ["a", "b", "c", "d", "e"].map((id) => ev({ id: `twnews-${id}`, title: id }));
+    const pair = (id: string, decision: string, a: number, b: number) => rec({
+      id, decision, subjects: [events[a].id, events[b].id], expect: expectOf([events[a], events[b]]),
+    });
+    for (const decision of ["not_same_event", "follow_up"]) {
+      const records = [pair("ab", "same_event", 0, 1), pair("bc", "same_event", 1, 2), pair("ac", decision, 0, 2), pair("de", "same_event", 3, 4)];
+      const withDirectConflict = [...records, pair("direct", "same_event", 0, 2)];
+      for (const curation of [records, [...records].reverse(), withDirectConflict, [...withDirectConflict].reverse()]) {
+        const result = resolveCurationLedger(curation, events);
+        expect(result.stats.conflicts).toBe(curation.length - 1);
+        expect(result.decisions.filter((d: any) => d.id !== "de").every((d: any) => d.status === "conflict")).toBe(true);
+        expect(result.sameEventPairs.map((p: any) => p.recordId)).toEqual(["de"]);
+        expect(result.blockedPairs).toEqual([]);
+        expect(result.followUps).toEqual([]);
+        expect(correlateEvents(events, { curation }).clusters.map((c: any) => c.members)).toEqual([["twnews-d", "twnews-e"]]);
+      }
+    }
+  });
+
+  it("[PR68 regression] equivalent location patches ignore JSON key order", () => {
+    const events = autoPair();
+    const record = rec({ decision: "location_correction", subjects: [events[0].id], expect: expectOf([events[0]]) });
+    const result = resolveCurationLedger([
+      { ...record, id: "loc1", patch: { region: "高雄市", locationRole: "agency" } },
+      { ...record, id: "loc2", patch: { locationRole: "agency", region: "高雄市" } },
+    ], events);
+    expect(result.stats.conflicts).toBe(0);
+    expect(result.stats.applied).toBe(2);
+    expect(result.locationPatches.get(events[0].id)?.patch).toEqual({ region: "高雄市", locationRole: "agency" });
+  });
+
   it("有效 not_same_event 記錄套用成功", () => {
     const events = autoPair();
     const r = resolveCurationLedger([rec({ expect: expectOf(events) })], events, { rulesVersion: RULES_VERSION });
@@ -252,6 +309,41 @@ describe("resolveCurationLedger — 驗證與狀態", () => {
 });
 
 describe("correlateEvents + curation — 人工更正層", () => {
+  it("[PR68 regression] manual same_event unions take priority over automatic candidates", () => {
+    const events = ["a", "b", "c"].map((id, i) => ev({
+      id: `twnews-${id}`, title: `信義分局毒品案 ${id}`, source: { name: `來源${i}`, type: "news-rss" },
+    }));
+    const pair = (decision: string, a: number, b: number) => rec({
+      id: decision, decision, subjects: [events[a].id, events[b].id], expect: expectOf([events[a], events[b]]),
+    });
+    const net = correlateEvents(events, { curation: [pair("same_event", 1, 2), pair("not_same_event", 0, 2)] });
+    expect(net.clusters.map((c: any) => c.members)).toEqual([["twnews-b", "twnews-c"]]);
+    expect(net.curation.applied).toBe(2);
+    expect(net.curation.vetoes).toEqual([expect.objectContaining({ a: "twnews-a", b: "twnews-b" })]);
+  });
+
+  it("[PR68 regression] follow_up replaces a pre-existing automatic same-incident relation", () => {
+    const events = autoPair();
+    expect(correlateEvents(events).clusters).toHaveLength(1);
+    const net = correlateEvents(events, { curation: [rec({ decision: "follow_up", expect: expectOf(events) })] });
+    expect(net.edges).toEqual([expect.objectContaining({ type: "follow-up", origin: "manual", from: events[0].id, to: events[1].id })]);
+    expect(net.clusters).toEqual([]);
+    expect(net.curation.removedAutoEdges).toBe(1);
+    expect(net.nodes.map((n: any) => n.degree)).toEqual([1, 1]);
+  });
+
+  it("[PR68 regression] follow_up cannot be re-merged through an automatic third report", () => {
+    const events = ["a", "b", "c"].map((id, i) => ev({
+      id: `twnews-${id}`, title: `信義分局毒品案 ${id}`, source: { name: `來源${i}`, type: "news-rss" },
+    }));
+    const net = correlateEvents(events, { curation: [rec({
+      decision: "follow_up", subjects: [events[0].id, events[2].id], expect: expectOf([events[0], events[2]]),
+    })] });
+    expect(net.clusters.some((c: any) => c.members.includes(events[0].id) && c.members.includes(events[2].id))).toBe(false);
+    expect(net.edges.filter((e: any) => e.type === "follow-up")).toHaveLength(1);
+    expect(net.curation.vetoedUnions).toBe(1);
+  });
+
   it("not_same_event：重建後不再自動合併（邊移除 + 不再同群）", () => {
     const events = autoPair();
     const before = correlateEvents(events);

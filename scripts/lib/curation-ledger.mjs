@@ -7,6 +7,7 @@
 //  - 相互矛盾的 override 全部標記 conflict 且不套用，絕不靜默 last-write-wins。
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
+import { isDeepStrictEqual } from "node:util";
 import { RULES_VERSION } from "./manifest.mjs";
 import { EXACT_PRECISIONS, LOW_PRECISIONS, INCIDENT_ROLES, NON_INCIDENT_ROLES } from "./geo-policy.mjs";
 
@@ -24,17 +25,33 @@ const LOCATION_PRECISIONS = new Set([...EXACT_PRECISIONS, ...LOW_PRECISIONS]);
 const SUBJECT_RE = /^\S{1,200}$/;
 
 // 來源版本指紋：對決策當下看到的關鍵欄位取 sha256。
-// 任何一欄被上游改掉（同連結換標題、改地區、改時間）→ 指紋不符 → override 轉 needs_review。
+// 涵蓋關聯與定位使用的證據；排除每次擷取都會變的 fetchedAt。
 export function fingerprintEvent(event) {
-  const canonical = [
+  const canonical = JSON.stringify([
     event?.id || "",
     event?.scope || "",
     event?.source?.name || "",
-    event?.source?.recordRef || event?.source?.url || "",
+    event?.source?.type || "",
+    event?.source?.datasetId || "",
+    event?.source?.recordRef || "",
+    event?.source?.url || "",
+    event?.source?.publisherName || "",
+    event?.source?.publisherUrl || "",
     event?.title || "",
+    event?.summary || "",
     event?.region || "",
     event?.timestamp || "",
-  ].join("\n");
+    event?.category || "",
+    event?.lat ?? null,
+    event?.lng ?? null,
+    event?.locationRole || "",
+    event?.locationPrecision || "",
+    event?.locationNote || "",
+    event?.locationMethod || "",
+    event?.locationSourceBasis || "",
+    event?.aiTopic || "",
+    Array.isArray(event?.aiEntities) ? [...new Set(event.aiEntities)].sort() : [],
+  ]);
   return createHash("sha256").update(canonical).digest("hex");
 }
 
@@ -134,10 +151,6 @@ function validateRecord(record) {
     return invalid("patch");
   }
   return { ok: true, record };
-}
-
-function samePatch(a, b) {
-  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 // 解析 ledger → 對目前 scope 的有效 overrides 與逐筆審計。
@@ -251,9 +264,35 @@ export function resolveCurationLedger(input, events, { rulesVersion = RULES_VERS
   for (const group of locationGroups.values()) {
     if (group.length < 2) continue;
     const first = group[0].record.patch;
-    if (group.some((c) => !samePatch(c.record.patch, first))) {
+    if (group.some((c) => !isDeepStrictEqual(c.record.patch, first))) {
       for (const c of group) conflicting.add(c);
     }
+  }
+  // 同案具傳遞性：A=B、B=C 若碰到 A≠C（或 A→C 續報），整個人工同案分量拒絕套用。
+  const sameParent = new Map([...eventsById.keys()].map((id) => [id, id]));
+  const sameRoot = (id) => {
+    while (sameParent.get(id) !== id) {
+      sameParent.set(id, sameParent.get(sameParent.get(id)));
+      id = sameParent.get(id);
+    }
+    return id;
+  };
+  const sameCandidates = candidates.filter((c) => c.record.decision === "same_event");
+  for (const { record } of sameCandidates) {
+    const [a, b] = record.subjects.map(sameRoot);
+    if (a !== b) sameParent.set(a, b);
+  }
+  const conflictRoots = new Set();
+  for (const c of candidates) {
+    if (!["not_same_event", "follow_up"].includes(c.record.decision)) continue;
+    const [a, b] = c.record.subjects.map(sameRoot);
+    if (a === b) {
+      conflicting.add(c);
+      conflictRoots.add(a);
+    }
+  }
+  for (const c of sameCandidates) {
+    if (conflictRoots.has(sameRoot(c.record.subjects[0]))) conflicting.add(c);
   }
   for (const c of conflicting) {
     if (c.audit.status === "applied") {

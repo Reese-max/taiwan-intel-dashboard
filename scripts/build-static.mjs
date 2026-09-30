@@ -17,6 +17,8 @@ import { emptyDirContents } from "./lib/fs-safe.mjs";
 import { minifyOrCopyJson } from "./lib/minify-json.mjs";
 import { buildCohortManifest, writeCohortManifest } from "./lib/manifest.mjs";
 import { isValidCoordinate } from "./lib/geo-policy.mjs";
+import { CURATED_LEDGER_REL_PATH, loadCurationLedger, resolveCurationLedger } from "./lib/curation-ledger.mjs";
+import { isNewsLikeEvent } from "./lib/correlate.mjs";
 
 const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
@@ -107,15 +109,21 @@ function trimNetwork(net) {
   return net;
 }
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
+const curation = loadCurationLedger(CURATED_LEDGER_REL_PATH);
 for (const f of readdirSync("public/data")) {
+  // 完整事件快照會重建 map，不能再被 restore-state 留下的舊 map 蓋回去。
+  if (f.endsWith(".map.json") && TRIM_FIELDS.has(f.replace(".map.json", ".json")) && existsSync(`public/data/${f.replace(".map.json", ".json")}`)) continue;
   if (TRIM_FIELDS.has(f)) {
     const arr = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
-    const trimmed = Array.isArray(arr) ? arr.map(trimEvent) : arr;
+    const scope = f.replace(/\.json$/, "");
+    // 在剝除 AI 證據前驗證原始快照；更正只寫入 dist，供兩個 UI 與 first-paint 地圖共用。
+    const patches = resolveCurationLedger(curation, Array.isArray(arr) ? arr.filter(isNewsLikeEvent) : [], { scope }).locationPatches;
+    const derived = Array.isArray(arr) ? arr.map((e) => ({ ...e, ...patches.get(e.id)?.patch })) : arr;
+    const trimmed = Array.isArray(derived) ? derived.map(trimEvent) : derived;
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimmed));
     // 同時輸出地圖 first-paint 精簡檔 <scope>.map.json（僅可定位事件 + 精簡欄位）。
-    if (Array.isArray(arr)) {
-      const scope = f.replace(/\.json$/, "");
-      writeFileSync(`${OUT}/data/${scope}.map.json`, JSON.stringify(arr.filter(isLocated).map(mapTrim)));
+    if (Array.isArray(derived)) {
+      writeFileSync(`${OUT}/data/${scope}.map.json`, JSON.stringify(derived.filter(isLocated).map(mapTrim)));
     }
   } else if (f === "network.json") {
     const net = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));

@@ -198,8 +198,10 @@ export class NetworkIndex {
       for (const id of c.members) this.clusterByMember.set(id, c);
     }
     for (const e of net.edges ?? []) {
-      this.push(e.a, { id: e.b, type: e.type, weight: e.weight, why: e.why });
-      this.push(e.b, { id: e.a, type: e.type, weight: e.weight, why: e.why });
+      const why = (id: string) => e.type === "follow-up"
+        ? `${(e.from ?? e.a) === id ? "後續報導" : "前情報導"}：${e.why}` : e.why;
+      this.push(e.a, { id: e.b, type: e.type, weight: e.weight, why: why(e.a) });
+      this.push(e.b, { id: e.a, type: e.type, weight: e.weight, why: why(e.b) });
     }
     for (const list of this.adj.values()) list.sort((x, y) => y.weight - x.weight);
   }
@@ -361,4 +363,3 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   const hasData = (scopeNet.edges?.length ?? 0) > 0 || (scopeNet.clusters?.length ?? 0) > 0 || (scopeNet.nodes?.length ?? 0) > 0;
   return hasData ? NetworkIndex.createReady(scopeNet, meta) : NetworkIndex.createEmpty(meta);
 }
-

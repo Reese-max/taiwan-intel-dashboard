@@ -1,0 +1,15 @@
+{
+  "pr": 68,
+  "head": "b0c3cd9092d2d953964bc60b30d653fc72d90729",
+  "findings": [
+    {"severity":"high","file":"scripts/lib/curation-ledger.mjs","line":28,"issue":"fingerprintEvent omits summary, location evidence and semantic signals used by correlation. Changes to reviewed evidence therefore remain applied instead of needs_review."},
+    {"severity":"high","file":"scripts/lib/correlate.mjs","line":581,"issue":"Union processes Map insertion order instead of prioritizing manual same_event edges. An earlier automatic A-B union plus not_same_event A-C vetoes a valid manual B-C decision while reporting it applied."},
+    {"severity":"med","file":"scripts/lib/correlate.mjs","line":418,"issue":"follow_up appends a manual edge without replacing the same pair's automatic edge or preventing indirect unions, so automatic same-incident candidates still merge the reports and double-count their relation."},
+    {"severity":"high","file":"scripts/lib/curation-ledger.mjs","line":240,"issue":"Conflict detection only checks identical pairs. same_event A-B and B-C with not_same_event A-C all report applied even though one required merge is vetoed; the contradictory component must fail closed."},
+    {"severity":"low","file":"scripts/lib/curation-ledger.mjs","line":139,"issue":"samePatch compares JSON serialization order. Equivalent location patches with reordered keys are falsely marked conflict and neither correction is applied."},
+    {"severity":"med","file":"scripts/lib/correlate.mjs","line":628,"issue":"Location corrections only reach network nodes/clusters; both deployed UIs and first-paint map data use uncorrected event snapshots. A successfully applied correction therefore leaves the displayed coordinates and location role unchanged."},
+    {"severity":"low","file":"src/data/network.ts","line":200,"issue":"The dashboard and globe adjacency indexes discard follow-up direction. Viewing the later report labels its earlier neighbor as a follow-up too, with no directional explanation."}
+  ],
+  "fixed": true,
+  "summary": "Reviewed against issue #44 and fixed seven defects in stale-evidence detection, manual precedence, follow-up replacement/direction, transitive conflicts, patch comparison and displayed location corrections. Nine regression tests have observed red-to-green proof; Git Bash verification passes 877 Vitest tests, 5 Python tests, typecheck/build and operational audits. Local fixes only; no push or deployment."
+}

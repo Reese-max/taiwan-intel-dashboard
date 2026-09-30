@@ -19,7 +19,7 @@ source data → normalize → 自動候選關聯 → correlation ledger → 最�
 | `id` | 人工記錄 id（如 `cur-2026-09-30-notsame-001`），審計與前端 tooltip 引用 |
 | `decision` | `not_same_event`／`same_event`／`location_correction`／`follow_up` |
 | `subjects` | 穩定 **event id**（`twnews-*`／`intl-*`）。pair 決策需 2 個、`location_correction` 需 1 個。**不接受自由文字標題** |
-| `expect` | `{ "<eventId>": "<sha256>" }`——記錄審核當下看到的來源版本指紋；上游內容（標題／地區／時間／來源）一改動，該筆自動轉 `needs_review`，不會默默套用到不同內容 |
+| `expect` | `{ "<eventId>": "<sha256>" }`——記錄審核當下看到的來源版本指紋；來源識別、標題／摘要、地區／時間／分類、定位證據或 AI 關聯訊號改動時，該筆自動轉 `needs_review`。僅 `fetchedAt` 改變不會失效 |
 | `reason` | 判斷理由（審計用，會出現在邊的 why 說明） |
 | `evidence` | 可追溯證據的參照（連結／出處）；**勿存完整文章原文、個資或 secrets** |
 | `reviewedAt` | ISO8601 人工審核時間 |
@@ -38,8 +38,11 @@ source data → normalize → 自動候選關聯 → correlation ledger → 最�
   任何自動候選；兩事件進同一群集。
 - `location_correction`：`patch` 套用到該事件的衍生副本與 network 節點（附
   `curated` 標記），地理群集資格／degraded 桶依更正後的角色重新計算。原始
-  `domestic.json`/`international.json` 事件內容不被改寫。
-- `follow_up`：新增 `follow-up` 邊（`origin:"manual"`、`from`/`to` 有向），不併群。
+  `public/data/domestic.json`/`international.json` 事件內容不被改寫；`build-static`
+  會將有效更正重放到 `dist/data` 的事件與 `.map.json`，供部署後的首頁與地球儀呈現。
+  `npm run dev` 直接讀取原始 public 快照；位置更正的畫面驗收請使用建置後的 dist。
+- `follow_up`：取代該 pair 的自動邊，產生 `follow-up` 邊（`origin:"manual"`、
+  `from`/`to` 有向），並禁止透過第三者間接併群；兩個介面的關聯提示區分「前情報導／後續報導」。
 
 ## 狀態與安全（fail closed）
 
@@ -53,9 +56,12 @@ union）。規則：
 - 同一 pair 的矛盾決策（例：`same_event` × `not_same_event`、反向 `follow_up`）或同主體
   不同 `patch` → 全部標 `conflict`，**雙方都不套用**，自動產物原樣輸出；不採
   last-write-wins。
+- 傳遞矛盾（例：A=B、B=C 卻 A≠C／A→C）→ 涉及的人工同案分量與矛盾記錄
+  全部標 `conflict`。同值但 JSON 欄位順序不同的地點 patch 不算矛盾。
 - 欄位缺失／非法 → `invalid`，不套用（`npm run audit:curation` exit 1）。
 
 `needs_review`／`conflict`／`invalid` 都需要人工回到本檔修正後重送 PR。
+舊版指紋未涵蓋摘要、定位與 AI 證據；升級後舊 `expect` 會失效，須重新核對來源後產生指紋。
 
 ## 操作流程
 

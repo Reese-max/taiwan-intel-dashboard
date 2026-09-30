@@ -635,8 +635,10 @@ function buildNetworkIndex(net) {
   NET_CLUSTER_BY_ID = new Map(NET_CLUSTERS.map((c) => [c.id, c]));
   if (Array.isArray(net?.edges)) {
     for (const e of net.edges) {
-      const ab = { id: e.b, type: e.type, weight: e.weight, why: e.why };
-      const ba = { id: e.a, type: e.type, weight: e.weight, why: e.why };
+      const why = (id) => e.type === 'follow-up'
+        ? `${(e.from ?? e.a) === id ? '後續報導' : '前情報導'}：${e.why}` : e.why;
+      const ab = { id: e.b, type: e.type, weight: e.weight, why: why(e.a) };
+      const ba = { id: e.a, type: e.type, weight: e.weight, why: why(e.b) };
       if (!NET_ADJ.has(e.a)) NET_ADJ.set(e.a, []);
       if (!NET_ADJ.has(e.b)) NET_ADJ.set(e.b, []);
       NET_ADJ.get(e.a).push(ab);
