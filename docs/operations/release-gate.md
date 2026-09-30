@@ -19,14 +19,17 @@
 
 ### Pull request required checks
 
-`deploy.yml` 的 `check` job 依賴 `build-preview`；後者依序執行：
+`deploy.yml` 的 `check` job 依賴 `build-preview`；`build-preview` 使用還原的同一份 `pipeline-state` 資料，依序執行：
 
 1. `npm run check`（完整 Vitest、TypeScript check、network build 與 production build）。
-2. `npm run ops:validate` 與 `npm run ops:verify-docs`（operating-state 契約及文件一致性）。
-3. `node scripts/approved-code.mjs`（approved production code manifest 格式）。
-4. Cloudflare Pages preview deploy 與 canonical data smoke check。
+2. `python3 -m unittest discover -s tests -p test_crime_weekly_parser.py`（Python 回歸測試）。
+3. 沿用 pipeline 的必要資料稽核：network contract、source freshness、coverage、source health、summary、source provenance、network quality 與 data size（24 MiB 上限）。資料過期或稽核失敗時阻擋 preview，不抓即時資料補過檢查。
+4. `npm run ops:validate` 與 `npm run ops:verify-docs`（operating-state 契約及文件一致性）。
+5. `node scripts/approved-code.mjs`（approved production code manifest 格式）。
 
-因此，`production` ruleset 雖只列 required context `check`，測試、建置、operating-state 或 manifest 任一失敗都會使該 context 失敗，不能進入 production。`pr-check.yml` 仍在 `main` 與 `production` pull request 執行 `test`，提供較早的回饋。
+上述檢查全部成功後，`check` 才下載 artifact、部署 Cloudflare Pages preview 並執行 canonical data smoke check。因此，`production` ruleset 雖只列 required context `check`，測試、建置、必要資料稽核、operating-state 或 manifest 任一失敗都會使該 context 失敗，不能進入 production。`pr-check.yml` 仍在 `main` 與 `production` pull request 執行 `test`，提供較早的回饋。
+
+本機 clean replay 可用 `CI=true npm run check` 驗證測試與建置；缺資料時建立的 fixture 不代表資料稽核或部署驗收通過。一般建置與 GitHub Actions 會拒絕殘留的 `build-replay-fixture` 事件，必須先還原已稽核資料。
 
 ### Scheduled data release
 
@@ -34,7 +37,7 @@
 
 `operating-state` → `fetch` → `audit` → `build-approved` → `save-state` → `deploy`
 
-`audit` 或 operating-state validation 失敗時，`save-state` 與 `deploy` 都不會執行。`build-approved` 會以同一份候選資料 checkout `ops/approved-code.json` 的 SHA，執行 `npm run check`；只有 audited data、approved code 與線上 smoke 都成功，才會更新資料狀態並部署正式站。
+`audit` 或 operating-state validation 失敗時，`save-state` 與 `deploy` 都不會執行。`build-approved` 會以同一份候選資料 checkout `ops/approved-code.json` 的 SHA，執行 `npm run check`；資料稽核與核准版本建置通過後，依序更新 `pipeline-state`、部署正式站，再執行線上 smoke。smoke 失敗不會自動回復已寫入的資料狀態或已部署版本，必須依事故程序處理。
 
 ## 正常發布步驟
 

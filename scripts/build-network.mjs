@@ -71,6 +71,9 @@ function readEvents(name) {
   try {
     const events = JSON.parse(readFileSync(p, "utf8"));
     if (!Array.isArray(events)) throw new Error("根值必須是陣列");
+    if (!canUseBuildReplayFixture() && events.some((event) => event?.source?.name === "build-replay-fixture")) {
+      throw new Error("build-replay-fixture 僅限本機 clean replay，請還原已稽核資料");
+    }
     return events;
   } catch (e) {
     throw new Error(`${fileName}：JSON 無法解析或不是事件陣列：${e.message}`);
