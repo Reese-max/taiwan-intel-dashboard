@@ -120,8 +120,17 @@ export interface LoadEventsOptions {
 
 function eventsFetchSignal(options?: LoadEventsOptions): AbortSignal {
   const timeoutSignal = AbortSignal.timeout(options?.timeoutMs ?? EVENTS_FETCH_TIMEOUT_MS);
-  if (!options?.signal) return timeoutSignal;
-  return typeof AbortSignal.any === "function" ? AbortSignal.any([options.signal, timeoutSignal]) : options.signal;
+  const caller = options?.signal;
+  if (!caller) return timeoutSignal;
+  if (typeof AbortSignal.any === "function") return AbortSignal.any([caller, timeoutSignal]);
+  // 無 AbortSignal.any 的環境：手動合併，不能為了相容而丟掉逾時（否則不回應的請求仍會永久佔住）。
+  if (caller.aborted) return caller;
+  if (timeoutSignal.aborted) return timeoutSignal;
+  const controller = new AbortController();
+  const relay = (source: AbortSignal) => () => controller.abort(source.reason);
+  caller.addEventListener("abort", relay(caller), { once: true });
+  timeoutSignal.addEventListener("abort", relay(timeoutSignal), { once: true });
+  return controller.signal;
 }
 
 export async function loadEvents(scope: Scope, options?: LoadEventsOptions): Promise<IntelEvent[]> {

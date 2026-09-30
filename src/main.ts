@@ -40,6 +40,9 @@ const fetchManifestOnce = createManifestLoader();
 let refreshRequestId = 0;
 const netAutoRetried: Record<string, number> = {};
 const manifestAutoRetried: Record<string, number> = {};
+// 記錄各 scope 快取事件是用哪一份 manifest 驗證的（null = 未驗證的獨立新聞備援）。
+// 關聯單獨重試只能沿用同一份 manifest；全域 cohortManifest 升版後不得拿新版關聯硬拼舊版事件。
+const cohortByScope: Partial<Record<Scope, CohortManifest | null>> = {};
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -650,11 +653,14 @@ async function refresh(): Promise<void> {
     // 首載/切換 scope 時主資料尚未快取：顯示載入佔位（篩選變更走快取、不會閃爍）。
     if (!cache[s.scope]) eventList.innerHTML = `<p class="empty">情報載入中…</p>`;
     try {
+      let verifiedBy: CohortManifest | null = cohortManifest;
       let [ev, net] = await fetchCohortPair(s.scope, cohortManifest);
       if (requestId !== refreshRequestId) return;
 
+      // 快照版本不符，或本次根本沒有 manifest 可用：各允許一次有界重讀 manifest
+      // （跨部署暫態：manifest 晚幾秒才上線、或舊頁面撞上新版產物）。
       const isMismatch = net.error && /不符|缺少快照版本/i.test(net.error);
-      if (isMismatch && (manifestAutoRetried[s.scope] ?? 0) < 1) {
+      if ((isMismatch || !cohortManifest) && (manifestAutoRetried[s.scope] ?? 0) < 1) {
         manifestAutoRetried[s.scope] = 1;
         const refreshedManifest = await loadManifest();
         if (requestId !== refreshRequestId) return;
@@ -665,6 +671,7 @@ async function refresh(): Promise<void> {
             [ev, net] = pair;
             // 事件驗證完成才換鎖；失敗後的關聯重試仍須使用舊事件的 manifest。
             cohortManifest = refreshedManifest;
+            verifiedBy = refreshedManifest;
           } catch {
             // 保持現狀
           }
@@ -677,6 +684,7 @@ async function refresh(): Promise<void> {
           // 保留先前一致快取
         } else {
           cache[s.scope] = ev;
+          cohortByScope[s.scope] = verifiedBy;
           netCache[s.scope] = NetworkIndex.createError(
             "情報網與事件快照版本不一致，已停用關聯網以維護資料正確性",
             { snapshotId: cohortManifest?.snapshotId },
@@ -684,7 +692,11 @@ async function refresh(): Promise<void> {
         }
       } else {
         cache[s.scope] = ev;
+        cohortByScope[s.scope] = verifiedBy;
         netCache[s.scope] = net;
+        // 有界重讀／重試以「每次失敗至多一次」計：驗證成功即歸還額度，
+        // 但同一次 refresh 不會重複觸發（失敗時額度已先扣除）。
+        manifestAutoRetried[s.scope] = 0;
       }
     } catch (err) {
       if (requestId !== refreshRequestId) return;
@@ -699,7 +711,9 @@ async function refresh(): Promise<void> {
             if (requestId !== refreshRequestId) return;
             cohortManifest = refreshedManifest;
             cache[s.scope] = ev;
+            cohortByScope[s.scope] = refreshedManifest;
             netCache[s.scope] = net;
+            manifestAutoRetried[s.scope] = 0;
           } catch {
             // 仍失敗
           }
@@ -727,15 +741,19 @@ async function refresh(): Promise<void> {
     }
   }
 
-  // 若關聯發生錯誤，至多允許一次自動有界重試，不無限迴圈
-  if (netCache[s.scope]?.state === "error" && (netAutoRetried[s.scope] ?? 0) < 1) {
+  // 若關聯發生錯誤，至多允許一次自動有界重試，不無限迴圈。
+  // 只能用「驗證目前這批事件的同一份 manifest」重試：全域 manifest 升版後
+  // 不得拿新版關聯硬拼舊版事件；事件未驗證（null）時重試必然失敗，直接略過。
+  const verifiedManifest = cohortByScope[s.scope];
+  if (netCache[s.scope]?.state === "error" && verifiedManifest && (netAutoRetried[s.scope] ?? 0) < 1) {
     netAutoRetried[s.scope] = 1;
     try {
       const retriedNet = await loadNetwork(s.scope, {
-        manifest: cohortManifest,
+        manifest: verifiedManifest,
       });
       if (requestId !== refreshRequestId) return;
       netCache[s.scope] = retriedNet;
+      if (retriedNet.state !== "error") netAutoRetried[s.scope] = 0;
     } catch {
       // 保持 error 狀態，等待使用者手動重試
     }
@@ -1250,6 +1268,7 @@ setInterval(() => {
       const scope = getState().scope;
       delete cache[scope];
       delete netCache[scope];
+      delete cohortByScope[scope];
       void refresh();
     })
     .catch(() => {});

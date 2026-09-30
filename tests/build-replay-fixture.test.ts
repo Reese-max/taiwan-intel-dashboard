@@ -9,6 +9,8 @@ describe("build replay fixture（hermetic clean replay）", () => {
   it("僅在本機 CI 環境（CI=true 且非 GitHub Actions）允許 fixture", () => {
     expect(canUseBuildReplayFixture({ CI: "true" })).toBe(true);
     expect(canUseBuildReplayFixture({ CI: "true", GITHUB_ACTIONS: "true" })).toBe(false);
+    // 本專案部署於 Cloudflare Pages：CF_PAGES 建置同樣不得用假資料充當正式產物。
+    expect(canUseBuildReplayFixture({ CI: "true", CF_PAGES: "1" })).toBe(false);
     expect(canUseBuildReplayFixture({})).toBe(false);
     expect(canUseBuildReplayFixture({ CI: "false" })).toBe(false);
   });

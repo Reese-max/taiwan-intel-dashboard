@@ -22,10 +22,13 @@ const DATA_DIR = join(ROOT, "public", "data");
 const DIST_DATA_DIR = join(ROOT, "dist", "data");
 
 // 監管 replay（detached worktree）有程式碼與依賴但沒有 pipeline-state 快照；
-// 僅限本機 replay 以最小 fixture 保持 hermetic，不允許 GitHub Actions 用假資料
-// 掩蓋 pipeline 產物缺失（CI 的真實 build 仍需 restore-state 成功）。
+// 僅限本機 replay 以最小 fixture 保持 hermetic，不允許任何託管 CI/CD 用假資料
+// 掩蓋 pipeline 產物缺失（真實 build 仍需 restore-state 成功）。
 export function canUseBuildReplayFixture(env = process.env) {
-  return env.CI === "true" && env.GITHUB_ACTIONS !== "true";
+  if (env.CI !== "true") return false;
+  // 已知託管建置環境一律禁用，避免假資料進入正式產物。
+  const hosted = ["GITHUB_ACTIONS", "CF_PAGES", "GITLAB_CI", "CIRCLECI", "VERCEL", "NETLIFY", "TF_BUILD", "BUILDKITE"];
+  return !hosted.some((name) => env[name]);
 }
 
 export const BUILD_REPLAY_FIXTURE = {
