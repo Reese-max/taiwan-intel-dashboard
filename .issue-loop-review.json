@@ -1,0 +1,14 @@
+{
+  "pr": 67,
+  "head": "dea59ebfa1be736293e30493b8765502cb0af2f4",
+  "findings": [
+    {
+      "severity": "med",
+      "file": "scripts/prepare-build-data.mjs",
+      "line": 26,
+      "issue": "TOCTOU: both seed writes overwrite their destination by default. If a concurrent refresh or snapshot restore creates domestic.json or international.json after the absence checks, the synthetic seed replaces real data, contradicting the documented no-overwrite guarantee. Use exclusive creation for both files and fail closed on EEXIST."
+    }
+  ],
+  "fixed": true,
+  "summary": "Fixed one medium-severity TOCTOU defect: fixture seeding now preserves concurrently published snapshots and fails closed using exclusive writes. Both regression cases failed before the fix; the Git Bash validation command now passes 845 Vitest tests, 5 Python tests, typecheck/build, and the existing operating-state checks. The fix is committed locally; CI and Preview validation of the new commit remain for the driver."
+}

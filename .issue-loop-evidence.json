@@ -1,0 +1,15 @@
+{
+  "repo": "Reese-max/taiwan-intel-dashboard",
+  "issue": 67,
+  "base_sha": "dea59ebfa1be736293e30493b8765502cb0af2f4",
+  "red_proof": "At reviewed head dea59ebfa1be736293e30493b8765502cb0af2f4, with only the new regression tests added, npm test -- tests/build-clean-checkout.test.ts exited 1: 2 failed, 1 passed. The domestic.json race expected [{\"id\":\"real-pipeline-event\"}] but received [{\"id\":\"fixture-event\"}]; the international.json race expected the real snapshot but received []. Both cases inject a concurrent snapshot after the absence checks and assert byte-for-byte preservation plus EEXIST. After the exclusive-write fix, both cases pass.",
+  "test_command": "npm run check && python -m unittest discover -s tests -p test_crime_weekly_parser.py && npm run ops:validate && npm run ops:verify-docs && node scripts/approved-code.mjs && git diff --check",
+  "test_exit": 0,
+  "tests_passed": 850,
+  "tests_failed": 0,
+  "summary": "Reviewed the full PR diff against issue #47 and fixed one medium-severity snapshot overwrite race with COPYFILE_EXCL and flag wx. Baseline: 843 Vitest tests and build passed; final Git Bash validation: 845 Vitest tests, 5 Python tests, TypeScript/static build, operating-state validation/docs agreement (DEGRADED), approved-code format, and whitespace checks passed. README documents the fail-closed behavior; no dependencies or runtime contracts changed.",
+  "not_done": [
+    "No push, branch switch, remote PR changes, or deployment; CI and Preview for this new local fix remain unverified until the driver runs them.",
+    "No lint script is configured in package.json; no new lint tooling was installed."
+  ]
+}

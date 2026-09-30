@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { constants, copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,8 +23,9 @@ export function ensureBuildData(dataDir, fixturePath) {
   }
 
   mkdirSync(dataDir, { recursive: true });
-  copyFileSync(fixturePath, domesticPath);
-  writeFileSync(internationalPath, "[]\n", "utf8");
+  // A refresh may publish snapshots after the absence checks; never replace them.
+  copyFileSync(fixturePath, domesticPath, constants.COPYFILE_EXCL);
+  writeFileSync(internationalPath, "[]\n", { encoding: "utf8", flag: "wx" });
   return true;
 }
 
