@@ -106,11 +106,22 @@ export function filterEvents(events: IntelEvent[], opts: FilterOptions): IntelEv
 import { computeSha256Hex } from "../utils/sha256";
 import { loadManifest, type CohortManifest } from "./manifest";
 
+// 事件檔也可能較大（數 MB），給較寬鬆上限；重點是「有界」——永不 settle 的回應
+// 不能永久佔住 main.ts 的 cohortPairInflight 去重快取，否則連手動重試都失效。
+export const EVENTS_FETCH_TIMEOUT_MS = 20_000;
+
 export interface LoadEventsOptions {
   manifest?: CohortManifest | null;
   expectedSha256?: string;
   url?: string;
   signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+function eventsFetchSignal(options?: LoadEventsOptions): AbortSignal {
+  const timeoutSignal = AbortSignal.timeout(options?.timeoutMs ?? EVENTS_FETCH_TIMEOUT_MS);
+  if (!options?.signal) return timeoutSignal;
+  return typeof AbortSignal.any === "function" ? AbortSignal.any([options.signal, timeoutSignal]) : options.signal;
 }
 
 export async function loadEvents(scope: Scope, options?: LoadEventsOptions): Promise<IntelEvent[]> {
@@ -123,7 +134,7 @@ export async function loadEvents(scope: Scope, options?: LoadEventsOptions): Pro
       : undefined);
   if (options?.manifest && !expectedSha256) throw new Error("事件資料缺少 SHA-256，無法驗證");
 
-  const res = await fetch(url, { signal: options?.signal });
+  const res = await fetch(url, { signal: eventsFetchSignal(options) });
   if (!res.ok) throw new Error(`載入 ${scope}.json 失敗: ${res.status}`);
   if (typeof res.text === "function") {
     const text = await res.text();
@@ -153,7 +164,7 @@ export async function loadMapEvents(scope: Scope, options?: LoadEventsOptions): 
   if (options?.manifest && !expectedSha256) return null;
 
   try {
-    const res = await fetch(url, { signal: options?.signal });
+    const res = await fetch(url, { signal: eventsFetchSignal(options) });
     if (!res.ok) return null;
     if (typeof res.text === "function") {
       const text = await res.text();
