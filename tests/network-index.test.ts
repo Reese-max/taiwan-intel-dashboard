@@ -1,9 +1,29 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import { loadNetwork, NetworkIndex, type IntelNetwork, type ScopeNetwork } from "../src/data/network";
 
 afterEach(() => vi.restoreAllMocks());
 
 describe("NetworkIndex cluster metadata", () => {
+  it.each(["dashboard", "globe"])("[PR68 regression] %s explains follow-up direction from either endpoint", (ui) => {
+    const net: ScopeNetwork = {
+      edges: [{ a: "earlier", b: "later", from: "earlier", to: "later", type: "follow-up", weight: 1, origin: "manual", curationId: "cur-fu", why: "人工更正（cur-fu）：續報" }],
+      clusters: [], stats: {},
+    };
+    const index = ui === "dashboard" ? new NetworkIndex(net) : null;
+    const html = readFileSync("static/intel.html", "utf8");
+    const code = html.match(/function buildNetworkIndex\(net\) \{[\s\S]*?\n\}/)![0];
+    const adj = ui === "globe" ? runInNewContext(`${code}; buildNetworkIndex(net); NET_ADJ;`, {
+      net, window: {}, NET_ADJ: null, NET_CLUSTERS: [], NET_CLUSTER_BY_ID: null,
+    }) : null;
+    const related = (id: string) => index ? index.related(id) : adj.get(id);
+    expect(related("earlier")[0].why).toContain("後續報導");
+    expect(related("later")[0].why).toContain("前情報導");
+    expect(related("earlier")[0].why).toContain("cur-fu");
+    expect(related("later")[0].why).toContain("cur-fu");
+  });
+
   it("保留 cluster label 並可依 id 查群集", () => {
     const net: ScopeNetwork = {
       nodes: [],

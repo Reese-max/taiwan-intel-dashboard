@@ -3,7 +3,10 @@ import { existsSync, readFileSync } from "node:fs";
 export const NETWORK_FILE = "public/data/network.json";
 export const MIN_NETWORK_EVENTS = 1;
 
-const EDGE_TYPES = ["same-incident", "same-entity", "same-topic"];
+// follow-up：人工更正 ledger 產生的「後續報導」有向邊（#44）。
+const EDGE_TYPES = ["same-incident", "same-entity", "same-topic", "follow-up"];
+const EDGE_ORIGINS = new Set(["auto", "manual"]);
+const CURATION_STATUSES = new Set(["applied", "needs_review", "conflict", "invalid"]);
 const SCOPES = ["domestic", "international"];
 
 function isRecord(value) {
@@ -77,7 +80,37 @@ function validateScope(scope, value, errors) {
       if (!EDGE_TYPES.includes(edge.type)) errors.push(`${path}.type：必須是 ${EDGE_TYPES.join("／")}`);
       if (!isFiniteNumber(edge.weight)) errors.push(`${path}.weight：必須是有限數值`);
       if (!isNonEmptyString(edge.why)) errors.push(`${path}.why：必須是非空字串`);
+      if (edge.origin !== undefined && !EDGE_ORIGINS.has(edge.origin)) {
+        errors.push(`${path}.origin：存在時必須是 auto／manual`);
+      }
     });
+  }
+
+  // 人工更正審計區塊（#44）：存在時必須可對回 ledger 記錄，三層可追溯。
+  if (value.curation !== undefined) {
+    const cp = `${prefix}.curation`;
+    const curation = value.curation;
+    if (!isRecord(curation)) {
+      errors.push(`${cp}：必須是 JSON 物件`);
+    } else {
+      for (const key of ["entries", "applied", "needsReview", "conflicts", "invalid", "removedAutoEdges", "vetoedUnions"]) {
+        if (!isNonNegativeInteger(curation[key])) errors.push(`${cp}.${key}：必須是非負整數`);
+      }
+      if (!Array.isArray(curation.decisions)) {
+        errors.push(`${cp}.decisions：必須是陣列`);
+      } else {
+        curation.decisions.forEach((decision, i) => {
+          const dp = `${cp}.decisions[${i}]`;
+          if (!isRecord(decision)) {
+            errors.push(`${dp}：必須是 JSON 物件`);
+            return;
+          }
+          if (!CURATION_STATUSES.has(decision.status)) {
+            errors.push(`${dp}.status：必須是 ${[...CURATION_STATUSES].join("／")}`);
+          }
+        });
+      }
+    }
   }
 
   const clusters = value.clusters;

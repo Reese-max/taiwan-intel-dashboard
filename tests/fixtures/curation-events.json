@@ -1,0 +1,72 @@
+[
+  {
+    "id": "twnews-fixture-auto-a",
+    "title": "信義分局破獲毒品水房 查獲安非他命",
+    "region": "臺北市",
+    "timestamp": "2026-06-20T10:00:00+08:00",
+    "category": "治安",
+    "scope": "domestic",
+    "riskLevel": "medium",
+    "summary": "",
+    "source": { "name": "來源A", "type": "news-rss", "fetchedAt": "2026-06-20T10:00:00+08:00" }
+  },
+  {
+    "id": "twnews-fixture-auto-b",
+    "title": "信義分局緝毒案 起獲海洛因毒品",
+    "region": "臺北市",
+    "timestamp": "2026-06-20T14:00:00+08:00",
+    "category": "治安",
+    "scope": "domestic",
+    "riskLevel": "medium",
+    "summary": "",
+    "source": { "name": "來源B", "type": "news-rss", "fetchedAt": "2026-06-20T14:00:00+08:00" }
+  },
+  {
+    "id": "twnews-fixture-sep-a",
+    "title": "河堤公園發現可疑包裹",
+    "region": "臺北市",
+    "timestamp": "2026-06-20T08:00:00+08:00",
+    "category": "治安",
+    "scope": "domestic",
+    "riskLevel": "medium",
+    "summary": "",
+    "source": { "name": "來源A", "type": "news-rss", "fetchedAt": "2026-06-20T08:00:00+08:00" }
+  },
+  {
+    "id": "twnews-fixture-sep-b",
+    "title": "包裹移除 列為刑事案件偵辦",
+    "region": "高雄市",
+    "timestamp": "2026-06-21T09:00:00+08:00",
+    "category": "司法",
+    "scope": "domestic",
+    "riskLevel": "medium",
+    "summary": "",
+    "source": { "name": "來源B", "type": "news-rss", "fetchedAt": "2026-06-21T09:00:00+08:00" }
+  },
+  {
+    "id": "twnews-fixture-geo",
+    "title": "鳳山分局 毒品案 說明",
+    "region": "高雄市",
+    "timestamp": "2026-06-20T11:00:00+08:00",
+    "category": "治安",
+    "scope": "domestic",
+    "riskLevel": "medium",
+    "summary": "",
+    "lat": 22.62,
+    "lng": 120.35,
+    "locationRole": "incident",
+    "locationPrecision": "exact",
+    "source": { "name": "來源A", "type": "news-rss", "fetchedAt": "2026-06-20T11:00:00+08:00" }
+  },
+  {
+    "id": "twnews-fixture-geo-b",
+    "title": "鳳山分局 毒品案 續報",
+    "region": "高雄市",
+    "timestamp": "2026-06-20T13:00:00+08:00",
+    "category": "治安",
+    "scope": "domestic",
+    "riskLevel": "medium",
+    "summary": "",
+    "source": { "name": "來源B", "type": "news-rss", "fetchedAt": "2026-06-20T13:00:00+08:00" }
+  }
+]

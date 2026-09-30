@@ -4,7 +4,7 @@ import { riskBadge } from "./RiskBadge";
 import type { IntelEvent, RiskLevel } from "../types/event";
 import { esc } from "../utils/escape";
 
-const REL_TYPES = ["same-incident", "same-entity", "same-topic"];
+const REL_TYPES = ["same-incident", "same-entity", "same-topic", "follow-up"];
 
 export interface RelationGraphContext {
   center: IntelEvent;

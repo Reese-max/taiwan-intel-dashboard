@@ -1,6 +1,7 @@
 // 情報網關聯引擎（純函式、零依賴）。
 // 輸入：已正規化的 IntelEvent[]（警政/判決/新聞/天氣/採購/國際…）。
 import { clusterSignals } from "./cluster-signals.mjs";
+import { resolveCurationLedger } from "./curation-ledger.mjs";
 // 輸出：事件之間的「關聯圖」——把散落各源的孤立事件串成情報網。
 //   · same-incident：同縣市 + 案類關鍵詞/實體重疊 + 時間相近 + 不同來源（跨源佐證，情報網骨幹）
 //   · same-entity ：具名實體線索；地名須同區域且不單獨成群
@@ -20,6 +21,8 @@ const VAGUE_REGION = new Set(["全國", "未知", "", "—", "-", "全球", "國
 const W_INCIDENT = 1.0;
 const W_ENTITY = 0.6;
 const W_TOPIC = 0.3;
+const W_FOLLOW_UP = 1.0; // 人工更正「後續報導」有向邊
+const W_MANUAL_SAME_EVENT = 2.0; // 人工確認同案：高於任何自動候選權重，必優先
 const CLUSTER_INCIDENT_MIN_WEIGHT = 1.5;
 const CLUSTER_INCOHERENT_DOMINANT_SHARE = (() => {
   const n = Number(process.env.CLUSTER_INCOHERENT_DOMINANT_SHARE);
@@ -249,22 +252,29 @@ function shouldUnionSameEntity(edge) {
   return entities.some((ent) => !isLocalPlace(ent) && !SAME_ENTITY_UNION_BLOCKLIST.has(ent));
 }
 
-// 把多個候選邊合併（同一對取最高權重，理由併陳）。
+// 把多個候選邊合併（同一對取最高權重，理由併陳）。自動產生的邊一律 origin:"auto"。
 function upsertEdge(map, aId, bId, type, weight, why) {
   if (aId === bId) return;
   const key = edgeKey(aId, bId);
   const [a, b] = aId < bId ? [aId, bId] : [bId, aId];
   const cur = map.get(key);
   if (!cur || weight > cur.weight) {
-    map.set(key, { a, b, type, weight, why });
+    map.set(key, { a, b, type, weight, why, origin: "auto" });
   } else if (cur.weight === weight && !cur.why.includes(why)) {
     cur.why = `${cur.why}；${why}`;
   }
 }
 
 // 主函式：把事件串成關聯圖。
+// opts.curation：人工更正 ledger（records[]／loadCurationLedger 結果）。
+// 套用順序：自動候選邊 → ledger overrides（not_same_event 切除＋cannot-link、
+// same_event 強制同案、location_correction 改衍生層、follow_up 有向邊）→ union/clusters。
 export function correlateEvents(events, opts = {}) {
   const list = (events || []).filter((e) => e && e.id);
+  const curation = resolveCurationLedger(opts.curation, list, {
+    rulesVersion: opts.rulesVersion,
+    scope: opts.scope || list.find((e) => e.scope)?.scope || "domestic",
+  });
   const sigs = list.map(extractSignals);
   const byId = new Map(sigs.map((s) => [s.id, s]));
   const edges = new Map();
@@ -379,7 +389,56 @@ export function correlateEvents(events, opts = {}) {
     }
   }
 
-  const edgeList = [...edges.values()];
+  // ── 人工更正 Ledger：自動候選生成完畢後、union/cluster 之前套用 ──
+  // not_same_event：切除該 pair 的自動邊；union 階段另有 cannot-link 傳遞約束。
+  let removedAutoEdges = 0;
+  for (const { a, b } of curation.blockedPairs) {
+    if (edges.delete(edgeKey(a, b))) removedAutoEdges++;
+  }
+  // same_event：人工確認同案，高權重壓過自動候選；同 pair 只保留一條（origin:"manual"）。
+  for (const { a, b, recordId, reason } of curation.sameEventPairs) {
+    const prior = edges.get(edgeKey(a, b));
+    upsertEdge(
+      edges,
+      a,
+      b,
+      "same-incident",
+      W_MANUAL_SAME_EVENT,
+      `人工更正：確認同一事件（${recordId}）${reason ? `；${reason}` : ""}`,
+    );
+    const edge = edges.get(edgeKey(a, b));
+    if (edge) {
+      edge.origin = "manual";
+      edge.decision = "same_event";
+      edge.curationId = recordId;
+      if (prior && prior !== edge) edge.supersedes = prior.type;
+    }
+  }
+  // follow_up：有向人工更正邊（from = 較早報導 → to = 後續報導）；不參與群集合併。
+  for (const { from, to } of curation.followUps) {
+    if (edges.delete(edgeKey(from, to))) removedAutoEdges++;
+  }
+  const manualFollowUps = curation.followUps.map(({ from, to, recordId, reason }) => ({
+    a: from,
+    b: to,
+    type: "follow-up",
+    weight: W_FOLLOW_UP,
+    why: `人工更正：後續報導（${recordId}）${reason ? `；${reason}` : ""}`,
+    origin: "manual",
+    decision: "follow_up",
+    curationId: recordId,
+    from,
+    to,
+  }));
+  const edgeList = [...edges.values(), ...manualFollowUps];
+  const eventsById = new Map(list.map((e) => [e.id, e]));
+
+  // location_correction：只改衍生層（地理群集＋節點呈現）的副本，不改原始事件。
+  const correctedById = new Map();
+  for (const [id, { patch }] of curation.locationPatches) {
+    const src = eventsById.get(id);
+    if (src) correctedById.set(id, { ...src, ...patch });
+  }
 
   // ── 節點 degree（cluster label 也會用到）──
   const degree = new Map(sigs.map((s) => [s.id, 0]));
@@ -387,7 +446,6 @@ export function correlateEvents(events, opts = {}) {
     degree.set(e.a, degree.get(e.a) + 1);
     degree.set(e.b, degree.get(e.b) + 1);
   }
-  const eventsById = new Map(list.map((e) => [e.id, e]));
   const directEvidenceSourcesById = new Map(list.map((e) => [e.id, new Set()]));
   for (const edge of edgeList) {
     if (edge.type !== "same-incident") continue;
@@ -420,7 +478,8 @@ export function correlateEvents(events, opts = {}) {
       .map(([value]) => value);
   };
   const describeCluster = (members, id) => {
-    const items = members.map((memberId) => eventsById.get(memberId)).filter(Boolean);
+    // 用更正後的副本（若有人工地點更正）算地理群集／regions 等衍生欄位；原始資料不變。
+    const items = members.map((memberId) => correctedById.get(memberId) ?? eventsById.get(memberId)).filter(Boolean);
     const memberIds = new Set(members);
     const clusterDirectEvidenceIds = new Set();
     const evidenceSources = new Set();
@@ -498,12 +557,49 @@ export function correlateEvents(events, opts = {}) {
     if (ra !== rb) parent.set(ra, rb);
   };
   let skippedSameEntityUnionEdges = 0;
-  for (const e of edgeList) {
+  // 不同案／續報的 cannot-link 傳遞約束：A、B 不得透過第三者的自動邊再併同群。
+  const blockedAdj = new Map();
+  const separatedPairs = [...curation.blockedPairs, ...curation.followUps.map(({ from, to }) => ({ a: from, b: to }))];
+  for (const { a, b } of separatedPairs) {
+    if (!blockedAdj.has(a)) blockedAdj.set(a, new Set());
+    if (!blockedAdj.has(b)) blockedAdj.set(b, new Set());
+    blockedAdj.get(a).add(b);
+    blockedAdj.get(b).add(a);
+  }
+  const compMembers = new Map(sigs.map((s) => [s.id, new Set([s.id])]));
+  const vetoedUnions = [];
+  const wouldViolate = (ra, rb) => {
+    if (!blockedAdj.size) return false;
+    const [small, other] =
+      compMembers.get(ra).size <= compMembers.get(rb).size
+        ? [compMembers.get(ra), compMembers.get(rb)]
+        : [compMembers.get(rb), compMembers.get(ra)];
+    for (const id of small) {
+      const banned = blockedAdj.get(id);
+      if (!banned) continue;
+      for (const m of other) if (banned.has(m)) return [id, m];
+    }
+    return false;
+  };
+  // 人工同案先固定分量，再處理自動候選，避免自動 union 搶先占用 cannot-link 約束。
+  const unionEdges = [...edgeList].sort((a, b) => Number(b.origin === "manual") - Number(a.origin === "manual"));
+  for (const e of unionEdges) {
     if (
       (e.type === "same-entity" && shouldUnionSameEntity(e)) ||
       (e.type === "same-incident" && e.weight >= CLUSTER_INCIDENT_MIN_WEIGHT)
     ) {
-      union(e.a, e.b);
+      const ra = find(e.a);
+      const rb = find(e.b);
+      if (ra === rb) continue;
+      const veto = wouldViolate(ra, rb);
+      if (veto) {
+        vetoedUnions.push({ a: e.a, b: e.b, type: e.type, blockedPair: veto });
+        continue;
+      }
+      union(ra, rb);
+      const merged = compMembers.get(rb);
+      for (const m of compMembers.get(ra)) merged.add(m);
+      compMembers.delete(ra);
     } else if (e.type === "same-entity") {
       skippedSameEntityUnionEdges++;
     }
@@ -519,21 +615,32 @@ export function correlateEvents(events, opts = {}) {
     .map((members, i) => describeCluster(members, `c${i}`))
     .sort((a, b) => b.size - a.size);
 
-  // ── 節點（含 degree）──
-  const nodes = list.map((e) => ({
-    id: e.id,
-    title: e.title || "",
-    summary: e.summary || "",
-    region: e.region,
-    category: e.category,
-    riskLevel: e.riskLevel,
-    scope: e.scope,
-    degree: degree.get(e.id) || 0,
-    sourceCount: directEvidenceSourcesById.get(e.id)?.size || 0,
-    evidenceSources: sortedSources(directEvidenceSourcesById.get(e.id) || []),
-  }));
+  // ── 節點（含 degree；location_correction 只落於衍生節點，不改原始資料）──
+  const nodes = list.map((e) => {
+    const corrected = correctedById.get(e.id);
+    const node = {
+      id: e.id,
+      title: e.title || "",
+      summary: e.summary || "",
+      region: corrected?.region ?? e.region,
+      category: e.category,
+      riskLevel: e.riskLevel,
+      scope: e.scope,
+      degree: degree.get(e.id) || 0,
+      sourceCount: directEvidenceSourcesById.get(e.id)?.size || 0,
+      evidenceSources: sortedSources(directEvidenceSourcesById.get(e.id) || []),
+    };
+    if (corrected) {
+      const patch = curation.locationPatches.get(e.id).patch;
+      for (const key of ["region", "locationRole", "locationPrecision", "lat", "lng"]) {
+        if (key in patch) node[key] = patch[key];
+      }
+      node.curated = { id: curation.locationPatches.get(e.id).recordId, decision: "location_correction", fields: Object.keys(patch).sort() };
+    }
+    return node;
+  });
 
-  const byType = { "same-incident": 0, "same-entity": 0, "same-topic": 0 };
+  const byType = { "same-incident": 0, "same-entity": 0, "same-topic": 0, "follow-up": 0 };
   for (const e of edgeList) byType[e.type] = (byType[e.type] || 0) + 1;
 
   return {
@@ -549,6 +656,18 @@ export function correlateEvents(events, opts = {}) {
       skippedGenericEntities: skippedGeneric,
       skippedSameEntityUnionEdges,
       aiTopicEdges,
+    },
+    // 人工更正審計：自動候選 / 人工決策 / 最終輸出三層各自可追溯。
+    curation: {
+      entries: curation.stats.entries,
+      applied: curation.stats.applied,
+      needsReview: curation.stats.needsReview,
+      conflicts: curation.stats.conflicts,
+      invalid: curation.stats.invalid,
+      removedAutoEdges,
+      vetoedUnions: vetoedUnions.length,
+      vetoes: vetoedUnions,
+      decisions: curation.decisions,
     },
   };
 }

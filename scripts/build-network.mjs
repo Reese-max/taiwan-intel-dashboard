@@ -15,11 +15,61 @@ import {
   writeCohortManifest,
   RULES_VERSION,
 } from "./lib/manifest.mjs";
+import {
+  CURATED_LEDGER_REL_PATH,
+  loadCurationLedger,
+} from "./lib/curation-ledger.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // 與 fetch-live 一致：實際服務／部署的資料在 public/data，dist/data 為已 build 副本。
 const DATA_DIR = join(ROOT, "public", "data");
 const DIST_DATA_DIR = join(ROOT, "dist", "data");
+const CURATED_LEDGER_PATH = join(ROOT, CURATED_LEDGER_REL_PATH);
+
+// 監管 replay（detached worktree）有程式碼與依賴但沒有 pipeline-state 快照；
+// 僅限本機 replay 以最小 fixture 保持 hermetic，不允許 GitHub Actions 用假資料
+// 掩蓋 pipeline 產物缺失（CI 的真實 build 仍需 restore-state 成功）。
+export function canUseBuildReplayFixture(env = process.env) {
+  return env.CI === "true" && env.GITHUB_ACTIONS !== "true";
+}
+
+export const BUILD_REPLAY_FIXTURE = {
+  domestic: [
+    {
+      id: "build-replay-domestic",
+      title: "本機建置驗證事件",
+      summary: "僅供 clean replay 建置驗證，不代表正式資料。",
+      region: "臺北市",
+      timestamp: "2026-01-01T00:00:00.000Z",
+      category: "測試",
+      scope: "domestic",
+      riskLevel: "low",
+      source: { name: "build-replay-fixture", type: "news-rss", recordRef: "https://example.invalid/build-replay-domestic" },
+    },
+  ],
+  international: [
+    {
+      id: "build-replay-international",
+      title: "Build replay fixture event",
+      summary: "Only for clean replay build verification; not production data.",
+      region: "全球",
+      timestamp: "2026-01-01T00:00:00.000Z",
+      category: "測試",
+      scope: "international",
+      riskLevel: "low",
+      source: { name: "build-replay-fixture", type: "news-rss", recordRef: "https://example.invalid/build-replay-international" },
+    },
+  ],
+};
+
+function writeBuildReplayFixture() {
+  if (!canUseBuildReplayFixture() || existsSync(DATA_DIR)) return false;
+  mkdirSync(DATA_DIR, { recursive: true });
+  for (const [name, events] of Object.entries(BUILD_REPLAY_FIXTURE)) {
+    writeFileSync(join(DATA_DIR, `${name}.json`), JSON.stringify(events) + "\n");
+  }
+  return true;
+}
 
 function readEvents(name) {
   const p = join(DATA_DIR, name);
@@ -36,7 +86,7 @@ function readEvents(name) {
   }
 }
 
-export function buildNetwork(domestic, international, nowIso, { snapshotId, rulesVersion = RULES_VERSION } = {}) {
+export function buildNetwork(domestic, international, nowIso, { snapshotId, rulesVersion = RULES_VERSION, curation } = {}) {
   const domesticNews = (domestic || []).filter(isNewsLikeEvent);
   const intlNews = (international || []).filter(isNewsLikeEvent);
   const sid =
@@ -47,8 +97,8 @@ export function buildNetwork(domestic, international, nowIso, { snapshotId, rule
     generatedAt: nowIso,
     rulesVersion,
     scopeNote: "情報網僅含新聞類事件（RSS / tw-news），排除政府模板化統計資料",
-    domestic: correlateEvents(domesticNews),
-    international: correlateEvents(intlNews),
+    domestic: correlateEvents(domesticNews, { curation, rulesVersion, scope: "domestic" }),
+    international: correlateEvents(intlNews, { curation, rulesVersion, scope: "international" }),
     excluded: {
       domestic: (domestic?.length || 0) - domesticNews.length,
       international: (international?.length || 0) - intlNews.length,
@@ -57,10 +107,14 @@ export function buildNetwork(domestic, international, nowIso, { snapshotId, rule
 }
 
 function main() {
+  if (writeBuildReplayFixture()) {
+    console.log("public/data 不存在；使用僅限本機 clean replay 的建置 fixture（GitHub Actions 不允許此 fallback）");
+  }
   const domestic = readEvents("domestic.json");
   const international = readEvents("international.json");
   const nowIso = new Date().toISOString();
-  const net = buildNetwork(domestic, international, nowIso);
+  const curation = loadCurationLedger(CURATED_LEDGER_PATH);
+  const net = buildNetwork(domestic, international, nowIso, { curation });
   const contractErrors = validateNetworkContract(net);
   if (contractErrors.length) {
     throw new Error(`產物契約驗收失敗：\n${formatNetworkContractErrors(NETWORK_FILE, contractErrors)}`);
@@ -82,10 +136,16 @@ function main() {
 
   const d = net.domestic.stats;
   const i = net.international.stats;
+  const dc = net.domestic.curation;
+  const ic = net.international.curation;
+  const curationNote = curation.entries.length
+    ? `\n  人工更正：ledger ${curation.entries.length} 筆（國內 套用 ${dc.applied}／待複審 ${dc.needsReview}／衝突 ${dc.conflicts}；國際 套用 ${ic.applied}／待複審 ${ic.needsReview}／衝突 ${ic.conflicts}）`
+    : "";
   console.log(
     `情報網已產出 → data/network.json（排除政府模板資料 國內 ${net.excluded.domestic}／國際 ${net.excluded.international} 筆）\n` +
       `  國內新聞：${d.events} 事件、${d.edges} 連結（佐證 ${d.byType["same-incident"]}／實體 ${d.byType["same-entity"]}／同題 ${d.byType["same-topic"]}）、${d.clusters} 群集（最大 ${d.largestCluster}）\n` +
-      `  國際新聞：${i.events} 事件、${i.edges} 連結、${i.clusters} 群集`,
+      `  國際新聞：${i.events} 事件、${i.edges} 連結、${i.clusters} 群集` +
+      curationNote,
   );
 }
 

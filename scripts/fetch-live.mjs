@@ -54,6 +54,7 @@ import {
   lastDomesticNormalizeSkippedBatches,
 } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
+import { CURATED_LEDGER_REL_PATH, loadCurationLedger } from "./lib/curation-ledger.mjs";
 import {
   formatNetworkContractErrors,
   NETWORK_FILE,
@@ -792,6 +793,8 @@ export async function run() {
   );
 
   // --- 情報網：把新聞事件串成關聯圖（純加法，不影響既有輸出）---
+  // 人工更正 ledger（#44）隨程式碼進 review 部署；rebuild 後 override 仍持續生效。
+  const curationLedger = loadCurationLedger(join(ROOT, CURATED_LEDGER_REL_PATH));
   let domesticClusters = []; // 供 AI 群摘要用（cluster id 與 build-network 一致，因同 correlateEvents/同 domestic.json）
   let network = null;
   try {
@@ -802,8 +805,8 @@ export async function run() {
       generatedAt: nowIso,
       rulesVersion: RULES_VERSION,
       scopeNote: "情報網僅含新聞類事件（RSS / tw-news），排除政府模板化統計資料",
-      domestic: correlateEvents(domesticNews),
-      international: correlateEvents(intlNews),
+      domestic: correlateEvents(domesticNews, { curation: curationLedger.entries, rulesVersion: RULES_VERSION, scope: "domestic" }),
+      international: correlateEvents(intlNews, { curation: curationLedger.entries, rulesVersion: RULES_VERSION, scope: "international" }),
       excluded: {
         domestic: domesticEvents.length - domesticNews.length,
         international: intlEvents.length - intlNews.length,
@@ -816,7 +819,11 @@ export async function run() {
     writeJson("network.json", network);
     domesticClusters = network.domestic.clusters || [];
     status.network = { ok: true, edges: network.domestic.stats.edges, clusters: network.domestic.stats.clusters };
-    console.log(`情報網：國內新聞 ${network.domestic.stats.events} 事件 → ${network.domestic.stats.edges} 連結、${network.domestic.stats.clusters} 群集`);
+    const cur = network.domestic.curation;
+    const curationNote = curationLedger.entries.length
+      ? `（人工更正 套用 ${cur.applied}／待複審 ${cur.needsReview}／衝突 ${cur.conflicts}）`
+      : "";
+    console.log(`情報網：國內新聞 ${network.domestic.stats.events} 事件 → ${network.domestic.stats.edges} 連結、${network.domestic.stats.clusters} 群集${curationNote}`);
   } catch (e) {
     status.network = { ok: false, error: e.message };
     console.error(`情報網建立失敗（不影響其他輸出）：${e.message}`);

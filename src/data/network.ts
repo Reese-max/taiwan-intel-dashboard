@@ -3,7 +3,8 @@
 import type { Scope } from "../types/event";
 import { computeSha256Hex } from "../utils/sha256";
 
-export type EdgeType = "same-incident" | "same-entity" | "same-topic";
+// follow-up：人工更正 ledger（#44）產生的「後續報導」有向邊（from→to）。
+export type EdgeType = "same-incident" | "same-entity" | "same-topic" | "follow-up";
 
 export interface NetEdge {
   a: string;
@@ -11,6 +12,13 @@ export interface NetEdge {
   type: EdgeType;
   weight: number;
   why: string;
+  /** auto = 自動候選；manual = 人工更正 ledger 覆寫（附 curationId 對回記錄）。 */
+  origin?: "auto" | "manual";
+  decision?: string;
+  curationId?: string;
+  /** follow-up 方向：from（較早報導）→ to（後續報導）。 */
+  from?: string;
+  to?: string;
 }
 
 export interface NetNode {
@@ -26,6 +34,12 @@ export interface NetNode {
   // 只計群內 same-incident 直接佐證來源；同實體／同題關聯不計入。
   sourceCount?: number;
   evidenceSources?: string[];
+  // location_correction 人工更正後的衍生欄位與審計標記（原始事件資料不變）。
+  locationRole?: string;
+  locationPrecision?: string;
+  lat?: number;
+  lng?: number;
+  curated?: { id?: string; decision?: string; fields?: string[] };
 }
 
 export interface ClusterTemporalBucket {
@@ -76,12 +90,33 @@ export interface NetCluster {
   incoherent?: boolean;
 }
 
+/** 人工更正 ledger 的逐筆套用審計（#44）：自動候選／人工決策／最終輸出分層可追溯。 */
+export interface CurationAudit {
+  entries: number;
+  applied: number;
+  needsReview: number;
+  conflicts: number;
+  invalid: number;
+  removedAutoEdges: number;
+  vetoedUnions: number;
+  vetoes?: { a: string; b: string; type: string; blockedPair: string[] }[];
+  decisions: {
+    id?: string | null;
+    line?: number | null;
+    decision?: string | null;
+    subjects?: string[] | null;
+    status: "applied" | "needs_review" | "conflict" | "invalid";
+    note?: string | null;
+  }[];
+}
+
 export interface ScopeNetwork {
   // 舊產物可省略；新產物保留事件摘要與直接佐證來源。
   nodes?: NetNode[];
   edges: NetEdge[];
   clusters: NetCluster[];
   stats: Record<string, unknown>;
+  curation?: CurationAudit;
 }
 
 export type NetworkState = "ready" | "empty" | "error" | "stale";
@@ -107,6 +142,7 @@ const TYPE_LABEL: Record<EdgeType, string> = {
   "same-incident": "同事件候選（待查證）",
   "same-entity": "共享實體",
   "same-topic": "同題情勢（弱關聯）",
+  "follow-up": "後續報導（人工更正）",
 };
 
 export const NETWORK_FETCH_TIMEOUT_MS = 5_000;
@@ -162,8 +198,10 @@ export class NetworkIndex {
       for (const id of c.members) this.clusterByMember.set(id, c);
     }
     for (const e of net.edges ?? []) {
-      this.push(e.a, { id: e.b, type: e.type, weight: e.weight, why: e.why });
-      this.push(e.b, { id: e.a, type: e.type, weight: e.weight, why: e.why });
+      const why = (id: string) => e.type === "follow-up"
+        ? `${(e.from ?? e.a) === id ? "後續報導" : "前情報導"}：${e.why}` : e.why;
+      this.push(e.a, { id: e.b, type: e.type, weight: e.weight, why: why(e.a) });
+      this.push(e.b, { id: e.a, type: e.type, weight: e.weight, why: why(e.b) });
     }
     for (const list of this.adj.values()) list.sort((x, y) => y.weight - x.weight);
   }
@@ -325,4 +363,3 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   const hasData = (scopeNet.edges?.length ?? 0) > 0 || (scopeNet.clusters?.length ?? 0) > 0 || (scopeNet.nodes?.length ?? 0) > 0;
   return hasData ? NetworkIndex.createReady(scopeNet, meta) : NetworkIndex.createEmpty(meta);
 }
-
