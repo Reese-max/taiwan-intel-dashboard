@@ -1,7 +1,8 @@
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync, copyFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
@@ -13,6 +14,10 @@ import {
   projectItem,
   sourceUrl,
 } from "../scripts/govintel-discovery.mjs";
+
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const DISCOVERY_SCRIPT = join(REPO_ROOT, "scripts", "govintel-discovery.mjs");
+const DISCOVERY_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "govintel-domestic.json");
 
 const NOW = new Date("2026-09-16T12:00:00Z");
 const ACTIVE = { state: "ACTIVE", stale: false, origin: "contract" };
@@ -287,7 +292,7 @@ describe("CLI end-to-end", () => {
     const dir = mkdtempSync(join(tmpdir(), "disc-cli-"));
     try {
       writeFileSync(join(dir, "domestic.json"), JSON.stringify([item()]));
-      const out = execFileSync("node", ["scripts/govintel-discovery.mjs"], {
+      const out = execFileSync(process.execPath, [DISCOVERY_SCRIPT], {
         env: { ...process.env, DISCOVERY_DATA_DIR: dir, DISCOVERY_STATE_PATH: join(dir, "missing.json"), DISCOVERY_NOW: NOW.toISOString() },
         encoding: "utf8",
       });
@@ -307,13 +312,13 @@ describe("CLI end-to-end", () => {
   });
 
   it("domestic.json 快照產出符合 schema 的 feed（有正式資料時驗正式資料）", () => {
-    const realSnapshot = join("public", "data", "domestic.json");
+    const realSnapshot = join(REPO_ROOT, "public", "data", "domestic.json");
     const hasRealSnapshot = existsSync(realSnapshot);
-    const input = hasRealSnapshot ? realSnapshot : join("tests", "fixtures", "govintel-domestic.json");
+    const input = hasRealSnapshot ? realSnapshot : DISCOVERY_FIXTURE;
     const dir = mkdtempSync(join(tmpdir(), "disc-snapshot-"));
     try {
       copyFileSync(input, join(dir, "domestic.json"));
-      execFileSync("node", ["scripts/govintel-discovery.mjs"], {
+      execFileSync(process.execPath, [DISCOVERY_SCRIPT], {
         env: {
           ...process.env,
           DISCOVERY_DATA_DIR: dir,
@@ -331,6 +336,22 @@ describe("CLI end-to-end", () => {
         expect(["official", "media"]).toContain(it2.authority);
         expect(it2.original_source_identity || it2.source_url).toBeTruthy();
       }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("clean checkout 從 repo 外 cwd 執行 fixture 仍可產出 feed", () => {
+    const dir = mkdtempSync(join(tmpdir(), "disc-clean-cwd-"));
+    try {
+      copyFileSync(DISCOVERY_FIXTURE, join(dir, "domestic.json"));
+      execFileSync(process.execPath, [DISCOVERY_SCRIPT], {
+        cwd: dir,
+        env: { ...process.env, DISCOVERY_DATA_DIR: dir, DISCOVERY_NOW: NOW.toISOString() },
+        encoding: "utf8",
+      });
+      const feed = JSON.parse(readFileSync(join(dir, "govintel-discovery.json"), "utf8"));
+      expect(feed.items.length).toBeGreaterThan(0);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

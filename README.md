@@ -59,6 +59,8 @@ npm run refresh:news   # 抓台灣新聞（吃 LLM 成本）
 node --env-file=.env scripts/fetch-live.mjs --sources=rss,gdelt   # 抓國際 RSS＋GDELT 補充
 ```
 
+乾淨 checkout 沒有 `public/data/` 時，`npm run build` 會暫時使用已提交的合成 fixture 建立本機 build 輸入；正式資料快照存在時則原樣使用，不會被 fixture 覆蓋。
+
 ## 稽核（CI 皆有掛）
 
 ```bash
