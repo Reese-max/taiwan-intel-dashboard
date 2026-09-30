@@ -134,7 +134,7 @@ jobs:
           if-no-files-found: error
 
   deploy:
-    needs: [save-state, build-approved]
+    needs: [operating-state, audit, save-state, build-approved]
     runs-on: ubuntu-latest
     permissions:
       contents: read

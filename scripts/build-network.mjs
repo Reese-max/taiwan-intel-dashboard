@@ -21,6 +21,47 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DIR = join(ROOT, "public", "data");
 const DIST_DATA_DIR = join(ROOT, "dist", "data");
 
+// The supervisor's detached replay has source code and dependencies but no
+// pipeline-state checkout. Keep that local replay hermetic without allowing a
+// GitHub Actions build to substitute data for a failed pipeline restore.
+export function canUseBuildReplayFixture(env = process.env) {
+  return env.CI === "true" && env.GITHUB_ACTIONS !== "true";
+}
+
+export const BUILD_REPLAY_FIXTURE = {
+  domestic: [{
+    id: "build-replay-domestic",
+    title: "本機建置測試事件",
+    summary: "僅供 clean replay 建置驗證，不代表正式資料。",
+    region: "臺北市",
+    timestamp: "2026-01-01T00:00:00.000Z",
+    category: "測試",
+    scope: "domestic",
+    riskLevel: "low",
+    source: { name: "build-replay-fixture", type: "news-rss", recordRef: "https://example.invalid/build-replay-fixture" },
+  }],
+  international: [{
+    id: "build-replay-international",
+    title: "Build replay fixture event",
+    summary: "Only for clean replay build verification; not production data.",
+    region: "全球",
+    timestamp: "2026-01-01T00:00:00.000Z",
+    category: "測試",
+    scope: "international",
+    riskLevel: "low",
+    source: { name: "build-replay-fixture", type: "news-rss", recordRef: "https://example.invalid/build-replay-fixture" },
+  }],
+};
+
+function writeBuildReplayFixture() {
+  if (!canUseBuildReplayFixture() || existsSync(DATA_DIR)) return false;
+  mkdirSync(DATA_DIR, { recursive: true });
+  for (const [name, events] of Object.entries(BUILD_REPLAY_FIXTURE)) {
+    writeFileSync(join(DATA_DIR, `${name}.json`), JSON.stringify(events) + "\n");
+  }
+  return true;
+}
+
 function readEvents(name) {
   const p = join(DATA_DIR, name);
   const fileName = `public/data/${name}`;
@@ -57,6 +98,9 @@ export function buildNetwork(domestic, international, nowIso, { snapshotId, rule
 }
 
 function main() {
+  if (writeBuildReplayFixture()) {
+    console.warn("public/data 不存在；使用僅限本機 clean replay 的建置 fixture（GitHub Actions 不允許此 fallback）");
+  }
   const domestic = readEvents("domestic.json");
   const international = readEvents("international.json");
   const nowIso = new Date().toISOString();

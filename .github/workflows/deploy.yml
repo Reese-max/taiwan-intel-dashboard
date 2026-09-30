@@ -29,6 +29,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      - name: Validate operating-state contract
+        run: npm run ops:validate
+      - name: Verify operating-state documentation
+        run: npm run ops:verify-docs
+      - name: Validate approved production code manifest
+        run: node scripts/approved-code.mjs
       - name: Upload checked preview artifact
         uses: actions/upload-artifact@v4
         with:
