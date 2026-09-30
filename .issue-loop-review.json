@@ -1,0 +1,32 @@
+{
+  "pr": 66,
+  "head": "f75e652b9eab2458218ed699363ec7c8baccc8d9",
+  "findings": [
+    {
+      "severity": "high",
+      "file": ".github/workflows/deploy.yml",
+      "line": 31,
+      "issue": "The production ruleset requires only check, but build-preview runs npm run check without the existing Python regression suite. A Python test failure in pr-check.yml can therefore leave the sole required production check green. Run the Python suite in the required check before publishing its artifact."
+    },
+    {
+      "severity": "high",
+      "file": ".github/workflows/deploy.yml",
+      "line": 38,
+      "issue": "The required PR checks never run the data/pipeline audits required by issue #42. Those audits run only after merge in update-and-deploy, so a revision with a failing audit can still satisfy main/production required checks. Reuse the existing mandatory pipeline audit commands on the restored preview snapshot before artifact publication."
+    },
+    {
+      "severity": "med",
+      "file": "scripts/build-network.mjs",
+      "line": 58,
+      "issue": "Replay isolation is enforced only when generating fixtures. Once a local replay leaves fixture events in public/data, an ordinary build or a GitHub Actions build reusing that directory accepts them. Reject persisted build-replay-fixture events when replay mode is unavailable; clean GitHub checkouts are not affected."
+    },
+    {
+      "severity": "low",
+      "file": "docs/operations/release-gate.md",
+      "line": 37,
+      "issue": "The document claims online smoke must succeed before pipeline-state and production are mutated. The workflow actually saves state, deploys, then runs smoke, and has no automatic rollback. Document that ordering and failure limitation accurately."
+    }
+  ],
+  "fixed": true,
+  "summary": "Fixed four findings: required production checks now include Python tests and mandatory pipeline audits, persisted replay fixtures are rejected outside replay mode, and smoke documentation states the actual post-deploy order and lack of automatic rollback. All four regressions failed before their fixes; Git Bash verification passed 850 Vitest tests, 5 Python tests, typecheck/build, operating-state checks, and approved-code validation. Changes are committed locally only; candidate GitHub CI, real snapshot audits, and preview deployment remain unverified until the driver publishes the commit."
+}

@@ -1,0 +1,16 @@
+{
+  "repo": "Reese-max/taiwan-intel-dashboard",
+  "issue": 66,
+  "base_sha": "f75e652b9eab2458218ed699363ec7c8baccc8d9",
+  "red_proof": "Before any implementation changes, npm test -- tests/release-gate.test.ts exited 1 with 4 failed and 5 passed tests. includes Python regressions in the required production check: expected -1 to be greater than -1. requires the pipeline data audits before publishing the preview artifact: Missing required preview audit: npm run check:network-contract. documents that post-deploy smoke does not roll back publication: missing smoke failure/rollback limitation. rejects persisted replay fixtures in ordinary and GitHub Actions builds: both CI=false/GITHUB_ACTIONS=false and CI=true/GITHUB_ACTIONS=true returned 0 instead of 1 after a successful replay. After the fixes, the same four regressions passed without weakening assertions.",
+  "test_command": "CI=true npm run check && python3 -B -m unittest discover -s tests -p test_crime_weekly_parser.py && npm run ops:validate && npm run ops:verify-docs && node scripts/approved-code.mjs && git diff --check",
+  "test_exit": 0,
+  "tests_passed": 855,
+  "tests_failed": 0,
+  "summary": "Verified the declared command under Git Bash: 113 Vitest files / 850 tests passed, 5 Python tests passed, TypeScript and static build succeeded, operating-state validation and documentation agreed at DEGRADED, approved-code validation and diff whitespace checks passed. Build used the explicitly labeled local replay fixture; it is not proof of production data health. A read-only follow-up review found no additional defects.",
+  "not_done": [
+    "No push, merge, branch switch, remote ruleset modification, external comment, or deployment was performed.",
+    "GitHub CI, real pipeline-state snapshot audits, and Cloudflare preview/smoke on the new local commit remain for the driver; the pre-fix head's green remote checks do not validate this commit.",
+    "No standalone lint script is configured in package.json; existing tests, TypeScript/build, and git diff --check were used."
+  ]
+}
