@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 // @ts-expect-error — JS ESM module without types
 import {
   BUILD_REPLAY_FIXTURE,
+  HOSTED_CI_ENV as IMPL_HOSTED_CI_ENV,
   canUseBuildReplayFixture,
   writeBuildReplayFixture,
 } from "../scripts/lib/build-replay-fixture.mjs";
@@ -19,6 +20,20 @@ const HOSTED_CI_ENV = [
   "CF_PAGES",
   "GITLAB_CI",
   "CIRCLECI",
+  "TRAVIS",
+  "APPVEYOR",
+  "DRONE",
+  "JENKINS_URL",
+  "JENKINS_HOME",
+  "TEAMCITY_VERSION",
+  "CODEBUILD_BUILD_ID",
+  "BITBUCKET_BUILD_NUMBER",
+  "SEMAPHORE",
+  "BITRISE_IO",
+  "BUDDY",
+  "CI_NAME",
+  "GO_PIPELINE_NAME",
+  "bamboo_buildKey",
   "VERCEL",
   "NETLIFY",
   "TF_BUILD",
@@ -38,6 +53,27 @@ describe("build replay fixture（hermetic clean replay）", () => {
     }
     expect(canUseBuildReplayFixture({})).toBe(false);
     expect(canUseBuildReplayFixture({ CI: "false" })).toBe(false);
+    // CI 必須完全等於 "true"——大小寫或其他真值都不放寬。
+    expect(canUseBuildReplayFixture({ CI: "TRUE" })).toBe(false);
+    expect(canUseBuildReplayFixture({ CI: "1" })).toBe(false);
+  });
+
+  it("託管標記以「存在」判定：空字串／'false' 值一律拒絕，且清單涵蓋其他常見託管 CI", () => {
+    // 空字串或 "false" 也可能代表環境曾被設定過——一律視為託管並拒絕。
+    expect(canUseBuildReplayFixture({ CI: "true", GITHUB_ACTIONS: "" })).toBe(false);
+    expect(canUseBuildReplayFixture({ CI: "true", GITHUB_ACTIONS: "false" })).toBe(false);
+    // 防呆：實作端清單必須包含測試涵蓋的每一個標記。
+    expect(IMPL_HOSTED_CI_ENV).toEqual(expect.arrayContaining(HOSTED_CI_ENV));
+  });
+
+  it("BUILD_REPLAY_FIXTURE 明確停用優先於一切；託管環境連 opt-in 也拒絕", () => {
+    expect(canUseBuildReplayFixture({ CI: "true", BUILD_REPLAY_FIXTURE: "0" })).toBe(false);
+    expect(canUseBuildReplayFixture({ BUILD_REPLAY_FIXTURE: "0" })).toBe(false);
+    // 本機明確啟用（無 CI 也可以）；託管標記存在時 opt-in 無效。
+    expect(canUseBuildReplayFixture({ BUILD_REPLAY_FIXTURE: "1" })).toBe(true);
+    expect(
+      canUseBuildReplayFixture({ CI: "true", BUILD_REPLAY_FIXTURE: "1", GITHUB_ACTIONS: "true" }),
+    ).toBe(false);
   });
 
   it("fixture 提供兩 scope 的最小可建置事件，欄位足以通過關聯建置", () => {
@@ -82,7 +118,11 @@ describe("build replay fixture（hermetic clean replay）", () => {
       expect(writeBuildReplayFixture({}, dataDir)).toBe(false);
       for (const name of HOSTED_CI_ENV) {
         expect(writeBuildReplayFixture({ CI: "true", [name]: "true" }, dataDir)).toBe(false);
+        // 託管標記即使是空字串（曾被設定）也不得放行。
+        expect(writeBuildReplayFixture({ CI: "true", [name]: "" }, dataDir)).toBe(false);
       }
+      // 明確停用時即使本機 CI 也不寫入。
+      expect(writeBuildReplayFixture({ CI: "true", BUILD_REPLAY_FIXTURE: "0" }, dataDir)).toBe(false);
       expect(existsSync(dataDir)).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
