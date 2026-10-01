@@ -211,6 +211,32 @@ describe("build site orchestration", () => {
     }
   });
 
+  it("外部殘留的 BUILD_DATA_DIR／BUILD_SYNTHETIC_INPUT 不得蓋過本輪 prepare 的驗證結果", () => {
+    const { dataDir, fixturePath, dispose } = makeWorkspace();
+    const ambient = mkdtempSync(join(tmpdir(), "build-data-ambient-"));
+    const { calls, spawn } = scriptedRunner([0, 0]);
+    try {
+      writeSnapshot(dataDir, "domestic.json", "real-domestic");
+      writeSnapshot(dataDir, "international.json", "real-international");
+
+      const code = buildSite({
+        root: repoRoot,
+        prepareOptions: { dataDir, fixturePath },
+        spawn,
+        log: () => {},
+        env: { PATH: process.env.PATH, BUILD_DATA_DIR: ambient, BUILD_SYNTHETIC_INPUT: "1" },
+      });
+
+      expect(code).toBe(0);
+      expect(calls.map((call) => call.env.BUILD_DATA_DIR)).toEqual([undefined, undefined]);
+      expect(calls.map((call) => call.env.BUILD_SYNTHETIC_INPUT)).toEqual([undefined, undefined]);
+      expect(calls[0].env.PATH).toBe(process.env.PATH);
+    } finally {
+      rmSync(ambient, { recursive: true, force: true });
+      dispose();
+    }
+  });
+
   it("npm script 確實走協調器（否則整條修法會被繞過）", () => {
     const pkg = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
     for (const script of ["build", "build:static"]) {
@@ -251,7 +277,10 @@ describe("build scripts data directory", () => {
     writeFileSync(join(prepared.dataDir, "provenance.json"), '{"sentinel":true}\n');
     // 在獨立 cwd 執行：dist/ 產物落在暫存目錄，不動開發者的 dist/
     const cwd = mkdtempSync(join(tmpdir(), "build-static-cwd-"));
-    for (const entry of ["src", "static", "node_modules"]) symlinkSync(join(repoRoot, entry), join(cwd, entry));
+    for (const entry of ["src", "static", "node_modules"]) {
+      // win32 用 junction：dir symlink 需要額外權限，會讓 Windows 開發者的 npm test 全紅
+      symlinkSync(join(repoRoot, entry), join(cwd, entry), process.platform === "win32" ? "junction" : "dir");
+    }
     const repoData = join(repoRoot, "public", "data");
     const before = fingerprintDir(repoData);
     try {

@@ -10,13 +10,16 @@ import { prepareCleanCheckoutBuild } from "./prepare-build-data.mjs";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BUILD_STEPS = ["build-network.mjs", "build-static.mjs"];
 
-export function buildSite({ root = ROOT, prepareOptions, spawn = spawnSync, log = console.log } = {}) {
+export function buildSite({ root = ROOT, prepareOptions, spawn = spawnSync, log = console.log, env = process.env } = {}) {
   const prepared = prepareCleanCheckoutBuild(prepareOptions);
+  // 一定用明確的 env：外部殘留的 BUILD_DATA_DIR／BUILD_SYNTHETIC_INPUT 不得蓋過本輪
+  // prepare 的驗證結果（否則會拿未驗證的目錄當輸入，甚至跳過 dist 鏡射）。
+  const { BUILD_DATA_DIR: _ambientDir, BUILD_SYNTHETIC_INPUT: _ambientFlag, ...inherited } = env;
   // BUILD_SYNTHETIC_INPUT：明確標記輸入為合成資料，讓 build-network 不得把合成產物
   // 鏡射進可部署的 dist/data（dist/ 與 public/data 都只能出現本輪輸入的內容）。
-  const env = prepared.seeded
-    ? { ...process.env, BUILD_DATA_DIR: prepared.dataDir, BUILD_SYNTHETIC_INPUT: "1" }
-    : process.env;
+  const childEnv = prepared.seeded
+    ? { ...inherited, BUILD_DATA_DIR: prepared.dataDir, BUILD_SYNTHETIC_INPUT: "1" }
+    : inherited;
   if (prepared.seeded) {
     log(
       `public/data 沒有事件快照 → 改用暫存合成輸入建置（${prepared.dataDir}，結束後自動刪除；public/data 不會被寫入）`,
@@ -24,7 +27,7 @@ export function buildSite({ root = ROOT, prepareOptions, spawn = spawnSync, log 
   }
   try {
     for (const step of BUILD_STEPS) {
-      const result = spawn(process.execPath, [join(root, "scripts", step)], { stdio: "inherit", env });
+      const result = spawn(process.execPath, [join(root, "scripts", step)], { stdio: "inherit", env: childEnv });
       if (result.error) throw result.error;
       // 前段失敗就不再跑下一段，失敗碼原樣回傳（npm script 才能紅）
       if (result.status !== 0) return result.status ?? 1;

@@ -26,6 +26,8 @@ const REQUIRED_FILES = [
   "package.json",
   ...DECLARED_DEPENDENCIES.map((name) => join("node_modules", name, "package.json")),
   ...REQUIRED_WORKFLOW_FILES.map((name) => `.github/workflows/${name}`),
+  "scripts/build-site.mjs",
+  "scripts/prepare-build-data.mjs",
   "scripts/build-network.mjs",
   "scripts/build-static.mjs",
   "vite.config.ts",
