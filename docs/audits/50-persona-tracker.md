@@ -37,12 +37,13 @@ Rounds 5 and 6 are complete 50/50 re-verifications but their reports are still *
 branch**, so they do not yet count as merged coverage. Their reviewable content lives in the
 referenced PRs; this tracker records their existence so the gap cannot be read as a clean streak.
 
-The last round that is merged coverage (Round 4) inspected `44eb775`. The default branch has since
-merged 12 product commits (`45cb168` … `df7cee1`), so no **merged** round has re-verified current
-code. Round 5 inspected `4521d46` and Round 6 inspected `df7cee1` (the current default-branch head);
-`git diff 4521d46..df7cee1 -- src/` is empty, so the browser-facing audited surface carried over
-unchanged between those two rounds. Because both reports are still unmerged, a qualifying round must
-repeat that coverage on merged code.
+The last round that is merged coverage (Round 4) inspected `44eb775`. Since that SHA the default
+branch merged 18 commits, including the #36/#37/#38/#39 remediation set (`d092277`, `830b1dc`,
+`e7f96a6`, `29a45b3`) and then 12 pipeline/feed recovery commits (`45cb168` … `df7cee1`), so no
+**merged** round has re-verified current code. Round 5 inspected `4521d46` and Round 6 inspected
+`df7cee1` (the default-branch head at Round 6's inspection); `git diff 4521d46..df7cee1 -- src/` is
+empty, so the browser-facing audited surface carried over unchanged between those two rounds. Because
+both reports are still unmerged, a qualifying round must repeat that coverage on merged code.
 
 ## Findings register
 
@@ -71,7 +72,7 @@ The protocol allows `CLEAN` only when **all** of the following hold. Current sta
 | # | Protocol stop condition | Met | Evidence / gap |
 | --- | --- | --- | --- |
 | 1 | All applicable P0/P1/P2 resolved or explicitly dispositioned | no | #38, #42, #43, #44, #47 open. |
-| 2 | Full 50-persona re-run against the latest default-branch SHA | no | Last merged round inspected `44eb775`; head is `df7cee1`. Rounds 5/6 exist only in open PRs. |
+| 2 | Full 50-persona re-run against the latest default-branch SHA | no | Last merged round inspected `44eb775`; 18 commits have landed since, and the 50/50 re-runs at `4521d46` / `df7cee1` exist only in open PRs #48/#71. |
 | 3 | No new reproducible problem in statically verifiable items | no | #38 remains source-reproducible at the latest inspected head. |
 | 4 | Required runtime evidence (core happy path, error paths, mobile/CLI path) complete | no | Round 6 recorded Actions/deploy receipts at `df7cee1`, but no browser happy-path / error-path / narrow-screen receipt, and the #38 cross-deploy cohort promotion scenario was never executed. |
 | 5 | Two consecutive rounds with no new P0/P1/P2 | no | Qualifying streak **0/2**. |
@@ -151,6 +152,8 @@ CLEAN streak arithmetic.
       "report": "docs/audits/50-persona-round-1-2026-09-06.md",
       "inspectedSha": null,
       "inspectedShaNote": "round-1 report records no inspected product SHA; it reviewed the then-current default branch",
+      "personasApplied": null,
+      "personasAppliedNote": "round-1 is a static review that lists the scenarios still required before CLEAN; it does not claim a full fixed-matrix run",
       "result": "NOT CLEAN — static review pass while the repository was intentionally paused",
       "onDefaultBranch": true,
       "pr": null,
@@ -161,6 +164,7 @@ CLEAN streak arithmetic.
       "round": 2,
       "date": "2026-09-10",
       "report": "docs/audits/50-persona-round-2-2026-09-10.md",
+      "personasApplied": 50,
       "inspectedSha": null,
       "inspectedShaNote": "round-2 report records no inspected product SHA; it reviewed the then-current default branch",
       "result": "NOT CLEAN — P1 #17 mapped to the existing operating-state issue",
@@ -173,6 +177,7 @@ CLEAN streak arithmetic.
       "round": 3,
       "date": "2026-09-11",
       "report": "docs/audits/50-persona-round-3-2026-09-11.md",
+      "personasApplied": 50,
       "inspectedSha": "e60ffa079b35cc6d01f4a672242736b5b54c5716",
       "result": "NOT CLEAN — P1 #18 incorporated, P1 #17 still open",
       "onDefaultBranch": true,
@@ -184,6 +189,7 @@ CLEAN streak arithmetic.
       "round": 4,
       "date": "2026-09-17",
       "report": "docs/audits/50-persona-round-4-2026-09-17.md",
+      "personasApplied": 50,
       "inspectedSha": "44eb775d3fe9e335b34b3e46be2bbffb42c572eb",
       "result": "NOT CLEAN — #38 reopened as REGRESSION / PARTIALLY_FIXED, no new distinct fingerprint",
       "onDefaultBranch": true,
@@ -195,6 +201,7 @@ CLEAN streak arithmetic.
       "round": 5,
       "date": "2026-09-17",
       "report": "docs/audits/50-persona-round-5-2026-09-17.md",
+      "personasApplied": 50,
       "inspectedSha": "4521d46411a2944fea446ce90f6f83ab3506a0f0",
       "result": "NOT CLEAN — new P2 #47; #38 narrowed to the map first-paint path",
       "onDefaultBranch": false,
@@ -207,6 +214,7 @@ CLEAN streak arithmetic.
       "round": 6,
       "date": "2026-10-01",
       "report": "docs/audits/50-persona-round-6-2026-10-01.md",
+      "personasApplied": 50,
       "inspectedSha": "df7cee191aa5f7cb21581e9e93844f6a57e1ea3a",
       "result": "NOT CLEAN — #38 boundary carried over verbatim (src/ identical to Round 5)",
       "onDefaultBranch": false,

@@ -19,6 +19,16 @@ import { minifyOrCopyJson } from "./lib/minify-json.mjs";
 import { buildCohortManifest, writeCohortManifest } from "./lib/manifest.mjs";
 import { isValidCoordinate } from "./lib/geo-policy.mjs";
 
+// 產出 dist/data 之後（或任何失敗中斷後）都要清掉本機 replay 的建置 fixture：殘留會被
+// fetch-live carry-over 與後續稽核當成真實狀態。掛在 exit 上，成功與拋錯兩條路徑都涵蓋，
+// 且一定發生在 public/data 被讀取並寫入 dist/data 之後。
+process.once("exit", () => {
+  const { removed } = cleanupBuildReplayFixture();
+  if (removed.length) {
+    console.log(`已清除 replay 建置 fixture：${removed.map((file) => file.split("/").pop()).join("、")}`);
+  }
+});
+
 const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
   throw new Error("BUILD_STATIC_OUT 只能指定專用產物目錄 dist");
@@ -208,11 +218,3 @@ for (const f of readdirSync(`${OUT}/assets`)) {
   console.log(`assets/${f}  ${kb} KB`);
 }
 console.log("Static build done -> dist/");
-
-// dist/data 已帶走資料；把本機 replay 的建置 fixture 與其衍生的 network.json /
-// manifest.json 從 public/data 清掉，避免之後的一般本機 build／fetch-live carry-over／
-// network-quality 稽核把假事件當成既有狀態（只刪內容仍等於 fixture 的那次建置）。
-const { removed: cleanedFixture } = cleanupBuildReplayFixture();
-if (cleanedFixture.length) {
-  console.log(`已清除 replay 建置 fixture：${cleanedFixture.map((file) => file.split("/").pop()).join("、")}`);
-}

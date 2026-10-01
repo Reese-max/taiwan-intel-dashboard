@@ -30,6 +30,7 @@ function validTracker() {
         report: "docs/audits/50-persona-round-1-2026-09-06.md",
         inspectedSha: null,
         inspectedShaNote: "round-1 report records no inspected SHA",
+        personasApplied: 50,
         result: "NOT CLEAN",
         onDefaultBranch: true,
         pr: null,
@@ -41,6 +42,7 @@ function validTracker() {
         date: "2026-09-10",
         report: "docs/audits/50-persona-round-2-2026-09-10.md",
         inspectedSha: "b".repeat(40),
+        personasApplied: 50,
         result: "NOT CLEAN",
         onDefaultBranch: true,
         pr: null,
@@ -389,6 +391,34 @@ describe("tracker 契約的其餘分支（逐一可失敗）", () => {
         t.rounds[0].prUrl = "https://github.com/Reese-max/taiwan-intel-dashboard/pull/1";
       },
       "rounds: round 1 不在 default branch，其報告可能隨 PR 消失，不能當作 qualifying CLEAN 輪",
+    ],
+    [
+      "verified 狀態必須附理由",
+      (t) => {
+        t.findings[0].state = "verified";
+        delete t.findings[0].note;
+      },
+      "findings: #17 標示 verified 必須附理由（note）",
+    ],
+    [
+      "未宣稱完整覆蓋時要附說明",
+      (t) => (t.rounds[0].personasApplied = null),
+      "rounds: round 1 未宣稱完整覆蓋時必須附 personasAppliedNote",
+    ],
+    [
+      "personasApplied 不得超過 50",
+      (t) => (t.rounds[0].personasApplied = 51),
+      "rounds: round 1 的 personasApplied 必須是 1..50 的整數",
+    ],
+    [
+      "qualifying 輪必須是完整 50 persona",
+      (t) => {
+        t.rounds[0].qualifyingClean = true;
+        t.rounds[0].inspectedSha = "c".repeat(40);
+        t.rounds[0].result = "CLEAN";
+        t.rounds[0].personasApplied = 3;
+      },
+      "rounds: round 1 只套用了 3/50 persona，不能當作 qualifying CLEAN 輪",
     ],
     [
       "NO_CHANGE / partial review 不推進 streak",

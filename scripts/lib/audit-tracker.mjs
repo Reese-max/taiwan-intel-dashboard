@@ -29,6 +29,8 @@ export const FINDING_STATES = Object.freeze([
 ]);
 // 這些狀態代表 finding 仍適用且未結案。
 export const BLOCKING_FINDING_STATES = Object.freeze(["open", "regression", "partial"]);
+// 這些狀態宣稱 finding 已不再阻擋，必須附上理由（note）才成立。
+export const REASON_REQUIRED_STATES = Object.freeze(["not_planned", "verified"]);
 
 export const TRACKER_RULE_IDS = Object.freeze([
   "one-finding-per-issue",
@@ -183,6 +185,13 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
       if (typeof round.qualifyingClean !== "boolean") {
         errors.push(`rounds: ${label} 必須標示 qualifyingClean`);
       }
+      if (round.personasApplied == null) {
+        if (!isNonEmptyString(round.personasAppliedNote)) {
+          errors.push(`rounds: ${label} 未宣稱完整覆蓋時必須附 personasAppliedNote`);
+        }
+      } else if (!Number.isInteger(round.personasApplied) || round.personasApplied < 1 || round.personasApplied > FIXED_PERSONA_IDS.length) {
+        errors.push(`rounds: ${label} 的 personasApplied 必須是 1..${FIXED_PERSONA_IDS.length} 的整數`);
+      }
       if (
         !Array.isArray(round.newFindings) ||
         round.newFindings.some((issue) => !isPositiveInt(issue)) ||
@@ -203,6 +212,12 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
         }
         if (round.onDefaultBranch !== true) {
           errors.push(`rounds: ${label} 不在 default branch，其報告可能隨 PR 消失，不能當作 qualifying CLEAN 輪`);
+        }
+        // 協議停止條件 2 要求「對最新 SHA 重新跑完整 50 persona」，缺一不可。
+        if (round.personasApplied !== FIXED_PERSONA_IDS.length) {
+          errors.push(
+            `rounds: ${label} 只套用了 ${round.personasApplied ?? 0}/${FIXED_PERSONA_IDS.length} persona，不能當作 qualifying CLEAN 輪`,
+          );
         }
       }
     });
@@ -264,9 +279,10 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
       } else if (!knownRounds.has(finding.since)) {
         errors.push(`findings: #${finding.issue} 的 since round 不存在：${finding.since}`);
       }
-      // 協議要求 not_planned 必須有明確理由，否則等於用一句話消掉一個 finding。
-      if (finding.state === "not_planned" && !isNonEmptyString(finding.note)) {
-        errors.push(`findings: #${finding.issue} 標示 not_planned 必須附理由（note）`);
+      // 協議只接受「已關閉」或「有明確理由的 not_planned」；verified / not_planned 都必須附
+      // 理由，否則等於用改標籤的方式消掉一個未結案的 finding。
+      if (REASON_REQUIRED_STATES.includes(finding.state) && !isNonEmptyString(finding.note)) {
+        errors.push(`findings: #${finding.issue} 標示 ${finding.state} 必須附理由（note）`);
       }
       if (seenIssues.has(finding.issue)) errors.push(`findings: issue 編號重複：${finding.issue}`);
       seenIssues.add(finding.issue);

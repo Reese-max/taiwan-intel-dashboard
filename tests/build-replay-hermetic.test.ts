@@ -230,12 +230,22 @@ describe("建置腳本確實接上 fixture（防止 hook 被無聲移除）", ()
     const source = script("build-network.mjs");
     expect(source).toContain("purgeStaleBuildReplayFixture(DATA_DIR)");
     expect(source).toContain("writeBuildReplayFixture(process.env, DATA_DIR)");
-    // 失敗時也要清，否則下一次 build 會把 fixture 當既有狀態。
-    expect(source).toMatch(/catch \(error\)[\s\S]*cleanupBuildReplayFixture\(DATA_DIR\)/);
+    // 失敗時也要清，而且必須在回報錯誤之前（否則下一次 build 會把 fixture 當既有狀態）。
+    const catchIndex = source.indexOf("catch (error)");
+    expect(catchIndex).toBeGreaterThan(-1);
+    const cleanupIndex = source.indexOf("cleanupBuildReplayFixture(DATA_DIR)", catchIndex);
+    expect(cleanupIndex).toBeGreaterThan(catchIndex);
+    expect(cleanupIndex).toBeLessThan(source.indexOf("process.exitCode", catchIndex));
   });
 
-  it("build-static：產出 dist/data 後清除 fixture", () => {
-    expect(script("build-static.mjs")).toContain("cleanupBuildReplayFixture()");
+  it("build-static：清除掛在 exit，且在讀取 public/data 之前就掛上", () => {
+    const source = script("build-static.mjs");
+    const hookIndex = source.indexOf('process.once("exit"');
+    expect(hookIndex).toBeGreaterThan(-1);
+    expect(source.indexOf("cleanupBuildReplayFixture()", hookIndex)).toBeGreaterThan(hookIndex);
+    // 掛在 exit 上代表一定發生在 public/data 讀取、寫入 dist/data 之後；這裡再釘住
+    // 「註冊發生在任何資料處理之前」，避免把清理誤寫成 build 前執行。
+    expect(hookIndex).toBeLessThan(source.indexOf('readdirSync("public/data")'));
   });
 
   it("module 路徑可解析（scripts/lib 存在該檔）", () => {
