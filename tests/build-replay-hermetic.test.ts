@@ -32,8 +32,14 @@ const HOSTED_CI_ENV = [
   "BITRISE_IO",
   "BUDDY",
   "CI_NAME",
+  "CI_SYSTEM_NAME",
   "GO_PIPELINE_NAME",
   "bamboo_buildKey",
+  "GITEA_ACTIONS",
+  "WOODPECKER",
+  "CF_BUILD_ID",
+  "RENDER",
+  "HARNESS_BUILD_ID",
   "VERCEL",
   "NETLIFY",
   "TF_BUILD",
@@ -62,13 +68,16 @@ describe("build replay fixture（hermetic clean replay）", () => {
     // 空字串或 "false" 也可能代表環境曾被設定過——一律視為託管並拒絕。
     expect(canUseBuildReplayFixture({ CI: "true", GITHUB_ACTIONS: "" })).toBe(false);
     expect(canUseBuildReplayFixture({ CI: "true", GITHUB_ACTIONS: "false" })).toBe(false);
-    // 防呆：實作端清單必須包含測試涵蓋的每一個標記。
-    expect(IMPL_HOSTED_CI_ENV).toEqual(expect.arrayContaining(HOSTED_CI_ENV));
+    // 防呆：實作端清單必須與測試清單完全一致（雙向捕捉 drift）。
+    expect([...IMPL_HOSTED_CI_ENV].sort()).toEqual([...HOSTED_CI_ENV].sort());
   });
 
-  it("BUILD_REPLAY_FIXTURE 明確停用優先於一切；託管環境連 opt-in 也拒絕", () => {
-    expect(canUseBuildReplayFixture({ CI: "true", BUILD_REPLAY_FIXTURE: "0" })).toBe(false);
-    expect(canUseBuildReplayFixture({ BUILD_REPLAY_FIXTURE: "0" })).toBe(false);
+  it("BUILD_REPLAY_FIXTURE 一旦被設定，僅精確 '1' 啟用；託管環境連 opt-in 也拒絕", () => {
+    // 已設定但只有 "1" 才放行——"0"、空字串、"true"、"yes" 一律停用。
+    for (const value of ["0", "", "true", "yes", "2"]) {
+      expect(canUseBuildReplayFixture({ CI: "true", BUILD_REPLAY_FIXTURE: value })).toBe(false);
+      expect(canUseBuildReplayFixture({ BUILD_REPLAY_FIXTURE: value })).toBe(false);
+    }
     // 本機明確啟用（無 CI 也可以）；託管標記存在時 opt-in 無效。
     expect(canUseBuildReplayFixture({ BUILD_REPLAY_FIXTURE: "1" })).toBe(true);
     expect(
