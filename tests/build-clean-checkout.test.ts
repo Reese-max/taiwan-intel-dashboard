@@ -1,5 +1,15 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -246,14 +256,24 @@ describe("build site orchestration", () => {
 });
 
 describe("build scripts data directory", () => {
-  it("build-network 以 BUILD_DATA_DIR 產出情報網，且不動 public/data 與 dist/data", () => {
+  it("build-network 以 BUILD_DATA_DIR 產出情報網，既不寫 public/data 也不覆蓋 dist/data", () => {
     const { dataDir, dispose } = makeWorkspace();
     const prepared = prepareCleanCheckoutBuild({ dataDir });
+    // 在獨立 ROOT 執行：dist/data 事先放一份 sentinel，證明「不鏡射」是真的被驗到
+    // （CI 的 npm test 跑在 build 之前，repo 的 dist/data 那時還不存在，用它驗會是空證）。
+    const root = mkdtempSync(join(tmpdir(), "build-network-root-"));
+    cpSync(join(repoRoot, "scripts"), join(root, "scripts"), { recursive: true });
+    const rootDist = join(root, "dist", "data");
+    mkdirSync(rootDist, { recursive: true });
+    const sentinel = '{"sentinel":"real"}\n';
+    writeFileSync(join(rootDist, "network.json"), sentinel);
+    writeFileSync(join(rootDist, "manifest.json"), sentinel);
+    const expectedDist = (name: string) => `${name}:${Buffer.from(sentinel).toString("base64")}`;
     const repoData = join(repoRoot, "public", "data");
     const repoDist = join(repoRoot, "dist", "data");
     const before = [fingerprintDir(repoData), fingerprintDir(repoDist)];
     try {
-      const result = spawnSync(process.execPath, [join(repoRoot, "scripts", "build-network.mjs")], {
+      const result = spawnSync(process.execPath, [join(root, "scripts", "build-network.mjs")], {
         encoding: "utf8",
         env: { ...process.env, BUILD_DATA_DIR: prepared.dataDir, BUILD_SYNTHETIC_INPUT: "1" },
       });
@@ -262,9 +282,12 @@ describe("build scripts data directory", () => {
       const network = JSON.parse(readFileSync(join(prepared.dataDir, "network.json"), "utf8"));
       expect(network.domestic.stats.events).toBeGreaterThan(0);
       expect(existsSync(join(prepared.dataDir, "manifest.json"))).toBe(true);
-      // 合成輸入不得覆蓋正式資料或既有可部署產物
+      // 合成輸入不得覆蓋既有可部署產物，也不得寫回資料層
+      expect(fingerprintDir(rootDist)).toBe([expectedDist("manifest.json"), expectedDist("network.json")].join("|"));
+      expect(existsSync(join(root, "public"))).toBe(false);
       expect([fingerprintDir(repoData), fingerprintDir(repoDist)]).toEqual(before);
     } finally {
+      rmSync(root, { recursive: true, force: true });
       prepared.cleanup?.();
       dispose();
     }
