@@ -12,7 +12,7 @@
 //   讓 fixture 不會被後續的一般本機 build 或 fetch-live carry-over 當成真實狀態。
 // - cleanupBuildReplayFixture：build-static 取用 dist/data 後清除 fixture 與其衍生的
 //   network.json / manifest.json；真實資料（內容已被 refresh 覆寫者）一律保留。
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -124,9 +124,16 @@ export function canUseBuildReplayFixture(env = process.env) {
   return env.CI === "true";
 }
 
-/** 真實／部分／殘留快照已存在時回 true，絕不摻入 fixture。 */
+/**
+ * 真實／部分／殘留快照已存在時回 true，絕不摻入 fixture。
+ * 除了兩個事件檔，dataDir 內任何其他非衍生物（例如部分 restore 留下的 summary.json、
+ * *.map.json）也算真實快照：build-static 會把整個目錄複製進 dist/data，摻進假事件等於
+ * 製造跨版本混合產物。衍生物（network.json / manifest.json）不算，它們本來就是本流程產物。
+ */
 export function hasRealSnapshot(dataDir = DEFAULT_DATA_DIR, fixture = BUILD_REPLAY_FIXTURE) {
-  return Object.keys(fixture).some((name) => existsSync(join(dataDir, `${name}.json`)));
+  if (Object.keys(fixture).some((name) => existsSync(join(dataDir, `${name}.json`)))) return true;
+  if (!existsSync(dataDir)) return false;
+  return readdirSync(dataDir).some((name) => !DERIVED_FILES.includes(name));
 }
 
 /** 清掉「內容仍等於 fixture」的殘留；真實資料（已被 refresh 覆寫）不動。 */

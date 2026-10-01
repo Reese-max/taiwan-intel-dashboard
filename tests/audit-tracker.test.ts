@@ -1,7 +1,10 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+// @ts-expect-error — JS ESM module without types
+import { validateTrackerFile } from "../scripts/validate-audit-tracker.mjs";
 // @ts-expect-error — JS ESM module without types
 import {
   CLEAN_REQUIRED_STREAK,
@@ -64,14 +67,26 @@ function validTracker() {
   };
 }
 
-function errorsFor(mutate: (tracker: any) => void, opts: { reports?: string[] } = {}) {
+// 預設兩份報告的內容不含不推進 streak 的字樣；要看「報告自述 NOT CLEAN」的分支時，
+// 用 opts.contents 覆寫。
+const DEFAULT_REPORTS = [
+  "docs/audits/50-persona-round-1-2026-09-06.md",
+  "docs/audits/50-persona-round-2-2026-09-10.md",
+];
+
+function errorsFor(
+  mutate: (tracker: any) => void,
+  opts: { reports?: string[]; contents?: Record<string, string>; orphans?: string[] } = {},
+) {
   const tracker = validTracker();
   mutate(tracker);
-  const reports = opts.reports ?? [
-    "docs/audits/50-persona-round-1-2026-09-06.md",
-    "docs/audits/50-persona-round-2-2026-09-10.md",
-  ];
-  return validateTracker(tracker, { reportExists: (p: string) => reports.includes(p) });
+  const reports = opts.reports ?? DEFAULT_REPORTS;
+  const contents = opts.contents ?? {};
+  return validateTracker(tracker, {
+    reportExists: (p: string) => reports.includes(p),
+    readReport: (p: string) => (reports.includes(p) ? (contents[p] ?? "# round report") : null),
+    orphanReports: opts.orphans ?? [],
+  });
 }
 
 describe("fixed-50 audit tracker contract", () => {
@@ -392,6 +407,15 @@ describe("tracker 契約的其餘分支（逐一可失敗）", () => {
       },
       "rounds: round 1 不在 default branch，其報告可能隨 PR 消失，不能當作 qualifying CLEAN 輪",
     ],
+    ["round 編號必須從 1 開始", (t) => (t.rounds[0].round = 2), "rounds: 第一輪必須是 round 1：2"],
+    [
+      "round 編號不得有缺口",
+      (t) => {
+        t.rounds[1].round = 3;
+        t.findings[0].since = 3;
+      },
+      "rounds: round 編號必須連續且從 1 開始，缺少 round 2",
+    ],
     [
       "verified 狀態必須附理由",
       (t) => {
@@ -466,8 +490,101 @@ describe("tracker 契約的其餘分支（逐一可失敗）", () => {
     );
   });
 
+  it("qualifying 輪的報告內容若仍自述 NOT CLEAN 即矛盾", () => {
+    const qualify = (t: any) => {
+      t.findings = [{ issue: 18, severity: "P3", state: "open", title: "cosmetic", since: 2 }];
+      t.rounds[1].qualifyingClean = true;
+      t.rounds[1].newFindings = [];
+      t.rounds[1].result = "CLEAN";
+      t.clean.streak = 1;
+    };
+    expect(
+      errorsFor(qualify, {
+        contents: { "docs/audits/50-persona-round-2-2026-09-10.md": "# round 2\n\n**NOT CLEAN — 0/2**\n" },
+      }),
+    ).toContain("rounds: round 2 的報告內容仍自述不推進 streak，與 qualifyingClean 矛盾：docs/audits/50-persona-round-2-2026-09-10.md");
+  });
+
+  it("qualifying 輪的報告讀不到就不能採信", () => {
+    expect(
+      errorsFor((t) => {
+        t.rounds[1].qualifyingClean = true;
+        t.rounds[1].newFindings = [];
+        t.rounds[1].result = "CLEAN";
+      }, { reports: ["docs/audits/50-persona-round-1-2026-09-06.md"] }),
+    ).toContain("rounds: round 2 無法讀取報告內容驗證 qualifying CLEAN 宣稱：docs/audits/50-persona-round-2-2026-09-10.md");
+  });
+
+  it("repo 內未被認領的 round 報告會被擋下", () => {
+    expect(
+      errorsFor(() => undefined, { orphans: ["docs/audits/50-persona-round-9-2026-12-01.md"] }),
+    ).toContain("rounds: repo 內的 round 報告未被任何一輪認領：docs/audits/50-persona-round-9-2026-12-01.md");
+    expect(
+      errorsFor(() => undefined, {
+        orphans: ["docs/audits/50-persona-round-1-2026-09-06.md", "docs/audits/50-persona-round-2-2026-09-10.md"],
+      }),
+    ).toEqual([]);
+  });
+
   it("非物件輸入 fail closed", () => {
     expect(validateTracker(null, {})).toEqual(["parse: tracker JSON 必須是物件"]);
     expect(validateTracker([], {})).toEqual(["parse: tracker JSON 必須是物件"]);
+  });
+});
+
+describe("validate-audit-tracker CLI 層", () => {
+  it("檔案不存在時回報錯誤而不是拋例外", async () => {
+    const { validateTrackerFile } = await import("../scripts/validate-audit-tracker.mjs");
+    expect(validateTrackerFile("/nonexistent/tracker.md")).toEqual([
+      expect.stringContaining("file: tracker 不存在"),
+    ]);
+  });
+
+  it("對 repo 內實際的 tracker 回傳空錯誤清單（CLI 用的就是這條路徑）", async () => {
+    const { validateTrackerFile } = await import("../scripts/validate-audit-tracker.mjs");
+    expect(validateTrackerFile(TRACKER_PATH, REPO_ROOT)).toEqual([]);
+  });
+
+  it("CLI 用的 orphan 比對涵蓋 repo 內每一份 round 報告", async () => {
+    const { validateTrackerFile } = await import("../scripts/validate-audit-tracker.mjs");
+    const { tracker } = parseTracker(readFileSync(TRACKER_PATH, "utf8"));
+    const claimed = new Set(tracker.rounds.map((round: any) => round.report));
+    const onDisk = readdirSync(join(REPO_ROOT, "docs", "audits")).filter((name) =>
+      /^50-persona-round-\d+-\d{4}-\d{2}-\d{2}\.md$/.test(name),
+    );
+    expect(onDisk.length).toBeGreaterThanOrEqual(4);
+    expect(onDisk.map((name) => `docs/audits/${name}`).every((path) => claimed.has(path))).toBe(true);
+    expect(validateTrackerFile(TRACKER_PATH, REPO_ROOT)).toEqual([]);
+  });
+});
+
+describe("Round index 表格與 JSON 必須一致", () => {
+  it("抽出表格列並比對列數／round／date", async () => {
+    const { roundIndexRows } = await import("../scripts/validate-audit-tracker.mjs");
+    const rows = roundIndexRows(readFileSync(TRACKER_PATH, "utf8"));
+    const { tracker } = parseTracker(readFileSync(TRACKER_PATH, "utf8"));
+    expect(rows).toHaveLength(tracker.rounds.length);
+    expect(rows.map((row: any) => row.round)).toEqual(tracker.rounds.map((round: any) => round.round));
+    expect(rows.map((row: any) => row.date)).toEqual(tracker.rounds.map((round: any) => round.date));
+    // 條件表（`| 1 | ... |`）不會被誤判為 round 列。
+    expect(rows.every((row: any) => /^\d{4}-\d{2}-\d{2}$/.test(row.date))).toBe(true);
+  });
+
+  it("拿掉一列 round 就會被 CLI 驗證擋下（JSON 與人讀表格不可漂移）", async () => {
+    const { validateTrackerFile } = await import("../scripts/validate-audit-tracker.mjs");
+    const markdown = readFileSync(TRACKER_PATH, "utf8");
+    const dropped = markdown
+      .split("\n")
+      .filter((line) => !/^\|\s*6\s*\|\s*2026-10-01\s*\|/.test(line))
+      .join("\n");
+    const temp = join(mkdtempSync(join(tmpdir(), "audit-tracker-")), "tracker.md");
+    writeFileSync(temp, dropped);
+    try {
+      expect(validateTrackerFile(temp, REPO_ROOT)).toContain(
+        "docs: Round index 表格列數（5）與 JSON 輪數（6）不一致",
+      );
+    } finally {
+      rmSync(dirname(temp), { recursive: true, force: true });
+    }
   });
 });

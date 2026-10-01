@@ -1,7 +1,7 @@
 // 驗證 umbrella 50-persona tracker（#41）的機器可檢查會計。
 // 用法：node scripts/validate-audit-tracker.mjs [tracker.md]
 // 失敗（任何 invariant 違反）時 exit 1，讓 tracker 的錯誤無法靜默通過。
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -11,15 +11,59 @@ import {
 } from "./lib/audit-tracker.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const DEFAULT_TRACKER = join(ROOT, "docs", "audits", "50-persona-tracker.md");
+const AUDIT_DIR = join(ROOT, "docs", "audits");
+const DEFAULT_TRACKER = join(AUDIT_DIR, "50-persona-tracker.md");
+const ROUND_REPORT_RE = /^50-persona-round-\d+-\d{4}-\d{2}-\d{2}\.md$/;
+
+function roundReportsInRepo(auditDir = AUDIT_DIR) {
+  if (!existsSync(auditDir)) return [];
+  return readdirSync(auditDir)
+    .filter((name) => ROUND_REPORT_RE.test(name))
+    .map((name) => `docs/audits/${name}`)
+    .sort();
+}
+
+// Round index 表格的資料列（`| 1 | 2026-09-06 | ...`），用來比對人讀表格與 JSON 是否一致。
+const ROUND_ROW_RE = /^\|\s*(\d+)\s*\|\s*(\d{4}-\d{2}-\d{2})\s*\|/gm;
+
+export function roundIndexRows(markdown) {
+  return [...String(markdown).matchAll(ROUND_ROW_RE)].map((match) => ({
+    round: Number(match[1]),
+    date: match[2],
+  }));
+}
 
 export function validateTrackerFile(trackerPath, root = ROOT) {
   if (!existsSync(trackerPath)) return [`file: tracker 不存在：${relative(root, trackerPath)}`];
-  const { tracker, errors } = parseTracker(readFileSync(trackerPath, "utf8"));
+  const markdown = readFileSync(trackerPath, "utf8");
+  const { tracker, errors } = parseTracker(markdown);
   if (errors.length) return errors;
-  return validateTracker(tracker, {
+  const auditDir = join(root, "docs", "audits");
+  const findings = validateTracker(tracker, {
     reportExists: (path) => existsSync(join(root, path)),
+    readReport: (path) => {
+      const file = join(root, path);
+      return existsSync(file) ? readFileSync(file, "utf8") : null;
+    },
+    orphanReports: roundReportsInRepo(auditDir),
   });
+
+  // 人讀的 Round index 表格必須與 JSON 的輪次一致：只改 JSON 會讓兩處敘述漂移。
+  const rows = roundIndexRows(markdown);
+  if (rows.length !== tracker.rounds.length) {
+    findings.push(
+      `docs: Round index 表格列數（${rows.length}）與 JSON 輪數（${tracker.rounds.length}）不一致`,
+    );
+  } else {
+    tracker.rounds.forEach((round, index) => {
+      if (rows[index].round !== round.round || rows[index].date !== round.date) {
+        findings.push(
+          `docs: Round index 表格第 ${index + 1} 列（${rows[index].round}／${rows[index].date}）與 JSON（${round.round}／${round.date}）不一致`,
+        );
+      }
+    });
+  }
+  return findings;
 }
 
 function main(argv) {

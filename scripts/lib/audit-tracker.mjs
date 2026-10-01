@@ -93,7 +93,10 @@ export function trailingQualifyingRounds(rounds) {
   return streak;
 }
 
-export function validateTracker(tracker, { reportExists = () => false } = {}) {
+export function validateTracker(
+  tracker,
+  { reportExists = () => false, readReport = () => null, orphanReports = [] } = {},
+) {
   if (!isPlainObject(tracker)) return ["parse: tracker JSON 必須是物件"];
 
   const errors = [];
@@ -214,6 +217,14 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
           errors.push(`rounds: ${label} 不在 default branch，其報告可能隨 PR 消失，不能當作 qualifying CLEAN 輪`);
         }
         // 協議停止條件 2 要求「對最新 SHA 重新跑完整 50 persona」，缺一不可。
+        // 報告本身是不可變的證據：自稱 qualifying CLEAN 的輪，其報告內容不得仍寫著
+        // NOT CLEAN / NO_CHANGE / partial review。沒有報告可讀時不能視為通過。
+        const reportText = readReport(round.report);
+        if (reportText == null) {
+          errors.push(`rounds: ${label} 無法讀取報告內容驗證 qualifying CLEAN 宣稱：${round.report}`);
+        } else if (NON_QUALIFYING_RESULT_RE.test(String(reportText))) {
+          errors.push(`rounds: ${label} 的報告內容仍自述不推進 streak，與 qualifyingClean 矛盾：${round.report}`);
+        }
         if (round.personasApplied !== FIXED_PERSONA_IDS.length) {
           errors.push(
             `rounds: ${label} 只套用了 ${round.personasApplied ?? 0}/${FIXED_PERSONA_IDS.length} persona，不能當作 qualifying CLEAN 輪`,
@@ -223,6 +234,9 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
     });
 
     const validRounds = rounds.filter(isPlainObject);
+    if (isPositiveInt(rounds[0]?.round) && rounds[0].round !== 1) {
+      errors.push(`rounds: 第一輪必須是 round 1：${rounds[0].round}`);
+    }
     let previousRound = null;
     for (const round of validRounds) {
       if (previousRound && !(round.round > previousRound.round)) {
@@ -246,6 +260,18 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
       if (!isPlainObject(round) || !isNonEmptyString(round.report)) continue;
       if (seenReports.has(round.report)) errors.push(`rounds: 報告路徑重複：${round.report}`);
       seenReports.add(round.report);
+    }
+    // round 編號必須連續：刪掉中間一輪等於讓該輪的覆蓋從紀錄上消失。
+    const numbers = validRounds.map((round) => round.round).filter((value) => Number.isInteger(value)).sort((a, b) => a - b);
+    for (let index = 0; index < numbers.length; index += 1) {
+      if (numbers[index] !== index + 1) {
+        errors.push(`rounds: round 編號必須連續且從 1 開始，缺少 round ${index + 1}`);
+        break;
+      }
+    }
+    // repo 內已存在的 round 報告必須被某一輪認領，否則 prose 與 JSON 會互相矛盾。
+    for (const orphan of Array.isArray(orphanReports) ? orphanReports : []) {
+      if (!seenReports.has(orphan)) errors.push(`rounds: repo 內的 round 報告未被任何一輪認領：${orphan}`);
     }
   }
 
