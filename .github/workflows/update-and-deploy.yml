@@ -32,6 +32,9 @@ concurrency:
 
 jobs:
   operating-state:
+    # 排程/推送/main 上的手動觸發才允許進入資料管線；從其他 ref dispatch
+    # 的工作流程不得觸碰 secrets 或做任何 mutation，全部 job 依 needs 連鎖跳過。
+    if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -55,6 +58,7 @@ jobs:
 
   save-state:
     needs: [fetch, audit, build-approved]
+    if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -134,7 +138,8 @@ jobs:
           if-no-files-found: error
 
   deploy:
-    needs: [save-state, build-approved]
+    needs: [operating-state, audit, save-state, build-approved]
+    if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
