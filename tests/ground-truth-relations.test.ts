@@ -10,9 +10,13 @@ import {
   computeRelationMetrics,
   diffBenchmarkReports,
   enumerateCandidatePairs,
+  loadLabeledJsonl,
+  pairKeyOf,
   validateLocationRow,
   validatePairRow,
 } from "../scripts/lib/ground-truth-relations.mjs";
+// @ts-expect-error — JS ESM module without declaration files
+import { SNAPSHOT_FIELDS } from "../scripts/ground-truth-relations-sample.mjs";
 
 const pair = (over: Record<string, unknown> = {}) => ({
   schema: PAIR_SCHEMA,
@@ -121,6 +125,16 @@ describe("ground-truth report comparison", () => {
     expect(diff.find((item: any) => item.metric === "relation.sameEvent.precision")?.direction).toBe("improved");
     expect(diff.find((item: any) => item.metric === "relation.sameEvent.recall")?.direction).toBe("regressed");
   });
+
+  it("marks coverage growth as changed, not regressed", () => {
+    const diff = diffBenchmarkReports(
+      { relation: { evaluated: 10, uncertain: 1, missedRelation: { count: 2, rate: 0.4 } } },
+      { relation: { evaluated: 40, uncertain: 5, missedRelation: { count: 1, rate: 0.1 } } },
+    );
+    expect(diff.find((item: any) => item.metric === "relation.evaluated")?.direction).toBe("changed");
+    expect(diff.find((item: any) => item.metric === "relation.uncertain")?.direction).toBe("changed");
+    expect(diff.find((item: any) => item.metric === "relation.missedRelation.rate")?.direction).toBe("improved");
+  });
 });
 
 describe("ground-truth candidate sampling", () => {
@@ -152,5 +166,45 @@ describe("ground-truth candidate sampling", () => {
       b: "south",
       candidateSource: "shared-place-unlinked",
     }));
+  });
+
+  it("assigns one story family to candidate pairs that share an event", () => {
+    const events = [
+      { id: "a", region: "高雄市", timestamp: "2026-09-17T00:00:00Z" },
+      { id: "b", region: "高雄市", timestamp: "2026-09-17T01:00:00Z" },
+      { id: "c", region: "高雄市", timestamp: "2026-09-17T02:00:00Z" },
+    ];
+    const rows = enumerateCandidatePairs(events, { edges: [], clusters: [] }, { maxPairs: 20, seed: 43 });
+    const familyOf = (x: string, y: string) =>
+      rows.find((row: any) => pairKeyOf(row.a, row.b) === pairKeyOf(x, y))?.family;
+
+    // (a,b) 與 (a,c) 共享事件 a——若各給不同 family，標註後可能分進
+    // tuning/holdout 兩側造成同案洩漏；必須同 family 才保證同側。
+    expect(familyOf("a", "b")).toBeTruthy();
+    expect(familyOf("a", "b")).toBe(familyOf("a", "c"));
+    expect(familyOf("a", "b")).toBe(familyOf("b", "c"));
+    expect(rows.every((row: any) => assignSplit(row.family) === assignSplit(familyOf("a", "b")!))).toBe(true);
+  });
+});
+
+describe("ground-truth labeled loader", () => {
+  it("rejects duplicate labeled pairs instead of double-counting them", () => {
+    const text = [pair(), pair({ b: "c" }), pair()].map((row) => JSON.stringify(row)).join("\n");
+    const { rows, errors } = loadLabeledJsonl(text, validatePairRow, (row: any) => pairKeyOf(row.a, row.b));
+
+    expect(rows).toHaveLength(2);
+    expect(errors).toEqual([{ line: 3, error: "duplicate-key" }]);
+  });
+});
+
+describe("ground-truth event snapshot", () => {
+  it("keeps every field correlateEvents reads so replays match the live policy", () => {
+    for (const field of [
+      "title", "summary", "region", "category", "scope", "timestamp",
+      "entities", "aiEntities", "aiTopic", "locationNote",
+      "locationRole", "locationPrecision", "lat", "lng",
+    ]) {
+      expect(SNAPSHOT_FIELDS).toContain(field);
+    }
   });
 });

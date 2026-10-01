@@ -1,11 +1,11 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs", async (importOriginal) => {
   const fs = await importOriginal<typeof import("node:fs")>();
-  return { ...fs, mkdirSync: vi.fn(fs.mkdirSync) };
+  return { ...fs, mkdirSync: vi.fn(fs.mkdirSync), copyFileSync: vi.fn(fs.copyFileSync) };
 });
 
 // @ts-expect-error — JS ESM module without types
@@ -63,6 +63,31 @@ describe("clean checkout build data", () => {
       if (name === "international.json") expect(existsSync(join(dataDir, "domestic.json"))).toBe(false);
     } finally {
       vi.mocked(mkdirSync).mockImplementation(fs.mkdirSync);
+      rmSync(rootDir, { recursive: true, force: true });
+    }
+  });
+
+  it("unwinds its stub when a publisher overwrites domestic between the exclusive writes", async () => {
+    const fs = await vi.importActual<typeof import("node:fs")>("node:fs");
+    const rootDir = mkdtempSync(join(tmpdir(), "build-data-midseed-"));
+    const dataDir = join(rootDir, "data");
+    const fixturePath = join(rootDir, "fixture.json");
+    const domesticPath = join(dataDir, "domestic.json");
+    const realSnapshot = '[{"id":"real-pipeline-event"}]\n';
+    try {
+      writeFileSync(fixturePath, '[{"id":"fixture-event"}]\n');
+      vi.mocked(copyFileSync).mockImplementationOnce((src, dest, mode) => {
+        fs.copyFileSync(src, dest, mode);
+        // A publisher that doesn't use EXCL overwrites domestic right after our
+        // copy; the stub international must not pair with their real snapshot.
+        fs.writeFileSync(domesticPath, realSnapshot);
+      });
+
+      expect(() => ensureBuildData(dataDir, fixturePath)).toThrow(/changed during seeding/);
+      expect(readFileSync(domesticPath, "utf8")).toBe(realSnapshot);
+      expect(existsSync(join(dataDir, "international.json"))).toBe(false);
+    } finally {
+      vi.mocked(copyFileSync).mockImplementation(fs.copyFileSync);
       rmSync(rootDir, { recursive: true, force: true });
     }
   });

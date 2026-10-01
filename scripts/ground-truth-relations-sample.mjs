@@ -18,8 +18,10 @@ import { enumerateCandidatePairs, PAIR_SCHEMA } from "./lib/ground-truth-relatio
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repoPath = (value) => resolve(ROOT, value);
 
-// 快照只留標註與重播所需欄位——不存全文、不存個資
-const SNAPSHOT_FIELDS = ["id", "title", "region", "timestamp", "category", "scope", "riskLevel", "summary", "lat", "lng", "locationPrecision", "locationRole", "locationNote", "entities", "aiEntities"];
+// 快照只留標註與重播所需欄位——不存全文、不存個資。
+// 必須涵蓋 correlate.mjs extractSignals 讀取的欄位（含 aiTopic——Pass 3
+// 同題語意邊的來源），否則 benchmark 重播時會少算系統真實會連的邊。
+export const SNAPSHOT_FIELDS = ["id", "title", "region", "timestamp", "category", "scope", "riskLevel", "summary", "lat", "lng", "locationPrecision", "locationRole", "locationNote", "entities", "aiEntities", "aiTopic"];
 
 function snapshotEvent(e) {
   const out = {};

@@ -22,7 +22,7 @@ export const SPLITS = ["tuning", "holdout"];
 const SAME_LABELS = new Set(["same_event", "same_original_report"]);
 const NOT_SAME_LABELS = new Set(["different_event", "follow_up"]);
 
-const pairKeyOf = (a, b) => [a, b].sort().join("|");
+export const pairKeyOf = (a, b) => [a, b].sort().join("|");
 
 function hashString(value) {
   let hash = 2166136261;
@@ -60,12 +60,14 @@ export function validateLocationRow(row) {
   return null;
 }
 
-// 解析 jsonl 標註檔：合法進 rows；`label===""` 的候選進 unlabeled（待人工填，不算錯）；
-// 不合法進 errors（附行號，不靜默）。
-export function loadLabeledJsonl(text, validate) {
+// 解析 jsonl 標註檔：合法進 rows；`label===""` 的 pair 候選進 unlabeled（待人工填，
+// 不算錯）；不合法進 errors（附行號，不靜默）。`keyOf` 提供時，重複鍵的標註列
+// 記為 duplicate-key 而非靜默重複計入指標。
+export function loadLabeledJsonl(text, validate, keyOf) {
   const rows = [];
   const unlabeled = [];
   const errors = [];
+  const seenKeys = new Set();
   String(text || "")
     .split(/\r?\n/)
     .forEach((line, index) => {
@@ -78,16 +80,14 @@ export function loadLabeledJsonl(text, validate) {
         errors.push({ line: index + 1, error: "invalid-json" });
         return;
       }
-      if (row && row.label === "") {
-        // 未標註候選：只驗結構（schema/a/b/family），其餘欄位待人填
+      if (row && row.label === "" && row.schema === PAIR_SCHEMA) {
+        // 未標註 pair 候選：只驗結構（a/b/family），其餘欄位待人填
         const structural =
-          !row || typeof row !== "object" || row.schema !== PAIR_SCHEMA
-            ? "unsupported-schema"
-            : typeof row.a !== "string" || !row.a || typeof row.b !== "string" || !row.b || row.a === row.b
-              ? "invalid-pair"
-              : typeof row.family !== "string" || !row.family.trim()
-                ? "missing-family"
-                : null;
+          typeof row.a !== "string" || !row.a || typeof row.b !== "string" || !row.b || row.a === row.b
+            ? "invalid-pair"
+            : typeof row.family !== "string" || !row.family.trim()
+              ? "missing-family"
+              : null;
         if (structural) errors.push({ line: index + 1, error: structural });
         else {
           row._line = index + 1;
@@ -96,11 +96,20 @@ export function loadLabeledJsonl(text, validate) {
         return;
       }
       const error = validate(row);
-      if (error) errors.push({ line: index + 1, error });
-      else {
-        row._line = index + 1;
-        rows.push(row);
+      if (error) {
+        errors.push({ line: index + 1, error });
+        return;
       }
+      const key = typeof keyOf === "function" ? keyOf(row) : null;
+      if (key != null) {
+        if (seenKeys.has(key)) {
+          errors.push({ line: index + 1, error: "duplicate-key" });
+          return;
+        }
+        seenKeys.add(key);
+      }
+      row._line = index + 1;
+      rows.push(row);
     });
   return { rows, unlabeled, errors };
 }
@@ -119,11 +128,6 @@ export function enumerateCandidatePairs(events, net, { maxPairs = 200, seed = 43
   const limit = Math.max(0, Math.floor(Number(maxPairs) || 0));
   const windowMs = Math.max(0, Number(windowHours) || 0) * 3600 * 1000;
   const byId = new Map((events || []).filter((e) => e && e.id).map((e) => [e.id, e]));
-  const clusterOf = new Map();
-  for (const cluster of net?.clusters || []) {
-    for (const id of cluster.members || []) clusterOf.set(id, cluster.id);
-  }
-  const familyOf = (id) => clusterOf.get(id) || `single:${id}`;
 
   const seen = new Set();
   const out = [];
@@ -132,12 +136,11 @@ export function enumerateCandidatePairs(events, net, { maxPairs = 200, seed = 43
     const key = pairKeyOf(a, b);
     if (seen.has(key)) return;
     seen.add(key);
-    const [fa, fb] = [familyOf(a), familyOf(b)].sort();
     out.push({
       schema: PAIR_SCHEMA,
       a,
       b,
-      family: fa === fb ? fa : `${fa}+${fb}`,
+      family: "",
       autoRelation,
       candidateSource: source,
       label: "",
@@ -206,6 +209,28 @@ export function enumerateCandidatePairs(events, net, { maxPairs = 200, seed = 43
       }
     }
   }
+
+  // family（故事族群）：共享任一事件的候選 pair 屬同一族群（union-find，根＝
+  // 最小 event id，deterministic）。預設就防止同案件 pair 被切到 tuning/holdout
+  // 兩側造成資料洩漏；標註者可把同案跨 pair 的 family 合併成同一 key，反之不得拆散。
+  const parent = new Map();
+  const find = (x) => {
+    let root = x;
+    while (parent.get(root) !== root) root = parent.get(root);
+    let cur = x;
+    while (parent.get(cur) !== root) {
+      const next = parent.get(cur);
+      parent.set(cur, root);
+      cur = next;
+    }
+    return root;
+  };
+  for (const row of out) {
+    for (const id of [row.a, row.b]) if (!parent.has(id)) parent.set(id, id);
+    const [ra, rb] = [find(row.a), find(row.b)];
+    if (ra !== rb) parent.set(ra < rb ? rb : ra, ra < rb ? ra : rb); // 小者為根，順序無關
+  }
+  for (const row of out) row.family = `fam:${find(row.a)}`;
 
   // deterministic 抽樣：seed+pair key 打分散值後排序截斷；auto-edge/cluster 候選優先保留一半額度
   const scored = out.map((row) => ({
@@ -373,7 +398,8 @@ export function computeLocationMetrics(rows, events) {
 // ── before / after 比較 ──────────────────────────────────────────────────────
 // 數值葉節點逐一比對；precision/recall/accuracy 愈高愈好，rate/count/錯誤類愈低愈好。
 const HIGHER_BETTER = /precision|recall|accuracy|correct/i;
-const LOWER_BETTER = /rate|count|fp|fn|missed|unknown|errors|evaluated|uncertain|missing/i;
+// evaluated/uncertain/labeled 等覆蓋量指標不標方向——標更多不叫好也不叫壞。
+const LOWER_BETTER = /rate|count|fp|fn|missed|unknown|errors|missing/i;
 
 export function diffBenchmarkReports(before, after) {
   const flatten = (obj, prefix = "", out = {}) => {

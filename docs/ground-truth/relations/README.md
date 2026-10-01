@@ -13,8 +13,12 @@ same-event precision/recall、false merge、missed relation、location-role/prec
 | `locations-v1-candidates.jsonl` | 40 筆帶來源的 `agent-draft` 地點候選，未人工覆核前不會被當成 ground truth |
 | `events-v1.json` | 被引用事件的 metadata 快照——固定此檔即可重播同一 benchmark |
 
-所有檔案 committed → 固定 SHA 可重播。事件快照只含標註所需欄位，summary 截 300 字，
-**不複製完整新聞全文**。
+所有檔案 committed → 固定 SHA 可重播。事件快照只含標註與重播所需欄位（涵蓋
+`correlateEvents` 讀取的欄位，含 `aiTopic`），summary 截 300 字，**不複製完整新聞全文**。
+
+已知限制：`events-v1.json` 在 `aiTopic` 納入快照欄位之前產生——對它重播時
+Pass 3 的 AI 同題邊不會出現，same-event recall / missed relation 因此略偏保守；
+下次用 sampler 產生新快照即自動補齊。
 
 ## 工作流程
 
@@ -45,9 +49,10 @@ node scripts/ground-truth-benchmark.mjs ... --baseline=report-before.json
 ```
 
 - `label`：`same_event` / `different_event` / `follow_up` / `same_original_report` / `uncertain`
-- `family`：同一案件的轉載/後續共享同一 family → 切分時不會散到 tuning/holdout 兩側（防洩漏）
+- `family`：同一案件的轉載/後續共享同一 family → 切分時不會散到 tuning/holdout 兩側（防洩漏）。sampler 以 union-find 產生 `fam:<root-event-id>`——共享任一事件的候選 pair 預設同族；標註者可把同案跨 pair 的 family 合併成同一 key，但不得反向把同案件拆到不同 family
 - `uncertain` 保留——不計入分母，只進 `uncertain` 計數；不強迫標註
 - `labeledBy`：`human` 才算 ground truth；AI 整理候選可標 `agent-draft`（報表可區分，不得冒充人工）
+- 同一 (a,b) 或同一 event 重複標註會被記為 `duplicate-key` 錯誤，不靜默計入指標
 - sampler 額外帶 `autoRelation`（系統當時的判斷）、`candidateSource`（`auto-edge`/`auto-cluster`/`same-region-unlinked`/`shared-place-unlinked`）、`ledgerDecision`（命中 #44 ledger 的 pair）
 
 ## location schema（`location-labels/1`）

@@ -19,6 +19,7 @@ import {
   computeRelationMetrics,
   diffBenchmarkReports,
   loadLabeledJsonl,
+  pairKeyOf,
   validateLocationRow,
   validatePairRow,
 } from "./lib/ground-truth-relations.mjs";
@@ -53,7 +54,7 @@ export function runBenchmark(argv = process.argv.slice(2)) {
   const eventIds = new Set(events.map((event) => event.id));
   const net = correlateEvents(events);
 
-  const pairs = loadLabeledJsonl(readFileSync(repoPath(args.pairs), "utf8"), validatePairRow);
+  const pairs = loadLabeledJsonl(readFileSync(repoPath(args.pairs), "utf8"), validatePairRow, (row) => pairKeyOf(row.a, row.b));
   const pairReferenceErrors = [];
   const pairRows = pairs.rows.filter((row) => {
     if (eventIds.has(row.a) && eventIds.has(row.b)) return true;
@@ -69,7 +70,7 @@ export function runBenchmark(argv = process.argv.slice(2)) {
   };
 
   if (args.locations) {
-    const locations = loadLabeledJsonl(readFileSync(repoPath(args.locations), "utf8"), validateLocationRow);
+    const locations = loadLabeledJsonl(readFileSync(repoPath(args.locations), "utf8"), validateLocationRow, (row) => row.event);
     const locationReferenceErrors = [];
     const locationRows = locations.rows.filter((row) => {
       if (eventIds.has(row.event)) return true;
