@@ -13,10 +13,21 @@ import {
   statSync,
 } from "node:fs";
 import { resolve } from "node:path";
+import { cleanupBuildReplayFixture } from "./lib/build-replay-fixture.mjs";
 import { emptyDirContents } from "./lib/fs-safe.mjs";
 import { minifyOrCopyJson } from "./lib/minify-json.mjs";
 import { buildCohortManifest, writeCohortManifest } from "./lib/manifest.mjs";
 import { isValidCoordinate } from "./lib/geo-policy.mjs";
+
+// 產出 dist/data 之後（或任何失敗中斷後）都要清掉本機 replay 的建置 fixture：殘留會被
+// fetch-live carry-over 與後續稽核當成真實狀態。掛在 exit 上，成功與拋錯兩條路徑都涵蓋，
+// 且一定發生在 public/data 被讀取並寫入 dist/data 之後。
+process.once("exit", () => {
+  const { removed } = cleanupBuildReplayFixture();
+  if (removed.length) {
+    console.log(`已清除 replay 建置 fixture：${removed.map((file) => file.split("/").pop()).join("、")}`);
+  }
+});
 
 const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
