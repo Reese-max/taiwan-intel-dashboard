@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "relation-pairs/1",
+  "type": "object",
+  "required": ["schema", "a", "b", "family", "label", "evidence", "labeledAt", "labeledBy"],
+  "properties": {
+    "schema": { "const": "relation-pairs/1" },
+    "a": { "type": "string", "minLength": 1 },
+    "b": { "type": "string", "minLength": 1 },
+    "family": { "type": "string", "minLength": 1 },
+    "label": { "enum": ["same_event", "different_event", "follow_up", "same_original_report", "uncertain"] },
+    "evidence": { "type": "string", "minLength": 1 },
+    "labeledAt": { "type": "string", "format": "date-time" },
+    "labeledBy": { "enum": ["human", "agent-draft"] },
+    "notes": { "type": "string" }
+  }
+}
