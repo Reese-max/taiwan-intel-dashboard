@@ -59,6 +59,11 @@ npm run refresh:news   # 抓台灣新聞（吃 LLM 成本）
 node --env-file=.env scripts/fetch-live.mjs --sources=rss,gdelt   # 抓國際 RSS＋GDELT 補充
 ```
 
+`npm run build` 需要 `public/data/` 快照（由 `npm run refresh` 產生，狀態庫在 gh-pages，不進 main）。
+乾淨 checkout 在 `CI=true` 且非託管建置環境（GitHub Actions、Cloudflare Pages 等）時，
+`build-network` 會以最小 fixture 補齊缺少的 `domestic.json`／`international.json`，讓 detached
+worktree 的建置可重現；託管建置與一般本機執行仍會因缺資料而 fail-closed。
+
 ## 稽核（CI 皆有掛）
 
 ```bash
@@ -68,6 +73,7 @@ npm run audit:network-quality  # 情報網品質
 npm run audit:source-freshness # 結構化來源成功時間與更新頻率健康閘門
 npm run audit:coverage         # scope/category 每日涵蓋矩陣一致性
 npm run report:news-sources    # 新聞來源漏斗貢獻報表
+npm run audit:tracker          # 50-persona umbrella 追蹤器的機器可檢查會計（#41）
 ```
 
 ## 重要環境變數（完整見 `.env.example`）
@@ -88,6 +94,7 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 - `docs/specs/` — 設計/規格（含 2026-07-03 強化與可持續性計畫）
 - `docs/plans/` — 實作計畫
 - `docs/reports/` — 診斷報告（含新聞來源漏斗診斷）
+- `docs/audits/` — 固定 50 persona 稽核：各輪不可變報告與 [umbrella 追蹤器](docs/audits/50-persona-tracker.md)（CLEAN 會計以 `npm run audit:tracker` 檢查）
 - `docs/research/` — 研究與決策紀錄（含授權與權利邊界研究）
 
 ## 授權與權利邊界（Licensing & Rights）
