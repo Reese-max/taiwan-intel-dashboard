@@ -18,9 +18,9 @@ merge, deploy, or paid-provider permission. Each round report stays immutable; e
 a new report path.
 
 The tracker carries no audit fix. The change that introduced it did also make `npm run build`
-hermetic on a clean checkout (`scripts/lib/build-replay-fixture.mjs`) — that is the
-verification prerequisite behind #47's residual scope, not a fix for any finding above, and the
-same gap is tracked by #67/#69.
+hermetic on a clean checkout (`scripts/lib/build-replay-fixture.mjs`, `CI=true` or an explicit
+`BUILD_REPLAY_FIXTURE=1`, never on hosted CI) — that is the verification prerequisite behind #47's
+residual scope, not a fix for any finding above, and the same gap is tracked by #67/#69.
 
 ## Round index
 
@@ -38,11 +38,16 @@ branch**, so they do not yet count as merged coverage. Their reviewable content 
 referenced PRs; this tracker records their existence so the gap cannot be read as a clean streak.
 
 The last round that is merged coverage (Round 4) inspected `44eb775`. The default branch has since
-merged 12 product commits (`45cb168` … `df7cee1`), so no round has re-verified current code. Round 5
-inspected `4521d46` and Round 6 inspected `df7cee1`; `git diff 4521d46..df7cee1 -- src/` is empty,
-so the browser-facing audited surface carried over unchanged between those two rounds.
+merged 12 product commits (`45cb168` … `df7cee1`), so no **merged** round has re-verified current
+code. Round 5 inspected `4521d46` and Round 6 inspected `df7cee1` (the current default-branch head);
+`git diff 4521d46..df7cee1 -- src/` is empty, so the browser-facing audited surface carried over
+unchanged between those two rounds. Because both reports are still unmerged, a qualifying round must
+repeat that coverage on merged code.
 
 ## Findings register
+
+`since` = the round in which the finding was filed (not necessarily the round that lists it in
+`newFindings`, which records only that round's *new distinct* fingerprints).
 
 | Issue | Severity | State | First seen | Note |
 | --- | --- | --- | --- | --- |

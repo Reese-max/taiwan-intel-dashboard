@@ -20,6 +20,7 @@ function validTracker() {
     schema: "fixed-50-audit-tracker/1",
     umbrella: { repo: "Reese-max/taiwan-intel-dashboard", issue: 41 },
     protocol: { repo: "Reese-max/autodev-ng", path: "docs/portfolio-audit/2026-09-06-50-persona-audit.md", blob: "a".repeat(40) },
+    protocolIssueQuality: { repo: "Reese-max/autodev-ng", path: "docs/portfolio-audit/2026-09-14-issue-quality-v2.md", blob: "d".repeat(40) },
     personas: [...FIXED_PERSONA_IDS],
     rules: [...TRACKER_RULE_IDS],
     rounds: [
@@ -171,7 +172,7 @@ describe("fixed-50 audit tracker contract", () => {
         qualifying(t);
         t.rounds[1].result = "NOT CLEAN — something new";
       }),
-    ).toContain("rounds: round 2 的結果自述為 NOT CLEAN，不能標示 qualifyingClean");
+    ).toContain("rounds: round 2 的結果自述不推進 streak（NOT CLEAN — something new），不能標示 qualifyingClean");
     expect(
       errorsFor((t) => {
         qualifying(t);
@@ -341,5 +342,102 @@ describe("repo 內的 50-persona tracker 文件", () => {
       expect(typeof round.pr).toBe("number");
       expect(round.pr).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("tracker 契約的其餘分支（逐一可失敗）", () => {
+  const cases: Array<[string, (t: any) => void, string]> = [
+    ["schema 必須是追蹤器 schema", (t) => (t.schema = "other/1"), "schema: 必須是 fixed-50-audit-tracker/1"],
+    ["umbrella 必須有 repo 與 issue", (t) => (t.umbrella = { repo: "", issue: 0 }), "umbrella: 必須記錄 repo 與正整數 issue 編號"],
+    [
+      "protocol 需要 40 碼 blob",
+      (t) => (t.protocol.blob = "nope"),
+      "protocol: 必須記錄外部協議 repo、path 與 40 碼 blob",
+    ],
+    [
+      "protocolIssueQuality 與 protocol 同樣被檢查",
+      (t) => delete t.protocolIssueQuality,
+      "protocolIssueQuality: 必須記錄外部協議 repo、path 與 40 碼 blob",
+    ],
+    ["未知規則 id 會被擋", (t) => t.rules.push("trust-me"), "rules: 未定義的規則 id：trust-me"],
+    ["至少要有一輪", (t) => (t.rounds = []), "rounds: 至少要有一輪稽核紀錄"],
+    ["round 必須是物件", (t) => (t.rounds[0] = "round-1"), "rounds: 第 1 筆 round 必須是物件"],
+    ["round 編號必須是正整數", (t) => (t.rounds[0].round = "1"), "rounds: rounds[0] 的 round 編號必須是正整數"],
+    ["date 必須是 YYYY-MM-DD", (t) => (t.rounds[0].date = "2026/09/06"), "rounds: round 1 的 date 必須是 YYYY-MM-DD"],
+    ["報告路徑必填", (t) => (t.rounds[0].report = ""), "rounds: round 1 必須記錄報告路徑"],
+    [
+      "報告路徑必須是 round 報告命名",
+      (t) => (t.rounds[0].report = "README.md"),
+      "rounds: round 1 的報告路徑必須是 docs/audits/50-persona-round-<n>-<YYYY-MM-DD>.md：README.md",
+    ],
+    ["每輪必須記錄結果", (t) => (t.rounds[0].result = ""), "rounds: round 1 必須記錄該輪結果"],
+    ["每輪必須標示 onDefaultBranch", (t) => delete t.rounds[0].onDefaultBranch, "rounds: round 1 必須標示 onDefaultBranch"],
+    ["每輪必須標示 qualifyingClean", (t) => delete t.rounds[0].qualifyingClean, "rounds: round 1 必須標示 qualifyingClean"],
+    [
+      "newFindings 不可重複",
+      (t) => (t.rounds[0].newFindings = [17, 17]),
+      "rounds: round 1 的 newFindings 必須是不重複的 issue 編號陣列",
+    ],
+    [
+      "qualifying 輪必須已合併",
+      (t) => {
+        t.rounds[0].qualifyingClean = true;
+        t.rounds[0].inspectedSha = "c".repeat(40);
+        t.rounds[0].result = "CLEAN";
+        t.rounds[0].onDefaultBranch = false;
+        t.rounds[0].pr = 1;
+        t.rounds[0].prUrl = "https://github.com/Reese-max/taiwan-intel-dashboard/pull/1";
+      },
+      "rounds: round 1 不在 default branch，其報告可能隨 PR 消失，不能當作 qualifying CLEAN 輪",
+    ],
+    [
+      "NO_CHANGE / partial review 不推進 streak",
+      (t) => {
+        t.rounds[0].qualifyingClean = true;
+        t.rounds[0].inspectedSha = "c".repeat(40);
+        t.rounds[0].result = "NO_CHANGE";
+      },
+      "rounds: round 1 的結果自述不推進 streak（NO_CHANGE），不能標示 qualifyingClean",
+    ],
+    ["findings 必須是陣列", (t) => (t.findings = {}), "findings: 必須是陣列"],
+    ["finding 必須有 title", (t) => (t.findings[0].title = " "), "findings: #17 必須有 title"],
+    ["since 必須是存在的 round", (t) => (t.findings[0].since = 99), "findings: #17 的 since round 不存在：99"],
+    [
+      "not_planned 必須附理由",
+      (t) => {
+        t.findings[0].state = "not_planned";
+        delete t.findings[0].note;
+      },
+      "findings: #17 標示 not_planned 必須附理由（note）",
+    ],
+    ["clean 必須是物件", (t) => delete t.clean, "clean: 必須記錄 CLEAN 會計"],
+    ["status 只能是 CLEAN 或 NOT CLEAN", (t) => (t.clean.status = "MOSTLY CLEAN"), "clean: status 必須是 CLEAN 或 NOT CLEAN：MOSTLY CLEAN"],
+    ["streak 必須是非負整數", (t) => (t.clean.streak = -1), "clean: streak 必須是非負整數"],
+    ["coverage.of 必須等於 scenarios", (t) => (t.clean.coverage.of = 49), "clean: coverage.of 必須等於 coverage.scenarios"],
+    ["conditions 每項必須是 boolean", (t) => (t.clean.conditions = [1, 0, 0, 0, 0]), "clean: conditions 每一項都必須是 boolean"],
+  ];
+
+  for (const [name, mutate, expected] of cases) {
+    it(name, () => {
+      expect(errorsFor(mutate)).toContain(expected);
+    });
+  }
+
+  it("未合併的 round 其實不在 checkout 時才會走到「不能當 qualifying 輪」判定", () => {
+    expect(errorsFor((t) => {
+      t.rounds[0].qualifyingClean = true;
+      t.rounds[0].inspectedSha = "c".repeat(40);
+      t.rounds[0].result = "CLEAN";
+      t.rounds[0].onDefaultBranch = false;
+      t.rounds[0].pr = 1;
+      t.rounds[0].prUrl = "https://github.com/Reese-max/taiwan-intel-dashboard/pull/1";
+    }, { reports: ["docs/audits/50-persona-round-2-2026-09-10.md"] })).toContain(
+      "rounds: round 1 不在 default branch，其報告可能隨 PR 消失，不能當作 qualifying CLEAN 輪",
+    );
+  });
+
+  it("非物件輸入 fail closed", () => {
+    expect(validateTracker(null, {})).toEqual(["parse: tracker JSON 必須是物件"]);
+    expect(validateTracker([], {})).toEqual(["parse: tracker JSON 必須是物件"]);
   });
 });

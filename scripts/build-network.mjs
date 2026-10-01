@@ -15,7 +15,11 @@ import {
   writeCohortManifest,
   RULES_VERSION,
 } from "./lib/manifest.mjs";
-import { writeBuildReplayFixture } from "./lib/build-replay-fixture.mjs";
+import {
+  cleanupBuildReplayFixture,
+  purgeStaleBuildReplayFixture,
+  writeBuildReplayFixture,
+} from "./lib/build-replay-fixture.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // 與 fetch-live 一致：實際服務／部署的資料在 public/data，dist/data 為已 build 副本。
@@ -58,6 +62,8 @@ export function buildNetwork(domestic, international, nowIso, { snapshotId, rule
 }
 
 function main() {
+  // 先清掉上一次 replay 留下的 fixture（含上一次失敗中斷的情況），避免它被當成真實快照。
+  purgeStaleBuildReplayFixture(DATA_DIR);
   if (writeBuildReplayFixture(process.env, DATA_DIR)) {
     console.log(
       "public/data 沒有事件快照；使用僅限本機 clean replay 的建置 fixture（託管建置不使用此 fallback，build-static 取用後會清除）",
@@ -100,6 +106,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   try {
     main();
   } catch (error) {
+    // 失敗路徑也要清掉 fixture：否則下一次 build 會拿它當既有狀態。
+    cleanupBuildReplayFixture(DATA_DIR);
     console.error(`network build 失敗：${error.message}`);
     process.exitCode = 1;
   }

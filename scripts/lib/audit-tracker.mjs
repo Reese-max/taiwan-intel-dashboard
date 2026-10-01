@@ -38,7 +38,9 @@ export const TRACKER_RULE_IDS = Object.freeze([
 ]);
 
 const SHA_RE = /^[0-9a-f]{40}$/;
-const NOT_CLEAN_RESULT_RE = /NOT[\s-]*CLEAN/i;
+// 協議明訂不推進 streak 的結果：NOT CLEAN、NO_CHANGE、partial review、audit-only。
+const REPORT_PATH_RE = /^docs\/audits\/50-persona-round-\d+-\d{4}-\d{2}-\d{2}\.md$/;
+const NON_QUALIFYING_RESULT_RE = /NOT[\s-]*CLEAN|NO[\s_-]?CHANGE|PARTIAL[\s-]*REVIEW|AUDIT[\s-]*ONLY/i;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const FENCE_RE = /```json audit-tracker[^\S\n]*\n([\s\S]*?)\n```/g;
 
@@ -104,13 +106,19 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
     errors.push("umbrella: 必須記錄 repo 與正整數 issue 編號");
   }
 
-  if (
-    !isPlainObject(tracker.protocol) ||
-    !isNonEmptyString(tracker.protocol.repo) ||
-    !isNonEmptyString(tracker.protocol.path) ||
-    !SHA_RE.test(String(tracker.protocol.blob ?? ""))
-  ) {
-    errors.push("protocol: 必須記錄外部協議 repo、path 與 40 碼 blob");
+  for (const [field, label] of [
+    ["protocol", "protocol"],
+    ["protocolIssueQuality", "protocolIssueQuality"],
+  ]) {
+    const ref = tracker[field];
+    if (
+      !isPlainObject(ref) ||
+      !isNonEmptyString(ref.repo) ||
+      !isNonEmptyString(ref.path) ||
+      !SHA_RE.test(String(ref.blob ?? ""))
+    ) {
+      errors.push(`${label}: 必須記錄外部協議 repo、path 與 40 碼 blob`);
+    }
   }
 
   const personas = tracker.personas;
@@ -141,7 +149,11 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
       if (!DATE_RE.test(String(round.date ?? ""))) {
         errors.push(`rounds: ${label} 的 date 必須是 YYYY-MM-DD`);
       }
-      if (!isNonEmptyString(round.report)) errors.push(`rounds: ${label} 必須記錄報告路徑`);
+      if (!isNonEmptyString(round.report)) {
+        errors.push(`rounds: ${label} 必須記錄報告路徑`);
+      } else if (!REPORT_PATH_RE.test(round.report)) {
+        errors.push(`rounds: ${label} 的報告路徑必須是 docs/audits/50-persona-round-<n>-<YYYY-MM-DD>.md：${round.report}`);
+      }
       if (round.inspectedSha == null) {
         if (!isNonEmptyString(round.inspectedShaNote)) {
           errors.push(`rounds: ${label} 缺少 inspectedSha 時必須附 inspectedShaNote`);
@@ -183,11 +195,14 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
         if (round.newFindings.length) {
           errors.push(`rounds: ${label} 有 newFindings（${round.newFindings.join("、")}）卻標示 qualifyingClean`);
         }
-        if (NOT_CLEAN_RESULT_RE.test(String(round.result ?? ""))) {
-          errors.push(`rounds: ${label} 的結果自述為 NOT CLEAN，不能標示 qualifyingClean`);
+        if (NON_QUALIFYING_RESULT_RE.test(String(round.result ?? ""))) {
+          errors.push(`rounds: ${label} 的結果自述不推進 streak（${round.result}），不能標示 qualifyingClean`);
         }
         if (!SHA_RE.test(String(round.inspectedSha ?? ""))) {
           errors.push(`rounds: ${label} 沒有 inspectedSha，不能當作 qualifying CLEAN 輪`);
+        }
+        if (round.onDefaultBranch !== true) {
+          errors.push(`rounds: ${label} 不在 default branch，其報告可能隨 PR 消失，不能當作 qualifying CLEAN 輪`);
         }
       }
     });
@@ -219,6 +234,10 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
     }
   }
 
+  const knownRounds = new Set(
+    (Array.isArray(tracker.rounds) ? tracker.rounds : []).filter(isPlainObject).map((round) => round.round),
+  );
+
   const findings = tracker.findings;
   if (!Array.isArray(findings)) {
     errors.push("findings: 必須是陣列");
@@ -240,7 +259,15 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
         errors.push(`findings: #${finding.issue} 的 state 非法：${finding.state}`);
       }
       if (!isNonEmptyString(finding.title)) errors.push(`findings: #${finding.issue} 必須有 title`);
-      if (!isPositiveInt(finding.since)) errors.push(`findings: #${finding.issue} 必須記錄 since round`);
+      if (!isPositiveInt(finding.since)) {
+        errors.push(`findings: #${finding.issue} 必須記錄 since round`);
+      } else if (!knownRounds.has(finding.since)) {
+        errors.push(`findings: #${finding.issue} 的 since round 不存在：${finding.since}`);
+      }
+      // 協議要求 not_planned 必須有明確理由，否則等於用一句話消掉一個 finding。
+      if (finding.state === "not_planned" && !isNonEmptyString(finding.note)) {
+        errors.push(`findings: #${finding.issue} 標示 not_planned 必須附理由（note）`);
+      }
       if (seenIssues.has(finding.issue)) errors.push(`findings: issue 編號重複：${finding.issue}`);
       seenIssues.add(finding.issue);
     });

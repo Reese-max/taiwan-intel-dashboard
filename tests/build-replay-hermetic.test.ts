@@ -1,6 +1,7 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — JS ESM modules without types
 import { buildNetwork } from "../scripts/build-network.mjs";
@@ -9,6 +10,7 @@ import {
   HOSTED_CI_ENV,
   canUseBuildReplayFixture,
   cleanupBuildReplayFixture,
+  purgeStaleBuildReplayFixture,
   writeBuildReplayFixture,
 } from "../scripts/lib/build-replay-fixture.mjs";
 // @ts-expect-error — JS ESM module without types
@@ -160,6 +162,45 @@ describe("build replay fixture（hermetic clean replay）", () => {
     }
   });
 
+  it("整組都是 fixture 時，連帶清掉衍生的 network.json / manifest.json", () => {
+    const { root, dataDir } = tempDataDir("build-replay-derived");
+    try {
+      writeBuildReplayFixture(REPLAY_ENV, dataDir);
+      writeFileSync(join(dataDir, "network.json"), JSON.stringify({ snapshotId: "cohort-fixture" }));
+      writeFileSync(join(dataDir, "manifest.json"), JSON.stringify({ snapshotId: "cohort-fixture" }));
+
+      const result = cleanupBuildReplayFixture(dataDir);
+      expect(result.fixtureDriven).toBe(true);
+      expect(result.removed.sort()).toEqual(
+        [join(dataDir, "domestic.json"), join(dataDir, "international.json"), join(dataDir, "manifest.json"), join(dataDir, "network.json")].sort(),
+      );
+      expect(existsSync(join(dataDir, "network.json"))).toBe(false);
+      expect(existsSync(join(dataDir, "manifest.json"))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("purge：建置前清掉殘留 fixture（真實資料不動），避免後續 build 把它當既有狀態", () => {
+    const { root, dataDir } = tempDataDir("build-replay-purge");
+    try {
+      writeBuildReplayFixture(REPLAY_ENV, dataDir);
+      writeFileSync(join(dataDir, "network.json"), JSON.stringify({ snapshotId: "cohort-fixture" }));
+      const removed = purgeStaleBuildReplayFixture(dataDir);
+      expect(removed.sort()).toEqual([join(dataDir, "domestic.json"), join(dataDir, "international.json")]);
+      // 殘留清掉後才可以再次 seed；network.json 是衍生物，不影響事件快照判定。
+      expect(writeBuildReplayFixture(REPLAY_ENV, dataDir)).toBe(true);
+      // 有真實資料時 purge 不動它。
+      const real = [{ id: "real", scope: "domestic", source: { type: "news-rss", recordRef: "https://example.invalid/real" } }];
+      writeFileSync(join(dataDir, "domestic.json"), JSON.stringify(real));
+      writeFileSync(join(dataDir, "international.json"), JSON.stringify(real));
+      purgeStaleBuildReplayFixture(dataDir);
+      expect(JSON.parse(readFileSync(join(dataDir, "domestic.json"), "utf8"))).toEqual(real);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("cleanup 只刪內容仍等於 fixture 的檔案，真實資料保留", () => {
     const { root, dataDir } = tempDataDir("build-replay-cleanup");
     try {
@@ -167,13 +208,37 @@ describe("build replay fixture（hermetic clean replay）", () => {
       const real = [{ id: "real-domestic", scope: "domestic", source: { type: "news-rss", recordRef: "https://example.invalid/real" } }];
       writeFileSync(join(dataDir, "domestic.json"), JSON.stringify(real));
 
-      const removed = cleanupBuildReplayFixture(dataDir);
-      expect(removed).toEqual([join(dataDir, "international.json")]);
+      // 只清掉仍是 fixture 的那一個；已被真實資料覆寫的保留，且不動衍生物。
+      writeFileSync(join(dataDir, "network.json"), JSON.stringify({ fixtureDriven: true }));
+      const result = cleanupBuildReplayFixture(dataDir);
+      expect(result.removed).toEqual([join(dataDir, "international.json")]);
+      expect(result.fixtureDriven).toBe(false);
       expect(JSON.parse(readFileSync(join(dataDir, "domestic.json"), "utf8"))).toEqual(real);
+      expect(existsSync(join(dataDir, "network.json"))).toBe(true);
       // 已清除後再清一次是 no-op。
-      expect(cleanupBuildReplayFixture(dataDir)).toEqual([]);
+      expect(cleanupBuildReplayFixture(dataDir).removed).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+describe("建置腳本確實接上 fixture（防止 hook 被無聲移除）", () => {
+  const script = (name: string) => readFileSync(new URL(`../scripts/${name}`, import.meta.url), "utf8");
+
+  it("build-network：建置前 purge 殘留、seed fixture、失敗路徑 cleanup", () => {
+    const source = script("build-network.mjs");
+    expect(source).toContain("purgeStaleBuildReplayFixture(DATA_DIR)");
+    expect(source).toContain("writeBuildReplayFixture(process.env, DATA_DIR)");
+    // 失敗時也要清，否則下一次 build 會把 fixture 當既有狀態。
+    expect(source).toMatch(/catch \(error\)[\s\S]*cleanupBuildReplayFixture\(DATA_DIR\)/);
+  });
+
+  it("build-static：產出 dist/data 後清除 fixture", () => {
+    expect(script("build-static.mjs")).toContain("cleanupBuildReplayFixture()");
+  });
+
+  it("module 路徑可解析（scripts/lib 存在該檔）", () => {
+    expect(existsSync(fileURLToPath(new URL("../scripts/lib/build-replay-fixture.mjs", import.meta.url)))).toBe(true);
   });
 });

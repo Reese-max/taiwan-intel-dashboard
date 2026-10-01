@@ -209,9 +209,10 @@ for (const f of readdirSync(`${OUT}/assets`)) {
 }
 console.log("Static build done -> dist/");
 
-// dist/data 已帶走資料；把本機 replay 的建置 fixture 從 public/data 清掉，避免之後的
-// 一般本機 build／fetch-live carry-over 把假事件當成既有狀態（只刪內容仍等於 fixture 者）。
-const cleanedFixture = cleanupBuildReplayFixture();
+// dist/data 已帶走資料；把本機 replay 的建置 fixture 與其衍生的 network.json /
+// manifest.json 從 public/data 清掉，避免之後的一般本機 build／fetch-live carry-over／
+// network-quality 稽核把假事件當成既有狀態（只刪內容仍等於 fixture 的那次建置）。
+const { removed: cleanedFixture } = cleanupBuildReplayFixture();
 if (cleanedFixture.length) {
   console.log(`已清除 replay 建置 fixture：${cleanedFixture.map((file) => file.split("/").pop()).join("、")}`);
 }
