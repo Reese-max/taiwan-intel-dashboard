@@ -2,7 +2,7 @@
 // 用法：node scripts/build-network.mjs
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import {
@@ -18,7 +18,8 @@ import {
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // 與 fetch-live 一致：實際服務／部署的資料在 public/data，dist/data 為已 build 副本。
-const DATA_DIR = join(ROOT, "public", "data");
+// BUILD_DATA_DIR 供 build 協調器（乾淨 checkout 的合成輸入）覆寫，預設不變。
+const DATA_DIR = process.env.BUILD_DATA_DIR ? resolve(process.env.BUILD_DATA_DIR) : join(ROOT, "public", "data");
 const DIST_DATA_DIR = join(ROOT, "dist", "data");
 
 function readEvents(name) {

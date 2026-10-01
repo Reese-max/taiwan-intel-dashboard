@@ -1,62 +1,47 @@
-import {
-  constants,
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  unlinkSync,
-  writeFileSync,
-} from "node:fs";
+// 乾淨 checkout（沒有 public/data 事件快照）時，為 build 準備一份隔離的合成輸入（#47）。
+//
+// 為什麼合成輸入要放在 tmpdir：合成事件若寫進 public/data，就會留在工作樹，成為後續
+// `npm run refresh` 的「舊快照」，而 fetch-live 的新聞路徑會把 oldNews 合併回正式
+// domestic.json —— 等於讓測試事件進入資料層。放在暫存目錄可讓 build 結束後完全不留痕。
+//
+// 正式資料優先：兩份事件快照都存在 → 直接沿用 public/data，build 行為與過去完全相同。
+// 只缺其中一份、或目錄內有其他狀態檔卻沒有事件快照 → fail closed，寧可 build 失敗，
+// 也不拿合成資料覆蓋或補齊真實狀態（管線／部署缺資料時必須立刻看見）。
+import { copyFileSync, existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/**
- * Make a clean-checkout build hermetic without masking a partial data snapshot.
- * Real pipeline data wins whenever both required inputs are already present.
- */
-export function ensureBuildData(dataDir, fixturePath) {
-  const domesticPath = join(dataDir, "domestic.json");
-  const internationalPath = join(dataDir, "international.json");
-  const hasDomestic = existsSync(domesticPath);
-  const hasInternational = existsSync(internationalPath);
+export const REQUIRED_SNAPSHOTS = ["domestic.json", "international.json"];
+export const DEFAULT_FIXTURE = join(ROOT, "tests", "fixtures", "govintel-domestic.json");
 
-  if (hasDomestic !== hasInternational) {
-    throw new Error("build data incomplete: domestic.json and international.json must be provided together");
+export function prepareCleanCheckoutBuild({
+  dataDir = join(ROOT, "public", "data"),
+  fixturePath = DEFAULT_FIXTURE,
+  stagingPrefix = "taiwan-intel-build-",
+} = {}) {
+  const present = REQUIRED_SNAPSHOTS.filter((name) => existsSync(join(dataDir, name)));
+  if (present.length === REQUIRED_SNAPSHOTS.length) return { seeded: false, dataDir };
+  if (present.length > 0) {
+    throw new Error(
+      `build data incomplete: ${REQUIRED_SNAPSHOTS.join(" 與 ")} 必須成對存在（目前只有 ${present.join(", ")}）`,
+    );
   }
-  if (hasDomestic) return false;
   if (existsSync(dataDir) && readdirSync(dataDir).length > 0) {
     throw new Error("build data incomplete: data directory contains files but both event snapshots are absent");
   }
-
-  mkdirSync(dataDir, { recursive: true });
-  let seededDomestic = false;
-  try {
-    // A refresh may publish snapshots after the absence checks; never replace them.
-    copyFileSync(fixturePath, domesticPath, constants.COPYFILE_EXCL);
-    seededDomestic = true;
-    writeFileSync(internationalPath, "[]\n", { encoding: "utf8", flag: "wx" });
-    return true;
-  } catch (error) {
-    // If a concurrent publisher won the second exclusive create, do not leave a
-    // synthetic domestic snapshot paired with its real international snapshot.
-    // Only remove the file while it still holds exactly what we seeded: the
-    // publisher may already have overwritten it with real data.
-    if (seededDomestic && existsSync(domesticPath)) {
-      try {
-        if (readFileSync(domesticPath, "utf8") === readFileSync(fixturePath, "utf8")) unlinkSync(domesticPath);
-      } catch {
-        // Provenance cannot be re-verified — leave the file in place.
-      }
-    }
-    throw error;
+  if (!existsSync(fixturePath)) {
+    throw new Error(`build data incomplete: committed synthetic fixture missing (${fixturePath})`);
   }
-}
 
-if (fileURLToPath(import.meta.url) === process.argv[1]) {
-  const dataDir = join(ROOT, "public", "data");
-  const seeded = ensureBuildData(dataDir, join(ROOT, "tests", "fixtures", "govintel-domestic.json"));
-  if (seeded) console.log("build data missing; seeded committed synthetic snapshots for the clean checkout build");
+  const staging = mkdtempSync(join(tmpdir(), stagingPrefix));
+  copyFileSync(fixturePath, join(staging, REQUIRED_SNAPSHOTS[0]));
+  writeFileSync(join(staging, REQUIRED_SNAPSHOTS[1]), "[]\n", "utf8");
+  return {
+    seeded: true,
+    dataDir: staging,
+    cleanup: () => rmSync(staging, { recursive: true, force: true }),
+  };
 }
