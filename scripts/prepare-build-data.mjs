@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdirSync,
   readdirSync,
+  readFileSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -41,7 +42,15 @@ export function ensureBuildData(dataDir, fixturePath) {
   } catch (error) {
     // If a concurrent publisher won the second exclusive create, do not leave a
     // synthetic domestic snapshot paired with its real international snapshot.
-    if (seededDomestic && existsSync(domesticPath)) unlinkSync(domesticPath);
+    // Only remove the file while it still holds exactly what we seeded: the
+    // publisher may already have overwritten it with real data.
+    if (seededDomestic && existsSync(domesticPath)) {
+      try {
+        if (readFileSync(domesticPath, "utf8") === readFileSync(fixturePath, "utf8")) unlinkSync(domesticPath);
+      } catch {
+        // Provenance cannot be re-verified — leave the file in place.
+      }
+    }
     throw error;
   }
 }
