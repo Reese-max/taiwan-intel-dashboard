@@ -15,6 +15,7 @@ import {
   writeCohortManifest,
   RULES_VERSION,
 } from "./lib/manifest.mjs";
+import { writeBuildReplayFixture } from "./lib/build-replay-fixture.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // 與 fetch-live 一致：實際服務／部署的資料在 public/data，dist/data 為已 build 副本。
@@ -57,6 +58,9 @@ export function buildNetwork(domestic, international, nowIso, { snapshotId, rule
 }
 
 function main() {
+  if (writeBuildReplayFixture()) {
+    console.log("public/data 不存在；使用僅限本機 clean replay 的建置 fixture（託管 CI 不允許此 fallback）");
+  }
   const domestic = readEvents("domestic.json");
   const international = readEvents("international.json");
   const nowIso = new Date().toISOString();
