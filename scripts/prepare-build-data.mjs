@@ -37,8 +37,14 @@ export function prepareCleanCheckoutBuild({
   }
 
   const staging = mkdtempSync(join(tmpdir(), stagingPrefix));
-  copyFileSync(fixturePath, join(staging, REQUIRED_SNAPSHOTS[0]));
-  writeFileSync(join(staging, REQUIRED_SNAPSHOTS[1]), "[]\n", "utf8");
+  try {
+    copyFileSync(fixturePath, join(staging, REQUIRED_SNAPSHOTS[0]));
+    writeFileSync(join(staging, REQUIRED_SNAPSHOTS[1]), "[]\n", "utf8");
+  } catch (error) {
+    // 寫入失敗（fixture 不可讀／磁碟滿）不得留下半套暫存輸入
+    rmSync(staging, { recursive: true, force: true });
+    throw error;
+  }
   return {
     seeded: true,
     dataDir: staging,

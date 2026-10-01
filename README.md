@@ -59,7 +59,7 @@ npm run refresh:news   # 抓台灣新聞（吃 LLM 成本）
 node --env-file=.env scripts/fetch-live.mjs --sources=rss,gdelt   # 抓國際 RSS＋GDELT 補充
 ```
 
-乾淨 checkout 沒有 `public/data/` 時，`npm run build` 會改用 tmpdir 裡的合成輸入（committed fixture）完成建置，結束後自動刪除；`public/data/` 全程不被寫入，合成事件不會留在工作樹被後續 `npm run refresh` 帶回正式快照。正式資料快照成對存在時則原樣使用，不會被 fixture 覆蓋；只缺一份快照、或資料目錄已有其他狀態檔卻缺事件快照時 build 會直接失敗，不拿合成資料補齊真實狀態。
+乾淨 checkout 沒有 `public/data/` 時，`npm run build` 會改用 tmpdir 裡的合成輸入（committed fixture）完成建置，結束後自動刪除；`public/data/` 與既有 `dist/` 全程不被寫入，合成事件不會留在工作樹被後續 `npm run refresh` 帶回正式快照。此時產出的 `dist/` 只含合成衍生的 4 份 JSON（無 `provenance.json`／`summary.json`），僅供 gate 驗證、不可部署。正式資料快照成對存在時則原樣使用，不會被 fixture 覆蓋；只缺一份快照、或資料目錄已有其他狀態檔卻缺事件快照時 build 會直接失敗，不拿合成資料補齊真實狀態。
 
 ## 稽核（CI 皆有掛）
 

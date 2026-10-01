@@ -21,10 +21,13 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // BUILD_DATA_DIR 供 build 協調器（乾淨 checkout 的合成輸入）覆寫，預設不變。
 const DATA_DIR = process.env.BUILD_DATA_DIR ? resolve(process.env.BUILD_DATA_DIR) : join(ROOT, "public", "data");
 const DIST_DATA_DIR = join(ROOT, "dist", "data");
+// 合成輸入的產物不得鏡射進可部署的 dist/data，否則會蓋掉既有正式 build 產物。
+const SYNTHETIC_INPUT = process.env.BUILD_SYNTHETIC_INPUT === "1";
 
 function readEvents(name) {
   const p = join(DATA_DIR, name);
-  const fileName = `public/data/${name}`;
+  // 覆寫輸入目錄時報實際路徑，避免 fail closed 訊息指向本輪沒讀過的目錄
+  const fileName = process.env.BUILD_DATA_DIR ? p : `public/data/${name}`;
   if (!existsSync(p)) {
     throw new Error(`${fileName}：檔案不存在，無法建立 ${NETWORK_FILE}`);
   }
@@ -70,7 +73,8 @@ function main() {
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
   const json = JSON.stringify(net, null, 2) + "\n";
   writeFileSync(join(DATA_DIR, "network.json"), json);
-  if (existsSync(DIST_DATA_DIR)) writeFileSync(join(DIST_DATA_DIR, "network.json"), json);
+  const mirrorToDist = !SYNTHETIC_INPUT && existsSync(DIST_DATA_DIR);
+  if (mirrorToDist) writeFileSync(join(DIST_DATA_DIR, "network.json"), json);
 
   const manifest = buildCohortManifest({
     dataDir: DATA_DIR,
@@ -79,7 +83,7 @@ function main() {
     nowIso,
   });
   writeCohortManifest(DATA_DIR, manifest);
-  if (existsSync(DIST_DATA_DIR)) writeCohortManifest(DIST_DATA_DIR, manifest);
+  if (mirrorToDist) writeCohortManifest(DIST_DATA_DIR, manifest);
 
   const d = net.domestic.stats;
   const i = net.international.stats;

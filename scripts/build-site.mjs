@@ -12,7 +12,11 @@ const BUILD_STEPS = ["build-network.mjs", "build-static.mjs"];
 
 export function buildSite({ root = ROOT, prepareOptions, spawn = spawnSync, log = console.log } = {}) {
   const prepared = prepareCleanCheckoutBuild(prepareOptions);
-  const env = prepared.seeded ? { ...process.env, BUILD_DATA_DIR: prepared.dataDir } : process.env;
+  // BUILD_SYNTHETIC_INPUT：明確標記輸入為合成資料，讓 build-network 不得把合成產物
+  // 鏡射進可部署的 dist/data（dist/ 與 public/data 都只能出現本輪輸入的內容）。
+  const env = prepared.seeded
+    ? { ...process.env, BUILD_DATA_DIR: prepared.dataDir, BUILD_SYNTHETIC_INPUT: "1" }
+    : process.env;
   if (prepared.seeded) {
     log(
       `public/data 沒有事件快照 → 改用暫存合成輸入建置（${prepared.dataDir}，結束後自動刪除；public/data 不會被寫入）`,
