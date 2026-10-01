@@ -13,6 +13,7 @@ import {
   statSync,
 } from "node:fs";
 import { resolve } from "node:path";
+import { cleanupBuildReplayFixture } from "./lib/build-replay-fixture.mjs";
 import { emptyDirContents } from "./lib/fs-safe.mjs";
 import { minifyOrCopyJson } from "./lib/minify-json.mjs";
 import { buildCohortManifest, writeCohortManifest } from "./lib/manifest.mjs";
@@ -207,3 +208,10 @@ for (const f of readdirSync(`${OUT}/assets`)) {
   console.log(`assets/${f}  ${kb} KB`);
 }
 console.log("Static build done -> dist/");
+
+// dist/data 已帶走資料；把本機 replay 的建置 fixture 從 public/data 清掉，避免之後的
+// 一般本機 build／fetch-live carry-over 把假事件當成既有狀態（只刪內容仍等於 fixture 者）。
+const cleanedFixture = cleanupBuildReplayFixture();
+if (cleanedFixture.length) {
+  console.log(`已清除 replay 建置 fixture：${cleanedFixture.map((file) => file.split("/").pop()).join("、")}`);
+}

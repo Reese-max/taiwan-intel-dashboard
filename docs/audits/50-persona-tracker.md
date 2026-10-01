@@ -17,6 +17,11 @@ honest. It is not 50 human tests, it is not an implementation authorization, and
 merge, deploy, or paid-provider permission. Each round report stays immutable; every new round uses
 a new report path.
 
+The tracker carries no audit fix. The change that introduced it did also make `npm run build`
+hermetic on a clean checkout (`scripts/lib/build-replay-fixture.mjs`) — that is the
+verification prerequisite behind #47's residual scope, not a fix for any finding above, and the
+same gap is tracked by #67/#69.
+
 ## Round index
 
 | Round | Date | Inspected product SHA | On default branch | Report | Result |
@@ -49,7 +54,7 @@ so the browser-facing audited surface carried over unchanged between those two r
 | #42 | P2 | open | Round 5 | Protected branches must gate on the full quality gate; blocks release-path trust. |
 | #43 | P2 | open | Round 5 | Relation/location ground-truth benchmark to measure mis-linking and missed links. |
 | #44 | P2 | open | Round 5 | Human correction ledger must survive pipeline rebuilds. |
-| #47 | P2 | open | Round 5 | NEW in Round 5. Clean-checkout test/tooling gaps that keep the PR gate permanently red (see #67/#69 for the CI-side fixes). |
+| #47 | P2 | open | Round 5 | NEW in Round 5. Round 6 re-check: the reported clean-checkout `npm test` defect is **source-fixed** at `df7cee1` (`45cb168` added `tests/fixtures/govintel-domestic.json` fallback); what remains is `npm run build` hermeticity without pipeline-state data, tracked by #67/#69. |
 
 Every independent actionable P0/P1/P2 root cause lives in its own issue. This umbrella only links
 rounds and findings; it never carries a fix.
@@ -63,7 +68,7 @@ The protocol allows `CLEAN` only when **all** of the following hold. Current sta
 | 1 | All applicable P0/P1/P2 resolved or explicitly dispositioned | no | #38, #42, #43, #44, #47 open. |
 | 2 | Full 50-persona re-run against the latest default-branch SHA | no | Last merged round inspected `44eb775`; head is `df7cee1`. Rounds 5/6 exist only in open PRs. |
 | 3 | No new reproducible problem in statically verifiable items | no | #38 remains source-reproducible at the latest inspected head. |
-| 4 | Required runtime evidence (core happy path, error paths, mobile/CLI path) complete | no | No runtime receipts tied to a current inspected SHA; cross-deploy cohort promotion remains unexecuted. |
+| 4 | Required runtime evidence (core happy path, error paths, mobile/CLI path) complete | no | Round 6 recorded Actions/deploy receipts at `df7cee1`, but no browser happy-path / error-path / narrow-screen receipt, and the #38 cross-deploy cohort promotion scenario was never executed. |
 | 5 | Two consecutive rounds with no new P0/P1/P2 | no | Qualifying streak **0/2**. |
 
 **Repository status: NOT CLEAN — streak 0/2.**
@@ -189,6 +194,7 @@ CLEAN streak arithmetic.
       "result": "NOT CLEAN — new P2 #47; #38 narrowed to the map first-paint path",
       "onDefaultBranch": false,
       "pr": 48,
+      "prUrl": "https://github.com/Reese-max/taiwan-intel-dashboard/pull/48",
       "qualifyingClean": false,
       "newFindings": [47]
     },
@@ -200,6 +206,7 @@ CLEAN streak arithmetic.
       "result": "NOT CLEAN — #38 boundary carried over verbatim (src/ identical to Round 5)",
       "onDefaultBranch": false,
       "pr": 71,
+      "prUrl": "https://github.com/Reese-max/taiwan-intel-dashboard/pull/71",
       "qualifyingClean": false,
       "newFindings": []
     }
@@ -268,9 +275,9 @@ CLEAN streak arithmetic.
       "issue": 47,
       "severity": "P2",
       "state": "open",
-      "title": "Clean-checkout test and tooling gaps keep the PR quality gate red",
+      "title": "Clean-checkout tooling gaps: test defect source-fixed, build still needs pipeline-state data",
       "since": 5,
-      "note": "new fingerprint established in round 5; CI-side fixes tracked by #67/#69"
+      "note": "new fingerprint established in round 5; the npm test half was source-fixed at df7cee1 by 45cb168, residual build hermeticity tracked by #67/#69"
     }
   ],
   "clean": {

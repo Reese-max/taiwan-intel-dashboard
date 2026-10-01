@@ -38,6 +38,7 @@ export const TRACKER_RULE_IDS = Object.freeze([
 ]);
 
 const SHA_RE = /^[0-9a-f]{40}$/;
+const NOT_CLEAN_RESULT_RE = /NOT[\s-]*CLEAN/i;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const FENCE_RE = /```json audit-tracker[^\S\n]*\n([\s\S]*?)\n```/g;
 
@@ -153,31 +154,61 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
         errors.push(`rounds: ${label} 必須標示 onDefaultBranch`);
       } else if (round.onDefaultBranch === false && !isPositiveInt(round.pr)) {
         errors.push(`rounds: ${label} 不在 default branch 時必須引用 PR 編號`);
+      } else if (round.onDefaultBranch === false && isNonEmptyString(round.report) && reportExists(round.report)) {
+        errors.push(`rounds: ${label} 標示不在 default branch，但報告已存在於此 checkout：${round.report}`);
       } else if (round.onDefaultBranch === true && isNonEmptyString(round.report) && !reportExists(round.report)) {
         errors.push(`rounds: ${label} 宣稱在 default branch，但報告不存在：${round.report}`);
+      } else if (
+        round.onDefaultBranch === false &&
+        isPositiveInt(round.pr) &&
+        isNonEmptyString(tracker.umbrella?.repo) &&
+        round.prUrl !== `https://github.com/${String(tracker.umbrella.repo).replace(/\.git$/, "")}/pull/${round.pr}`
+      ) {
+        errors.push(
+          `rounds: ${label} 的 prUrl 必須是 https://github.com/${String(tracker.umbrella.repo).replace(/\.git$/, "")}/pull/${round.pr}`,
+        );
       }
       if (typeof round.qualifyingClean !== "boolean") {
         errors.push(`rounds: ${label} 必須標示 qualifyingClean`);
       }
-      if (!Array.isArray(round.newFindings) || round.newFindings.some((issue) => !isPositiveInt(issue))) {
-        errors.push(`rounds: ${label} 的 newFindings 必須是 issue 編號陣列`);
+      if (
+        !Array.isArray(round.newFindings) ||
+        round.newFindings.some((issue) => !isPositiveInt(issue)) ||
+        new Set(round.newFindings).size !== round.newFindings.length
+      ) {
+        errors.push(`rounds: ${label} 的 newFindings 必須是不重複的 issue 編號陣列`);
+      } else if (round.qualifyingClean === true) {
+        // qualifying CLEAN 不能只靠自稱：新增任何 finding、結果自述 NOT CLEAN、
+        // 沒有可追溯的 inspected SHA，都不可能是協議定義的 qualifying 輪。
+        if (round.newFindings.length) {
+          errors.push(`rounds: ${label} 有 newFindings（${round.newFindings.join("、")}）卻標示 qualifyingClean`);
+        }
+        if (NOT_CLEAN_RESULT_RE.test(String(round.result ?? ""))) {
+          errors.push(`rounds: ${label} 的結果自述為 NOT CLEAN，不能標示 qualifyingClean`);
+        }
+        if (!SHA_RE.test(String(round.inspectedSha ?? ""))) {
+          errors.push(`rounds: ${label} 沒有 inspectedSha，不能當作 qualifying CLEAN 輪`);
+        }
       }
     });
 
-    const seenRounds = new Set();
+    const validRounds = rounds.filter(isPlainObject);
     let previousRound = null;
-    for (const round of rounds) {
-      if (!isPlainObject(round)) continue;
-      if (seenRounds.has(round.round)) {
-        errors.push(`rounds: round 編號重複或未嚴格遞增：${round.round}`);
-      }
-      seenRounds.add(round.round);
-      if (previousRound && DATE_RE.test(String(round.date)) && String(round.date) < String(previousRound.date)) {
-        errors.push(
-          `rounds: 日期必須依 round 編號遞增：round ${round.round}（${round.date}）早於 round ${previousRound.round}（${previousRound.date}）`,
-        );
+    for (const round of validRounds) {
+      if (previousRound && !(round.round > previousRound.round)) {
+        errors.push(`rounds: round 編號重複或未嚴格遞增：${round.round}（前一筆為 ${previousRound.round}）`);
       }
       previousRound = round;
+    }
+    const byRound = [...validRounds].sort((a, b) => a.round - b.round);
+    for (let index = 1; index < byRound.length; index += 1) {
+      const current = byRound[index];
+      const earlier = byRound[index - 1];
+      if (DATE_RE.test(String(current.date)) && DATE_RE.test(String(earlier.date)) && String(current.date) < String(earlier.date)) {
+        errors.push(
+          `rounds: 日期必須依 round 編號遞增：round ${current.round}（${current.date}）早於 round ${earlier.round}（${earlier.date}）`,
+        );
+      }
     }
 
     const seenReports = new Set();
@@ -213,6 +244,17 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
       if (seenIssues.has(finding.issue)) errors.push(`findings: issue 編號重複：${finding.issue}`);
       seenIssues.add(finding.issue);
     });
+
+    const knownIssues = new Set(
+      (Array.isArray(findings) ? findings : []).filter(isPlainObject).map((finding) => finding.issue),
+    );
+    for (const round of Array.isArray(rounds) ? rounds.filter(isPlainObject) : []) {
+      for (const issue of Array.isArray(round.newFindings) ? round.newFindings : []) {
+        if (isPositiveInt(issue) && !knownIssues.has(issue)) {
+          errors.push(`rounds: round ${round.round} 的 newFindings #${issue} 未登記在 findings`);
+        }
+      }
+    }
   }
 
   const clean = tracker.clean;
@@ -235,6 +277,13 @@ export function validateTracker(tracker, { reportExists = () => false } = {}) {
       errors.push(`clean: conditions 必須列出協議的 ${PROTOCOL_CONDITION_COUNT} 個停止條件`);
     } else if (clean.conditions.some((value) => typeof value !== "boolean")) {
       errors.push("clean: conditions 每一項都必須是 boolean");
+    } else if (
+      typeof clean.status === "string" &&
+      clean.conditions.every(Boolean) !== (clean.status === "CLEAN")
+    ) {
+      errors.push(
+        `clean: status=${clean.status} 與 conditions（${clean.conditions.filter(Boolean).length}/${PROTOCOL_CONDITION_COUNT} 成立）不一致`,
+      );
     }
 
     const blocking = blockingFindings(tracker).map((finding) => `#${finding.issue}`);

@@ -60,9 +60,11 @@ node --env-file=.env scripts/fetch-live.mjs --sources=rss,gdelt   # 抓國際 RS
 ```
 
 `npm run build` 需要 `public/data/` 快照（由 `npm run refresh` 產生，狀態庫在 gh-pages，不進 main）。
-乾淨 checkout 在 `CI=true` 且非託管建置環境（GitHub Actions、Cloudflare Pages 等）時，
-`build-network` 會以最小 fixture 補齊缺少的 `domestic.json`／`international.json`，讓 detached
-worktree 的建置可重現；託管建置與一般本機執行仍會因缺資料而 fail-closed。
+乾淨 checkout 在 `CI=true` 或明確 `BUILD_REPLAY_FIXTURE=1`、且沒有任何託管建置標記
+（GitHub Actions、Cloudflare Pages/Workers Builds 等）時，`build-network` 會以最小 fixture 補齊
+缺少的 `domestic.json`／`international.json`，讓 detached worktree 的建置可重現；`build-static`
+取用後會清除 fixture。託管建置與一般本機執行仍會因缺資料而 fail-closed，且只要任一事件快照
+已存在就整組拒絕寫入，絕不產生真實＋假資料的混合快照。
 
 ## 稽核（CI 皆有掛）
 
@@ -73,8 +75,11 @@ npm run audit:network-quality  # 情報網品質
 npm run audit:source-freshness # 結構化來源成功時間與更新頻率健康閘門
 npm run audit:coverage         # scope/category 每日涵蓋矩陣一致性
 npm run report:news-sources    # 新聞來源漏斗貢獻報表
-npm run audit:tracker          # 50-persona umbrella 追蹤器的機器可檢查會計（#41）
 ```
+
+另有 `npm run audit:tracker` 檢查 50-persona umbrella 追蹤器（#41）的機器可檢查會計；
+它未列在上表，因為它不是資料稽核，而是稽核治理檢查——同一套規則由
+`tests/audit-tracker.test.ts` 在 `npm test` 中執行，因此 CI 已間接強制。
 
 ## 重要環境變數（完整見 `.env.example`）
 

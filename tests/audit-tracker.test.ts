@@ -93,7 +93,8 @@ describe("fixed-50 audit tracker contract", () => {
   });
 
   it("round 編號不可重複、日期必須遞增", () => {
-    expect(errorsFor((t) => (t.rounds[1].round = 1))).toContain("rounds: round 編號重複或未嚴格遞增：1");
+    expect(errorsFor((t) => (t.rounds[1].round = 1))).toContain("rounds: round 編號重複或未嚴格遞增：1（前一筆為 1）");
+    expect(errorsFor((t) => t.rounds.reverse())).toContain("rounds: round 編號重複或未嚴格遞增：1（前一筆為 2）");
     expect(errorsFor((t) => (t.rounds[1].date = "2026-09-01"))).toContain(
       "rounds: 日期必須依 round 編號遞增：round 2（2026-09-01）早於 round 1（2026-09-06）",
     );
@@ -109,19 +110,81 @@ describe("fixed-50 audit tracker contract", () => {
     );
   });
 
-  it("尚未合併的 round 必須引用 PR（不可出現無憑據的覆蓋）", () => {
+  it("尚未合併的 round 必須引用 PR，且其報告必須確實不在此 checkout", () => {
+    const reports = ["docs/audits/50-persona-round-1-2026-09-06.md"];
+    const unmerged = (t: any) => {
+      t.rounds[1].onDefaultBranch = false;
+      t.rounds[1].pr = 48;
+      t.rounds[1].prUrl = "https://github.com/Reese-max/taiwan-intel-dashboard/pull/48";
+    };
     expect(
-      errorsFor((t) => {
-        t.rounds[1].onDefaultBranch = false;
-        t.rounds[1].pr = 48;
-      }),
+      validateTracker((() => {
+        const t = validTracker();
+        unmerged(t);
+        return t;
+      })(), { reportExists: (p: string) => reports.includes(p) }),
     ).toEqual([]);
+    // 宣稱未合併，報告卻已經在 checkout 裡 → 可被驗證的假話。
+    expect(
+      validateTracker((() => {
+        const t = validTracker();
+        unmerged(t);
+        return t;
+      })(), { reportExists: () => true }),
+    ).toContain("rounds: round 2 標示不在 default branch，但報告已存在於此 checkout：docs/audits/50-persona-round-2-2026-09-10.md");
+    expect(
+      errorsFor(
+        (t) => {
+          unmerged(t);
+          t.rounds[1].prUrl = "https://github.com/someone-else/repo/pull/48";
+        },
+        { reports },
+      ),
+    ).toContain("rounds: round 2 的 prUrl 必須是 https://github.com/Reese-max/taiwan-intel-dashboard/pull/48");
     expect(
       errorsFor((t) => {
         t.rounds[1].onDefaultBranch = false;
         t.rounds[1].pr = null;
       }),
     ).toContain("rounds: round 2 不在 default branch 時必須引用 PR 編號");
+  });
+
+  it("qualifyingClean 不能只靠自稱：新增 finding／結果自述 NOT CLEAN／缺 SHA 都不得算數", () => {
+    const qualifying = (t: any) => {
+      t.findings = [{ issue: 18, severity: "P3", state: "open", title: "cosmetic", since: 2 }];
+      t.clean.status = "NOT CLEAN";
+      t.clean.streak = 1;
+      t.rounds[1].qualifyingClean = true;
+      t.rounds[1].newFindings = [];
+      t.rounds[1].result = "CLEAN";
+    };
+    expect(errorsFor(qualifying)).toEqual([]);
+    expect(
+      errorsFor((t) => {
+        qualifying(t);
+        t.rounds[1].newFindings = [18];
+        t.findings = [{ issue: 18, severity: "P2", state: "closed", title: "fixed", since: 2 }];
+      }),
+    ).toContain("rounds: round 2 有 newFindings（18）卻標示 qualifyingClean");
+    expect(
+      errorsFor((t) => {
+        qualifying(t);
+        t.rounds[1].result = "NOT CLEAN — something new";
+      }),
+    ).toContain("rounds: round 2 的結果自述為 NOT CLEAN，不能標示 qualifyingClean");
+    expect(
+      errorsFor((t) => {
+        qualifying(t);
+        t.rounds[1].inspectedSha = null;
+        t.rounds[1].inspectedShaNote = "unknown";
+      }),
+    ).toContain("rounds: round 2 沒有 inspectedSha，不能當作 qualifying CLEAN 輪");
+  });
+
+  it("newFindings 必須已登記在 findings（round 與 register 不可脫鉤）", () => {
+    expect(errorsFor((t) => (t.rounds[1].newFindings = [999]))).toContain(
+      "rounds: round 2 的 newFindings #999 未登記在 findings",
+    );
   });
 
   it("inspectedSha 必須是 40 碼 SHA；未知時要寫明原因", () => {
@@ -155,6 +218,7 @@ describe("fixed-50 audit tracker contract", () => {
         t.findings = [{ issue: 18, severity: "P3", state: "open", title: "cosmetic", since: 2 }];
         t.clean.status = "NOT CLEAN";
         t.clean.streak = 0;
+        t.rounds[1].newFindings = [];
       }),
     ).toEqual([]);
     expect(
@@ -168,6 +232,28 @@ describe("fixed-50 audit tracker contract", () => {
     );
   });
 
+  it("conditions 必須與 status 一致（不得在同區塊自相矛盾）", () => {
+    expect(errorsFor((t) => (t.clean.conditions = [true, true, true, true, true]))).toContain(
+      "clean: status=NOT CLEAN 與 conditions（5/5 成立）不一致",
+    );
+    expect(
+      errorsFor((t) => {
+        t.findings = [];
+        t.clean.conditions = [true, true, true, true, true];
+        t.clean.status = "CLEAN";
+        t.clean.streak = 2;
+        t.rounds[1].qualifyingClean = true;
+        t.rounds[1].newFindings = [];
+        t.rounds[1].result = "CLEAN";
+        t.rounds[0].qualifyingClean = true;
+        t.rounds[0].newFindings = [];
+        t.rounds[0].inspectedSha = "c".repeat(40);
+        t.rounds[0].inspectedShaNote = undefined;
+        t.rounds[0].result = "CLEAN";
+      }),
+    ).toEqual([]);
+  });
+
   it("streak 必須等於最近連續的 qualifying CLEAN round 數", () => {
     expect(errorsFor((t) => (t.clean.streak = 1))).toContain(
       "clean: streak（1）與最近連續 qualifying CLEAN round 數（0）不一致",
@@ -176,6 +262,8 @@ describe("fixed-50 audit tracker contract", () => {
       errorsFor((t) => {
         t.findings = [{ issue: 18, severity: "P3", state: "open", title: "cosmetic", since: 2 }];
         t.rounds[1].qualifyingClean = true;
+        t.rounds[1].newFindings = [];
+        t.rounds[1].result = "CLEAN";
         t.clean.streak = 1;
       }),
     ).toEqual([]);
@@ -183,8 +271,11 @@ describe("fixed-50 audit tracker contract", () => {
       errorsFor((t) => {
         t.findings = [{ issue: 18, severity: "P3", state: "open", title: "cosmetic", since: 2 }];
         t.rounds[1].qualifyingClean = true;
+        t.rounds[1].newFindings = [];
+        t.rounds[1].result = "CLEAN";
         t.clean.status = "CLEAN";
         t.clean.streak = 1;
+        t.clean.conditions = [true, true, true, true, true];
       }),
     ).toContain(`clean: CLEAN 需要連續 ${CLEAN_REQUIRED_STREAK} 輪 qualifying CLEAN，目前 streak=1`);
   });
