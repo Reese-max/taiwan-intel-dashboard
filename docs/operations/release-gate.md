@@ -6,7 +6,7 @@
 
 | 路徑 | 寫入目標 | 條件 |
 |---|---|---|
-| 程式碼開發 | `main` | PR 的 `test` 與 `check` 通過；`check` 包含真實 Cloudflare 預覽部署 |
+| 程式碼開發 | `main` | PR 的 `test` 與 `build-preview` 通過；`build-preview` 包含真實 Cloudflare 預覽部署與生產建置驗證 (`npm run check`) |
 | 程式碼發布 | `ops/approved-code.json` 中的 SHA | 核准指定 commit 與預覽後，以獨立 PR 更新 SHA；合併前需取得專案負責人的明確發布核准 |
 | 資料更新 | `pipeline-state` 與 Cloudflare Pages | 排程抓取、來源稽核、摘要檢查、以核准程式碼建置和測試、保存狀態、部署、線上 smoke；不需每輪人工核准 |
 
@@ -14,12 +14,60 @@
 
 ## 發布步驟
 
-1. 在 `main` 以 PR 完成程式碼變更，確認 `test`、`check`、預覽網站及所需資料檢查。
+1. 在 `main` 以 PR 完成程式碼變更，確認 `test`、`build-preview`、預覽網站及所需資料檢查。
 2. 以獨立 PR 將 `ops/approved-code.json` 的 `sha` 改為已驗證的 40 字元 commit SHA，附上候選版本、預覽與檢查連結。
 3. 請專案負責人對**該版本**明確核准正式發布；未取得核准，不合併發布 PR。
 4. 合併後，下一輪成功的資料更新會以新 SHA 建置與部署；檢查 Cloudflare 部署版本及線上 smoke。若需立刻發布，經核准後手動觸發 `更新資料並部署`。
 
-GitHub ruleset 目前對 `main` 要求 `test` 與 `check`，對 `production` 要求 `check`，但規則的 required approving review count 為 0。上面的人工核准是營運與 `AGENTS.md` 的發布要求；單靠現有 ruleset **不能**強制人員核准。設定更嚴格的 GitHub 規則前，不可將 PR 通過檢查解讀為已核准發布。
+## 分支保護規則
+
+GitHub Repository Ruleset 對 `main` 與 `production` 分支均啟用，要求：
+
+- **Required Status Checks**（必須通過）：
+  - `test` — 單元測試、TypeScript 型別檢查、Operating-state 契約驗證
+  - `build-preview` — 生產建置驗證 (`npm run check`) 與 Cloudflare Pages 預覽部署
+- **Pull Request 要求**：
+  - 至少 1 位核准審查
+  - 程式碼擁有者審查
+  - 過期審查在推送時失效
+  - 最後推送需重新核准
+  - 審查執行緒必須解決
+  - 允許的合併方式：merge、squash、rebase
+- **禁止**：強制推送、刪除分支
+
+`production` 分支同樣受相同規則保護，確保任何正式環境程式碼變更都經過完整品質閘門。
+
+> **注意**：Ruleset 的 required approving review count 為 1，但人工發布核准（步驟 3）仍為營運規定。單靠 ruleset 通過不代表已獲發布授權；需專案負責人對特定版本明確核准。
+
+## Mutation Boundary 總表
+
+| 邊界 | 允許操作 | 禁止操作 | 執行者 |
+|---|---|---|---|
+| **main (程式碼)** | PR + 通過 test + build-preview | 直接 push、跳過 required checks、force push | 開發者 / Agent |
+| **ops/approved-code.json (發布核准)** | PR 更新 SHA + 負責人核准 | 直接 push、未核准合併 | 專案負責人 |
+| **pipeline-state (資料快照)** | `update-and-deploy.yml` 自動更新 | 手動 push、任何程式碼變更 | 排程 / workflow_dispatch |
+| **production (歷史分支)** | 受 ruleset 保護，同 main | 直接部署觸發 | 無（保留分支） |
+| **排程資料更新** | `update-and-deploy.yml` 完整管線 | 繞過 audit 或 build-approved | 排程 |
+
+## Break-Glass 緊急通道
+
+僅限 **生產環境事故修復**（如：正式站嚴重錯誤、資料管線卡死導致服務中斷），必須滿足：
+
+1. **授權**：由 Repository Admin（或具備 `bypass_mode: pull_request` 的角色）執行
+2. **記錄**：在 PR 或 Issue 中留下：
+   - 操作者
+   - 原因（具體事故描述）
+   - 時間（UTC ISO 8601）
+   - Commit SHA（緊急修復的 commit）
+   - 繞過的具體規則（如：required status checks、PR 核准數）
+3. **事後補驗**：事故解除後 **24 小時內** 必須：
+   - 建立正式 PR 走完整 `test` + `build-preview` 檢查
+   - 取得專案負責人核准
+   - 更新 `ops/approved-code.json` 為修復後的正確 SHA
+   - 在原始記錄中補上驗證收據（workflow run URL、結論）
+4. **審計追蹤**：所有 break-glass 操作記錄於 `docs/operations/receipts/break-glass-<UTC日期>.md`
+
+> ⚠️ **嚴禁** 將 break-glass 用於：功能趕工、繞過 code review、非生產環境問題、資料更新排程問題。
 
 ## 事故處理
 
