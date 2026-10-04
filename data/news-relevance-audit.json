@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-10-04T04:36:58.891Z",
+  "windowHours": 24,
+  "windowStart": "2026-10-03T04:36:58.891Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 925,
+    "accepted": 465,
+    "rejected": 460
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "高市這區客家人口最多 議員推童樂會壯大客家從小扎根",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5594979",
+        "pubDate": "Sun, 04 Oct 2026 12:23:07 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高市鳳山區客家人口數最多超過7萬人，民進黨籍議員林智鴻於鳳山區新泰兒童公園舉辦「鳳山童樂會《山神的考驗》」，以親子互動劇場呈現客家傳統文化，同黨立委郭昱晴長期推動客家文化也到場...…"
+      },
+      {
+        "title": "黃世杰競總成立藏彩蛋！賴清德背後驚見「6字」 全網秒懂笑翻",
+        "link": "https://news.ltn.com.tw/news/Taoyuan/breakingnews/5594833",
+        "pubDate": "Sun, 04 Oct 2026 12:19:15 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨桃園市長參選人黃世杰昨（3）日舉行南區競選總部成立大會，現場湧入超過2萬名支持者力挺，總統兼民進黨主席賴清德、行政院長卓榮泰皆親自站台助陣。賴清德在致詞時大讚黃世杰是一流頂...…"
+      },
+      {
+        "title": "名古屋亞運台灣較上屆少12面牌 仍創13面史上首度奪牌",
+        "link": "https://news.pts.org.tw/article/829787",
+        "pubDate": "2026-10-04T12:13:34+08:00",
+        "source": "公視新聞",
+        "hint": "治安",
+        "authority": "media",
+        "description": "名古屋亞運賽事結束，本屆台灣代表隊共奪下5金、17銀、33銅，較上屆少14面金牌，總獎牌數也少12面，不過，仍有13面獎牌是隊史首度在亞運奪得，另有獎牌睽違28年再度入袋，公視新聞網整理，台灣這次創下多少歷史性突破？"
+      },
+      {
+        "title": "微笑單車進駐校園2-2》微笑單車進駐山坡地形起伏大校園 適用性熱議",
+        "link": "https://news.ltn.com.tw/news/Pingtung/breakingnews/5594855",
+        "pubDate": "Sun, 04 Oct 2026 12:10:48 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "屏東科技大學大規模引進微笑單車系統進入校園，但這所佔地極廣的大學，屬於山坡地形，路況高低起伏甚大，師生已習慣以汽、機車在校園內代步，南部天氣炎熱，須耗力踩踏的自行車是否能改變學...…"
+      },
+      {
+        "title": "鄭麗文稱她「公主」 蘇巧慧駁：我就是民主的二代",
+        "link": "https://newtalk.tw/news/view/2026-10-04/1063491",
+        "pubDate": "Sun, 04 Oct 2026 12:08:06 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 國民黨新北市長參選人李四川昨（3）天成立客家後援會，國民黨主席鄭麗文到場助陣，並強調年底這場選舉是一個不對稱的戰爭及不公平的選舉，李四川出身基層，而民進黨新北市長參選人蘇巧慧卻出身自民進黨內最顯赫的家族，「公主就是公主」，不能靠選舉就華麗轉身成另一個人設騙票。對此，蘇巧慧今（4）日受訪駁斥指稱，「我 延伸閱讀： 蘇巧慧週六行程滿檔！蘆洲、板橋合體新北隊宣傳都更政見 南鶯活動中心"
+      },
+      {
+        "title": "韓國瑜稱江啟臣又帥又有國際觀 自嘲自己只比許信良、蘇貞昌、柯建銘帥",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5594952",
+        "pubDate": "Sun, 04 Oct 2026 12:01:04 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國民黨中市長參選人江啟臣今天競選總部成立，立法院長韓國瑜、中市長盧秀燕及新北市長侯友宜「三子」在本次選舉首次合體，現場達上萬人，三子更和江啟臣團抱在一起；韓國瑜表示，此次選戰首...…"
+      },
+      {
+        "title": "控蔣萬安反毒文被綠網軍洗版 藍議員爆：網友分享留言製造程式 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE0tRk80c052dy1POVByLVlPY1RRaVRMNkdEV1dyeGN3NHdUd0puVDJkMVFKMC14OEhJenRVQ1puMXBTMHJ3MUVGSjBnLTRfV0ZHMXF5ZmNlbkp3WGRTNVHSAUtBVV95cUxOY2JrdERXQ0JaWlV2OWo1RFhET21IZGxQREZEQzU4NUdfR2YzbkF4Y19oUE5sYmV5UnNDTk14cnNmSnViaXlTa3pOQ1k?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 04:00:00 GMT",
+        "source": "GN ETtoday 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "控蔣萬安反毒文被綠網軍洗版 藍議員爆：網友分享留言製造程式 ETtoday新聞雲"
+      },
+      {
+        "title": "捷運墩柱建案廣告議員憂影響市容 籲植栽或藝術創作捷運公司回應了 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1JZVd5NWNxN2d2VjV6ZjZGVVl4UHdZU3ZRcG1uVW5SM3pUa3Jzc3hlQkw0Y1B6aHU0WEZzNHpIZUtnNmdQT3JpYVVKNUNZWGFf0gFWQVVfeXFMTlVyX0NFUlZ3TUgyQVhCc0lfU0xZN1BZdm84cVpiajd2VXp5T2FOcHJyQko0Q1hXaGFtb2oyblg4dURwR3B4UzNCeHpfajhVYTVLa29WeFE?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 03:59:06 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "捷運墩柱建案廣告議員憂影響市容 籲植栽或藝術創作捷運公司回應了 UDN"
+      },
+      {
+        "title": "澎湖追風燈光音樂節 萬人齊唱 《帥到分手》圓滿閉幕",
+        "link": "https://news.ltn.com.tw/news/Penghu/breakingnews/5594953",
+        "pubDate": "Sun, 04 Oct 2026 11:56:52 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "澎管處主辦的「澎湖追風音樂燈光節」，昨（3）日在澎湖觀音亭園區引爆最終壓軸場「熱浪搖擺夜」！由人氣流行龐克樂團怕胖團、性感舞曲女神安心亞，以及潮流天王周湯豪強勢領軍，3組指標性...…"
+      },
+      {
+        "title": "28歲蔡天鳳遭分屍「蘿蔔烹煮3天」恐怖原因曝光！ 2周前就已佈置烹屍房 - ETtoday星光雲| ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFBvblFJUlk0enFUVE55WXotV1VFRVIxZWRNVTVOeUk1YmI3OWhpUXRpLWhHODgzeDhISmFFcVViZHo5djJ2M0FCc3U2STNVd9IBTEFVX3lxTE5YLWhYWVZUUWRnc08ydGdldzVUVm03RUhqUUptS2lydWVGQVc0M2o0U2ZkaWxHbFc2YTRmaU9VU0hRQ1dlVlBZZWlJNVc?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 03:56:00 GMT",
+        "source": "GN 殺人分屍",
+        "hint": "治安",
+        "authority": "media",
+        "description": "28歲蔡天鳳遭分屍「蘿蔔烹煮3天」恐怖原因曝光！ 2周前就已佈置烹屍房 ETtoday星光雲| ETtoday新聞雲"
+      },
+      {
+        "title": "陳瑩助台東農產銷韓國 盼引入AI自動化溫室",
+        "link": "https://news.ltn.com.tw/news/Taitung/breakingnews/5594885",
+        "pubDate": "Sun, 04 Oct 2026 11:54:03 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台東縣長參選人陳瑩結束「台東農特產，前進韓國」行程後返台，發表參訪心得，強調「韓國做得到，台東也可以！」展現推動農業升級與國際觀光的決心。 陳瑩指出，本次參訪成功促成「鳳...…"
+      },
+      {
+        "title": "韓國瑜輔選大讚謝國樑 童子瑋：「太少來基隆」與市民感受有落差",
+        "link": "https://news.ltn.com.tw/news/Keelung/breakingnews/5594942",
+        "pubDate": "Sun, 04 Oct 2026 11:44:05 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "基隆市立田徑場昨天（3日）重新開放，立法院長韓國瑜特地參與開幕儀式，稱讚基隆市長謝國樑做到「小愛爸爸，大愛基隆」的承諾，過去4年做牛做馬，籲請選民支持連任。民進黨基隆市長參選人...…"
+      },
+      {
+        "title": "蔣萬安拿沈伯洋針具減害開戰醫界炸鍋！一夜累計2267人連署反擊| 生活 - Newtalk新聞",
+        "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE1hclZ5eFJaUE14R3VPUy10UGJ6X2tMcHM0Z3BRelZTRDhjSWRRVjVPbUs3dG90dEFZOXhac3drOWxDcWtpSjVEcGNQbS1ybjM0M2lvbS1MOUxkcHM?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 03:42:55 GMT",
+        "source": "GN 校園毒品咖啡包",
+        "hint": "治安",
+        "authority": "media",
+        "description": "蔣萬安拿沈伯洋針具減害開戰醫界炸鍋！一夜累計2267人連署反擊| 生活 Newtalk新聞"
+      },
+      {
+        "title": "李四川下午大造勢 上午派人到海山高中稱全程監測音量、不干擾考試",
+        "link": "https://newtalk.tw/news/view/2026-10-04/1063462",
+        "pubDate": "Sun, 04 Oct 2026 11:38:28 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 「我們都挺李四川」活動今(4)日下午於板橋第一運動場舉行，李四川競選辦公室今表示，因應海山高中舉行115年度自學進修普通型高中畢業程度學力鑑定考試，各科考試期間將全面落實降低音量，並同步進行「三創新措施」，鼓掌替代凍蒜、揮旗替代歡呼、啟動降噪並全時監測，一同為了學生們的考試品質努力。李四川競辦表示， 延伸閱讀： 被疑隱匿財產申報 李四川辦批抹黑：蘇巧慧結合側翼粉專攻擊 蘇巧慧週"
+      },
+      {
+        "title": "柯文哲、黃國昌唱衰高雄？ 賴瑞隆、柯志恩隔空交火",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5594926",
+        "pubDate": "Sun, 04 Oct 2026 11:34:41 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民眾黨創黨主席柯文哲、現任主席黃國昌這兩天相繼南下高雄，引發民進黨市長參選人賴瑞隆與國民黨市長參選人柯志恩隔空交火，賴指柯「邀請的人來，不要唱衰高雄」；柯則回嗆賴，2015年也...…"
+      },
+      {
+        "title": "悲慟！ 慈善家「刈包吉」廖榮吉病逝享壽86歲 千桌街友宴成絕響",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5594916",
+        "pubDate": "Sun, 04 Oct 2026 11:32:28 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "知名慈善家「刈包吉」廖榮吉，過去多年都在農曆春節前，舉辦街友宴宴請寒士，善心義舉被各界有目共睹；不過，廖榮吉在上月初染病後身體健康亮起紅燈，最終在上月29日病逝，享壽86歲。家...…"
+      },
+      {
+        "title": "不爽價格？男怒掀墾丁大街攤位成「在地美食」遭法辦",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5594849",
+        "pubDate": "Sun, 04 Oct 2026 11:29:10 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "恆春半島知名景點墾丁大街段3日晚間驚傳砸攤衝突。鄭姓男子疑似與攤商因消費金額認知產生口角，情緒失控當場暴怒掀翻攤位，連烤架上的食材與生財器具都散落滿地，損失大約1500元。雖然...…"
+      },
+      {
+        "title": "拖欠市政費三年 房產遭強制拍賣 6.55萬澳元成交 - 大紀元",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5XdkZOdXhaTjRJWk5BMEp5ZGRPRzNLb0FxN0lrRGEzcGxQZHZCMzlfUEFGWUlCa01NZ1lyZnR4VmpiOG9zaV9IRklYTk94T1FHbkNJeW9DRV91cHQ2blAtYdIBZkFVX3lxTE45Y0NqT3lqMHp1THppVm5meVdBLTNVMWZVQWVQdTg2eWJwTnRxbi1TeURyUmtEZEl0R3R3NnJYVzdFblNQVGpKUkRLN1oxTTRlNXZQVGJ5MWd4d044SVpfRVVZcHh6UQ?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 03:26:00 GMT",
+        "source": "GN 妨害自由恐嚇",
+        "hint": "治安",
+        "authority": "media",
+        "description": "拖欠市政費三年 房產遭強制拍賣 6.55萬澳元成交 大紀元"
+      },
+      {
+        "title": "高處丟「石塊、鐵球」！瑞典坦克天窗裂了 苗栗警調監視器逮人 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5uSzdBc3pxQThuaEZjR1RrVy1YY1A1c1MxNGIwanBFOXc5VGIzakMyMmpHZlUtSDl4bXpmUDVvYUcxclVqNnkzaXMzNmsxamhHY1pNRFN4VEctWGFINVHSAUtBVV95cUxOeW9ZSlVvUEtGbFRLcWpvd0hrMWluVnlJYlF0RDZmLWJaUzZZMXFQb01oYUlRQktVSm1zTDVfc05LY0FId25zWDFBVms?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 03:26:00 GMT",
+        "source": "GN ETtoday 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高處丟「石塊、鐵球」！瑞典坦克天窗裂了 苗栗警調監視器逮人 ETtoday新聞雲"
+      },
+      {
+        "title": "「集保 e 手掌握」青年金融知識挑戰10月1日開跑 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE0xcGcyUXdPRG1HTHV5N1NxSXVpV1BwNVRicjJ3bnE5RGJBMTg5d0hfVUVEeW9zMkg5d2taSW1VWktqc1pxS1AzcVVzTU1LVkFKZFFOWHRVU1FUQdIBX0FVX3lxTE1ub2NKUWZ3Wjh1MkpkYnpRbEtod1VvcVZuMUN3Q1ZBTXJ2dGxKZldhRE82eVRydUhJVWVjdlhQajBKYUdNTzNnMGkway10QUtuTFFLbXd0Y05yTHNrVy1r?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 03:24:14 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "「集保 e 手掌握」青年金融知識挑戰10月1日開跑 經濟日報"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "黃仁勳點名AI下一波「資安」！駭客也用AI找漏洞 台股這族群受矚目 - FTNN",
+        "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE1iQXBZRlNnalRJMVJyeEpIcEd3anNzajl3QVJRbENxOWhpQTlxem9Ub2xGVjhQWEFCMW1UVzlUTzZ4ZEc5RXhyTnhTNA?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 04:35:00 GMT",
+        "source": "GN 個資駭客",
+        "hint": "資安",
+        "authority": "media",
+        "description": "黃仁勳點名AI下一波「資安」！駭客也用AI找漏洞 台股這族群受矚目 FTNN"
+      },
+      {
+        "title": "五角大廈人資系統遭駭 逾 300 萬人個資外洩 - netmag.tw",
+        "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTFBFdFBwX1RBNHdMZHg4ZFhEb0RJSV9IeGdYYjl0T1hSRDJnVDNPMHcxTHRwbGdNbGFXU3lwZEQ2eWlqbkFqY0NYT2hiRzlKNUdXcVBhN0Y4eElrb3dVOXhrb1lyVjZMRUNvRGJ1MEJn?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 04:30:13 GMT",
+        "source": "GN 個資駭客",
+        "hint": "資安",
+        "authority": "media",
+        "description": "五角大廈人資系統遭駭 逾 300 萬人個資外洩 netmag.tw"
+      },
+      {
+        "title": "神明面前也敢騙！女遭假檢警詐130萬再索88萬 警扮信徒埋伏逮2車手",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5594918",
+        "pubDate": "Sun, 04 Oct 2026 12:29:17 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "莊姓女子落入假檢警詐騙陷阱，對方先以「帳戶異常遭警示、涉刑案、財物監管」等話術騙走130萬元，食髓知味後再度索取88萬元，新北市警永和分局獲報成立專案小組，前往雙方交易的宮廟假...…"
+      },
+      {
+        "title": "蔣萬安遭轟雙標！林楚茵揭台北市已發93萬支清潔針具",
+        "link": "https://newtalk.tw/news/view/2026-10-04/1063480",
+        "pubDate": "Sun, 04 Oct 2026 12:26:55 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 民進黨立委林楚茵今（4）日在 Threads 發文，針對台北市長蔣萬安近日就毒品防治與減害政策的言論提出批評，林楚茵指出，台北市本身已有清潔針具相關服務，2023年至2026年6月底共發出93萬1339支，並質疑蔣萬安過去支持美沙冬替代治療，如今卻拿減害政策攻擊對手。林楚茵表示，毒品防治涉及專業政策 延伸閱讀： 蔣萬安反擊沈伯洋毒品政策 「反毒沒有模糊空間」：別拿美沙冬計畫遮掩"
+      },
+      {
+        "title": "加強毒駕肇事路段路臨檢 警查獲毒駕、毒品 當場逮捕扣車並聲請預防性羈押溯源追毒 - 新華報導",
+        "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBNWlUwTlpPOWJxM1pLbmdKY3hNMTYtUWxic0J4SkNwUzM3TFJyeXExTG1NaW5RZ1YtQlBqVkR4b3M1eXFaQ3JpZGVHR0drZWlKWTR0Tnc1WFRsaXRSdFJrNmlDekxFMjQ?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 04:22:00 GMT",
+        "source": "GN 酒駕毒駕",
+        "hint": "交通",
+        "authority": "media",
+        "description": "加強毒駕肇事路段路臨檢 警查獲毒駕、毒品 當場逮捕扣車並聲請預防性羈押溯源追毒 新華報導"
+      },
+      {
+        "title": "打亂蔣萬安競選節奏？ 國民黨促兩人公開辯論毒品政策",
+        "link": "https://newtalk.tw/news/view/2026-10-04/1063493",
+        "pubDate": "Sun, 04 Oct 2026 12:19:40 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 民進黨台北市長候選人沈伯洋一篇提供「毒品與乾淨針頭」舊文引爆爭議。國民黨文傳會主委陳以信今（4）日表示，既然蔣萬安與沈伯洋都已公開表態願意參加台北市長辯論，他正式呼籲兩人就毒品政策進行公開辯論，「不要再隔空交火，直接面對面把政策講清楚，讓台北市民自己判斷。」由於蔣萬安今早面對辯論議題，並沒有正面回應 延伸閱讀： 提供毒品「乾淨針頭」 沈伯洋嗆自打臉：馬政府就開始做的事情 沈伯洋"
+      },
+      {
+        "title": "打亂蔣萬安競選節奏？ 國民黨促兩人公開辯論毒品政策| 政治 - Newtalk新聞",
+        "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFB4a1hDdnB3Wmo5SVhHUGpuU2MtdS1BVkFGY0p2a3NqMF9sV25ubDhDYzRSa0xTbU81ZnBSOU1STjdLQXI2dzNiRVNvOW1uN3dodkx4azRUMG0zRVU?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 04:19:40 GMT",
+        "source": "GN 校園毒品咖啡包",
+        "hint": "治安",
+        "authority": "media",
+        "description": "打亂蔣萬安競選節奏？ 國民黨促兩人公開辯論毒品政策| 政治 Newtalk新聞"
+      },
+      {
+        "title": "張麗善北上力挺自嘲被抹黑反問「我們像黑道嗎」 李四川端政績牌搶攻雲林票",
+        "link": "https://news.ltn.com.tw/news/NewTaipei/breakingnews/5594948",
+        "pubDate": "Sun, 04 Oct 2026 12:17:39 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "新北市長選戰升溫，國民黨參選人李四川今（4日）成立雲林同鄉會，雲林縣長張麗善特地北上力挺，現場民眾相擁握手、合照氣氛熱絡。張麗善致詞時大吐苦水，自曝常遭抹黑，更主動反問鄉親「李...…"
+      },
+      {
+        "title": "沈伯洋嗆辯論毒品防治 國民黨幫蔣萬安接戰帖：面對面講清楚 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5yLU9kcUZ0UWVxeXVfRDN0NHJJaUJvMklGdGJTS0FsUWVwVTBseXRoU0xPR2tXZWJMd1hvM1pLOFNvaGZ6MlJlTkpTQ0ljb0pyeEYw?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 04:14:00 GMT",
+        "source": "GN 校園毒品咖啡包",
+        "hint": "治安",
+        "authority": "media",
+        "description": "沈伯洋嗆辯論毒品防治 國民黨幫蔣萬安接戰帖：面對面講清楚 TVBS新聞網"
+      },
+      {
+        "title": "3體大生遭撞上2重傷男疑毒駕還叫友頂替遭羈押- 社會 - 華視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTFAwSkhnaHB4X21fdldmOUJvd2VqXzJuNUdZN21Da002UzI5b056ckRqV2tOdGpQR2dWR19iV0pxQlRfQVVCYkVZRGNTYXZLcmUxTkd5Nnh2Q0M4Y2o1LW9vN2gtUjdEYW82X1RLVjlHOEk?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 04:10:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "3體大生遭撞上2重傷男疑毒駕還叫友頂替遭羈押- 社會 華視新聞網"
+      },
+      {
+        "title": "蔣萬安遭40萬則留言洗版 王鴻薇：有人還把網軍程式公開在網路上",
+        "link": "https://newtalk.tw/news/view/2026-10-04/1063492",
+        "pubDate": "Sun, 04 Oct 2026 12:08:31 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 台北市長蔣萬安抨擊民進黨台北市長沈伯洋提供毒品、乾淨針頭政策，引發支持沈伯洋反擊，直到中午12時，已經有40萬則留言，還不斷希望大家複製貼上，加入洗版。對此，國民黨立委王鴻薇今（4）日引述一位支持沈伯洋者「大橋底下臨時工」留言稱「偏激側翼青鳥選擇的方法，卻相當可笑，用大量帳號出征蔣萬安市長的臉書。甚 延伸閱讀： 蔣萬安反擊沈伯洋毒品政策 「反毒沒有模糊空間」：別拿美沙冬計畫遮掩"
+      },
+      {
+        "title": "微笑單車進駐校園2-1》屏縣微笑單車最大站在屏科大 站點數佔全縣近1成",
+        "link": "https://news.ltn.com.tw/news/Pingtung/breakingnews/5594923",
+        "pubDate": "Sun, 04 Oct 2026 12:06:40 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國立屏東科技大學（簡稱屏科大）校區佔地近300公頃，是全國最大單一校區的大學，學生皆依賴汽機車通行，但近年校內交通事故頻傳，校方除設置測速照相桿等防止超速措施外，並透過引進公共...…"
+      },
+      {
+        "title": "【桃園二兵入伍剛滿月「請5天病假不回營」 逃1個半月仍落網...下場曝】 （#大表哥） - facebook.com",
+        "link": "https://news.google.com/rss/articles/CBMiyANBVV95cUxOOU5PTWFQS01Qd2ZRcmFwY2FUMnFUT2tFNXp1bEFIeE84akxtMEJaQ1NKRXJmMnJuT0x6SkpLeXppOHRBaU1uajlKc05sN19KSGhIYkFUa3BpUEpjNHZBejJHRTBEeHVHMkhDMUZXMzloTkFNRnc0Uk1iQm5JbDFsRUxQWm9UQllobGMwZ0lKR0RqQXF1emVPNDExYlhiZi1WVFBndldsbndkU1NuU0laLV9haDVTMXhhb0tzRmNKZkU5U2JGU1BnRnFJLUo5dENOSHNVV0FsYmk4NWJ3bjJrbjkzYVJPbndCVEZqdWVicHZQOGpMOTIyTlJlYTRuaDBuTzRMcWlJMjhFR1FDNjVfSEpwOTJGRkUtSzFGejlvZVZEVHNHb3R4VVhUQTZsaEFOVlduMVhpT2JISGh1QnZYRDE3dXk2aVdFWGljS2xLZ2ExMnVNWnpXRVZzblhNTEtkTy1QdDV2ZGpHdlVTeFlZdUM3RU9LOUR6SWdaR3R1TmNUMWdBWng5S2lRbXg0MG1QR0s0eXdxZ1lsMDNZTnJTZVE5LTVudkpqakJYZHBWV3BuUHY3NS1uUWN4TlBvUUNfY1VON0lXNnA?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 04:06:03 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "【桃園二兵入伍剛滿月「請5天病假不回營」 逃1個半月仍落網...下場曝】 （#大表哥） facebook.com"
+      },
+      {
+        "title": "談沈伯洋「毒品論」 藍：別拿下一代做實驗 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMijAJBVV95cUxOeXdRQkhyeEtkQ1FaODJwZEM5NHhPWXlEeXBuN2prbzhZMmlCMklBRHZKaEwxc3N2aVdoRFBpZ0ZDNHY2TTUxQ3JxOFBfMm5PaGJITWJ4YW1QUW8tT1VGVXhURFJmZGVOS0pKdTZRWVVYT3E0OE9EZDEzdFFEQzhRVEVJNm05QklhSUlTNllxbGZXb3d0dEREZHZZMm1FSDU5T1RJTjYtamYyNHNsdjRZaFlZWDZYMXlPTFNrNjJfcmQxaTR6aTNrZGtxQnR3TFdFR2hQRk50anNUN2VJM1J2eDU2SXhIYUZfVUhrZ1VrVVQ2RWVTOGxIQ1NrX08yUG1wLXYzTFBucUI3dmZU?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 04:03:34 GMT",
+        "source": "GN 校園毒品咖啡包",
+        "hint": "治安",
+        "authority": "media",
+        "description": "談沈伯洋「毒品論」 藍：別拿下一代做實驗 Yahoo新聞"
+      },
+      {
+        "title": "反毒不能單靠嚴刑峻法！王必勝談成癮防治與管制藥品 批政治操作背道而馳",
+        "link": "https://newtalk.tw/news/view/2026-10-04/1063487",
+        "pubDate": "Sun, 04 Oct 2026 12:03:18 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 針對近期毒品防制與減害措施引發的相關爭議，前衛生福利部政務次長王必勝今（4）天在臉書發文表示，毒品防制工作是一條艱難又複雜的道路，不只台灣，全世界各國皆是如此，絕對不是光靠嚴刑峻法就能夠解決。他直指，若用粗暴的望文生義方式、去脈絡化地貼標籤抹黑進行政治操作，完全與反毒號召背道而馳，相當不可取。王必勝 延伸閱讀： 聲稱「迎戰大罷免2.0」 蔣萬安競辦擴增北市5藍委加入發言團隊 批"
+      },
+      {
+        "title": "電影場景真實上演！失聯移工毒駕拔腿狂奔推倒機車做路障不敵霹靂警、正義哥聯手圍捕「舉雙手投降」 - 鏡報",
+        "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE01eFptaVpUQjFYajk1alE5bm5MbGxRYmgzZUNqVDJPck5SVkdJQXBacy1HNDdTQnNkTE9WazBiV0xjZExQSkpzN0RRMG81azhjUWc?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 04:03:00 GMT",
+        "source": "GN 拒捕拒檢",
+        "hint": "治安",
+        "authority": "media",
+        "description": "電影場景真實上演！失聯移工毒駕拔腿狂奔推倒機車做路障不敵霹靂警、正義哥聯手圍捕「舉雙手投降」 鏡報"
+      },
+      {
+        "title": "進戒癮所竟還在吸毒！辛蒂克勞馥27歲兒隔天身亡 死前最後影片曝光",
+        "link": "https://www.mirrormedia.mg/story/20261004edi012",
+        "pubDate": "Sun, 04 Oct 2026 12:01:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "首嘗試AI結合歷史畫面與真人訪談 外交部發布「國家的相簿」國慶影片",
+        "link": "https://newtalk.tw/news/view/2026-10-04/1063488",
+        "pubDate": "Sun, 04 Oct 2026 11:59:12 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 為慶祝今年雙十國慶，外交部以「國家的相簿」為題製作國慶影片。此外，今年適逢我國總統直選30週年，外交部首度嘗試以AI結合歷史畫面與真人訪談，呈現台灣從逆境中淬鍊出自由、多元與榮耀的民主發展歷程。外交部說明，該片以旁白「這是我們的家庭相簿，每一頁都記錄著我們如何成為今天的台灣」揭開序幕，並從退伍軍人張 延伸閱讀： 反毒發文被嗆留言破38萬！蔣萬安：怎麼刪？蔣競辦秀證據稱機器人所為"
+      },
+      {
+        "title": "綠島小店鍊養鹿遭疑虐待！業者喊冤：沒有小鹿受傷害 | TVBS - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFA0bkJETk9qMHRXQVpIa01nZWkxMkNQeFU1MDJGY3FoVTRhc0RzYUZWOEZleTJxdVZVQlpWanpFQVUyWTM0c3VYZ3RpZkhMOGVRZzRxYlB3?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 03:58:44 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "綠島小店鍊養鹿遭疑虐待！業者喊冤：沒有小鹿受傷害 | TVBS LINE TODAY"
+      },
+      {
+        "title": "台北市長選舉變「毒戰」 蔣萬安競辦轟：沈伯洋模糊民眾對毒品認知界線 - upmedia.mg",
+        "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE45QTk3V3kwSkpvekNpZF9UVURQaUJlRnI2amxIQzZSUl9PYTZfMEg0UnktMmtneE53TDBrZmhQdHduT3hxZlp6ZTlMMEVZdGFTOGlKcUxfVjJrRW8?oc=5",
+        "pubDate": "Sun, 04 Oct 2026 03:57:00 GMT",
+        "source": "GN 上報綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北市長選舉變「毒戰」 蔣萬安競辦轟：沈伯洋模糊民眾對毒品認知界線 upmedia.mg"
+      }
+    ]
+  }
+}
