@@ -8,7 +8,8 @@ const REQUIRED_RULESETS = [
   { name: "protect-main", branch: "refs/heads/main" },
   { name: "protect-production", branch: "refs/heads/production" },
 ];
-const REQUIRED_CHECKS = ["test", "build-preview"];
+// `check` depends on build-preview and deploys/verifies the checked artifact.
+const REQUIRED_CHECKS = ["test", "check"];
 
 function runGhApi(endpoint) {
   try {
@@ -43,11 +44,15 @@ function validateRuleset(rulesetConfig) {
 
   console.log(`✅ Found ruleset: ${ruleset.name} (ID: ${rulesetId})`);
 
+  if (ruleset.target !== "branch" || ruleset.enforcement !== "active") {
+    return { valid: false, reason: "Ruleset must actively enforce branch protection" };
+  }
+
   // Check target branch
   const conditions = ruleset.conditions || {};
   const refName = conditions.ref_name || {};
   const includeBranches = refName.include || [];
-  if (!includeBranches.includes(rulesetConfig.branch)) {
+  if (!includeBranches.includes(rulesetConfig.branch) || (refName.exclude || []).length > 0) {
     console.error(`❌ Ruleset does not target ${rulesetConfig.branch}`);
     return { valid: false, reason: `Ruleset does not target ${rulesetConfig.branch}` };
   }
@@ -55,12 +60,18 @@ function validateRuleset(rulesetConfig) {
 
   // Check required status checks
   const rules = ruleset.rules || [];
+  if (!["deletion", "non_fast_forward"].every((type) => rules.some((rule) => rule.type === type))) {
+    return { valid: false, reason: "Missing deletion or non-fast-forward prohibition" };
+  }
   const statusCheckRule = rules.find((r) => r.type === "required_status_checks");
   if (!statusCheckRule) {
     console.error("❌ No required_status_checks rule found");
     return { valid: false, reason: "No required_status_checks rule" };
   }
 
+  if (statusCheckRule.parameters?.strict_required_status_checks_policy !== true) {
+    return { valid: false, reason: "Required checks must use the current base" };
+  }
   const requiredChecks = statusCheckRule.parameters?.required_status_checks?.map((c) => c.context) || [];
   console.log("Required checks in ruleset:", requiredChecks);
 
@@ -77,10 +88,19 @@ function validateRuleset(rulesetConfig) {
     console.error("❌ No pull_request rule found");
     return { valid: false, reason: "No pull_request rule" };
   }
+  const parameters = prRule.parameters || {};
+  if (!Number.isInteger(parameters.required_approving_review_count) || parameters.required_approving_review_count < 1
+      || !["require_code_owner_review", "dismiss_stale_reviews_on_push", "require_last_push_approval", "required_review_thread_resolution"]
+        .every((flag) => parameters[flag] === true)) {
+    return { valid: false, reason: "Pull request approval and review protections are incomplete" };
+  }
   console.log("✅ Pull request requirements configured");
 
   // Check bypass actors for break-glass
   const bypassActors = ruleset.bypass_actors || [];
+  if (!Array.isArray(bypassActors) || bypassActors.some((actor) => actor.bypass_mode !== "pull_request")) {
+    return { valid: false, reason: "Break-glass actors must remain constrained to pull requests" };
+  }
   console.log("Bypass actors:", bypassActors.length > 0 ? bypassActors : "none");
 
   return { valid: true, ruleset };

@@ -25,42 +25,6 @@ function readEvents(name) {
   const p = join(DATA_DIR, name);
   const fileName = `public/data/${name}`;
   if (!existsSync(p)) {
-    if (name === "domestic.json") {
-      return [{
-        id: "dummy-domestic-1",
-        type: "news",
-        title: "測試新聞",
-        summary: "測試摘要",
-        source: { type: "news-rss", name: "測試來源" },
-        sourceUrl: "https://example.com",
-        publishedAt: new Date().toISOString(),
-        location: "台北市",
-        lat: 25.033,
-        lng: 121.5654,
-        entities: ["測試"],
-        category: "news",
-        riskLevel: 1,
-        severity: "low",
-      }];
-    }
-    if (name === "international.json") {
-      return [{
-        id: "dummy-intl-1",
-        type: "news",
-        title: "Test News",
-        summary: "Test summary",
-        source: { type: "news-rss", name: "Test Source" },
-        sourceUrl: "https://example.com",
-        publishedAt: new Date().toISOString(),
-        location: "Tokyo",
-        lat: 35.6762,
-        lng: 139.6503,
-        entities: ["Test"],
-        category: "news",
-        riskLevel: 1,
-        severity: "low",
-      }];
-    }
     throw new Error(`${fileName}：檔案不存在，無法建立 ${NETWORK_FILE}`);
   }
   try {
