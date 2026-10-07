@@ -288,7 +288,16 @@ export async function checkBuildArtifacts({ rootDir = REPO_ROOT, exists = exists
       detail: "唯讀演練拒絕執行可能寫入產物的建置命令",
     };
   }
-  const required = ["scripts/build-network.mjs", "scripts/build-static.mjs", "vite.config.ts", "tsconfig.json"];
+  // build-site.mjs 是 `npm run build` 的實際入口，prepare-build-data.mjs 是它的輸入準備步驟；
+  // 缺少任一個，恢復後的 repo 都建不起來（2026-09 的乾淨 checkout 事故即為 build 缺輸入）。
+  const required = [
+    "scripts/build-site.mjs",
+    "scripts/prepare-build-data.mjs",
+    "scripts/build-network.mjs",
+    "scripts/build-static.mjs",
+    "vite.config.ts",
+    "tsconfig.json",
+  ];
   const missing = required.filter((name) => !exists(join(rootDir, name)));
   return {
     id: "build-artifacts",
