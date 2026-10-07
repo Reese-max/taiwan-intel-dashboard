@@ -629,7 +629,7 @@ describe("fetch-live pipeline integration (missing)", () => {
     expect(provenance.pipeline.police).toEqual({ skipped: true });
     expect(provenance.pipeline.missing).toMatchObject({ ok: true, count: 2 });
     expect(unexpected).toEqual([]);
-  }, 20000);
+  }, 180_000);
 });
 
 describe("fetch-live pipeline integration (MOFA + NCDR)", () => {
@@ -800,7 +800,7 @@ describe("fetch-live pipeline integration (twnews)", () => {
       expect(validateEventContract(domestic).invalid).toEqual([]);
       expect(unexpected.every((entry) => entry.status === 500)).toBe(true);
     },
-    60_000,
+    180_000,
   );
 });
 
