@@ -151,6 +151,50 @@ describe("clean checkout build data", () => {
 });
 
 describe("build site orchestration", () => {
+  it.each([false, true])("合成 build 的完整 CLI 不建立或覆蓋 checkout 的 dist（既有產物：%s）", (hasDist) => {
+    const { root, dataDir, fixturePath, dispose } = makeWorkspace();
+    cpSync(join(repoRoot, "scripts"), join(root, "scripts"), { recursive: true });
+    cpSync(join(repoRoot, "tests", "fixtures", "govintel-domestic.json"), fixturePath);
+    for (const entry of ["src", "static", "node_modules"]) {
+      symlinkSync(join(repoRoot, entry), join(root, entry), process.platform === "win32" ? "junction" : "dir");
+    }
+    const dist = join(root, "dist");
+    if (hasDist) {
+      mkdirSync(join(dist, "data"), { recursive: true });
+      writeFileSync(join(dist, "index.html"), "existing-deploy-html\n");
+      writeFileSync(join(dist, "data", "domestic.json"), '[{"id":"existing-deploy-event"}]\n');
+    }
+    const before = hasDist
+      ? [readFileSync(join(dist, "index.html"), "utf8"), fingerprintDir(join(dist, "data"))]
+      : null;
+    const temporary = join(root, "tmp");
+    mkdirSync(temporary);
+    try {
+      const result = spawnSync(process.execPath, [join(root, "scripts", "build-site.mjs")], {
+        cwd: root,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          TMPDIR: temporary,
+          TMP: temporary,
+          TEMP: temporary,
+          BUILD_DATA_DIR: join(root, "unvalidated-ambient"),
+          BUILD_SYNTHETIC_INPUT: "0",
+        },
+      });
+
+      expect(result.status, result.stderr).toBe(0);
+      expect(listDataDir(dataDir)).toBeNull();
+      expect(readdirSync(temporary)).toEqual([]);
+      expect(existsSync(dist)).toBe(hasDist);
+      if (hasDist) {
+        expect([readFileSync(join(dist, "index.html"), "utf8"), fingerprintDir(join(dist, "data"))]).toEqual(before);
+      }
+    } finally {
+      dispose();
+    }
+  });
+
   it("無正式資料 → 兩個 build 腳本都拿到暫存 BUILD_DATA_DIR 與合成標記，結束後清掉暫存", () => {
     const { dataDir, fixturePath, dispose } = makeWorkspace();
     const { calls, spawn } = scriptedRunner([0, 0]);
