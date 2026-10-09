@@ -29,6 +29,24 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      - name: Run Python regressions
+        run: python3 -m unittest discover -s tests -p test_crime_weekly_parser.py
+      - name: Audit preview data
+        run: |
+          npm run check:network-contract
+          npm run audit:source-freshness
+          npm run audit:coverage
+          npm run audit:source-health
+          npm run audit:summary
+          npm run audit:source-provenance
+          npm run audit:network-quality
+          npm run audit:data-size -- --max-mb=24
+      - name: Validate operating-state contract
+        run: npm run ops:validate
+      - name: Verify operating-state documentation
+        run: npm run ops:verify-docs
+      - name: Validate approved production code manifest
+        run: node scripts/approved-code.mjs
       - name: Upload checked preview artifact
         uses: actions/upload-artifact@v4
         with:
