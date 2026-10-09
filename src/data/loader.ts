@@ -104,13 +104,33 @@ export function filterEvents(events: IntelEvent[], opts: FilterOptions): IntelEv
 }
 
 import { computeSha256Hex } from "../utils/sha256";
-import type { CohortManifest } from "./manifest";
+import { loadManifest, type CohortManifest } from "./manifest";
+
+// 事件檔也可能較大（數 MB），給較寬鬆上限；重點是「有界」——永不 settle 的回應
+// 不能永久佔住 main.ts 的 cohortPairInflight 去重快取，否則連手動重試都失效。
+export const EVENTS_FETCH_TIMEOUT_MS = 20_000;
 
 export interface LoadEventsOptions {
   manifest?: CohortManifest | null;
   expectedSha256?: string;
   url?: string;
   signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+function eventsFetchSignal(options?: LoadEventsOptions): AbortSignal {
+  const timeoutSignal = AbortSignal.timeout(options?.timeoutMs ?? EVENTS_FETCH_TIMEOUT_MS);
+  const caller = options?.signal;
+  if (!caller) return timeoutSignal;
+  if (typeof AbortSignal.any === "function") return AbortSignal.any([caller, timeoutSignal]);
+  // 無 AbortSignal.any 的環境：手動合併，不能為了相容而丟掉逾時（否則不回應的請求仍會永久佔住）。
+  if (caller.aborted) return caller;
+  if (timeoutSignal.aborted) return timeoutSignal;
+  const controller = new AbortController();
+  const relay = (source: AbortSignal) => () => controller.abort(source.reason);
+  caller.addEventListener("abort", relay(caller), { once: true });
+  timeoutSignal.addEventListener("abort", relay(timeoutSignal), { once: true });
+  return controller.signal;
 }
 
 export async function loadEvents(scope: Scope, options?: LoadEventsOptions): Promise<IntelEvent[]> {
@@ -121,25 +141,27 @@ export async function loadEvents(scope: Scope, options?: LoadEventsOptions): Pro
     (manifestFile
       ? options?.manifest?.files?.[manifestFile]?.sha256 || options?.manifest?.scopes?.[scope]?.sha256
       : undefined);
+  if (options?.manifest && !expectedSha256) throw new Error("事件資料缺少 SHA-256，無法驗證");
 
-  const res = await fetch(url, { signal: options?.signal });
+  const res = await fetch(url, { signal: eventsFetchSignal(options) });
   if (!res.ok) throw new Error(`載入 ${scope}.json 失敗: ${res.status}`);
   if (typeof res.text === "function") {
     const text = await res.text();
-    if (expectedSha256 && globalThis.crypto?.subtle) {
+    if (expectedSha256) {
       const hash = await computeSha256Hex(text);
-      if (hash && hash !== expectedSha256) {
+      if (!hash) throw new Error("事件資料 SHA-256 無法驗證");
+      if (hash !== expectedSha256) {
         throw new Error(`事件資料 SHA-256 不符 (期望 ${expectedSha256}，實收 ${hash})`);
       }
     }
     return JSON.parse(text) as IntelEvent[];
   }
+  if (expectedSha256) throw new Error("事件資料 SHA-256 無法驗證");
   return (await res.json()) as IntelEvent[];
 }
 
 // 地圖 first-paint 是效能最佳化，不是資料一致性的例外路徑。
-// 呼叫端沒有先鎖定 manifest，或 manifest 沒有該 map 產物的 hash 時，一律跳過早繪，
-// 交由後續已鎖定 cohort 的完整事件 refresh 繪圖，避免跨部署時短暫晉級舊快照。
+// 低階入口也須先鎖定 manifest 及具名 map；缺少任一契約即回 null，交由完整 refresh 補繪。
 export async function loadMapEvents(scope: Scope, options?: LoadEventsOptions): Promise<IntelEvent[] | null> {
   const manifest = options?.manifest;
   if (!manifest) return null;
@@ -149,24 +171,55 @@ export async function loadMapEvents(scope: Scope, options?: LoadEventsOptions): 
 
   const expectedSha256 = options?.expectedSha256 ?? manifest.files?.[manifestFile]?.sha256;
   if (!expectedSha256) return null;
-
   const url = options?.url ?? `./data/${manifestFile}`;
 
   try {
-    const res = await fetch(url, { signal: options?.signal });
+    const res = await fetch(url, { signal: eventsFetchSignal(options) });
     if (!res.ok) return null;
     if (typeof res.text === "function") {
       const text = await res.text();
-      if (!globalThis.crypto?.subtle) return null;
-      const hash = await computeSha256Hex(text);
-      if (!hash || hash !== expectedSha256) {
-        return null;
+      if (expectedSha256) {
+        const hash = await computeSha256Hex(text);
+        if (!hash || hash !== expectedSha256) return null;
       }
       return JSON.parse(text) as IntelEvent[];
     }
-    // 無法取得原始文字就無法驗證 manifest hash，因此 first-paint 不得晉級。
-    return null;
+    if (expectedSha256) return null;
+    return (await res.json()) as IntelEvent[];
   } catch {
     return null;
   }
+}
+
+export interface FirstPaintMapOptions {
+  // 已鎖定的 manifest；給 undefined 才會走 fetchManifest/loadManifest 取得。
+  manifest?: CohortManifest | null;
+  // 呼叫端可注入共享的 manifest 抓取（如 createManifestLoader），避免開機重複請求。
+  fetchManifest?: () => Promise<CohortManifest | null>;
+  signal?: AbortSignal;
+}
+
+export interface FirstPaintMapResult {
+  events: IntelEvent[];
+  // 實際用於驗證的 manifest —— 呼叫端須核對其 snapshotId 仍為目前鎖定版本才晉級。
+  manifest: CohortManifest;
+}
+
+// 地圖 first-paint 的同版鎖定入口：必須先取得 cohort manifest，精簡點位檔以其具名檔案＋
+// SHA-256 驗證後才允許早繪。manifest 缺失、檔案 404、缺 hash 或 hash 不符一律回 null
+// （fail-closed，不晉級未驗證產物），呼叫端等完整 refresh 以已驗證的同版資料繪製。
+export async function loadFirstPaintMapEvents(
+  scope: Scope,
+  options?: FirstPaintMapOptions,
+): Promise<FirstPaintMapResult | null> {
+  const manifest =
+    options?.manifest !== undefined
+      ? options.manifest
+      : options?.fetchManifest
+        ? await options.fetchManifest()
+        : await loadManifest({ signal: options?.signal });
+  if (!manifest) return null;
+  const events = await loadMapEvents(scope, { manifest, signal: options?.signal });
+  if (!events) return null;
+  return { events, manifest };
 }

@@ -1,6 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
+import { createHash } from "node:crypto";
 import { filterEvents } from "../src/data/loader";
 import type { IntelEvent } from "../src/types/event";
+import type { CohortManifest } from "../src/data/manifest";
 
 const base: IntelEvent = {
   id: "1",
@@ -165,5 +167,83 @@ describe("explainOutOfFilter", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("loadEvents / loadMapEvents 有界載入", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // 永不回應的 fetch（尊重 abort signal）：沒有預設逾時時 loadEvents 會永久等待，
+  // 讓 main.ts 的 cohortPairInflight 去重快取被一筆不 settle 的請求佔住，連手動重試都失效。
+  const hangUntilAborted = () =>
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          const signal = (init as RequestInit | undefined)?.signal;
+          if (signal?.aborted) {
+            reject(signal.reason ?? new DOMException("aborted", "AbortError"));
+            return;
+          }
+          signal?.addEventListener("abort", () =>
+            reject(signal.reason ?? new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+
+  const lockedMapManifest = (): CohortManifest => ({
+    manifestVersion: 1, snapshotId: "owned-map-timeout", generatedAt: "2026-10-09T00:00:00.000Z", rulesVersion: "correlate-v1",
+    scopes: {
+      domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+      international: { events: "international.json", map: "international.map.json", network: "network.json" },
+    },
+    files: { "domestic.map.json": { path: "domestic.map.json", sha256: createHash("sha256").update("[]").digest("hex"), bytes: 2 } },
+  });
+
+  it("loadEvents 逾時後 reject（TimeoutError），不永久佔住呼叫端", async () => {
+    const { loadEvents } = await import("../src/data/loader");
+    hangUntilAborted();
+    const err = await loadEvents("domestic", { timeoutMs: 5 }).then(
+      () => null,
+      (e: unknown) => e as DOMException,
+    );
+    expect(err?.name).toBe("TimeoutError");
+  });
+
+  it("loadMapEvents 逾時後 fail-soft 回 null，不把等待丟給 first-paint", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const fetchSpy = hangUntilAborted();
+    await expect(loadMapEvents("domestic", { manifest: lockedMapManifest(), timeoutMs: 5 })).resolves.toBeNull();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe("./data/domestic.map.json");
+    const signal = fetchSpy.mock.calls[0]?.[1]?.signal;
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal?.aborted).toBe(true);
+    expect(signal?.reason?.name).toBe("TimeoutError");
+  });
+
+  it("呼叫端 signal abort 時 loadEvents 立即放棄，不等預設逾時", async () => {
+    const { loadEvents } = await import("../src/data/loader");
+    hangUntilAborted();
+    const controller = new AbortController();
+    const promise = loadEvents("domestic", { signal: controller.signal, timeoutMs: 60_000 });
+    controller.abort();
+    await expect(promise).rejects.toThrow();
+  });
+
+  it("呼叫端 signal abort 時具名 map 真正中止已開始的 fetch", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const fetchSpy = hangUntilAborted();
+    const controller = new AbortController();
+    const promise = loadMapEvents("domestic", { manifest: lockedMapManifest(), signal: controller.signal, timeoutMs: 60_000 });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe("./data/domestic.map.json");
+    const signal = fetchSpy.mock.calls[0]?.[1]?.signal;
+    expect(signal).toBeInstanceOf(AbortSignal);
+    controller.abort();
+    await expect(promise).resolves.toBeNull();
+    expect(signal?.aborted).toBe(true);
+    expect(signal?.reason).toBe(controller.signal.reason);
   });
 });

@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
 import { normalizeInternational, intlNormalizeFailed } from "../scripts/lib/nvidia.mjs";
+// @ts-expect-error — JS ESM module without types
+import { chat, chatVia, retryDelayMs } from "../scripts/lib/llm-client.mjs";
 
 const item = (i: number) => ({
   title: `備援測試标题完全相異第${i}號`,
@@ -19,8 +21,9 @@ const okCompletion = (content: string) =>
 
 describe("primary→fallback LLM 備援（C1）", () => {
   const KEYS = [
-    "LLM_API_KEY", "NVIDIA_API_KEY", "LLM_MAX_RETRIES",
+    "LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL", "NVIDIA_API_KEY", "NVIDIA_BASE_URL", "NVIDIA_MODEL", "LLM_MAX_RETRIES",
     "LLM_FALLBACK_API_KEY", "LLM_FALLBACK_BASE_URL", "LLM_FALLBACK_MODEL", "LLM_FALLBACK_MAX_RETRIES",
+    "SUMMARY_API_KEY", "SUMMARY_BASE_URL", "SUMMARY_MODEL", "SUMMARY_LLM",
   ];
   const saved: Record<string, string | undefined> = {};
   beforeEach(() => {
@@ -69,5 +72,123 @@ describe("primary→fallback LLM 備援（C1）", () => {
     const out = await normalizeInternational(Array.from({ length: 5 }, (_, i) => item(i)), { max: 10, batchSize: 2, concurrency: 1 });
     expect(out).toEqual([]);
     expect(intlNormalizeFailed()).toBe(true);
+  });
+
+  it("401 憑證錯誤只請求主要端點一次；後續批次直接使用可用備援", async () => {
+    process.env.LLM_API_KEY = "expired-primary";
+    process.env.LLM_BASE_URL = "https://primary-expired-20260926.test/v1";
+    process.env.LLM_MODEL = "primary-model";
+    process.env.LLM_FALLBACK_API_KEY = "working-fallback";
+    process.env.LLM_FALLBACK_BASE_URL = "https://fallback-circuit.test/v1";
+    process.env.LLM_FALLBACK_MODEL = "working-model";
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn(async (url: string) =>
+      String(url).includes("primary-expired")
+        ? new Response("invalid api key", { status: 401 })
+        : okCompletion("備援成功"),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await chat([{ role: "user", content: "測試" }])).toBe("備援成功");
+    expect(await chat([{ role: "user", content: "再次測試" }])).toBe("備援成功");
+    expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("primary-expired"))).toHaveLength(1);
+    expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("fallback-circuit"))).toHaveLength(2);
+  });
+
+  it("保留獨立摘要模型；摘要端點 410 時改用 NVIDIA 備援模型", async () => {
+    process.env.SUMMARY_API_KEY = "dedicated-summary-key";
+    process.env.SUMMARY_BASE_URL = "https://summary-retired-20260926.test/v1";
+    process.env.SUMMARY_MODEL = "dedicated-summary-model";
+    process.env.LLM_FALLBACK_API_KEY = "working-fallback-key";
+    process.env.LLM_FALLBACK_BASE_URL = "https://integrate.api.nvidia.com/v1";
+    process.env.LLM_FALLBACK_MODEL = "nvidia/nemotron-3-super-120b-a12b";
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn(async (url: string, _options?: RequestInit) =>
+      String(url).includes("summary-retired")
+        ? new Response("retired model", { status: 410 })
+        : okCompletion("摘要備援成功"),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await chat([{ role: "user", content: "摘要測試" }], { profile: "summary" })).toBe("摘要備援成功");
+    expect(fetchMock.mock.calls.map((call) => String(call[0]))).toEqual([
+      "https://summary-retired-20260926.test/v1/chat/completions",
+      "https://integrate.api.nvidia.com/v1/chat/completions",
+    ]);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).model).toBe("dedicated-summary-model");
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).model).toBe("nvidia/nemotron-3-super-120b-a12b");
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({ stream: false });
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).not.toHaveProperty("reasoning_effort");
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toMatchObject({
+      reasoning_effort: "none",
+      stream: false,
+    });
+  });
+
+  it("共用 NVIDIA 摘要設定也關閉 Super 長推理", async () => {
+    process.env.SUMMARY_LLM = "true";
+    delete process.env.SUMMARY_API_KEY;
+    delete process.env.SUMMARY_BASE_URL;
+    delete process.env.SUMMARY_MODEL;
+    process.env.NVIDIA_API_KEY = "summary-key";
+    process.env.NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
+    process.env.NVIDIA_MODEL = "nvidia/nemotron-3-super-120b-a12b";
+    const fetchMock = vi.fn(async () => okCompletion("摘要完成"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await chat([{ role: "user", content: "摘要測試" }], { profile: "summary" })).toBe("摘要完成");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({
+      model: "nvidia/nemotron-3-super-120b-a12b",
+      reasoning_effort: "none",
+      stream: false,
+    });
+  });
+
+  it("同一供應商被配置為 primary、summary、fallback 時不重複打失敗端點", async () => {
+    const base = "https://single-provider-20260929.test/v1";
+    process.env.LLM_API_KEY = "same-key";
+    process.env.LLM_BASE_URL = base;
+    process.env.LLM_MODEL = "same-model";
+    process.env.LLM_FALLBACK_API_KEY = "same-key";
+    process.env.LLM_FALLBACK_BASE_URL = base;
+    process.env.LLM_FALLBACK_MODEL = "same-model";
+    process.env.LLM_FALLBACK_MAX_RETRIES = "0";
+    process.env.SUMMARY_LLM = "true";
+    delete process.env.SUMMARY_API_KEY;
+    delete process.env.SUMMARY_BASE_URL;
+    delete process.env.SUMMARY_MODEL;
+    process.env.NVIDIA_API_KEY = "same-key";
+    process.env.NVIDIA_BASE_URL = base;
+    process.env.NVIDIA_MODEL = "same-model";
+    const fetchMock = vi.fn(async () => new Response("provider unavailable", { status: 503 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(chat([{ role: "user", content: "primary" }])).rejects.toThrow("LLM HTTP 503");
+    await expect(chat([{ role: "user", content: "summary" }], { profile: "summary" })).rejects.toThrow("LLM HTTP 503");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("429 遵守 Retry-After 並重試摘要請求；缺少標頭時採較長退避", async () => {
+    expect(retryDelayMs(429, null, 0)).toBe(8_000);
+    expect(retryDelayMs(429, null, 1)).toBe(16_000);
+    expect(retryDelayMs(503, null, 0)).toBe(2_000);
+    expect(retryDelayMs(429, "120", 0)).toBe(30_000);
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response("rate limited", { status: 429, headers: { "retry-after": "0.001" } }))
+      .mockResolvedValueOnce(okCompletion("摘要已恢復"));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await chatVia({
+      name: "retry-summary-test",
+      base: "https://retry-summary-20260929.test/v1",
+      key: "test-key",
+      model: "test-model",
+      maxConc: 1,
+      timeout: 1000,
+      retries: 2,
+    }, [{ role: "user", content: "摘要" }], 256, 0.3);
+    expect(result).toBe("摘要已恢復");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

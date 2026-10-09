@@ -6,6 +6,8 @@ dist/
 dist-esbuild/
 dist-*/
 *.log
+__pycache__/
+*.pyc
 .gstack/
 
 # 資料快照與增量狀態：體積大且持續變動，存在 gh-pages 分支（狀態庫），不進 main

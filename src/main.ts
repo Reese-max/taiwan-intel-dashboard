@@ -1,7 +1,7 @@
 import "./styles/global.css";
 import { t } from "./i18n/zh-TW";
 import { getState, setState, subscribe } from "./store";
-import { loadEvents, filterEvents, loadMapEvents, explainOutOfFilter } from "./data/loader";
+import { loadEvents, filterEvents, loadFirstPaintMapEvents, explainOutOfFilter } from "./data/loader";
 import { edgeTypeLabel, loadNetwork, NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
 import { renderKpiStrip } from "./components/KpiStrip";
@@ -24,7 +24,7 @@ import { filterTriageEvents, loadTriageAcked, saveTriageAcked, type TriageSortMo
 import { corroborationOf } from "./utils/corroboration";
 import { collapseSameIncident } from "./utils/collapse";
 import { stalenessNotice } from "./utils/staleness";
-import { loadManifest, type CohortManifest } from "./data/manifest";
+import { loadManifest, createManifestLoader, type CohortManifest } from "./data/manifest";
 
 const DEFAULT_SINCE_DAYS = 3;
 const REFRESH_MS = 300000;
@@ -35,9 +35,14 @@ const MOBILE_VIEW_KEY = "taiwan-intel-mobile-view";
 const MOBILE_LAYOUT_QUERY = "(max-width: 640px), (max-width: 932px) and (max-height: 500px)";
 
 let cohortManifest: CohortManifest | null = null;
+// 啟動期 first-paint 與 refresh 共用同一次 manifest 抓取（settled 後不留存，重試仍可重抓）。
+const fetchManifestOnce = createManifestLoader();
 let refreshRequestId = 0;
 const netAutoRetried: Record<string, number> = {};
 const manifestAutoRetried: Record<string, number> = {};
+// 記錄各 scope 快取事件是用哪一份 manifest 驗證的（null = 未驗證的獨立新聞備援）。
+// 關聯單獨重試只能沿用同一份 manifest；全域 cohortManifest 升版後不得拿新版關聯硬拼舊版事件。
+const cohortByScope: Partial<Record<Scope, CohortManifest | null>> = {};
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -391,14 +396,42 @@ document.getElementById("filter-sheet-close")?.addEventListener("click", () => s
 document.getElementById("filter-sheet-done")?.addEventListener("click", () => setMobileFilters(false));
 const cache: Partial<Record<Scope, IntelEvent[]>> = {};
 const netCache: Partial<Record<Scope, NetworkIndex>> = {};
+type CohortPair = [IntelEvent[], NetworkIndex];
+const cohortPairInflight: Partial<Record<Scope, { key: string; promise: Promise<CohortPair> }>> = {};
+
+function fetchCohortPair(scope: Scope, manifest: CohortManifest | null): Promise<CohortPair> {
+  const manifestEvents = manifest?.scopes?.[scope]?.events;
+  const eventsPath = manifestEvents ? `./data/${manifestEvents}` : `./data/${scope}.json`;
+  const expectedEventsHash =
+    manifest?.files?.[manifestEvents || ""]?.sha256 || manifest?.scopes?.[scope]?.sha256;
+  const manifestNetwork = manifest?.scopes?.[scope]?.network;
+  const networkPath = manifestNetwork ? `./data/${manifestNetwork}` : "./data/network.json";
+  const expectedNetworkHash = manifest?.files?.[manifestNetwork || "network.json"]?.sha256;
+  const key = JSON.stringify({ scope, snapshotId: manifest?.snapshotId ?? null, eventsPath, expectedEventsHash, networkPath, expectedNetworkHash });
+  const existing = cohortPairInflight[scope];
+  if (existing?.key === key) return existing.promise;
+
+  // 完整 pair 的快取由 refresh 使用；重載時兩份都須依本次 manifest 驗證。
+  const promise: Promise<CohortPair> = Promise.all([
+    loadEvents(scope, { manifest }),
+    loadNetwork(scope, { manifest }),
+  ]);
+  const entry = { key, promise };
+  cohortPairInflight[scope] = entry;
+  void promise.then(
+    () => {
+      if (cohortPairInflight[scope] === entry) delete cohortPairInflight[scope];
+    },
+    () => {
+      if (cohortPairInflight[scope] === entry) delete cohortPairInflight[scope];
+    },
+  );
+  return promise;
+}
+
 const triageAcked = loadTriageAcked();
 let triageStorageOk = true;
 let triageSortMode: TriageSortMode = "default";
-// 地圖 first-paint：先用精簡 map.json 即時繪出標點，不必等完整事件（給清單用）載入；
-// refresh() 隨後以完整集重繪校正。slim 載入失敗則無早繪、行為不變。
-void loadMapEvents(getState().scope).then((pts) => {
-  if (pts && !cache[getState().scope]) void mapView.render(filterEvents(pts, getState()), getState().scope);
-});
 let summary: AiSummary | null = null;
 // 情報網聚焦：可選單一事件，或選一個 cluster 展開整群。
 let focusId: string | null = null;
@@ -607,66 +640,51 @@ async function refresh(): Promise<void> {
   const eventList = document.getElementById("eventlist")!;
   const relationNoticeEl = document.getElementById("relation-notice");
 
-  // 同步載入小型靜態 manifest（僅首載或重新整理時），鎖定同版快照
+  // 同步載入小型靜態 manifest（僅首載或重新整理時），鎖定同版快照；
+  // 與地圖 first-paint 共用同一次 inflight 抓取，避免開機重複請求。
   if (!cohortManifest) {
-    cohortManifest = await loadManifest();
+    const manifest = await fetchManifestOnce();
     if (requestId !== refreshRequestId) return;
+    cohortManifest = manifest;
   }
-
-  const fetchCohortPair = async (manifest: CohortManifest | null) => {
-    const manifestEvents = manifest?.scopes?.[s.scope]?.events;
-    const eventsPath = manifestEvents ? `./data/${manifestEvents}` : `./data/${s.scope}.json`;
-    const expectedEventsHash =
-      manifest?.files?.[manifestEvents || ""]?.sha256 || manifest?.scopes?.[s.scope]?.sha256;
-    const manifestNetwork = manifest?.scopes?.[s.scope]?.network;
-    const networkPath = manifestNetwork ? `./data/${manifestNetwork}` : "./data/network.json";
-    const expectedNetworkHash = manifest?.files?.[manifestNetwork || "network.json"]?.sha256;
-
-    return await Promise.all([
-      cache[s.scope] ??
-        loadEvents(s.scope, {
-          url: eventsPath,
-          expectedSha256: expectedEventsHash,
-        }),
-      netCache[s.scope] ??
-        loadNetwork(s.scope, {
-          networkUrl: networkPath,
-          expectedSnapshotId: manifest?.snapshotId,
-          expectedSha256: expectedNetworkHash,
-          previousIndex: netCache[s.scope],
-        }),
-    ]);
-  };
 
   // 事件與情報網兩支 fetch 並行（原本串行，第二支要等第一支完成才開始）。
   if (!cache[s.scope] || !netCache[s.scope]) {
     // 首載/切換 scope 時主資料尚未快取：顯示載入佔位（篩選變更走快取、不會閃爍）。
     if (!cache[s.scope]) eventList.innerHTML = `<p class="empty">情報載入中…</p>`;
     try {
-      let [ev, net] = await fetchCohortPair(cohortManifest);
+      let verifiedBy: CohortManifest | null = cohortManifest;
+      let [ev, net] = await fetchCohortPair(s.scope, cohortManifest);
       if (requestId !== refreshRequestId) return;
 
+      // 快照版本不符，或本次根本沒有 manifest 可用：各允許一次有界重讀 manifest
+      // （跨部署暫態：manifest 晚幾秒才上線、或舊頁面撞上新版產物）。
       const isMismatch = net.error && /不符|缺少快照版本/i.test(net.error);
-      if (isMismatch && (manifestAutoRetried[s.scope] ?? 0) < 1) {
+      if ((isMismatch || !cohortManifest) && (manifestAutoRetried[s.scope] ?? 0) < 1) {
         manifestAutoRetried[s.scope] = 1;
         const refreshedManifest = await loadManifest();
         if (requestId !== refreshRequestId) return;
         if (refreshedManifest) {
-          cohortManifest = refreshedManifest;
           try {
-            [ev, net] = await fetchCohortPair(cohortManifest);
+            const pair = await fetchCohortPair(s.scope, refreshedManifest);
             if (requestId !== refreshRequestId) return;
+            [ev, net] = pair;
+            // 事件驗證完成才換鎖；失敗後的關聯重試仍須使用舊事件的 manifest。
+            cohortManifest = refreshedManifest;
+            verifiedBy = refreshedManifest;
           } catch {
             // 保持現狀
           }
         }
       }
+      if (requestId !== refreshRequestId) return;
 
       if (net.error && /不符|缺少快照版本/i.test(net.error)) {
-        if (cache[s.scope] && netCache[s.scope]?.state !== "error") {
+        if (cache[s.scope] && netCache[s.scope] && netCache[s.scope]?.state !== "error") {
           // 保留先前一致快取
         } else {
           cache[s.scope] = ev;
+          cohortByScope[s.scope] = verifiedBy;
           netCache[s.scope] = NetworkIndex.createError(
             "情報網與事件快照版本不一致，已停用關聯網以維護資料正確性",
             { snapshotId: cohortManifest?.snapshotId },
@@ -674,7 +692,11 @@ async function refresh(): Promise<void> {
         }
       } else {
         cache[s.scope] = ev;
+        cohortByScope[s.scope] = verifiedBy;
         netCache[s.scope] = net;
+        // 有界重讀／重試以「每次失敗至多一次」計：驗證成功即歸還額度，
+        // 但同一次 refresh 不會重複觸發（失敗時額度已先扣除）。
+        manifestAutoRetried[s.scope] = 0;
       }
     } catch (err) {
       if (requestId !== refreshRequestId) return;
@@ -684,17 +706,20 @@ async function refresh(): Promise<void> {
         const refreshedManifest = await loadManifest();
         if (requestId !== refreshRequestId) return;
         if (refreshedManifest) {
-          cohortManifest = refreshedManifest;
           try {
-            const [ev, net] = await fetchCohortPair(cohortManifest);
+            const [ev, net] = await fetchCohortPair(s.scope, refreshedManifest);
             if (requestId !== refreshRequestId) return;
+            cohortManifest = refreshedManifest;
             cache[s.scope] = ev;
+            cohortByScope[s.scope] = refreshedManifest;
             netCache[s.scope] = net;
+            manifestAutoRetried[s.scope] = 0;
           } catch {
             // 仍失敗
           }
         }
       }
+      if (requestId !== refreshRequestId) return;
 
       // 主資料 fetch 失敗：無既有快取時顯示可重試錯誤卡，不留白、不中斷（不 throw）。
       if (!cache[s.scope]) {
@@ -708,22 +733,27 @@ async function refresh(): Promise<void> {
         return;
       }
       // 有舊快取則沿用，靜默續繪
+      if (!netCache[s.scope]) {
+        netCache[s.scope] = NetworkIndex.createError("事件快照更新失敗，已停用關聯並保留先前新聞");
+        // 舊事件尚未通過目前 manifest 驗證；後續篩選也不能單獨晉級新版關聯。
+        netAutoRetried[s.scope] = 1;
+      }
     }
   }
 
-  // 若關聯發生錯誤，至多允許一次自動有界重試，不無限迴圈
-  if (netCache[s.scope]?.state === "error" && (netAutoRetried[s.scope] ?? 0) < 1) {
+  // 若關聯發生錯誤，至多允許一次自動有界重試，不無限迴圈。
+  // 只能用「驗證目前這批事件的同一份 manifest」重試：全域 manifest 升版後
+  // 不得拿新版關聯硬拼舊版事件；事件未驗證（null）時重試必然失敗，直接略過。
+  const verifiedManifest = cohortByScope[s.scope];
+  if (netCache[s.scope]?.state === "error" && verifiedManifest && (netAutoRetried[s.scope] ?? 0) < 1) {
     netAutoRetried[s.scope] = 1;
     try {
-      const manifestNetwork = cohortManifest?.scopes?.[s.scope]?.network;
       const retriedNet = await loadNetwork(s.scope, {
-        networkUrl: manifestNetwork ? `./data/${manifestNetwork}` : "./data/network.json",
-        expectedSnapshotId: cohortManifest?.snapshotId,
-        expectedSha256: cohortManifest?.files?.[manifestNetwork || "network.json"]?.sha256,
-        previousIndex: netCache[s.scope],
+        manifest: verifiedManifest,
       });
       if (requestId !== refreshRequestId) return;
       netCache[s.scope] = retriedNet;
+      if (retriedNet.state !== "error") netAutoRetried[s.scope] = 0;
     } catch {
       // 保持 error 狀態，等待使用者手動重試
     }
@@ -901,7 +931,7 @@ async function refresh(): Promise<void> {
   }
   renderFocusBar(display, net, focusBarDetails);
   if (relationNoticeEl) {
-    if ((focusId || focusCluster) && net.state === "error") {
+    if (net.state === "error") {
       relationNoticeEl.hidden = false;
       relationNoticeEl.innerHTML = `
         <div class="relation-status-notice relation-status-error">
@@ -915,7 +945,7 @@ async function refresh(): Promise<void> {
         cohortManifest = null;
         void refresh();
       });
-    } else if ((focusId || focusCluster) && net.state === "stale") {
+    } else if (net.state === "stale") {
       relationNoticeEl.hidden = false;
       relationNoticeEl.innerHTML = `
         <div class="relation-status-notice relation-status-stale">
@@ -1142,6 +1172,19 @@ window.addEventListener("popstate", () => {
 });
 
 applyHash();
+// 地圖 first-paint：先鎖定 cohort manifest，精簡點位通過 SHA-256 驗證才早繪；
+// manifest 不可用或驗證失敗時不晉級未驗證產物，交由 refresh() 以同版資料補繪。
+// 放在 applyHash() 之後：scope 以網址深連結為準。晉級前核對：scope 未被切走、
+// refresh 未先完成（cache 有值）、且所用 manifest 仍是目前鎖定版本（refresh 重讀到新版時不覆蓋）。
+{
+  const firstPaintScope = getState().scope;
+  void loadFirstPaintMapEvents(firstPaintScope, { fetchManifest: fetchManifestOnce }).then((res) => {
+    if (!res || getState().scope !== firstPaintScope || cache[firstPaintScope]) return;
+    if (!cohortManifest) cohortManifest = res.manifest;
+    if (cohortManifest.snapshotId !== res.manifest.snapshotId) return;
+    void mapView.render(filterEvents(res.events, getState()), firstPaintScope);
+  });
+}
 renderUsageTip();
 // 側欄警政健康面板只用尾端趨勢、且多在首屏摺線下：捲入視窗才抓 police-hourly-history.json（數 MB），
 // 讓它離開首屏關鍵載入窗，不與 domestic 主資料搶頻寬（IntersectionObserver 不支援時退回立即渲染）。
@@ -1225,6 +1268,7 @@ setInterval(() => {
       const scope = getState().scope;
       delete cache[scope];
       delete netCache[scope];
+      delete cohortByScope[scope];
       void refresh();
     })
     .catch(() => {});

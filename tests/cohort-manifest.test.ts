@@ -1,17 +1,93 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { buildCohortManifest, writeCohortManifest } from "../scripts/lib/manifest.mjs";
 import { loadManifest, type CohortManifest } from "../src/data/manifest";
 
 const TEMP_DIR = join(process.cwd(), "temp-test-manifest");
 
+const directMapBody = JSON.stringify([{ id: "owned-direct-map", title: "已驗證地圖點位", scope: "domestic", lat: 25.03, lng: 121.56, locationPrecision: "city" }]);
+const directMapHash = createHash("sha256").update(directMapBody).digest("hex");
+function directMapManifest(): CohortManifest {
+  return {
+    manifestVersion: 1, snapshotId: "owned-direct-map", generatedAt: "2026-10-09T00:00:00.000Z", rulesVersion: "correlate-v1",
+    scopes: {
+      domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+      international: { events: "international.json", map: "international.map.json", network: "network.json" },
+    },
+    files: { "domestic.map.json": { path: "domestic.map.json", sha256: directMapHash, bytes: Buffer.byteLength(directMapBody) } },
+  };
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   if (existsSync(TEMP_DIR)) rmSync(TEMP_DIR, { recursive: true, force: true });
 });
 
 describe("Cohort Manifest (Work package D2)", () => {
+  it.each(["events", "network"])("manifest 缺少 %s hash 時拒收產物", async (kind) => {
+    const { loadEvents } = await import("../src/data/loader");
+    const { loadNetwork } = await import("../src/data/network");
+    const manifest: CohortManifest = {
+      manifestVersion: 1, snapshotId: "cohort-s2", generatedAt: "2026-09-17T00:00:00.000Z", rulesVersion: "correlate-v1",
+      scopes: {
+        domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+        international: { events: "international.json", map: "international.map.json", network: "network.json" },
+      },
+      files: {},
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(kind === "events" ? [] : {
+      snapshotId: manifest.snapshotId, generatedAt: manifest.generatedAt,
+      domestic: { nodes: [], edges: [], clusters: [], stats: {} },
+    })));
+
+    if (kind === "events") {
+      await expect(loadEvents("domestic", { manifest })).rejects.toThrow(/SHA-256/);
+    } else {
+      const net = await loadNetwork("domestic", { manifest });
+      expect(net.state).toBe("error");
+      expect(net.error).toMatch(/SHA-256/);
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("明示 manifest 不可用時停用關聯，不走未驗證的 legacy 載入", async () => {
+    const { loadNetwork } = await import("../src/data/network");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      snapshotId: "unverified", domestic: { nodes: [], edges: [], clusters: [], stats: {} },
+    })));
+    const network = await loadNetwork("domestic", { manifest: null });
+    expect(network.state).toBe("error");
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("情報網 response body 中止時保留並繪製已成功載入的事件資料", async () => {
+    const { loadEvents } = await import("../src/data/loader");
+    const { loadNetwork } = await import("../src/data/network");
+    const events = [{ id: "event-kept", scope: "domestic", title: "保留事件" }];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      if (String(input).includes("network.json")) {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => {
+            throw new DOMException("The user aborted a request.", "AbortError");
+          },
+        } as Response;
+      }
+      return { ok: true, status: 200, text: async () => JSON.stringify(events) } as Response;
+    });
+
+    const [loadedEvents, network] = await Promise.all([loadEvents("domestic"), loadNetwork("domestic")]);
+
+    expect(loadedEvents.map((event) => event.id)).toEqual(["event-kept"]);
+    expect(network.state).toBe("error");
+    expect(network.error).toContain("逾時");
+  });
+
   it("建立 manifest 正確計算檔案雜湊與快照 ID", () => {
     mkdirSync(TEMP_DIR, { recursive: true });
     writeFileSync(join(TEMP_DIR, "domestic.json"), JSON.stringify([{ id: "e1" }, { id: "e2" }]));
@@ -111,6 +187,42 @@ describe("Cohort Manifest (Work package D2)", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it.each([undefined, null])("URL/hash 覆寫不能繞過鎖定 manifest（%s）", async (manifest) => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(directMapBody));
+    const result = await loadMapEvents("domestic", { manifest, url: "./data/owned-override.map.json", expectedSha256: directMapHash });
+    expect(result).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("URL/hash 覆寫不能繞過 manifest 具名 map", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const manifest = directMapManifest();
+    delete (manifest.scopes.domestic as Partial<CohortManifest["scopes"]["domestic"]>).map;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(directMapBody));
+    const result = await loadMapEvents("domestic", { manifest, url: "./data/owned-override.map.json", expectedSha256: directMapHash });
+    expect(result).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("低階入口具名 manifest/hash 相符時仍載入完整地圖陣列", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(directMapBody));
+    expect(await loadMapEvents("domestic", { manifest: directMapManifest() })).toEqual(JSON.parse(directMapBody));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe("./data/domestic.map.json");
+  });
+
+  it("低階入口具名 manifest 存在時保留明示 URL/hash 覆寫相容性", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const manifest = directMapManifest();
+    manifest.files["domestic.map.json"] = { path: "domestic.map.json", sha256: "a".repeat(64), bytes: Buffer.byteLength(directMapBody) };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(directMapBody));
+    expect(await loadMapEvents("domestic", { manifest, url: "./data/owned-override.map.json", expectedSha256: directMapHash })).toEqual(JSON.parse(directMapBody));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe("./data/owned-override.map.json");
+  });
+
   it("loadEvents 與 loadMapEvents 在 SHA-256 不符時拒絕晉級（防跨部署混 cohort）", async () => {
     const { loadEvents, loadMapEvents } = await import("../src/data/loader");
     const manifest: CohortManifest = {
@@ -149,6 +261,39 @@ describe("Cohort Manifest (Work package D2)", () => {
     // loadMapEvents 必須 fail-safe 回傳 null
     const mapResult = await loadMapEvents("domestic", { manifest });
     expect(mapResult).toBeNull();
+  });
+
+  it("無 crypto.subtle 時事件、地圖及情報網皆不接受未驗證的同版產物", async () => {
+    const { loadEvents, loadMapEvents } = await import("../src/data/loader");
+    const { loadNetwork } = await import("../src/data/network");
+    const manifest: CohortManifest = {
+      manifestVersion: 1,
+      snapshotId: "cohort-s2",
+      generatedAt: "2026-09-17T00:00:00.000Z",
+      rulesVersion: "correlate-v1",
+      scopes: {
+        domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+        international: { events: "international.json", map: "international.map.json", network: "network.json" },
+      },
+      files: {
+        "domestic.json": { path: "domestic.json", sha256: "expected-events", bytes: 2 },
+        "domestic.map.json": { path: "domestic.map.json", sha256: "expected-map", bytes: 2 },
+      },
+    };
+    vi.stubGlobal("crypto", {});
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      text: async () => "[]",
+    } as Response);
+
+    await expect(loadEvents("domestic", { manifest })).rejects.toThrow(/SHA-256 無法驗證/);
+    expect(await loadMapEvents("domestic", { manifest })).toBeNull();
+    const network = await loadNetwork("domestic", {
+      expectedSnapshotId: "cohort-s2",
+      expectedSha256: "expected-network",
+    });
+    expect(network.state).toBe("error");
+    expect(network.error).toMatch(/SHA-256 無法驗證/);
   });
 
   it("loadNetwork 在 manifest 期待 snapshotId 但 response 缺少 snapshotId 時 fail-closed", async () => {

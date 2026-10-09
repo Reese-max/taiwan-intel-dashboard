@@ -8,14 +8,15 @@
 6. 資料庫結構變更必須使用 migrations（不得直接 ALTER TABLE）。
 7. 不得在同一版本中移除舊欄位並切換新程式。
 8. Preview 部署通過驗證後，才可建議合併。
-9. Production 部署必須由使用者核准。
+9. 正式站的程式碼版本變更必須由使用者核准；例行資料更新可在稽核通過後自動部署已核准的程式碼版本。
 10. Commit message 使用 Conventional Commits 格式。
 
 ## Branch Strategy
 
 - `feature/*` — 功能開發分支
-- `main` — 整合/測試環境
-- `production` — 正式環境（觸發 Cloudflare 正式部署）
+- `main` — 整合/測試與資料管線程式碼；正式網站程式碼由 `ops/approved-code.json` 固定版本
+- `production` — 保留的歷史保護分支，不以 push 直接觸發正式部署
+- `pipeline-state` — 自動更新的資料快照，不是程式碼發布來源
 
 ## Testing
 
