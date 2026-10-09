@@ -71,7 +71,7 @@ describe("release gate contract (Issue #42)", () => {
     // workflow_dispatch allows picking any ref; a modified workflow file on a
     // side branch must not reach secrets, pipeline-state, or production deploy.
     for (const name of ["operating-state", "save-state", "deploy"]) {
-      expect(jobs[name].if, `${name} missing main-ref guard`).toContain("github.ref_name == 'main'");
+      expect(jobs[name].if, `${name} missing main-ref guard`).toContain("github.ref == 'refs/heads/main'");
     }
     // A skipped operating-state cascades through needs to every later job.
     expect(jobs.fetch.needs).toBe("operating-state");
@@ -79,7 +79,7 @@ describe("release gate contract (Issue #42)", () => {
   });
 
   it("documents the dispatch ref boundary and fork preview limits", () => {
-    for (const term of ["workflow_dispatch", "ref_name == 'main'", "fork"]) {
+    for (const term of ["workflow_dispatch", "ref == 'refs/heads/main'", "fork"]) {
       expect(releaseGateDoc).toContain(term);
     }
   });
@@ -125,17 +125,26 @@ describe("release gate contract (Issue #42)", () => {
       cpSync("scripts/lib", join(root, "scripts/lib"), { recursive: true });
       const script = join(root, "scripts/build-network.mjs");
       cpSync("scripts/build-network.mjs", script);
-      const build = (env: Record<string, string>) => spawnSync(process.execPath, [script], {
-        cwd: root,
-        env: { ...process.env, ...env },
-        encoding: "utf8",
-        timeout: 10_000,
-      });
-      const replay = build({ CI: "true", GITHUB_ACTIONS: "false" });
+      const build = (env: Record<string, string>) => {
+        // Model an owned local environment even when the parent test runs in CI.
+        // The production helper's stronger hosted-presence policy stays intact.
+        const localEnv = { ...process.env };
+        for (const key of ["GITHUB_ACTIONS", "CF_PAGES", "GITLAB_CI", "CIRCLECI", "VERCEL", "NETLIFY", "TF_BUILD", "BUILDKITE"]) {
+          delete localEnv[key];
+        }
+        return spawnSync(process.execPath, [script], {
+          cwd: root,
+          env: { ...localEnv, ...env },
+          encoding: "utf8",
+          timeout: 10_000,
+        });
+      };
+      const replay = build({ CI: "true" });
       expect(replay.status, replay.stderr).toBe(0);
       for (const env of [
         { CI: "false", GITHUB_ACTIONS: "false" },
         { CI: "true", GITHUB_ACTIONS: "true" },
+        { CI: "true", GITHUB_ACTIONS: "false" },
       ]) {
         const result = build(env);
         expect.soft(result.status, JSON.stringify(env)).toBe(1);
