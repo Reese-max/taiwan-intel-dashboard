@@ -931,7 +931,7 @@ async function refresh(): Promise<void> {
   }
   renderFocusBar(display, net, focusBarDetails);
   if (relationNoticeEl) {
-    if ((focusId || focusCluster) && net.state === "error") {
+    if (net.state === "error") {
       relationNoticeEl.hidden = false;
       relationNoticeEl.innerHTML = `
         <div class="relation-status-notice relation-status-error">
@@ -945,7 +945,7 @@ async function refresh(): Promise<void> {
         cohortManifest = null;
         void refresh();
       });
-    } else if ((focusId || focusCluster) && net.state === "stale") {
+    } else if (net.state === "stale") {
       relationNoticeEl.hidden = false;
       relationNoticeEl.innerHTML = `
         <div class="relation-status-notice relation-status-stale">

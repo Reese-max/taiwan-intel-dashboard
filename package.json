@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && node scripts/build-network.mjs && node scripts/build-static.mjs",
-    "build:static": "tsc --noEmit && node scripts/build-network.mjs && node scripts/build-static.mjs",
+    "build": "tsc --noEmit && node scripts/build-site.mjs",
+    "build:static": "tsc --noEmit && node scripts/build-site.mjs",
     "build:network": "node scripts/build-network.mjs",
     "check:network-contract": "node scripts/assert-network-contract.mjs",
     "summary": "node --env-file=.env scripts/generate-summary.mjs",

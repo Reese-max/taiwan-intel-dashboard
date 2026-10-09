@@ -229,6 +229,41 @@ export interface LoadNetworkOptions {
   expectedSha256?: string;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+// Validate the fields consumed by the index before deciding that a response is
+// empty or promoting it as ready. Missing optional legacy metadata/nodes remain
+// compatible; malformed records must degrade through the explicit error state.
+function scopeShapeError(value: unknown): string | null {
+  if (!isRecord(value)) return "領域資料必須是 JSON 物件";
+  if (!Array.isArray(value.edges) || !Array.isArray(value.clusters)) {
+    return "領域 edges 與 clusters 必須是陣列";
+  }
+  if (value.nodes !== undefined && (!Array.isArray(value.nodes) || value.nodes.some((node) => !isRecord(node) || !isNonEmptyString(node.id)))) {
+    return "領域 nodes 必須是具有字串 id 的物件陣列";
+  }
+  for (const edge of value.edges) {
+    if (!isRecord(edge) || !isNonEmptyString(edge.a) || !isNonEmptyString(edge.b) ||
+      typeof edge.type !== "string" || !["same-incident", "same-entity", "same-topic"].includes(edge.type) ||
+      typeof edge.weight !== "number" || !Number.isFinite(edge.weight) || typeof edge.why !== "string") {
+      return "領域 edge 的端點、類型、權重或原因格式錯誤";
+    }
+  }
+  for (const cluster of value.clusters) {
+    if (!isRecord(cluster) || !isNonEmptyString(cluster.id) || !Array.isArray(cluster.members) ||
+      cluster.members.some((member) => !isNonEmptyString(member))) {
+      return "領域 cluster 的 id 或 members 格式錯誤";
+    }
+  }
+  return null;
+}
+
 // 載入並建索引；明確區分 ready、empty、error、stale。
 export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}): Promise<NetworkIndex> {
   const manifestFile = options.manifest?.scopes?.[scope]?.network;
@@ -326,6 +361,14 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
     return NetworkIndex.createError(errorMsg);
   }
 
+  for (const field of ["snapshotId", "rulesVersion", "generatedAt"] as const) {
+    if (net[field] !== undefined && typeof net[field] !== "string") {
+      const errorMsg = `情報網資料格式錯誤 (${field} 必須是字串)`;
+      if (previous) return NetworkIndex.createStale(previous, errorMsg);
+      return NetworkIndex.createError(errorMsg);
+    }
+  }
+
   if (expectedSnapshotId) {
     if (!net.snapshotId || !net.snapshotId.trim()) {
       const errorMsg = `情報網缺少快照版本 (期望 ${expectedSnapshotId}，實收無版本)`;
@@ -342,6 +385,13 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   const scopeNet = net[scope];
   if (!scopeNet || typeof scopeNet !== "object") {
     const errorMsg = `情報網未包含 ${scope} 領域資料`;
+    if (previous) return NetworkIndex.createStale(previous, errorMsg);
+    return NetworkIndex.createError(errorMsg);
+  }
+
+  const shapeError = scopeShapeError(scopeNet);
+  if (shapeError) {
+    const errorMsg = `情報網資料格式錯誤 (${shapeError})`;
     if (previous) return NetworkIndex.createStale(previous, errorMsg);
     return NetworkIndex.createError(errorMsg);
   }
