@@ -1,6 +1,8 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
+import { createHash } from "node:crypto";
 import { filterEvents } from "../src/data/loader";
 import type { IntelEvent } from "../src/types/event";
+import type { CohortManifest } from "../src/data/manifest";
 
 const base: IntelEvent = {
   id: "1",
@@ -180,11 +182,24 @@ describe("loadEvents / loadMapEvents 有界載入", () => {
       (_input, init) =>
         new Promise<Response>((_resolve, reject) => {
           const signal = (init as RequestInit | undefined)?.signal;
+          if (signal?.aborted) {
+            reject(signal.reason ?? new DOMException("aborted", "AbortError"));
+            return;
+          }
           signal?.addEventListener("abort", () =>
             reject(signal.reason ?? new DOMException("aborted", "AbortError")),
           );
         }),
     );
+
+  const lockedMapManifest = (): CohortManifest => ({
+    manifestVersion: 1, snapshotId: "owned-map-timeout", generatedAt: "2026-10-09T00:00:00.000Z", rulesVersion: "correlate-v1",
+    scopes: {
+      domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+      international: { events: "international.json", map: "international.map.json", network: "network.json" },
+    },
+    files: { "domestic.map.json": { path: "domestic.map.json", sha256: createHash("sha256").update("[]").digest("hex"), bytes: 2 } },
+  });
 
   it("loadEvents 逾時後 reject（TimeoutError），不永久佔住呼叫端", async () => {
     const { loadEvents } = await import("../src/data/loader");
@@ -198,8 +213,14 @@ describe("loadEvents / loadMapEvents 有界載入", () => {
 
   it("loadMapEvents 逾時後 fail-soft 回 null，不把等待丟給 first-paint", async () => {
     const { loadMapEvents } = await import("../src/data/loader");
-    hangUntilAborted();
-    await expect(loadMapEvents("domestic", { timeoutMs: 5 })).resolves.toBeNull();
+    const fetchSpy = hangUntilAborted();
+    await expect(loadMapEvents("domestic", { manifest: lockedMapManifest(), timeoutMs: 5 })).resolves.toBeNull();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe("./data/domestic.map.json");
+    const signal = fetchSpy.mock.calls[0]?.[1]?.signal;
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal?.aborted).toBe(true);
+    expect(signal?.reason?.name).toBe("TimeoutError");
   });
 
   it("呼叫端 signal abort 時 loadEvents 立即放棄，不等預設逾時", async () => {
@@ -209,5 +230,20 @@ describe("loadEvents / loadMapEvents 有界載入", () => {
     const promise = loadEvents("domestic", { signal: controller.signal, timeoutMs: 60_000 });
     controller.abort();
     await expect(promise).rejects.toThrow();
+  });
+
+  it("呼叫端 signal abort 時具名 map 真正中止已開始的 fetch", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const fetchSpy = hangUntilAborted();
+    const controller = new AbortController();
+    const promise = loadMapEvents("domestic", { manifest: lockedMapManifest(), signal: controller.signal, timeoutMs: 60_000 });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe("./data/domestic.map.json");
+    const signal = fetchSpy.mock.calls[0]?.[1]?.signal;
+    expect(signal).toBeInstanceOf(AbortSignal);
+    controller.abort();
+    await expect(promise).resolves.toBeNull();
+    expect(signal?.aborted).toBe(true);
+    expect(signal?.reason).toBe(controller.signal.reason);
   });
 });

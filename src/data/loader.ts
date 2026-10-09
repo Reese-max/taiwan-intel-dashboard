@@ -160,17 +160,18 @@ export async function loadEvents(scope: Scope, options?: LoadEventsOptions): Pro
   return (await res.json()) as IntelEvent[];
 }
 
-// 地圖 first-paint 精簡點：只含可定位事件與地圖/篩選所需欄位，體積遠小於完整 <scope>.json，
-// 讓地圖標點不必等完整事件即可先繪。載入失敗（如尚未產出或 hash 不符）回 null，呼叫端 fallback 至完整事件。
+// 地圖 first-paint 是效能最佳化，不是資料一致性的例外路徑。
+// 低階入口也須先鎖定 manifest 及具名 map；缺少任一契約即回 null，交由完整 refresh 補繪。
 export async function loadMapEvents(scope: Scope, options?: LoadEventsOptions): Promise<IntelEvent[] | null> {
-  const manifestFile = options?.manifest?.scopes?.[scope]?.map;
-  const url = options?.url ?? (manifestFile ? `./data/${manifestFile}` : `./data/${scope}.map.json`);
-  const expectedSha256 =
-    options?.expectedSha256 ??
-    (manifestFile ? options?.manifest?.files?.[manifestFile]?.sha256 : undefined);
-  // manifest 模式 fail-closed：具名檔沒有對應 hash 即契約不完整，不晉級無法驗證的產物。
-  // （scopes.*.sha256 是事件檔 hash，不是地圖檔的合法備援，不可借用。）
-  if (options?.manifest && !expectedSha256) return null;
+  const manifest = options?.manifest;
+  if (!manifest) return null;
+
+  const manifestFile = manifest.scopes?.[scope]?.map;
+  if (!manifestFile) return null;
+
+  const expectedSha256 = options?.expectedSha256 ?? manifest.files?.[manifestFile]?.sha256;
+  if (!expectedSha256) return null;
+  const url = options?.url ?? `./data/${manifestFile}`;
 
   try {
     const res = await fetch(url, { signal: eventsFetchSignal(options) });

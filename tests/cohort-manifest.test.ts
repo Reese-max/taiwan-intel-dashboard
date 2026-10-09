@@ -1,10 +1,24 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { buildCohortManifest, writeCohortManifest } from "../scripts/lib/manifest.mjs";
 import { loadManifest, type CohortManifest } from "../src/data/manifest";
 
 const TEMP_DIR = join(process.cwd(), "temp-test-manifest");
+
+const directMapBody = JSON.stringify([{ id: "owned-direct-map", title: "已驗證地圖點位", scope: "domestic", lat: 25.03, lng: 121.56, locationPrecision: "city" }]);
+const directMapHash = createHash("sha256").update(directMapBody).digest("hex");
+function directMapManifest(): CohortManifest {
+  return {
+    manifestVersion: 1, snapshotId: "owned-direct-map", generatedAt: "2026-10-09T00:00:00.000Z", rulesVersion: "correlate-v1",
+    scopes: {
+      domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+      international: { events: "international.json", map: "international.map.json", network: "network.json" },
+    },
+    files: { "domestic.map.json": { path: "domestic.map.json", sha256: directMapHash, bytes: Buffer.byteLength(directMapBody) } },
+  };
+}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -140,6 +154,73 @@ describe("Cohort Manifest (Work package D2)", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network offline"));
     const loadedOffline = await loadManifest();
     expect(loadedOffline).toBeNull();
+  });
+
+  it("first-paint 未鎖定 manifest 時 fail-closed，舊 map 不得被 fetch 或晉級", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    const result = await loadMapEvents("domestic");
+
+    expect(result).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("first-paint manifest 缺少 map hash 時 fail-closed，不允許未驗證產物晉級", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const manifest: CohortManifest = {
+      manifestVersion: 1,
+      snapshotId: "cohort-s2",
+      generatedAt: "2026-09-17T00:00:00.000Z",
+      rulesVersion: "correlate-v1",
+      scopes: {
+        domestic: { events: "domestic.json", map: "domestic.map.json", network: "network.json" },
+        international: { events: "international.json", map: "international.map.json", network: "network.json" },
+      },
+      files: {},
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    const result = await loadMapEvents("domestic", { manifest });
+
+    expect(result).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, null])("URL/hash 覆寫不能繞過鎖定 manifest（%s）", async (manifest) => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(directMapBody));
+    const result = await loadMapEvents("domestic", { manifest, url: "./data/owned-override.map.json", expectedSha256: directMapHash });
+    expect(result).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("URL/hash 覆寫不能繞過 manifest 具名 map", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const manifest = directMapManifest();
+    delete (manifest.scopes.domestic as Partial<CohortManifest["scopes"]["domestic"]>).map;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(directMapBody));
+    const result = await loadMapEvents("domestic", { manifest, url: "./data/owned-override.map.json", expectedSha256: directMapHash });
+    expect(result).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("低階入口具名 manifest/hash 相符時仍載入完整地圖陣列", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(directMapBody));
+    expect(await loadMapEvents("domestic", { manifest: directMapManifest() })).toEqual(JSON.parse(directMapBody));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe("./data/domestic.map.json");
+  });
+
+  it("低階入口具名 manifest 存在時保留明示 URL/hash 覆寫相容性", async () => {
+    const { loadMapEvents } = await import("../src/data/loader");
+    const manifest = directMapManifest();
+    manifest.files["domestic.map.json"] = { path: "domestic.map.json", sha256: "a".repeat(64), bytes: Buffer.byteLength(directMapBody) };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(directMapBody));
+    expect(await loadMapEvents("domestic", { manifest, url: "./data/owned-override.map.json", expectedSha256: directMapHash })).toEqual(JSON.parse(directMapBody));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe("./data/owned-override.map.json");
   });
 
   it("loadEvents 與 loadMapEvents 在 SHA-256 不符時拒絕晉級（防跨部署混 cohort）", async () => {
