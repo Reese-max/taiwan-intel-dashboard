@@ -110,6 +110,8 @@ function trimNetwork(net) {
 }
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
 for (const f of readdirSync(DATA_DIR)) {
+  // 這兩份衍生 map 由本輪事件產生，不能再被輸入中的舊投影覆蓋。
+  if (f === "domestic.map.json" || f === "international.map.json") continue;
   if (TRIM_FIELDS.has(f)) {
     const arr = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
     const trimmed = Array.isArray(arr) ? arr.map(trimEvent) : arr;
