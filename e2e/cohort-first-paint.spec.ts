@@ -69,13 +69,21 @@ test("部署競態：manifest 先於 map 請求；hash 不符的 S1 產物永不
     // cluster bubble 是 DOM（divIcon）：記錄 S1 特有的「3」泡泡是否曾出現，
     // 即使之後被 refresh 重繪覆蓋也能抓到瞬間晉級。
     (window as unknown as { __sawS1: boolean }).__sawS1 = false;
-    new MutationObserver(() => {
-      document.querySelectorAll(".map-cluster-hit").forEach((el) => {
+    new MutationObserver((records) => {
+      const candidates = Array.from(document.querySelectorAll(".map-cluster-hit"));
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (!(node instanceof Element)) continue;
+          if (node.matches(".map-cluster-hit")) candidates.push(node);
+          candidates.push(...node.querySelectorAll(".map-cluster-hit"));
+        }
+      }
+      candidates.forEach((el) => {
         if (el.textContent?.trim() === "3") {
           (window as unknown as { __sawS1: boolean }).__sawS1 = true;
         }
       });
-    }).observe(document.documentElement, { childList: true, subtree: true });
+    }).observe(document, { childList: true, subtree: true });
   });
 
   await page.route("**/data/*.json", async (route) => {
