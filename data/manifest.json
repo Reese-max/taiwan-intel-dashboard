@@ -1,0 +1,59 @@
+{
+  "manifestVersion": 1,
+  "snapshotId": "cohort-20261011-e0f5c722",
+  "generatedAt": "2026-10-11T06:02:31.547Z",
+  "rulesVersion": "correlate-v1",
+  "scopes": {
+    "domestic": {
+      "events": "domestic.json",
+      "map": "domestic.map.json",
+      "network": "network.json",
+      "eventCount": 7903,
+      "sha256": "06bdf00f0228f33ffeafc15055ef76dbf2c9901a692f84737417940b1ed40094"
+    },
+    "international": {
+      "events": "international.json",
+      "map": "international.map.json",
+      "network": "network.json",
+      "eventCount": 3200,
+      "sha256": "0c3e64f07c62bd3829cd179f9eafef7a81af9552e99e9f400d34370fb0fec366"
+    }
+  },
+  "files": {
+    "domestic.json": {
+      "path": "domestic.json",
+      "sha256": "06bdf00f0228f33ffeafc15055ef76dbf2c9901a692f84737417940b1ed40094",
+      "bytes": 14532099,
+      "count": 7903
+    },
+    "domestic.map.json": {
+      "path": "domestic.map.json",
+      "sha256": "c63b7046fb8fdd61caeac0386fc0cc7da72e6d80a008c6fa403bee5fc97800b3",
+      "bytes": 3094735,
+      "count": 9301
+    },
+    "international.json": {
+      "path": "international.json",
+      "sha256": "0c3e64f07c62bd3829cd179f9eafef7a81af9552e99e9f400d34370fb0fec366",
+      "bytes": 4553890,
+      "count": 3200
+    },
+    "international.map.json": {
+      "path": "international.map.json",
+      "sha256": "a71b185e898aea8531948a47c055497d2250c44237e5b61b16ab6e9da940dc9d",
+      "bytes": 6892,
+      "count": 18
+    },
+    "network.json": {
+      "path": "network.json",
+      "sha256": "4e667749b8d7cb7627e340688861211e89db64c466b2f77afda657520bac1735",
+      "bytes": 14073128,
+      "snapshotId": "cohort-20261011-e0f5c722"
+    },
+    "summary.json": {
+      "path": "summary.json",
+      "sha256": "850f1dfe04db5c0a4d227c17b24d9936f5d090f397205e42ebb26f68ecfc5818",
+      "bytes": 3773
+    }
+  }
+}

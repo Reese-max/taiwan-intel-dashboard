@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-10-11T06:02:31.547Z",
+  "windowHours": 24,
+  "windowStart": "2026-10-10T06:02:31.547Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 788,
+    "accepted": 418,
+    "rejected": 370
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "26歲男好奇「尿道塞24顆珠子」！18公分珠鍊打死結卡膀胱 醫動刀驚揭恐怖下場",
+        "link": "https://www.mirrormedia.mg/story/20261011edi019",
+        "pubDate": "Sun, 11 Oct 2026 14:01:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "總統與史瓦帝尼國王參訪航指部 登黑鷹直升機體驗",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5602599",
+        "pubDate": "Sun, 11 Oct 2026 14:00:55 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "總統賴清德今（11）日陪同邦交國史瓦帝尼王國國王恩史瓦帝三世，參訪陸軍航空飛行訓練指揮部營區，恩史瓦帝三世不僅體驗飛行模擬機，並實際登上黑鷹通用直升機。賴清德說，希望未來台灣與...…"
+      },
+      {
+        "title": "台股 5 萬點前高檔震盪，渣打：企業獲利跑贏股價，漲勢仍有基本面支撐",
+        "link": "https://finance.technews.tw/2026/10/11/what-driving-taiwan-stocks-toward-50000/",
+        "pubDate": "Sun, 11 Oct 2026 06:00:00 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "近期台股在全球資金行情與 AI 權值股帶動下屢創新高，距離 5 萬點大關僅一步之遙。然而，5 萬點前似乎還有一 [&#8230;]"
+      },
+      {
+        "title": "陳信秀、何欣純聯合競選成立！ 陳信秀：有信心將北屯第3席拚回來",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5602629",
+        "pubDate": "Sun, 11 Oct 2026 13:56:18 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨台中市北屯區市議員參選人陳信秀與市長參選人何欣純聯合競選總部今天成立，交通部長陳世凱、衛生福利部政務次長林靜儀、立法院民進黨黨團總召蔡其昌皆來站台，陳世凱及林靜儀盛讚陳信...…"
+      },
+      {
+        "title": "李四川獲客家鄉親熱情力挺 提哈客館12年15館、改善教師待遇",
+        "link": "https://news.ltn.com.tw/news/NewTaipei/breakingnews/5602616",
+        "pubDate": "Sun, 11 Oct 2026 13:55:03 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國民黨新北市長參選人李四川今（11日）出席新北市客家義民爺文化祭「千人挑擔奉飯創意踩街」，受客家鄉親熱烈歡迎爭相簽名、合影。李四川強調，將秉持客家硬頸精神全力推動各項建設，並具...…"
+      },
+      {
+        "title": "桃園「大秘寶」是他！黃世杰成動漫角色 幽默喊：我現在瘦10幾公斤",
+        "link": "https://news.ltn.com.tw/news/Taoyuan/breakingnews/5602644",
+        "pubDate": "Sun, 11 Oct 2026 13:53:38 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "年底選戰進入倒數計時，各式選舉花絮不斷，參選人更成為漫畫創作的主角。近日網路流傳由知名漫畫家韋蘺若明創作的趣味漫畫，故事最後的「桃園大秘寶」竟然就是民進黨桃園市長參選人黃世杰，...…"
+      },
+      {
+        "title": "探究美濃野蓮產業、屏東站前商圈 屏中奪地理奧林匹亞金、銀牌",
+        "link": "https://news.ltn.com.tw/news/Pingtung/breakingnews/5602643",
+        "pubDate": "Sun, 11 Oct 2026 13:52:02 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國立屏東高中學生組成2支隊伍，參加今年第25屆高中地理奧林匹亞競賽，探究美濃野蓮產業、屏東車站高架化對站前商圈影響，一舉抱回地理專題組金牌、銀牌，展現扎實的地理探究能力與研究實...…"
+      },
+      {
+        "title": "沈伯洋邀4場辯論 蔣萬安籲協商雙邊同意場次細節",
+        "link": "https://www.cna.com.tw/news/aipl/202610110100.aspx",
+        "pubDate": "Sun, 11 Oct 2026 13:50:35 +0800",
+        "source": "中央社 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "（中央社記者楊淑閔台北11日電）選情趨熱，昨晚民進黨台北市長參選人沈伯洋當面遞出4場辯論邀請，市長蔣萬安今天受訪時表示，不是喊愈多場就愈贏，並呼籲沈伯洋團隊出席雙方已同意的電視台辯論細節協商。"
+      },
+      {
+        "title": "秋日美人櫻開了！新北2大賞花秘境曝光 淡水300株美到11月",
+        "link": "https://news.ltn.com.tw/news/NewTaipei/breakingnews/5602628",
+        "pubDate": "Sun, 11 Oct 2026 13:49:21 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "秋風送爽，素有「秋日美人櫻」美名的美人樹接棒登場，為新北換上粉嫩秋裝。新北市綠美化環境景觀處推薦淡水奎柔山路、三峽安溪翠堤兩大秘境，淡水2公里路段植有逾300株、花況已近7成並...…"
+      },
+      {
+        "title": "曾遇恐怖情人！親揭前男友們NG行徑 鍾欣怡勸兒女：要人改不如換人愛 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMiqgNBVV95cUxPVUtXbV9KS0tybG5qV0xEREpJZG1QTmYzblI2aHdrWF9aZzJtU2dtUDVZQVFiN1Y3V0dVWkl2SDZOb1BzQ1FmRnN6TEUyR0IwSFNHTEpSLVQyTE4zalNhWWEzdXBqZFUzMzkwR2NQTE9NYVcwaTNVb1N5RG1SZmFYby1senA2ZDFuQnZ0MEhNUFFwUGNFamtBU1FOQU9Na1paNFJ6UmtZTHhqMkJyZHctdzBDSWY4OXl0VU9WdXB5Q3JhdjZoUzZCSjBjTG5ndmxyZnlKMURENllWTTI1WmdzMEE3R0w2RWVRYVA5UnpjMDVnUDhtbkhoNE82TGJ1cE1aSndITHR5V1lrVFpxS3Q4RURQa05NZkNFNEVSTXp0NmhiUTBqcVdmcmZpMEwxelRpSWFDVEpEOWl2Ml91emVha2xCcUFlNG9LR3U1MGFHdm44TUFkSEpwMVBZQ1o4MTFBUGw4VE5aYkR0T1RTS0FPNUVBRlpNVnVXYm1WemdmUmNhQ05IWWJZZjI1RXdYRnhiYnpYdk8tdXdadDRIdGF5MkVuQV90N1FTb2c?oc=5",
+        "pubDate": "Sun, 11 Oct 2026 05:45:13 GMT",
+        "source": "GN 跟蹤騷擾",
+        "hint": "治安",
+        "authority": "media",
+        "description": "曾遇恐怖情人！親揭前男友們NG行徑 鍾欣怡勸兒女：要人改不如換人愛 Yahoo新聞"
+      },
+      {
+        "title": "鄭麗文台中為議員站台 批中央能源政策籲挺重啟核電",
+        "link": "https://www.cna.com.tw/news/aipl/202610110097.aspx",
+        "pubDate": "Sun, 11 Oct 2026 13:44:29 +0800",
+        "source": "中央社 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "（中央社記者蘇木春台中11日電）中國國民黨黨主席鄭麗文今天為黨籍台中市議員蘇柏興站台，她讚許蘇深耕基層，並批中央能源政策，呼籲支持重啟核電公投與藍營人選。"
+      },
+      {
+        "title": "桃捷綠線首階段通車倒數 黃世杰質疑缺乏配套、拋「3級公車路網」",
+        "link": "https://news.ltn.com.tw/news/Taoyuan/breakingnews/5602609",
+        "pubDate": "Sun, 11 Oct 2026 13:43:17 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨桃園市長參選人黃世杰、蘆竹區爭取連任的議員許清順聯合競選總部今（11）日舉行成立造勢大會，總統府副秘書長何志偉、立委張雅琳、新北市議員戴瑋姍及基層里長、地方仕紳站台力挺，...…"
+      },
+      {
+        "title": "不斷電系統避免交通號誌受停電影響 中市審計處：涵蓋率不夠",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5602495",
+        "pubDate": "Sun, 11 Oct 2026 13:42:13 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "中市交通局避免因停電影響交通號誌運作設不斷電系統，審計部台中市審計處表示，有部分車流量高的路口尚未建置不斷電系統，建議市府要評估建置的需求。 交通局表示，考量預算有限，綜合評...…"
+      },
+      {
+        "title": "競總變身「城市沙龍」！鄭朝方競總開箱 發言人帶路分享竹北施政",
+        "link": "https://news.ltn.com.tw/news/HsinchuCounty/breakingnews/5602640",
+        "pubDate": "Sun, 11 Oct 2026 13:41:42 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨新竹縣長參選人鄭朝方昨（10）日舉辦別開生面「競選總部開箱沙龍」，打破傳統競總偏重造勢與選務的形式，由競總發言人蘇愛婷帶路，引領「縣民主委」走訪空間，分享竹北近年來的改變...…"
+      },
+      {
+        "title": "王美惠將成立競總 張啓楷預告向總統遞交陳情書",
+        "link": "https://www.cna.com.tw/news/aipl/202610110096.aspx",
+        "pubDate": "Sun, 11 Oct 2026 13:41:27 +0800",
+        "source": "中央社 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "（中央社記者黃國芳嘉義市11日電）民進黨嘉義市長參選人王美惠今晚將舉行競選總部成立大會，兼任民進黨主席的總統賴清德將站台；民眾黨嘉義市長參選人張啓楷預告將當面向賴總統遞交陳情書，為市民爭取權益。"
+      },
+      {
+        "title": "台中藍白合 何欣純：心存祝福",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5602601",
+        "pubDate": "Sun, 11 Oct 2026 13:39:20 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台灣民眾黨台中市議員江和樹今天舉行競選總部成立大會，台中市長盧秀燕、國民黨台中市長參選人江啟臣及藍委楊瓊瓔、黃健豪及羅廷瑋等藍營要角站台，展現「台中藍白合」氣勢；民進黨台中市長...…"
+      },
+      {
+        "title": "日台友好聯盟訪台賀國慶 古屋圭司籲國際守護台海和平",
+        "link": "https://news.pts.org.tw/article/830833",
+        "pubDate": "2026-10-11T13:38:34+08:00",
+        "source": "公視新聞",
+        "hint": "治安",
+        "authority": "media",
+        "description": "日本國會最大跨黨派友台團體「日本台灣友好議員聯盟」，於我國國慶期間率團訪台，會長古屋圭司除了強調會竭盡全力，促進台日友好關係，也認同賴總統，在國慶大會上提到「打造山巔之城」的說法，認為日本、台灣、美國，以及其他民主國家，應強化合作、守護台海和平。"
+      },
+      {
+        "title": "沙國首都機場遇襲12死逾3百傷 一週以來第三度遭攻擊",
+        "link": "https://news.pts.org.tw/article/830832",
+        "pubDate": "2026-10-11T13:38:04+08:00",
+        "source": "公視新聞",
+        "hint": "治安",
+        "authority": "media",
+        "description": "沙烏地阿拉伯首都利雅德的國際機場，一週內三度遭到攻擊，最新一起造成12人死亡、309人受傷，機場一度全面停擺。這一連串攻擊，也暴露沙國防空系統的漏洞。美國總統川普表示，不排除加入沙國對葉門青年運動的空襲行動，讓中東戰火面臨，進一步擴大的風險。"
+      },
+      {
+        "title": "與台灣建交58週年 史瓦帝尼國王第二十度率團訪台",
+        "link": "https://news.pts.org.tw/article/830831",
+        "pubDate": "2026-10-11T13:37:33+08:00",
+        "source": "公視新聞",
+        "hint": "治安",
+        "authority": "media",
+        "description": "今（2026）年是台灣跟史瓦帝尼王國建交58週年，已來訪多次的國王恩史瓦帝三世，因應昨（10）日的國慶大會，第20次率團訪台。今（11）日上午更與總統賴清德一同南下台南，參訪陸軍航空，飛行訓練指揮部，了解國軍戰力及培訓狀況。"
+      },
+      {
+        "title": "沈伯洋盼4場辯論且有交叉詰問 蔣萬安：不是喊越多場就贏",
+        "link": "https://news.pts.org.tw/article/830830",
+        "pubDate": "2026-10-11T13:37:12+08:00",
+        "source": "公視新聞",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北市長選舉是否舉辦市政辯論，備受關注。昨（10）日晚民進黨參選人沈伯洋，在萬華參加活動時，當場向對手台北市長蔣萬安，提出辯論意向書，希望雙方能夠至少有4場辯論，且能「交叉詰問」。而蔣萬安則呼籲沈伯洋陣營，週一（12日）要派人參加TVBS的辯論協調會，並強調不是喊越多場就越贏。"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "雙十連假2起山難空勤直升機馳援| 社會 - Newtalk新聞",
+        "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBIakZ6QUQ0b21XZGw5S3lKWGNyVzZhci00cm1VSjBSdVhNYVpCOVpaWksyaXZhNG4tdmdjOEJmQjVsRi11dTA4YllNenZrelJoMFpiT1JDNE1PVHM?oc=5",
+        "pubDate": "Sun, 11 Oct 2026 05:55:03 GMT",
+        "source": "GN 山難海難",
+        "hint": "災防",
+        "authority": "media",
+        "description": "雙十連假2起山難空勤直升機馳援| 社會 Newtalk新聞"
+      },
+      {
+        "title": "雙十連假2起山難 空勤直升機馳援",
+        "link": "https://newtalk.tw/news/view/2026-10-11/1064838",
+        "pubDate": "Sun, 11 Oct 2026 13:55:03 +0800",
+        "source": "Newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "空勤總隊花蓮駐地勤務第一大隊第三隊黑鷹直升機，11日連續出動執行2起高山救援任務。先是前往牡丹池山域搜尋失聯黃姓山友，隨後轉往八大秀路線的白洋金礦山屋，成功把右腳疑似骨折無法行走的山友救援下山。（空勤總隊花蓮駐地勤務第一大隊第三隊提供）中央社記者李先鳳傳真 115年10月11日 Newtalk新聞 （中央社記者李先鳳花蓮縣11日電）5名山友攀登北三段，其中黃姓山友爬牡丹岩失聯，空勤直升機搭載搜救人"
+      },
+      {
+        "title": "將軍澳住宅變詐騙電話中心 「貓池」狂打2.3萬電話 24歲男被捕 - 香港01",
+        "link": "https://news.google.com/rss/articles/CBMi_AJBVV95cUxOR0txSnVzdkItQXZmcVVzc3F6Z2d4RnJVYnh1eGZ5UzdHcU1SVWRPX1U0S21SNHJJU2gtS1FRdGJyRUtVSy1jNmFRYzRfYUpUOUFUcXhybGtlckVLeW1FdVQ1NG0yZzVVejIwR0xNQWVjSmFNWmMwV3kyYnZ0SGY4VW02YmJRU2RNX2tVQWdlcmJtdGpXU3ljTUhTZ1I5cEpkWHR3a0oxLUJJWEFadnAzWGRjc2VmUXFvSTI3VzNQYkdsMXRoZHMwaFhJcko3V1RzeGhXcVNwVlNZbXBlRFUxdk1Cai1vN0dlbjE5LUtXcjJTUlZhLW5SU2pTZ3lYTlBDM1lNN1hnd0xKdkF4WjZ1SVg4YUdSaC1OSUU5b1d2TXQ3RWd0OXRnR2hWcG0zRFdJTkpOS2pDd0hzb2s1dHEwcXItYW90LXhLWVdHUEotM2ZISWdhYlZuV3RlRXRiTGhIcFNldWpiNEdaTTZOMi1YU0FkbVZDUHhFclVUUQ?oc=5",
+        "pubDate": "Sun, 11 Oct 2026 05:50:04 GMT",
+        "source": "GN 詐騙逮捕",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "將軍澳住宅變詐騙電話中心 「貓池」狂打2.3萬電話 24歲男被捕 香港01"
+      },
+      {
+        "title": "國慶連假爛醉上路！員林男酒測0.87狂撞民宅「烏龜翻」",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5602636",
+        "pubDate": "Sun, 11 Oct 2026 13:39:38 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "彰化縣員林市員集路二段今天（11日）凌晨發生一起驚險車禍，江姓男子酒後駕車行經該路段時，突然失控偏離車道，先擦撞路邊停放的休旅車，再猛力撞上民宅，強大撞擊力道讓整輛車180度翻...…"
+      },
+      {
+        "title": "國慶連假收假日 國五北向部分路段已現壅塞",
+        "link": "https://news.pts.org.tw/article/830836",
+        "pubDate": "2026-10-11T13:39:25+08:00",
+        "source": "公視新聞",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國慶連假最後一天，高公局預估，國道全線交通量大約110百萬車公里，國5北向宜蘭到坪林路段，已經出現壅塞車潮，台鐵因應國慶連假返工需求，東部幹線開放新自強號無座票。至於，天氣部分，週三（14日）開始因東北季風增強影響，北部低溫可能略降1℃到2℃，迎風面地區包含基隆北海岸、東半部等，可能有局部短暫陣雨。"
+      },
+      {
+        "title": "國慶焰火引卑南溪濕地火警 保育團體憂影響生態",
+        "link": "https://news.pts.org.tw/article/830834",
+        "pubDate": "2026-10-11T13:38:59+08:00",
+        "source": "公視新聞",
+        "hint": "治安",
+        "authority": "media",
+        "description": "今（2026）年國慶焰火在台東市卑南溪出海口施放，吸引全國超過5萬名民眾前往觀賞，不過在過程也發生零星意外，有民眾開車卡在溪床，還有焰火在卑南溪國家級濕地引發火警，保育團體擔心生態受影響。"
+      },
+      {
+        "title": "女醫師遇上假檢警被騙4百萬 警方將計就計逮到3車手",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5602625",
+        "pubDate": "Sun, 11 Oct 2026 13:37:03 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北市一名王姓女醫師日前接獲詐騙集團亂槍打鳥的詐騙電話，對方謊稱他名下帳戶被人盜用涉及詐欺罪，必須要將名下財產交付保管，「否則就是共犯！」她信以為真，交付4百萬元後，沒想到對方...…"
+      },
+      {
+        "title": "林口男子駕車拒檢逃逸5公里 失控撞警車搜出毒品",
+        "link": "https://news.pts.org.tw/article/830829",
+        "pubDate": "2026-10-11T13:36:46+08:00",
+        "source": "公視新聞",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國內毒害問題嚴重，新北市林口有60歲男子，拒檢逃逸5公里，失控撞上警車才落網，被搜出持有依托咪酯煙彈等毒品；板橋則有警方，跨區搜索製毒據點，嫌犯趁員警破門前跳窗、開車逃逸，前後躲藏2小時，最後3名製毒與販毒嫌犯，在土城的汽車旅館落網。"
+      },
+      {
+        "title": "麥寮王船文化祭開幕 「雙媽」四百年來首碰面",
+        "link": "https://news.pts.org.tw/article/830828",
+        "pubDate": "2026-10-11T13:36:15+08:00",
+        "source": "公視新聞",
+        "hint": "治安",
+        "authority": "media",
+        "description": "雲林縣麥寮鄉公所舉辦五年一科「麥寮王船文化祭」活動今（11）日正式開幕，上午重頭戲之一，就是麥寮拱範宮的開山媽祖，與苗栗拱天宮白沙屯媽祖的「雙媽會」，這次雙媽400年來首次碰面，上千民眾齊聚麥寮鄉公所前，要搶著目睹雙媽同框的歷史性畫面。"
+      },
+      {
+        "title": "涉向餐飲集團寄30封恐嚇信追數 警拘裝修公司負責人及職員 (13:33) - 20261011 - 港聞 - 明報新聞網",
+        "link": "https://news.google.com/rss/articles/CBMivwNBVV95cUxPNF9CclMyaXZoQlM5VnE4YjdoMVJwemlmb09XdlF6ZVJ0QUNhQ0pBWmdpVFBnQ2pLeFhKYm5Oa1phOW4zbTQxUm5iVWk4RTJKM0gwWVp0a3FaNFdMbG9vS29mdE1OWkFFbEhEWm9yWXJWNWpwT0JNSFlWYVFsV21iU001S2VJX3VpY0JmV2haVTY4ZUM0amZUYllMYXp2Qml0OFBnU1BleHVIZDYtTzBib2taa0JlNjJpMzNaTFgyd1hyUmdJOWROUTdXc2NRUjlrQXlIcUNEQ2RQX0JPWjVCTE53SUxaRVhuQ0Y5Q1AwdkMwLVptSk9EYU90X0QxV19SQjB2WnJxNEg4NDFCZERyQXJNVWZkNG1tTEtxLVVMUWRWRVlyRVdOSXZZRWViTGJiMGgybTFJUVdPNC1WYmo1WDJyaTdpeXJOZndVbXZod0JZUkh5ejFtWWxTLVFhSUY4MzJYOHlIZE5xYkFVNUtWdkw5cWhhbHVUS1pUcmhTbUVtLXVKMjJYTzBtN1hBSGhBTVU3ZGZKaDFjTDNyQ3NyajJQX0pOMGdQUTdRMk43TFc0a3RSakRvZ1VjYk5yd2M?oc=5",
+        "pubDate": "Sun, 11 Oct 2026 05:33:51 GMT",
+        "source": "GN 妨害自由恐嚇",
+        "hint": "治安",
+        "authority": "media",
+        "description": "涉向餐飲集團寄30封恐嚇信追數 警拘裝修公司負責人及職員 (13:33) - 20261011 - 港聞 明報新聞網"
+      },
+      {
+        "title": "新店分局交通執法專案事故減少62％ 北宜公路加強取締逾70件",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5602617",
+        "pubDate": "Sun, 11 Oct 2026 13:29:47 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "為提升用路人安全，新北市警新店分局自今年7月起推動「交通事故防制執法專案」，透過大數據分析熱時、熱點與肇事因素，針對酒（毒）駕、超速、無照駕駛等易肇事違規全面加強取締，事故較去...…"
+      },
+      {
+        "title": "蘇巧慧、山田摩衣聯合競總成立 加速板橋醫療園區、推動浮洲軟體新創園區",
+        "link": "https://newtalk.tw/news/view/2026-10-11/1064829",
+        "pubDate": "Sun, 11 Oct 2026 13:22:08 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 新北市長候選人、立法委員蘇巧慧今（11）日出席「蘇巧慧、山田摩衣聯合競選總部成立大會」，現場民眾擠爆板橋「農村公園」，蘇巧慧一到場，群眾立刻高喊「未來市長好！」、「一定慧贏！」許多人拿帽子、手機殼、包包、小卡給蘇巧慧簽名，短短30公尺進場路線，眾人花了7分鐘才上台，氣氛相當熱烈。立法委員張宏陸、李坤 延伸閱讀： 蘇巧慧掃板橋湳雅夜市人氣旺！民眾夾道歡迎搶合照、簽名 蘇巧慧青商之"
+      },
+      {
+        "title": "外賣點餐遠端觀看廚師製作過程：國內推出食安監管封簽服務 - DCFever.com",
+        "link": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE01OURhak9HRV96TkVsNjlwSklnNHpTeko4djZ1RGUtNGZpWWdVeFdSb2IxdzhNQmtwWGMwVVZheTFfZzZSWFJhWEdob3ZWaHNMdExkcEY2NS0yd0hKOE0w?oc=5",
+        "pubDate": "Sun, 11 Oct 2026 05:16:00 GMT",
+        "source": "GN 食安黑心",
+        "hint": "食安",
+        "authority": "media",
+        "description": "外賣點餐遠端觀看廚師製作過程：國內推出食安監管封簽服務 DCFever.com"
+      },
+      {
+        "title": "狂熱男收押！搭公車聊政治被勸音量放小 竟重擊乘客倒地還猛踹 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9kVE9tWjY4UGRqOExnYjI0OWJ3NHp4UE5wQnpaNnFhOXpMZ3hmUDBBMWY5YzNzU01IOVo4eWI5NzdTQ3J3NGU0SDRPUTk0ZkNaVU9STEgtR2E4VDhqbWfSAUtBVV95cUxNRzRET00wa1pmR2ozVzA1bWE4Tnd4R3JYOG5KQUx1VDFSbExLckZiU2ZpS0RwOEVsZHNGSGpJTDZoRDU1eGNaclJ3cDA?oc=5",
+        "pubDate": "Sun, 11 Oct 2026 05:14:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "狂熱男收押！搭公車聊政治被勸音量放小 竟重擊乘客倒地還猛踹 ETtoday新聞雲"
+      },
+      {
+        "title": "假檢警得手400萬想再騙200萬 3車手「不到20歲」首次取款就被逮 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5WWTZuVEtycVRRQkNjNDMtcFYzc0k0SHU4czFJUDRLUXZlei1CSGRreENrUmJXRnFNVmpoRDZfTDdic0d0QV9EWExGVC14YWo0d0JfOHRUb3XSAVhBVV95cUxOVlk2blRLcnFUUUJDYzQzLXBWM3NJNEh1OHMxSVA0S1F2ZXotQkhka3hDa1JiV0ZxTVZqaEQ2X0w3YnNHdEFfRFhMRlQteGFqNHdCXzh0VG91?oc=5",
+        "pubDate": "Sun, 11 Oct 2026 05:13:38 GMT",
+        "source": "GN 假檢警監管帳戶",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "假檢警得手400萬想再騙200萬 3車手「不到20歲」首次取款就被逮 UDN"
+      },
+      {
+        "title": "假檢警得手400萬想再騙200萬 3車手「不到20歲」首次取款就被逮| 時事 - 聯合影音",
+        "link": "https://news.google.com/rss/articles/CBMiSkFVX3lxTE1lYTV4aGhCY3VFSmNXRVVTX2UzVWYxVXRpNW1tVXBNZ2piTG9FNWhGZXlaM1ljR05FYm9rYnVOVFdMNHRXREtuVnFn?oc=5",
+        "pubDate": "Sun, 11 Oct 2026 05:13:00 GMT",
+        "source": "GN 車手取款面交",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "假檢警得手400萬想再騙200萬 3車手「不到20歲」首次取款就被逮| 時事 聯合影音"
+      },
+      {
+        "title": "臉書社團上售管制安眠藥成「販毒未遂」 女子為賺1千判1年5月",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5602494",
+        "pubDate": "Sun, 11 Oct 2026 13:12:53 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "基隆一名丁姓女子今年2月13日，在臉書社團內刊登販售含有第四級毒品「咪達唑侖」成分的管制安眠藥「導美睡」，網路巡邏員警發現後，佯裝成買家購毒，最後真的收到丁女寄出的藥品，循線將...…"
+      },
+      {
+        "title": "國慶連假收假日國5北上車潮增 宜警估壅塞持續至晚間8時",
+        "link": "https://www.cna.com.tw/news/aloc/202610110088.aspx",
+        "pubDate": "Sun, 11 Oct 2026 13:10:10 +0800",
+        "source": "中央社 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "（中央社記者王朝鈺宜蘭11日電）今天是國慶連假最後1天，宜蘭縣政府警察局表示，國道5號北上車潮逐漸增加，預估北上易壅塞時段將持續至晚間8時，警方已提前部署警力全力疏導。"
+      },
+      {
+        "title": "快訊／高雄2歲女童疑遭虐亡…1歲弟也渾身傷 狠毒父母羈押禁見！ - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMihgNBVV95cUxOaUw3bTRMd19ST2Njd3paUzF6VzJYejg5SlRzSlpsQ3F5UWMwbllEQW9rZjlEQzdvS296X3U3OUNZX0llb2Ffa1MyeDZoREpXWENCZTQtaGo1OTVYVE9UZzZ5VGhRSDAxRkVNMXFxRFBQV19NempBZlFnWGlrOERTNzl0aEhMQnpPR25lWlBsTnhtb1NCSkkzMVkxbEx6MDMtYWFMSkJEbGtvQmtzSmF3Y243VXMxbmVsenpfWVZVX0E1aGduTlBZeVBvbGY4UUxMUDJpVk5FbFNVT2Y0LWF4UWhjS29MZ1dQbGNYdjd6eTgzb0lVSmduSk9ETkNfZEtCQnhlSGpDamV3TlBiZlZrblBnWFR1c2V6VUdUVHVmcFNBM19aUWtGVHFpbDA4eHpqc0JCcG45anBkUzNkLXRTMl8wVTBwNXVjZFcxeHVCd0t1bXNwRHVyOFRYd2RXUnNtRDd6TWJRQWxwWGNUeXZjcGRsTUZ5NU94QXM1aE5KbWFrOE1lNUE?oc=5",
+        "pubDate": "Sun, 11 Oct 2026 05:06:02 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "快訊／高雄2歲女童疑遭虐亡…1歲弟也渾身傷 狠毒父母羈押禁見！ Yahoo新聞"
+      },
+      {
+        "title": "信義警一日連破2起假投資詐欺案 詐團話術報你知 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMixwJBVV95cUxQZFBvX1QydVBlaHA5M19nZUYxbzRjeVExa0g1THB5OVBWUk1hZG9YaUU3NEFoSTNMRkxiNHB3TjFhRThPaFlCeEtnY1ZrYmc2WkpBYXBLQldWWkZ2YmhJYWlEcUYtbUN4MnI3d0tZNjROY1FqUWlwSE1hU2JOS1l0aGJ5N2JCc3ZDNTVRck12aHVscHhrU3pNOGFzQl9qZDV1eWliVkk1aUZkbW5IVktlY3JZVUJGNXVnNk1pZmF6X0tJRG50UGFhRkhaR1lLaE4yTkxobFZlZmVNQ01TUjJwdmZOTWNoQzBkMG1TTGFoR0lUVDc4ZklVcWYtN0VyNGJyQ0t3dWx5WGpFQV9aUVFhYlVWeERJOVhBZTVCZG1GNFlYdXdVeWhZcElveGg5XzdvZHhwM3plT3ZRSkRMTWZDd3ZBSDNvOVk?oc=5",
+        "pubDate": "Sun, 11 Oct 2026 05:01:59 GMT",
+        "source": "GN 假投資假交友",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "信義警一日連破2起假投資詐欺案 詐團話術報你知 Yahoo新聞"
+      }
+    ]
+  }
+}
