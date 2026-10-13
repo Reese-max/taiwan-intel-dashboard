@@ -15,11 +15,16 @@ import {
   writeCohortManifest,
   RULES_VERSION,
 } from "./lib/manifest.mjs";
+import {
+  CURATED_LEDGER_REL_PATH,
+  loadCurationLedger,
+} from "./lib/curation-ledger.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Source updates own public/data; static build alone creates a complete dist cohort.
 // BUILD_DATA_DIR 供 build 協調器（乾淨 checkout 的合成輸入）覆寫，預設不變。
 const DATA_DIR = process.env.BUILD_DATA_DIR ? resolve(process.env.BUILD_DATA_DIR) : join(ROOT, "public", "data");
+const CURATED_LEDGER_PATH = join(ROOT, CURATED_LEDGER_REL_PATH);
 
 // 監管 replay（detached worktree）有程式碼與依賴但沒有 pipeline-state 快照；
 // 僅限本機 replay 以最小 fixture 保持 hermetic，不允許任何託管 CI/CD 用假資料
@@ -88,7 +93,7 @@ function readEvents(name) {
   }
 }
 
-export function buildNetwork(domestic, international, nowIso, { snapshotId, rulesVersion = RULES_VERSION } = {}) {
+export function buildNetwork(domestic, international, nowIso, { snapshotId, rulesVersion = RULES_VERSION, curation } = {}) {
   const domesticNews = (domestic || []).filter(isNewsLikeEvent);
   const intlNews = (international || []).filter(isNewsLikeEvent);
   const sid =
@@ -99,8 +104,8 @@ export function buildNetwork(domestic, international, nowIso, { snapshotId, rule
     generatedAt: nowIso,
     rulesVersion,
     scopeNote: "情報網僅含新聞類事件（RSS / tw-news），排除政府模板化統計資料",
-    domestic: correlateEvents(domesticNews),
-    international: correlateEvents(intlNews),
+    domestic: correlateEvents(domesticNews, { curation, rulesVersion, scope: "domestic" }),
+    international: correlateEvents(intlNews, { curation, rulesVersion, scope: "international" }),
     excluded: {
       domestic: (domestic?.length || 0) - domesticNews.length,
       international: (international?.length || 0) - intlNews.length,
@@ -115,7 +120,8 @@ function main() {
   const domestic = readEvents("domestic.json");
   const international = readEvents("international.json");
   const nowIso = new Date().toISOString();
-  const net = buildNetwork(domestic, international, nowIso);
+  const curation = loadCurationLedger(CURATED_LEDGER_PATH);
+  const net = buildNetwork(domestic, international, nowIso, { curation });
   const contractErrors = validateNetworkContract(net);
   if (contractErrors.length) {
     throw new Error(`產物契約驗收失敗：\n${formatNetworkContractErrors(NETWORK_FILE, contractErrors)}`);
@@ -137,10 +143,16 @@ function main() {
 
   const d = net.domestic.stats;
   const i = net.international.stats;
+  const dc = net.domestic.curation;
+  const ic = net.international.curation;
+  const curationNote = curation.entries.length
+    ? `\n  人工更正：ledger ${curation.entries.length} 筆（國內 套用 ${dc.applied}／待複審 ${dc.needsReview}／衝突 ${dc.conflicts}；國際 套用 ${ic.applied}／待複審 ${ic.needsReview}／衝突 ${ic.conflicts}）`
+    : "";
   console.log(
     `情報網已產出 → data/network.json（排除政府模板資料 國內 ${net.excluded.domestic}／國際 ${net.excluded.international} 筆）\n` +
       `  國內新聞：${d.events} 事件、${d.edges} 連結（佐證 ${d.byType["same-incident"]}／實體 ${d.byType["same-entity"]}／同題 ${d.byType["same-topic"]}）、${d.clusters} 群集（最大 ${d.largestCluster}）\n` +
-      `  國際新聞：${i.events} 事件、${i.edges} 連結、${i.clusters} 群集`,
+      `  國際新聞：${i.events} 事件、${i.edges} 連結、${i.clusters} 群集` +
+      curationNote,
   );
 }
 
