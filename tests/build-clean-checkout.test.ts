@@ -300,7 +300,7 @@ describe("build site orchestration", () => {
 });
 
 describe("build scripts data directory", () => {
-  it("build-network 以 BUILD_DATA_DIR 產出情報網，既不寫 public/data 也不覆蓋 dist/data", () => {
+  it.each(["1", undefined])("build-network keeps built dist intact for synthetic flag %s", (syntheticFlag) => {
     const { dataDir, dispose } = makeWorkspace();
     const prepared = prepareCleanCheckoutBuild({ dataDir });
     // 在獨立 ROOT 執行：dist/data 事先放一份 sentinel，證明「不鏡射」是真的被驗到
@@ -319,7 +319,7 @@ describe("build scripts data directory", () => {
     try {
       const result = spawnSync(process.execPath, [join(root, "scripts", "build-network.mjs")], {
         encoding: "utf8",
-        env: { ...process.env, BUILD_DATA_DIR: prepared.dataDir, BUILD_SYNTHETIC_INPUT: "1" },
+        env: { ...process.env, BUILD_DATA_DIR: prepared.dataDir, BUILD_SYNTHETIC_INPUT: syntheticFlag },
       });
 
       expect(result.status).toBe(0);

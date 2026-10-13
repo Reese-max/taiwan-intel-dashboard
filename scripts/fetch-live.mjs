@@ -179,19 +179,13 @@ export function buildCategoryBasisDistribution(events = []) {
   return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b, "zh-Hant")));
 }
 
-const DIST_DATA_DIR = join(ROOT, "dist", "data");
-
 function writeJson(name, obj) {
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
   const json = JSON.stringify(obj, null, 2) + "\n";
   writeFileSync(join(DATA_DIR, name), json, "utf8");
-  // 若已有部署用 dist，同步寫入，使 prod 資料即時更新（不需重 build）
-  let synced = "";
-  if (!process.env.FETCH_LIVE_DATA_DIR && existsSync(DIST_DATA_DIR)) {
-    writeFileSync(join(DIST_DATA_DIR, name), json, "utf8");
-    synced = " (+dist)";
-  }
-  console.log(`  ✔ 寫入 ${name}${synced}`);
+  // A partial refresh must not mutate an already built cohort. npm run build
+  // promotes the complete source snapshot into dist with matching projections.
+  console.log(`  ✔ 寫入 ${name}`);
 }
 
 function readOld(name) {
@@ -1121,6 +1115,8 @@ export async function run() {
     DATA_DIR,
     buildCohortManifest({
       dataDir: DATA_DIR,
+      // Until static build regenerates map projections, use current event bytes.
+      includeMapProjections: false,
       snapshotId: network?.snapshotId,
       rulesVersion: RULES_VERSION,
       nowIso,
