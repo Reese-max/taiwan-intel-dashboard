@@ -290,7 +290,7 @@ function scopeShapeError(value: unknown): string | null {
   }
   for (const edge of value.edges) {
     if (!isRecord(edge) || !isNonEmptyString(edge.a) || !isNonEmptyString(edge.b) ||
-      typeof edge.type !== "string" || !["same-incident", "same-entity", "same-topic"].includes(edge.type) ||
+      typeof edge.type !== "string" || !["same-incident", "same-entity", "same-topic", "follow-up"].includes(edge.type) ||
       typeof edge.weight !== "number" || !Number.isFinite(edge.weight) || typeof edge.why !== "string") {
       return "領域 edge 的端點、類型、權重或原因格式錯誤";
     }
