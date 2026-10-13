@@ -12,7 +12,7 @@ import {
   existsSync,
   statSync,
 } from "node:fs";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { emptyDirContents } from "./lib/fs-safe.mjs";
 import { minifyOrCopyJson } from "./lib/minify-json.mjs";
 import { buildCohortManifest, writeCohortManifest } from "./lib/manifest.mjs";
@@ -24,6 +24,8 @@ const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
   throw new Error("BUILD_STATIC_OUT 只能指定專用產物目錄 dist");
 }
+// BUILD_DATA_DIR 供 build 協調器（乾淨 checkout 的合成輸入）覆寫，預設不變。
+const DATA_DIR = process.env.BUILD_DATA_DIR ? resolve(process.env.BUILD_DATA_DIR) : "public/data";
 if (existsSync(OUT)) emptyDirContents(OUT);
 mkdirSync(`${OUT}/assets`, { recursive: true });
 
@@ -110,11 +112,11 @@ function trimNetwork(net) {
 }
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
 const curation = loadCurationLedger(CURATED_LEDGER_REL_PATH);
-for (const f of readdirSync("public/data")) {
-  // 完整事件快照會重建 map，不能再被 restore-state 留下的舊 map 蓋回去。
-  if (f.endsWith(".map.json") && TRIM_FIELDS.has(f.replace(".map.json", ".json")) && existsSync(`public/data/${f.replace(".map.json", ".json")}`)) continue;
+for (const f of readdirSync(DATA_DIR)) {
+  // 這兩份衍生 map 由本輪事件產生，不能再被輸入中的舊投影覆蓋。
+  if (f === "domestic.map.json" || f === "international.map.json") continue;
   if (TRIM_FIELDS.has(f)) {
-    const arr = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
+    const arr = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
     const scope = f.replace(/\.json$/, "");
     // 在剝除 AI 證據前驗證原始快照；更正只寫入 dist，供兩個 UI 與 first-paint 地圖共用。
     const patches = resolveCurationLedger(curation, Array.isArray(arr) ? arr.filter(isNewsLikeEvent) : [], { scope }).locationPatches;
@@ -126,16 +128,16 @@ for (const f of readdirSync("public/data")) {
       writeFileSync(`${OUT}/data/${scope}.map.json`, JSON.stringify(derived.filter(isLocated).map(mapTrim)));
     }
   } else if (f === "network.json") {
-    const net = JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
+    const net = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimNetwork(net)));
   } else {
-    minifyOrCopyJson(`public/data/${f}`, `${OUT}/data/${f}`);
+    minifyOrCopyJson(join(DATA_DIR, f), `${OUT}/data/${f}`);
   }
 }
 
 const manifest = buildCohortManifest({ dataDir: `${OUT}/data` });
 writeCohortManifest(`${OUT}/data`, manifest);
-writeCohortManifest("public/data", manifest);
+writeCohortManifest(DATA_DIR, manifest);
 
 // 首頁＝美化後的儀表板（地圖＋清單＋情報網，吃 data/*.json）。
 // 與 dev 的 index.html 同步：含字型 preconnect/links、theme-color、description。

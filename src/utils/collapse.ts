@@ -25,9 +25,9 @@ function betterRepresentative(a: IntelEvent, b: IntelEvent, originalIndex: Map<s
   return (originalIndex.get(a.id) ?? 0) <= (originalIndex.get(b.id) ?? 0) ? a : b;
 }
 
-function areVerifiableDuplicates(a: IntelEvent, b: IntelEvent): boolean {
-  const keyA = extractRawReportKey(a);
-  const keyB = extractRawReportKey(b);
+function areVerifiableDuplicates(a: IntelEvent, b: IntelEvent, rawKey: (e: IntelEvent) => string): boolean {
+  const keyA = rawKey(a);
+  const keyB = rawKey(b);
   if (keyA && keyB && keyA === keyB && !keyA.startsWith("event:")) {
     return true;
   }
@@ -45,9 +45,9 @@ function hasDirectSameIncident(aId: string, bId: string, net: NetworkIndex): boo
   return false;
 }
 
-function canJoinGroup(candidate: IntelEvent, currentMembers: IntelEvent[], net: NetworkIndex): boolean {
+function canJoinGroup(candidate: IntelEvent, currentMembers: IntelEvent[], net: NetworkIndex, rawKey: (e: IntelEvent) => string): boolean {
   for (const member of currentMembers) {
-    if (areVerifiableDuplicates(candidate, member)) continue;
+    if (areVerifiableDuplicates(candidate, member, rawKey)) continue;
     if (hasDirectSameIncident(candidate.id, member.id, net)) continue;
     // 只要與組內任一成員無直接佐證且非可驗證重複紀錄，即不得藉由第三者傳遞收合
     return false;
@@ -60,6 +60,21 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
   const originalIndex = new Map(events.map((e, i) => [e.id, i] as const));
   const visited = new Set<string>();
   const groups: CollapsedGroup[] = [];
+  const rawKeys = new Map<IntelEvent, string>();
+  const rawKeyPositions = new Map<string, number[]>();
+  const recordRefPositions = new Map<string, number[]>();
+  const addPosition = (index: Map<string, number[]>, key: string, position: number): void => {
+    const positions = index.get(key);
+    if (positions) positions.push(position);
+    else index.set(key, [position]);
+  };
+  events.forEach((e, position) => {
+    if (!rawKeys.has(e)) rawKeys.set(e, extractRawReportKey(e));
+    const key = rawKeys.get(e)!;
+    if (key && !key.startsWith("event:")) addPosition(rawKeyPositions, key, position);
+    if (e.source.recordRef) addPosition(recordRefPositions, e.source.recordRef, position);
+  });
+  const rawKey = (e: IntelEvent): string => rawKeys.get(e)!;
 
   for (const seed of events) {
     if (visited.has(seed.id)) continue;
@@ -72,11 +87,16 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
     // 2. 與 seed 有 direct same-incident 之鄰居（依 weight 與時間排序）
     const candidateIds: string[] = [];
 
-    // 先納入相同 URL 重複稿
-    const seedRawKey = extractRawReportKey(seed);
+    // 候選仍依原陣列 entry 順序；同 ID 的 byId/originalIndex 保留既有 last-entry 語義。
+    const seedRawKey = rawKey(seed);
     if (seedRawKey && !seedRawKey.startsWith("event:")) {
-      for (const other of events) {
-        if (!visited.has(other.id) && areVerifiableDuplicates(seed, other)) {
+      const positions = new Set(rawKeyPositions.get(seedRawKey) ?? []);
+      if (seed.source.recordRef) {
+        for (const position of recordRefPositions.get(seed.source.recordRef) ?? []) positions.add(position);
+      }
+      for (const position of [...positions].sort((a, b) => a - b)) {
+        const other = events[position];
+        if (!visited.has(other.id)) {
           candidateIds.push(other.id);
         }
       }
@@ -99,7 +119,7 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
       const cand = byId.get(cid);
       if (!cand) continue;
 
-      if (canJoinGroup(cand, groupMembers, net)) {
+      if (canJoinGroup(cand, groupMembers, net, rawKey)) {
         groupMembers.push(cand);
         visited.add(cid);
       }
@@ -123,7 +143,7 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
       if (pub) publishers.add(pub);
       const ch = extractChannelKey(ev);
       if (ch) channels.add(ch);
-      const raw = extractRawReportKey(ev);
+      const raw = rawKey(ev);
       if (raw) rawReports.add(raw);
     }
 

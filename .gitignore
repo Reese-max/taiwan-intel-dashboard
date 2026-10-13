@@ -1,7 +1,9 @@
 .env
 .env.*
 !.env.example
-node_modules/
+# Match both a local dependency directory and the symlink used by detached
+# issue-loop replays.
+node_modules
 dist/
 dist-esbuild/
 dist-*/

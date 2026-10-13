@@ -282,7 +282,12 @@ describe("resolveFetchMode", () => {
     expect(jobs.audit.needs).toBe("fetch");
     expect(jobs["build-approved"].needs).toEqual(["fetch", "audit"]);
     expect(jobs["save-state"].needs).toEqual(["fetch", "audit", "build-approved"]);
-    expect(jobs.deploy.needs).toEqual(["save-state", "build-approved"]);
+    expect(jobs.deploy.needs).toEqual([
+      "operating-state",
+      "audit",
+      "save-state",
+      "build-approved",
+    ]);
     expect(jobs["save-state"].steps.some((step: { with?: { publish_branch?: string } }) =>
       step.with?.publish_branch === "pipeline-state")).toBe(true);
     expect(jobs.audit.uses).toBe("./.github/workflows/pipeline-audit.yml");
