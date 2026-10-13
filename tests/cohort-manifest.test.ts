@@ -27,6 +27,21 @@ afterEach(() => {
 });
 
 describe("Cohort Manifest (Work package D2)", () => {
+  it("source updates exclude retained previous-snapshot map files until projections are regenerated", () => {
+    mkdirSync(TEMP_DIR, { recursive: true });
+    for (const scope of ["domestic", "international"]) {
+      writeFileSync(join(TEMP_DIR, `${scope}.json`), JSON.stringify([{ id: `${scope}-current` }]));
+      writeFileSync(join(TEMP_DIR, `${scope}.map.json`), JSON.stringify([{ id: `${scope}-previous` }]));
+    }
+    const source = buildCohortManifest({ dataDir: TEMP_DIR, includeMapProjections: false });
+    for (const scope of ["domestic", "international"]) {
+      expect(source.scopes[scope].map).toBe(`${scope}.json`);
+      expect(source.files).not.toHaveProperty(`${scope}.map.json`);
+      expect(source.files[`${scope}.json`].sha256).toBeTruthy();
+    }
+    const built = buildCohortManifest({ dataDir: TEMP_DIR });
+    expect(built.scopes.domestic.map).toBe("domestic.map.json");
+  });
   it.each(["events", "network"])("manifest 缺少 %s hash 時拒收產物", async (kind) => {
     const { loadEvents } = await import("../src/data/loader");
     const { loadNetwork } = await import("../src/data/network");

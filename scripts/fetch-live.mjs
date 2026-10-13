@@ -1121,6 +1121,8 @@ export async function run() {
     DATA_DIR,
     buildCohortManifest({
       dataDir: DATA_DIR,
+      // Until static build regenerates map projections, use current event bytes.
+      includeMapProjections: false,
       snapshotId: network?.snapshotId,
       rulesVersion: RULES_VERSION,
       nowIso,

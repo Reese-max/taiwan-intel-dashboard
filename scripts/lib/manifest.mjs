@@ -15,12 +15,13 @@ export function buildCohortManifest({
   snapshotId,
   rulesVersion = RULES_VERSION,
   nowIso = new Date().toISOString(),
+  includeMapProjections = true,
 }) {
   const filesToCheck = [
     "domestic.json",
-    "domestic.map.json",
+    ...(includeMapProjections ? ["domestic.map.json"] : []),
     "international.json",
-    "international.map.json",
+    ...(includeMapProjections ? ["international.map.json"] : []),
     "network.json",
     "summary.json",
   ];
@@ -72,14 +73,14 @@ export function buildCohortManifest({
     scopes: {
       domestic: {
         events: "domestic.json",
-        map: existsSync(join(dataDir, "domestic.map.json")) ? "domestic.map.json" : "domestic.json",
+        map: files["domestic.map.json"] ? "domestic.map.json" : "domestic.json",
         network: "network.json",
         eventCount: files["domestic.json"]?.count ?? 0,
         sha256: files["domestic.json"]?.sha256,
       },
       international: {
         events: "international.json",
-        map: existsSync(join(dataDir, "international.map.json")) ? "international.map.json" : "international.json",
+        map: files["international.map.json"] ? "international.map.json" : "international.json",
         network: "network.json",
         eventCount: files["international.json"]?.count ?? 0,
         sha256: files["international.json"]?.sha256,

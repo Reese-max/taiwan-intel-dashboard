@@ -60,7 +60,7 @@ describe("static build map projection ownership", () => {
     writeFileSync(join(inputs, "network.json"), JSON.stringify({ snapshotId: "owned-fixture", domestic: {}, international: {} }));
     writeFileSync(join(inputs, "summary.json"), '{"retained":true}');
     writeFileSync(join(inputs, "other.map.json"), '[{"id":"other-map-retained"}]');
-    writeCohortManifest(inputs, buildCohortManifest({ dataDir: inputs }));
+    writeCohortManifest(inputs, buildCohortManifest({ dataDir: inputs, includeMapProjections: false }));
     inputBefore = fingerprint(inputs);
     for (const entry of ["src", "static", "node_modules"]) {
       symlinkSync(join(repoRoot, entry), join(root, entry), process.platform === "win32" ? "junction" : "dir");
@@ -77,6 +77,10 @@ describe("static build map projection ownership", () => {
   it("retains the source cohort bytes and loads events/maps with its own manifest after build", async () => {
     expect(fingerprint(inputs)).toEqual(inputBefore);
     const manifest = readJson(inputs, "manifest.json");
+    for (const scope of scopes) {
+      expect(manifest.scopes[scope].map).toBe(`${scope}.json`);
+      expect(manifest.files).not.toHaveProperty(`${scope}.map.json`);
+    }
     for (const [name, entry] of Object.entries(manifest.files)) {
       expect((entry as { sha256: string }).sha256).toBe(hash(readFileSync(join(inputs, name))));
     }
@@ -86,7 +90,7 @@ describe("static build map projection ownership", () => {
     });
     for (const scope of scopes) {
       expect(await loadEvents(scope, { manifest })).toEqual(eventsFor(scope));
-      expect(await loadMapEvents(scope, { manifest })).toEqual(JSON.parse(oldMaps[scope]));
+      expect(await loadMapEvents(scope, { manifest })).toEqual(eventsFor(scope));
     }
   });
 

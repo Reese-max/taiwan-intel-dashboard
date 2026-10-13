@@ -132,6 +132,8 @@ function main() {
 
   const manifest = buildCohortManifest({
     dataDir: DATA_DIR,
+    // Source events changed; retained map files have not been regenerated.
+    includeMapProjections: false,
     snapshotId: net.snapshotId,
     rulesVersion: net.rulesVersion,
     nowIso,
