@@ -12,7 +12,9 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { buildCohortManifest, writeCohortManifest } from "../scripts/lib/manifest.mjs";
+import { loadEvents, loadMapEvents } from "../src/data/loader";
 
 const repoRoot = process.cwd();
 const scopes = ["domestic", "international"] as const;
@@ -46,6 +48,7 @@ const eventsFor = (scope: typeof scopes[number]) => {
 
 describe("static build map projection ownership", () => {
   let sourceBefore: string[];
+  let inputBefore: string[];
   const oldMaps: Record<string, string> = {};
   beforeAll(() => {
     mkdirSync(inputs);
@@ -57,6 +60,8 @@ describe("static build map projection ownership", () => {
     writeFileSync(join(inputs, "network.json"), JSON.stringify({ snapshotId: "owned-fixture", domestic: {}, international: {} }));
     writeFileSync(join(inputs, "summary.json"), '{"retained":true}');
     writeFileSync(join(inputs, "other.map.json"), '[{"id":"other-map-retained"}]');
+    writeCohortManifest(inputs, buildCohortManifest({ dataDir: inputs }));
+    inputBefore = fingerprint(inputs);
     for (const entry of ["src", "static", "node_modules"]) {
       symlinkSync(join(repoRoot, entry), join(root, entry), process.platform === "win32" ? "junction" : "dir");
     }
@@ -67,6 +72,23 @@ describe("static build map projection ownership", () => {
     expect(result.status, result.stderr).toBe(0);
   });
   afterAll(() => rmSync(root, { recursive: true, force: true }));
+  afterEach(() => vi.restoreAllMocks());
+
+  it("retains the source cohort bytes and loads events/maps with its own manifest after build", async () => {
+    expect(fingerprint(inputs)).toEqual(inputBefore);
+    const manifest = readJson(inputs, "manifest.json");
+    for (const [name, entry] of Object.entries(manifest.files)) {
+      expect((entry as { sha256: string }).sha256).toBe(hash(readFileSync(join(inputs, name))));
+    }
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      const name = String(url).split("/").pop()!;
+      return new Response(readFileSync(join(inputs, name), "utf8"));
+    });
+    for (const scope of scopes) {
+      expect(await loadEvents(scope, { manifest })).toEqual(eventsFor(scope));
+      expect(await loadMapEvents(scope, { manifest })).toEqual(JSON.parse(oldMaps[scope]));
+    }
+  });
 
   it.each(scopes)("%s map derives exclusively from this build's located events despite an old input map", (scope) => {
     const map = readJson(output, `${scope}.map.json`);
