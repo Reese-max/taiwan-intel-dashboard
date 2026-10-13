@@ -137,7 +137,8 @@ for (const f of readdirSync(DATA_DIR)) {
 
 const manifest = buildCohortManifest({ dataDir: `${OUT}/data` });
 writeCohortManifest(`${OUT}/data`, manifest);
-writeCohortManifest(DATA_DIR, manifest);
+// The manifest binds the transformed output bytes. The source snapshot retains
+// its own manifest because development serves those untrimmed files directly.
 
 // 首頁＝美化後的儀表板（地圖＋清單＋情報網，吃 data/*.json）。
 // 與 dev 的 index.html 同步：含字型 preconnect/links、theme-color、description。
