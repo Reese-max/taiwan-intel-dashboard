@@ -35,7 +35,9 @@ source data → normalize → 自動候選關聯 → correlation ledger → 最�
 - `not_same_event`：移除該 pair 的自動邊，且 union 階段加入 cannot-link——即使兩事件
   各自與第三者有邊，也不會透過中繼被併入同群。
 - `same_event`：高權重 `same-incident` 邊（`origin:"manual"`，附 `curationId`），優先於
-  任何自動候選；兩事件進同一群集。
+  任何自動候選；兩事件進同一群集。人工合併本身不增加節點、群集或時序的跨源佐證數。
+  若原本已有自動 `same-incident` 證據，以 `automaticIncidentEvidence:true` 保留其資格；
+  原本只有同實體／同題弱邊時，不會因人工合併而變成直接佐證。
 - `location_correction`：`patch` 套用到該事件的衍生副本與 network 節點（附
   `curated` 標記），地理群集資格／degraded 桶依更正後的角色重新計算。原始
   `public/data/domestic.json`/`international.json` 事件內容不被改寫；`build-static`

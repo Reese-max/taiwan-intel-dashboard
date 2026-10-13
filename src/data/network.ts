@@ -16,6 +16,8 @@ export interface NetEdge {
   origin?: "auto" | "manual";
   decision?: string;
   curationId?: string;
+  /** Retained automatic same-incident basis; a manual union alone adds no corroboration. */
+  automaticIncidentEvidence?: boolean;
   /** follow-up 方向：from（較早報導）→ to（後續報導）。 */
   from?: string;
   to?: string;

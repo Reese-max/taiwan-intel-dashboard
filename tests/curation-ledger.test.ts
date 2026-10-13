@@ -309,6 +309,39 @@ describe("resolveCurationLedger — 驗證與狀態", () => {
 });
 
 describe("correlateEvents + curation — 人工更正層", () => {
+  it.each(["unrelated", "weak"])("manual same_event over %s evidence cannot invent corroborating sources", (basis) => {
+    const events = [
+      ev({ id: "twnews-manual-a", title: "河堤公園可疑包裹", region: "臺北市", source: { name: "來源A", type: "news-rss" } }),
+      ev({ id: "twnews-manual-b", title: "爆炸物處理小組到場", region: "高雄市", source: { name: "來源B", type: "news-rss" } }),
+    ];
+    if (basis === "weak") for (const event of events) event.aiEntities = ["王小明"];
+    const automatic = correlateEvents(events);
+    expect(automatic.edges.every((edge: any) => edge.type !== "same-incident")).toBe(true);
+    if (basis === "weak") expect(automatic.edges.some((edge: any) => edge.type === "same-entity")).toBe(true);
+    const original = JSON.stringify(events);
+    const net = correlateEvents(events, { curation: [rec({
+      decision: "same_event", subjects: events.map((event) => event.id), expect: expectOf(events),
+    })] });
+    expect(net.edges).toEqual([expect.objectContaining({ origin: "manual", type: "same-incident" })]);
+    expect(net.clusters).toHaveLength(1);
+    expect(net.nodes.map((node: any) => node.sourceCount)).toEqual([0, 0]);
+    expect(net.nodes.every((node: any) => node.evidenceSources.length === 0)).toBe(true);
+    expect(net.clusters[0]).toMatchObject({ sourceCount: 0, evidenceSources: [] });
+    expect(net.clusters[0].temporalSeries.every((bucket: any) => bucket.sources === 0)).toBe(true);
+    expect(JSON.stringify(events)).toBe(original);
+  });
+
+  it("manual confirmation retains existing automatic same-incident evidence", () => {
+    const events = autoPair();
+    const automatic = correlateEvents(events);
+    expect(automatic.nodes.map((node: any) => node.sourceCount)).toEqual([1, 1]);
+    const net = correlateEvents(events, { curation: [rec({ decision: "same_event", expect: expectOf(events) })] });
+    expect(net.edges[0].origin).toBe("manual");
+    expect(net.nodes.map((node: any) => node.evidenceSources)).toEqual(automatic.nodes.map((node: any) => node.evidenceSources));
+    expect(net.clusters[0].sourceCount).toBe(automatic.clusters[0].sourceCount);
+    expect(net.clusters[0].temporalSeries).toEqual(automatic.clusters[0].temporalSeries);
+  });
+
   it("[PR68 regression] manual same_event unions take priority over automatic candidates", () => {
     const events = ["a", "b", "c"].map((id, i) => ev({
       id: `twnews-${id}`, title: `信義分局毒品案 ${id}`, source: { name: `來源${i}`, type: "news-rss" },

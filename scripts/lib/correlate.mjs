@@ -398,6 +398,7 @@ export function correlateEvents(events, opts = {}) {
   // same_event：人工確認同案，高權重壓過自動候選；同 pair 只保留一條（origin:"manual"）。
   for (const { a, b, recordId, reason } of curation.sameEventPairs) {
     const prior = edges.get(edgeKey(a, b));
+    const automaticIncidentEvidence = prior?.type === "same-incident" && prior.origin === "auto";
     upsertEdge(
       edges,
       a,
@@ -411,6 +412,9 @@ export function correlateEvents(events, opts = {}) {
       edge.origin = "manual";
       edge.decision = "same_event";
       edge.curationId = recordId;
+      // A reviewed union does not create independent source corroboration.
+      // Preserve a pre-existing automatic same-incident basis separately.
+      edge.automaticIncidentEvidence = automaticIncidentEvidence;
       if (prior && prior !== edge) edge.supersedes = prior.type;
     }
   }
@@ -447,8 +451,10 @@ export function correlateEvents(events, opts = {}) {
     degree.set(e.b, degree.get(e.b) + 1);
   }
   const directEvidenceSourcesById = new Map(list.map((e) => [e.id, new Set()]));
+  const hasAutomaticIncidentEvidence = (edge) => edge.type === "same-incident" &&
+    (edge.origin !== "manual" || edge.automaticIncidentEvidence === true);
   for (const edge of edgeList) {
-    if (edge.type !== "same-incident") continue;
+    if (!hasAutomaticIncidentEvidence(edge)) continue;
     const a = eventsById.get(edge.a);
     const b = eventsById.get(edge.b);
     const aSource = a?.source?.name;
@@ -484,7 +490,7 @@ export function correlateEvents(events, opts = {}) {
     const clusterDirectEvidenceIds = new Set();
     const evidenceSources = new Set();
     for (const edge of edgeList) {
-      if (edge.type !== "same-incident" || !memberIds.has(edge.a) || !memberIds.has(edge.b)) continue;
+      if (!hasAutomaticIncidentEvidence(edge) || !memberIds.has(edge.a) || !memberIds.has(edge.b)) continue;
       clusterDirectEvidenceIds.add(edge.a);
       clusterDirectEvidenceIds.add(edge.b);
       const aSource = eventsById.get(edge.a)?.source?.name;
