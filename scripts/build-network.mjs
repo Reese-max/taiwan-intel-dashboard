@@ -17,12 +17,9 @@ import {
 } from "./lib/manifest.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-// 與 fetch-live 一致：實際服務／部署的資料在 public/data，dist/data 為已 build 副本。
+// Source updates own public/data; static build alone creates a complete dist cohort.
 // BUILD_DATA_DIR 供 build 協調器（乾淨 checkout 的合成輸入）覆寫，預設不變。
 const DATA_DIR = process.env.BUILD_DATA_DIR ? resolve(process.env.BUILD_DATA_DIR) : join(ROOT, "public", "data");
-const DIST_DATA_DIR = join(ROOT, "dist", "data");
-// 合成輸入的產物不得鏡射進可部署的 dist/data，否則會蓋掉既有正式 build 產物。
-const SYNTHETIC_INPUT = process.env.BUILD_SYNTHETIC_INPUT === "1";
 
 // 監管 replay（detached worktree）有程式碼與依賴但沒有 pipeline-state 快照；
 // 僅限本機 replay 以最小 fixture 保持 hermetic，不允許任何託管 CI/CD 用假資料
@@ -127,8 +124,6 @@ function main() {
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
   const json = JSON.stringify(net, null, 2) + "\n";
   writeFileSync(join(DATA_DIR, "network.json"), json);
-  const mirrorToDist = !SYNTHETIC_INPUT && existsSync(DIST_DATA_DIR);
-  if (mirrorToDist) writeFileSync(join(DIST_DATA_DIR, "network.json"), json);
 
   const manifest = buildCohortManifest({
     dataDir: DATA_DIR,
@@ -139,7 +134,6 @@ function main() {
     nowIso,
   });
   writeCohortManifest(DATA_DIR, manifest);
-  if (mirrorToDist) writeCohortManifest(DIST_DATA_DIR, manifest);
 
   const d = net.domestic.stats;
   const i = net.international.stats;
