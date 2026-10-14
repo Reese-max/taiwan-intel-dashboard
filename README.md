@@ -90,6 +90,7 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 ## 文件索引
 
 - `docs/curation/` — 人工更正 ledger（關聯覆寫的格式、狀態與流程）
+- [`docs/ground-truth/relations/`](docs/ground-truth/relations/README.md) — 關聯／地點 benchmark（固定 SHA 重播、人工標註、before/after；目前待人工 baseline）
 - `docs/operations/` — 線上暫停、驗證與復原程序
 - `docs/specs/` — 設計/規格（含 2026-07-03 強化與可持續性計畫）
 - `docs/plans/` — 實作計畫

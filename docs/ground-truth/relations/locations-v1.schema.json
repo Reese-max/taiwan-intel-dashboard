@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "location-labels/1",
+  "type": "object",
+  "required": ["schema", "event", "family", "locationRole", "locationPrecision", "region", "evidence", "labeledAt", "labeledBy"],
+  "properties": {
+    "schema": { "const": "location-labels/1" },
+    "event": { "type": "string", "minLength": 1 },
+    "family": { "type": "string", "minLength": 1 },
+    "benchmark": { "enum": ["tuning", "holdout"] },
+    "locationRole": { "enum": ["incident", "arrest", "agency", "mention", "impact_zone", "unknown"] },
+    "locationPrecision": { "enum": ["exact", "address", "district", "city", "county-center", "country", "global", "unknown"] },
+    "region": { "type": "string", "minLength": 1 },
+    "evidence": { "type": "string", "minLength": 1 },
+    "labeledAt": { "type": "string", "format": "date-time" },
+    "labeledBy": { "enum": ["human", "agent-draft"] },
+    "notes": { "type": "string" }
+  }
+}
