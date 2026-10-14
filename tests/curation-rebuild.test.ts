@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
 import { fingerprintEvent } from "../scripts/lib/curation-ledger.mjs";
 import { RULES_VERSION } from "../scripts/lib/manifest.mjs";
@@ -45,7 +46,7 @@ it("persists reviewed decisions through complete repeat builds and reports chang
     writeFileSync(clock, `const OriginalDate = Date; const stamp = OriginalDate.parse("2026-10-13T00:00:00Z");
 globalThis.Date = class extends OriginalDate { constructor(...args) { super(...(args.length ? args : [stamp])); } static now() { return stamp; } };`);
     const run = (script: string) => {
-      const result = spawnSync(process.execPath, ["--import", clock, join(root, "scripts", script)], {
+      const result = spawnSync(process.execPath, ["--import", pathToFileURL(clock).href, join(root, "scripts", script)], {
         cwd: root, encoding: "utf8", env: { ...process.env, BUILD_DATA_DIR: data, BUILD_SYNTHETIC_INPUT: "1" },
       });
       expect(result.status, result.stderr).toBe(0);

@@ -10,6 +10,8 @@ type Job = { needs?: string | string[]; if?: string }
 type Workflow = { on: Record<string, unknown>; jobs: Record<string, Job> }
 type Context = { ref: string | undefined; eventName?: string; cancelled?: boolean }
 const workflow = YAML.parse(readFileSync('.github/workflows/update-and-deploy.yml', 'utf8')) as Workflow
+const dryRun = YAML.parse(readFileSync('.github/workflows/pipeline-dry-run.yml', 'utf8')) as Workflow
+const watchdog = YAML.parse(readFileSync('.github/workflows/refresh-watchdog.yml', 'utf8')) as Workflow
 const privilegedJobs = ['operating-state', 'save-state', 'deploy'] as const
 const pipelineJobs = ['operating-state', 'fetch', 'audit', 'build-approved', 'save-state', 'deploy', 'next-refresh'] as const
 
@@ -66,6 +68,24 @@ function evaluatePipeline(context: Context, injected: Partial<Record<string, Res
 }
 
 describe('Issue42: formal data publication uses the complete main branch ref', () => {
+  it.each([
+    ['dry-run source secrets', dryRun.jobs.fetch],
+    ['watchdog production dispatch', watchdog.jobs['check-and-dispatch']],
+  ])('keeps %s on main before any privileged steps run', (_label, job) => {
+    expect(eligible(job, { ref: 'refs/heads/main' }, {})).toBe(true)
+    for (const ref of ['refs/heads/feature/issue-42', 'refs/heads/production', 'refs/tags/main', '', undefined]) {
+      expect(eligible(job, { ref }, {}), String(ref)).toBe(false)
+    }
+    expect(eligible(job, { ref: 'refs/heads/main', cancelled: true }, {})).toBe(false)
+    expect(dryRun.jobs.audit.needs).toBe('fetch')
+  })
+
+  it('keeps failure and cancellation notifications behind the same main ref boundary', () => {
+    expect(expression(workflow.jobs.notify.if)).toBe(
+      "always() && github.ref == 'refs/heads/main' && (failure() || cancelled())",
+    )
+  })
+
   it.each(['schedule', 'push', 'workflow_dispatch'])('keeps lawful main %s eligible in the unchanged needs chain', eventName => {
     const results = evaluatePipeline({ ref: 'refs/heads/main', eventName })
     for (const name of pipelineJobs) expect(results[name], name).toBe('success')
