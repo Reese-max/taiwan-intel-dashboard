@@ -2,7 +2,7 @@
 // 用法：node scripts/build-network.mjs
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import {
@@ -15,28 +15,85 @@ import {
   writeCohortManifest,
   RULES_VERSION,
 } from "./lib/manifest.mjs";
+import {
+  CURATED_LEDGER_REL_PATH,
+  loadCurationLedger,
+} from "./lib/curation-ledger.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-// 與 fetch-live 一致：實際服務／部署的資料在 public/data，dist/data 為已 build 副本。
-const DATA_DIR = join(ROOT, "public", "data");
-const DIST_DATA_DIR = join(ROOT, "dist", "data");
+// Source updates own public/data; static build alone creates a complete dist cohort.
+// BUILD_DATA_DIR 供 build 協調器（乾淨 checkout 的合成輸入）覆寫，預設不變。
+const DATA_DIR = process.env.BUILD_DATA_DIR ? resolve(process.env.BUILD_DATA_DIR) : join(ROOT, "public", "data");
+const CURATED_LEDGER_PATH = join(ROOT, CURATED_LEDGER_REL_PATH);
+
+// 監管 replay（detached worktree）有程式碼與依賴但沒有 pipeline-state 快照；
+// 僅限本機 replay 以最小 fixture 保持 hermetic，不允許任何託管 CI/CD 用假資料
+// 掩蓋 pipeline 產物缺失（真實 build 仍需 restore-state 成功）。
+export function canUseBuildReplayFixture(env = process.env) {
+  if (env.CI !== "true") return false;
+  // 已知託管建置環境一律禁用，避免假資料進入正式產物。
+  const hosted = ["GITHUB_ACTIONS", "CF_PAGES", "GITLAB_CI", "CIRCLECI", "VERCEL", "NETLIFY", "TF_BUILD", "BUILDKITE"];
+  return !hosted.some((name) => env[name]);
+}
+
+export const BUILD_REPLAY_FIXTURE = {
+  domestic: [
+    {
+      id: "build-replay-domestic",
+      title: "本機建置驗證事件",
+      summary: "僅供 clean replay 建置驗證，不代表正式資料。",
+      region: "臺北市",
+      timestamp: "2026-01-01T00:00:00.000Z",
+      category: "測試",
+      scope: "domestic",
+      riskLevel: "low",
+      source: { name: "build-replay-fixture", type: "news-rss", recordRef: "https://example.invalid/build-replay-domestic" },
+    },
+  ],
+  international: [
+    {
+      id: "build-replay-international",
+      title: "Build replay fixture event",
+      summary: "Only for clean replay build verification; not production data.",
+      region: "全球",
+      timestamp: "2026-01-01T00:00:00.000Z",
+      category: "測試",
+      scope: "international",
+      riskLevel: "low",
+      source: { name: "build-replay-fixture", type: "news-rss", recordRef: "https://example.invalid/build-replay-international" },
+    },
+  ],
+};
+
+function writeBuildReplayFixture() {
+  if (!canUseBuildReplayFixture() || existsSync(DATA_DIR)) return false;
+  mkdirSync(DATA_DIR, { recursive: true });
+  for (const [name, events] of Object.entries(BUILD_REPLAY_FIXTURE)) {
+    writeFileSync(join(DATA_DIR, `${name}.json`), JSON.stringify(events) + "\n");
+  }
+  return true;
+}
 
 function readEvents(name) {
   const p = join(DATA_DIR, name);
-  const fileName = `public/data/${name}`;
+  // 覆寫輸入目錄時報實際路徑，避免 fail closed 訊息指向本輪沒讀過的目錄
+  const fileName = process.env.BUILD_DATA_DIR ? p : `public/data/${name}`;
   if (!existsSync(p)) {
     throw new Error(`${fileName}：檔案不存在，無法建立 ${NETWORK_FILE}`);
   }
   try {
     const events = JSON.parse(readFileSync(p, "utf8"));
     if (!Array.isArray(events)) throw new Error("根值必須是陣列");
+    if (!canUseBuildReplayFixture() && events.some((event) => event?.source?.name === "build-replay-fixture")) {
+      throw new Error("build-replay-fixture 僅限本機 clean replay，請還原已稽核資料");
+    }
     return events;
   } catch (e) {
     throw new Error(`${fileName}：JSON 無法解析或不是事件陣列：${e.message}`);
   }
 }
 
-export function buildNetwork(domestic, international, nowIso, { snapshotId, rulesVersion = RULES_VERSION } = {}) {
+export function buildNetwork(domestic, international, nowIso, { snapshotId, rulesVersion = RULES_VERSION, curation } = {}) {
   const domesticNews = (domestic || []).filter(isNewsLikeEvent);
   const intlNews = (international || []).filter(isNewsLikeEvent);
   const sid =
@@ -47,8 +104,8 @@ export function buildNetwork(domestic, international, nowIso, { snapshotId, rule
     generatedAt: nowIso,
     rulesVersion,
     scopeNote: "情報網僅含新聞類事件（RSS / tw-news），排除政府模板化統計資料",
-    domestic: correlateEvents(domesticNews),
-    international: correlateEvents(intlNews),
+    domestic: correlateEvents(domesticNews, { curation, rulesVersion, scope: "domestic" }),
+    international: correlateEvents(intlNews, { curation, rulesVersion, scope: "international" }),
     excluded: {
       domestic: (domestic?.length || 0) - domesticNews.length,
       international: (international?.length || 0) - intlNews.length,
@@ -57,10 +114,14 @@ export function buildNetwork(domestic, international, nowIso, { snapshotId, rule
 }
 
 function main() {
+  if (writeBuildReplayFixture()) {
+    console.log("public/data 不存在；使用僅限本機 clean replay 的建置 fixture（GitHub Actions 不允許此 fallback）");
+  }
   const domestic = readEvents("domestic.json");
   const international = readEvents("international.json");
   const nowIso = new Date().toISOString();
-  const net = buildNetwork(domestic, international, nowIso);
+  const curation = loadCurationLedger(CURATED_LEDGER_PATH);
+  const net = buildNetwork(domestic, international, nowIso, { curation });
   const contractErrors = validateNetworkContract(net);
   if (contractErrors.length) {
     throw new Error(`產物契約驗收失敗：\n${formatNetworkContractErrors(NETWORK_FILE, contractErrors)}`);
@@ -69,23 +130,29 @@ function main() {
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
   const json = JSON.stringify(net, null, 2) + "\n";
   writeFileSync(join(DATA_DIR, "network.json"), json);
-  if (existsSync(DIST_DATA_DIR)) writeFileSync(join(DIST_DATA_DIR, "network.json"), json);
 
   const manifest = buildCohortManifest({
     dataDir: DATA_DIR,
+    // Source events changed; retained map files have not been regenerated.
+    includeMapProjections: false,
     snapshotId: net.snapshotId,
     rulesVersion: net.rulesVersion,
     nowIso,
   });
   writeCohortManifest(DATA_DIR, manifest);
-  if (existsSync(DIST_DATA_DIR)) writeCohortManifest(DIST_DATA_DIR, manifest);
 
   const d = net.domestic.stats;
   const i = net.international.stats;
+  const dc = net.domestic.curation;
+  const ic = net.international.curation;
+  const curationNote = curation.entries.length
+    ? `\n  人工更正：ledger ${curation.entries.length} 筆（國內 套用 ${dc.applied}／待複審 ${dc.needsReview}／衝突 ${dc.conflicts}；國際 套用 ${ic.applied}／待複審 ${ic.needsReview}／衝突 ${ic.conflicts}）`
+    : "";
   console.log(
     `情報網已產出 → data/network.json（排除政府模板資料 國內 ${net.excluded.domestic}／國際 ${net.excluded.international} 筆）\n` +
       `  國內新聞：${d.events} 事件、${d.edges} 連結（佐證 ${d.byType["same-incident"]}／實體 ${d.byType["same-entity"]}／同題 ${d.byType["same-topic"]}）、${d.clusters} 群集（最大 ${d.largestCluster}）\n` +
-      `  國際新聞：${i.events} 事件、${i.edges} 連結、${i.clusters} 群集`,
+      `  國際新聞：${i.events} 事件、${i.edges} 連結、${i.clusters} 群集` +
+      curationNote,
   );
 }
 

@@ -2,11 +2,11 @@
 
 聚合台灣國內外多源公開資料，以 LLM 正規化、風險評級、關聯分析，呈現為互動式情報視覺化網站。
 
-- 狀態：**降級運作中**（排程與 canonical 持續運作中，依 [ops/operating-state.json](ops/operating-state.json) 標記為未完成受控復原收據之降級狀態）
+- 狀態：**降級運作中**（依 [ops/operating-state.json](ops/operating-state.json) 標記；資料新鮮度與來源健康須以線上 provenance 和最近排程紀錄確認）
 - 網址：<https://taiwan-intel-dashboard.pages.dev>
 - 營運狀態契約：[`ops/operating-state.json`](ops/operating-state.json)｜[`docs/operations/operating-state.md`](docs/operations/operating-state.md)
 - 復原程序：[`docs/operations/pause-and-restore.md`](docs/operations/pause-and-restore.md)
-- 技術棧：Vite + Vanilla TypeScript + Leaflet（唯一 runtime 依賴）｜資料層 Node.js ESM 腳本｜LLM 走 OpenAI 相容端點（現用 MiniMax-M2）｜部署 Cloudflare Pages｜CI GitHub Actions
+- 技術棧：Vite + Vanilla TypeScript + Leaflet｜資料層 Node.js ESM 腳本｜LLM 走 OpenAI 相容端點｜部署 Cloudflare Pages｜CI GitHub Actions
 
 ## 資料管線（`scripts/fetch-live.mjs` 主控，`--sources=` 選擇）
 
@@ -35,14 +35,18 @@
 
 完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」。移除第三方 MCP 後，採購、司法、空品、停車、經濟等原 MCP 來源不再刷新，待改成官方直連後再恢復。
 
+情報網人工更正：維護者確認過的錯誤關聯／地點角色／後續關係記於 [`docs/curation/correlation-overrides.jsonl`](docs/curation/correlation-overrides.jsonl)（JSONL、隨程式碼 review）；每次 rebuild 自動重放，來源內容或規則版本變動時記錄自動轉 `needs_review`（fail closed），矛盾記錄全部標 `conflict` 不套用。格式與流程見 [`docs/curation/README.md`](docs/curation/README.md)。
+
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
 > 目前 workflow 依 [ops/operating-state.json](ops/operating-state.json) 規範運作；正式轉為完全運作（ACTIVE）前須補齊受控復原收據。
 
-- 每 30 分（:05/:35）：cwa+police+missing+twnews+rss+gdelt+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver 增量
+- 每 30 分（:17/:47）：cwa+police+missing+twnews+rss+gdelt+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver 增量；另有獨立備援檢查在正式資料逾 75 分鐘且無近期執行時補觸發
 - 每日 18:30 UTC（台北 02:30）：上述來源加上 cdc、tfda 的 exclusive 重建
 - 手動 `workflow_dispatch`：`mode` 選來源組合；`renorm_intl=true` 忽略國際快取全量重評（緊急用；平時靠 `INTL_RECALIBRATE_DAYS` 3 天生命週期自然換血）
 - Cloudflare 發佈後會再讀取 canonical `provenance.json`／`domain-coverage.json`，並確認已移除的查詢頁與 API 路由回傳 404。
+- 資料更新使用 [`ops/approved-code.json`](ops/approved-code.json) 固定的網站程式碼版本；程式碼發布須走 [發布程序](docs/operations/release-gate.md) 並取得負責人核准。
+- AI 端點失效時會保留標記的統計備援；需由管理者更新失效的 GitHub Actions 憑證／模型設定，再以實際排程驗證 AI 摘要恢復。
 
 ## 本地開發
 
@@ -57,6 +61,8 @@ npm run refresh:news   # 抓台灣新聞（吃 LLM 成本）
 node --env-file=.env scripts/fetch-live.mjs --sources=rss,gdelt   # 抓國際 RSS＋GDELT 補充
 ```
 
+乾淨 checkout 沒有 `public/data/` 時，`npm run build` 會改用 tmpdir 裡的合成輸入（committed fixture）完成建置，結束後自動刪除；`public/data/` 全程不被寫入，合成事件不會留在工作樹被後續 `npm run refresh` 帶回正式快照。build-static 會在另一個暫存工作目錄建立 `dist/`，產物於結束後一併刪除；checkout 的 `dist/` 不會被建立、清空或覆寫。此路徑僅供 gate 驗證，不產出可部署的 `dist/`。正式資料快照成對存在時則原樣使用，不會被 fixture 覆蓋；只缺一份快照、或資料目錄已有其他狀態檔卻缺事件快照時 build 會直接失敗，不拿合成資料補齊真實狀態。
+
 ## 稽核（CI 皆有掛）
 
 ```bash
@@ -65,6 +71,7 @@ npm run audit:data-size        # 資料檔尺寸（Cloudflare Pages 單檔 25MiB
 npm run audit:network-quality  # 情報網品質
 npm run audit:source-freshness # 結構化來源成功時間與更新頻率健康閘門
 npm run audit:coverage         # scope/category 每日涵蓋矩陣一致性
+npm run audit:curation         # 人工更正 ledger：逐筆套用狀態（conflict/invalid → 失敗）
 npm run report:news-sources    # 新聞來源漏斗貢獻報表
 ```
 
@@ -82,6 +89,7 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 
 ## 文件索引
 
+- `docs/curation/` — 人工更正 ledger（關聯覆寫的格式、狀態與流程）
 - `docs/operations/` — 線上暫停、驗證與復原程序
 - `docs/specs/` — 設計/規格（含 2026-07-03 強化與可持續性計畫）
 - `docs/plans/` — 實作計畫
@@ -95,3 +103,10 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 - 政府開放資料：受原發布機關之「政府資料開放授權條款」或宣告拘束，保留來源標註。
 - 新聞與媒體：僅作必要之標題與短摘要引述並附原文連結，不重新散布全文；權利未知不代表允許再利用。
 - 下游發現饋送（Discovery Feed）：遵循相同權利規則，未經授權資料標記為 `REVIEW_REQUIRED`。
+
+## 快照建置
+
+來源更新與 `npm run build:network` 寫入 `public/data`。執行 `npm run build`
+才會產生完整、可部署的 `dist` 快照；來源更新期間保留上一份建置快照，
+不逐檔覆寫其中內容。開發模式先載入本期完整事件，靜態建置重新產生對應
+的地圖投影後，建置產物才使用精簡地圖檔。

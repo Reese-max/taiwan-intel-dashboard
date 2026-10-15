@@ -76,7 +76,7 @@ async function loadData() {
 }
 
 async function main() {
-  console.log("=== 產出最新 summary.json (NVIDIA Nemotron 3 Ultra 550B 優先) ===");
+  console.log("=== 產出最新 summary.json ===");
   const { domestic, international, clusters } = await loadData();
   console.log(`準備生成摘要：國內 ${domestic.length} 則、國際 ${international.length} 則、情報群 ${clusters.length} 個`);
 

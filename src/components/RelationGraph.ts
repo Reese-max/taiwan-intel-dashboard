@@ -172,5 +172,6 @@ export function renderRelationGraph(
       <button type="button" class="rg-legend-btn" data-type="same-incident" aria-pressed="true"><i class="edge-same-incident"></i>${esc(edgeTypeLabel("same-incident"))}</button>
       <button type="button" class="rg-legend-btn" data-type="same-entity" aria-pressed="true"><i class="edge-same-entity"></i>共享實體</button>
       <button type="button" class="rg-legend-btn" data-type="same-topic" aria-pressed="true"><i class="edge-same-topic"></i>${esc(edgeTypeLabel("same-topic"))}</button>
+      <button type="button" class="rg-legend-btn" data-type="follow-up" aria-pressed="true"><i class="edge-follow-up"></i>${esc(edgeTypeLabel("follow-up"))}</button>
     </div>`;
 }

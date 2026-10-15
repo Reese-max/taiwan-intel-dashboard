@@ -110,6 +110,19 @@ describe("assertRequiredPipelineSources", () => {
     ).not.toThrow();
   });
 
+  it("allows a recent marked police carry-over after a transient weekly ZIP failure", () => {
+    const now = Date.parse("2026-09-29T03:00:00Z");
+    const police = {
+      ok: false,
+      error: "weekly crime ZIP download failed: HTTP Error 502",
+      carryOver: { count: 7, lastSuccessAt: "2026-09-28T03:00:00Z" },
+    };
+    expect(() => assertRequiredPipelineSources({ police }, ["police"], { now })).not.toThrow();
+    expect(() => assertRequiredPipelineSources({ police }, ["police"], {
+      now: now + 15 * 86400_000,
+    })).toThrow("Required pipeline source police failed");
+  });
+
   it("still rejects CWA warnings when allowStaleCwa is off", () => {
     expect(() =>
       assertRequiredPipelineSources(

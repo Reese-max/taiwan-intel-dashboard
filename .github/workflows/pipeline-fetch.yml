@@ -77,30 +77,46 @@ jobs:
 
       - name: 抓取即時資料
         env:
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
-          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          # The legacy primary key now returns HTTP 401 in live runs. Use the
+          # already verified hosted model directly, with the same concurrency
+          # as the former fallback so normalization does not increase load.
+          LLM_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          LLM_BASE_URL: https://integrate.api.nvidia.com/v1
+          LLM_MODEL: nvidia/nemotron-3-super-120b-a12b
+          LLM_MAX_CONCURRENCY: "2"
+          LLM_TIMEOUT_MS: "45000"
+          LLM_MAX_RETRIES: "1"
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NVIDIA_BASE_URL: ${{ secrets.NVIDIA_BASE_URL }}
-          NVIDIA_MODEL: ${{ secrets.NVIDIA_MODEL }}
+          # Match the reviewed model to NVIDIA's public hosted API. The old
+          # secret-selected endpoint returned HTTP 410 in the live 2026-09-26 run.
+          NVIDIA_BASE_URL: https://integrate.api.nvidia.com/v1
+          # NVIDIA's API returned HTTP 410 for gpt-oss-120b on 2026-09-26;
+          # the active Nemotron endpoint returned HTTP 401 for a deliberately invalid test key.
+          NVIDIA_MODEL: nvidia/nemotron-3-super-120b-a12b
           LLM_FALLBACK_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          LLM_FALLBACK_BASE_URL: ${{ secrets.NVIDIA_BASE_URL }}
-          LLM_FALLBACK_MODEL: ${{ secrets.NVIDIA_MODEL }}
+          LLM_FALLBACK_BASE_URL: https://integrate.api.nvidia.com/v1
+          LLM_FALLBACK_MODEL: nvidia/nemotron-3-super-120b-a12b
+          # Bound provider stalls so routine data can reach publication even
+          # when some AI enrichment batches must continue on the next run.
+          LLM_FALLBACK_TIMEOUT_MS: "45000"
+          LLM_FALLBACK_MAX_RETRIES: "2"
           SUMMARY_LLM: ${{ secrets.SUMMARY_LLM }}
           SUMMARY_API_KEY: ${{ secrets.SUMMARY_API_KEY }}
           SUMMARY_BASE_URL: ${{ secrets.SUMMARY_BASE_URL }}
+          # Keep a dedicated summary provider's configured model. If it retires,
+          # llm-client tries the separately configured NVIDIA fallback model.
           SUMMARY_MODEL: ${{ secrets.SUMMARY_MODEL }}
-          SUMMARY_MAX_CONCURRENCY: ${{ secrets.SUMMARY_MAX_CONCURRENCY }}
-          SUMMARY_TIMEOUT_MS: ${{ secrets.SUMMARY_TIMEOUT_MS }}
-          SUMMARY_MAX_RETRIES: ${{ secrets.SUMMARY_MAX_RETRIES }}
+          SUMMARY_MAX_CONCURRENCY: "1"
+          SUMMARY_TIMEOUT_MS: "30000"
+          SUMMARY_MAX_RETRIES: "2"
           CWA_API_KEY: ${{ secrets.CWA_API_KEY }}
           INTERNATIONAL_FEED_TIER: ${{ steps.mode.outputs.international_feed_tier }}
           INTERNATIONAL_FEED_TOPIC: ${{ steps.mode.outputs.international_feed_topic }}
           INTL_RENORM_ALL: ${{ inputs.renorm_intl }}
-          # 冷啟動（快取空白）時 15 分鐘預設預算跑不完全量正規化（2026-08-02 實證：
-          # normalizeSkippedBatches=60、general 40/50 不達門檻），停擺 6 週後復原首跑必中。
-          INTL_NORMALIZE_BUDGET_MS: "2700000"
-          DOMESTIC_NORMALIZE_BUDGET_MS: "1800000"
+          # Routine runs must finish before the next refresh. Priority general
+          # feeds run first; unprocessed enrichment is retried in later runs.
+          INTL_NORMALIZE_BUDGET_MS: "600000"
+          DOMESTIC_NORMALIZE_BUDGET_MS: "300000"
           NODE_OPTIONS: --use-system-ca
         run: node scripts/fetch-live.mjs ${{ steps.mode.outputs.args }}
 

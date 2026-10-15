@@ -86,7 +86,7 @@ async function fetchCrimeWeekly() {
   const result = spawnSync(python, [CRIME_WEEKLY_SCRIPT], {
     encoding: "utf8",
     env: crimeWeeklySpawnEnv(),
-    timeout: 120_000,
+    timeout: 180_000,
   });
   if (result.status !== 0) {
     throw new Error(result.stderr?.trim() || result.stdout?.trim() || "crime weekly parse failed");

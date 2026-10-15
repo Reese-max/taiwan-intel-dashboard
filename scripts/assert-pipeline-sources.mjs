@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { selectInternationalFeeds } from "./lib/international-feeds.mjs";
+import { canCarryOverPolice } from "./lib/police-carryover.mjs";
 
 const CWA_SOURCES = new Set(["cwa", "cwaWarnings"]);
 const POLICE_CATEGORIES = new Set(["治安", "反詐", "協尋"]);
@@ -31,6 +32,11 @@ export function assertRequiredPipelineSources(pipeline, requiredSources, options
     if (status.skipped) throw new Error(`Required pipeline source ${name} was skipped`);
 
     if (allowStaleCwa && CWA_SOURCES.has(name)) {
+      continue;
+    }
+
+    if (name === "police" && canCarryOverPolice(status, { now: options.now })) {
+      console.warn(`警政週報本輪抓取失敗，沿用 ${status.carryOver.count} 筆已標記 stale 的舊快照（上次成功 ${status.carryOver.lastSuccessAt}）`);
       continue;
     }
 

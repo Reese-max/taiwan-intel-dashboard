@@ -25,8 +25,10 @@ import {
   POLICE_NEW_PER_HOUR_FALLBACK,
   POLICE_TODAY_MINIMUM,
 } from "./lib/fetch-police.mjs";
+import { isTransientPoliceFailure, policeCarryoverEvidence } from "./lib/police-carryover.mjs";
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
 import { fetchGdelt } from "./lib/fetch-gdelt.mjs";
+import { gdeltRetryAt } from "./lib/gdelt-cooldown.mjs";
 import { googleNewsHealth } from "./lib/gn-health.mjs";
 import { getInternationalRuntimeConfig, selectInternationalFeeds } from "./lib/international-feeds.mjs";
 import { accumulateInternational } from "./lib/intl-accumulate.mjs";
@@ -52,6 +54,7 @@ import {
   lastDomesticNormalizeSkippedBatches,
 } from "./lib/nvidia.mjs";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
+import { CURATED_LEDGER_REL_PATH, loadCurationLedger } from "./lib/curation-ledger.mjs";
 import {
   formatNetworkContractErrors,
   NETWORK_FILE,
@@ -177,19 +180,13 @@ export function buildCategoryBasisDistribution(events = []) {
   return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b, "zh-Hant")));
 }
 
-const DIST_DATA_DIR = join(ROOT, "dist", "data");
-
 function writeJson(name, obj) {
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
   const json = JSON.stringify(obj, null, 2) + "\n";
   writeFileSync(join(DATA_DIR, name), json, "utf8");
-  // 若已有部署用 dist，同步寫入，使 prod 資料即時更新（不需重 build）
-  let synced = "";
-  if (!process.env.FETCH_LIVE_DATA_DIR && existsSync(DIST_DATA_DIR)) {
-    writeFileSync(join(DIST_DATA_DIR, name), json, "utf8");
-    synced = " (+dist)";
-  }
-  console.log(`  ✔ 寫入 ${name}${synced}`);
+  // A partial refresh must not mutate an already built cohort. npm run build
+  // promotes the complete source snapshot into dist with matching projections.
+  console.log(`  ✔ 寫入 ${name}`);
 }
 
 function readOld(name) {
@@ -256,7 +253,18 @@ export async function run() {
       console.log(`警政署犯罪週報：${policeResult.events.length} 筆`);
     } catch (e) {
       status.police = { ok: false, error: e.message };
+      if (isTransientPoliceFailure(e)) {
+        const carryOver = policeCarryoverEvidence({
+          events: readOld("domestic.json"),
+          provenance: readJson("provenance.json", {}),
+          now: nowMs,
+        });
+        if (carryOver) status.police.carryOver = carryOver;
+      }
       console.error(`警政失敗：${e.message}`);
+      if (status.police.carryOver) {
+        console.warn(`警政週報暫時不可用，沿用 ${status.police.carryOver.count} 筆舊快照（上次成功 ${status.police.carryOver.lastSuccessAt}；標記 stale）`);
+      }
     }
   } else status.police = { skipped: true };
 
@@ -294,22 +302,41 @@ export async function run() {
 
       let gdelt = { ok: false, skipped: true, label: "GDELT Global News", items: [] };
       if (want("gdelt") && (intlCfg.topic === "all" || intlCfg.topic === "general")) {
-        try {
-          gdelt = await fetchGdelt();
+        const previousGdelt = readJson("provenance.json", {})?.pipeline?.gdelt;
+        const retryAt = gdeltRetryAt(previousGdelt, { now: nowMs });
+        if (retryAt) {
           status.gdelt = {
-            ok: true,
-            count: gdelt.items.length,
-            query: gdelt.query,
-            timespan: gdelt.timespan,
-            maxRecords: gdelt.maxRecords,
-            fetchedAt: gdelt.fetchedAt,
-            requestUrl: gdelt.requestUrl,
+            skipped: true,
+            reason: "GDELT HTTP 429 cooldown",
+            lastRateLimitAt: previousGdelt.lastRateLimitAt || previousGdelt.lastAttemptAt,
+            retryAt,
           };
-          console.log(`GDELT：${gdelt.items.length} 則原文`);
-        } catch (e) {
-          // GDELT 是補充訊號；API 限流或暫時失敗只告警，RSS 主線照常更新。
-          status.gdelt = { ok: false, error: e.message, label: "GDELT Global News" };
-          console.warn(`GDELT 失敗（補充來源，繼續部署）：${e.message}`);
+          console.warn(`GDELT 限流冷卻至 ${retryAt}，本輪由 RSS 主線更新`);
+        } else {
+          try {
+            gdelt = await fetchGdelt();
+            status.gdelt = {
+              ok: true,
+              count: gdelt.items.length,
+              query: gdelt.query,
+              timespan: gdelt.timespan,
+              maxRecords: gdelt.maxRecords,
+              fetchedAt: gdelt.fetchedAt,
+              lastAttemptAt: nowIso,
+              requestUrl: gdelt.requestUrl,
+            };
+            console.log(`GDELT：${gdelt.items.length} 則原文`);
+          } catch (e) {
+            // GDELT 是補充訊號；API 限流或暫時失敗只告警，RSS 主線照常更新。
+            status.gdelt = {
+              ok: false,
+              error: e.message,
+              label: "GDELT Global News",
+              lastAttemptAt: nowIso,
+              ...(/GDELT HTTP 429/i.test(e.message) ? { lastRateLimitAt: nowIso } : {}),
+            };
+            console.warn(`GDELT 失敗（補充來源，繼續部署）：${e.message}`);
+          }
         }
       } else {
         status.gdelt = { skipped: true, reason: want("gdelt") ? `topic=${intlCfg.topic}` : "未選取" };
@@ -330,8 +357,9 @@ export async function run() {
         : [];
       feedStatus = [...rssFeedStatus, ...gdeltFeedStatus];
       const okFeeds = feedStatus.filter((f) => f.ok && f.count).length;
+      const fallbackFeeds = feedStatus.filter((f) => f.ok && f.count && f.fallback === true).length;
       console.log(
-        `國際原文：${rawItems.length} 則（${okFeeds}/${feedStatus.length} 來源有回；${feedStatus
+        `國際原文：${rawItems.length} 則（${okFeeds}/${feedStatus.length} 來源有回，其中 ${fallbackFeeds} 個使用備援；${feedStatus
           .map((f) => `${f.label}:${f.ok ? f.count : "X"}`)
           .join(" ")}）`,
       );
@@ -390,6 +418,7 @@ export async function run() {
         rssRawCount: rss.items.length,
         gdeltRawCount: gdelt.ok ? gdelt.items.length : 0,
         okFeeds,
+        fallbackFeeds,
         totalFeeds: feedStatus.length,
         tier: intlCfg.tier,
         topic: intlCfg.topic,
@@ -758,6 +787,8 @@ export async function run() {
   );
 
   // --- 情報網：把新聞事件串成關聯圖（純加法，不影響既有輸出）---
+  // 人工更正 ledger（#44）隨程式碼進 review 部署；rebuild 後 override 仍持續生效。
+  const curationLedger = loadCurationLedger(join(ROOT, CURATED_LEDGER_REL_PATH));
   let domesticClusters = []; // 供 AI 群摘要用（cluster id 與 build-network 一致，因同 correlateEvents/同 domestic.json）
   let network = null;
   try {
@@ -768,8 +799,8 @@ export async function run() {
       generatedAt: nowIso,
       rulesVersion: RULES_VERSION,
       scopeNote: "情報網僅含新聞類事件（RSS / tw-news），排除政府模板化統計資料",
-      domestic: correlateEvents(domesticNews),
-      international: correlateEvents(intlNews),
+      domestic: correlateEvents(domesticNews, { curation: curationLedger.entries, rulesVersion: RULES_VERSION, scope: "domestic" }),
+      international: correlateEvents(intlNews, { curation: curationLedger.entries, rulesVersion: RULES_VERSION, scope: "international" }),
       excluded: {
         domestic: domesticEvents.length - domesticNews.length,
         international: intlEvents.length - intlNews.length,
@@ -782,7 +813,11 @@ export async function run() {
     writeJson("network.json", network);
     domesticClusters = network.domestic.clusters || [];
     status.network = { ok: true, edges: network.domestic.stats.edges, clusters: network.domestic.stats.clusters };
-    console.log(`情報網：國內新聞 ${network.domestic.stats.events} 事件 → ${network.domestic.stats.edges} 連結、${network.domestic.stats.clusters} 群集`);
+    const cur = network.domestic.curation;
+    const curationNote = curationLedger.entries.length
+      ? `（人工更正 套用 ${cur.applied}／待複審 ${cur.needsReview}／衝突 ${cur.conflicts}）`
+      : "";
+    console.log(`情報網：國內新聞 ${network.domestic.stats.events} 事件 → ${network.domestic.stats.edges} 連結、${network.domestic.stats.clusters} 群集${curationNote}`);
   } catch (e) {
     status.network = { ok: false, error: e.message };
     console.error(`情報網建立失敗（不影響其他輸出）：${e.message}`);
@@ -1087,6 +1122,8 @@ export async function run() {
     DATA_DIR,
     buildCohortManifest({
       dataDir: DATA_DIR,
+      // Until static build regenerates map projections, use current event bytes.
+      includeMapProjections: false,
       snapshotId: network?.snapshotId,
       rulesVersion: RULES_VERSION,
       nowIso,

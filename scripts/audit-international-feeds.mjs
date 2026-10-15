@@ -10,11 +10,12 @@ function argValue(name, argv = process.argv.slice(2)) {
 
 export function summarizeInternationalFeedAudit(feedStatus, { minOkFeeds = 10, minRawItems = 50 } = {}) {
   const okFeeds = feedStatus.filter((f) => f.ok && Number(f.count || 0) > 0).length;
+  const fallbackFeeds = feedStatus.filter((f) => f.ok && Number(f.count || 0) > 0 && f.fallback === true).length;
   const rawItems = feedStatus.reduce((sum, f) => sum + (f.ok ? Number(f.count || 0) : 0), 0);
   const errors = [];
   if (okFeeds < minOkFeeds) errors.push(`live feeds ${okFeeds}/${minOkFeeds}`);
   if (rawItems < minRawItems) errors.push(`raw items ${rawItems}/${minRawItems}`);
-  return { ok: errors.length === 0, okFeeds, rawItems, errors };
+  return { ok: errors.length === 0, okFeeds, fallbackFeeds, rawItems, errors };
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
@@ -25,12 +26,13 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const result = await fetchRssItems({ perFeed: cfg.perFeed, feeds, concurrency: cfg.concurrency });
 
   for (const status of result.feedStatus) {
-    console.log(`${status.ok ? "OK" : "FAIL"}\t${status.count || 0}\t${status.label}${status.error ? `\t${status.error}` : ""}`);
+    const detail = status.fallback ? `\tGoogle News fallback (${status.primaryError})` : status.error ? `\t${status.error}` : "";
+    console.log(`${status.ok ? "OK" : "FAIL"}\t${status.count || 0}\t${status.label}${detail}`);
   }
 
   const summary = summarizeInternationalFeedAudit(result.feedStatus, { minOkFeeds, minRawItems });
   console.log(
-    `International feed audit: ${summary.okFeeds}/${feeds.length} live feeds, ${summary.rawItems} raw items, tier=${cfg.tier}, topic=${cfg.topic}`,
+    `International feed audit: ${summary.okFeeds}/${feeds.length} live feeds (${summary.fallbackFeeds} fallback), ${summary.rawItems} raw items, tier=${cfg.tier}, topic=${cfg.topic}`,
   );
   if (!summary.ok) {
     console.error(`International feed audit failed: ${summary.errors.join(", ")}`);

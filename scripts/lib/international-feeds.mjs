@@ -1,4 +1,4 @@
-export const INTERNATIONAL_FEEDS = [
+const DIRECT_INTERNATIONAL_FEEDS = [
   { label: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml", hint: "地緣政治", tier: "core", topic: "general", topics: ["general"] },
   { label: "NPR World", url: "https://feeds.npr.org/1004/rss.xml", hint: "災害", tier: "core", topic: "general", topics: ["general", "disaster", "humanitarian"] },
   { label: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml", hint: "地緣政治", tier: "core", topic: "general", topics: ["general"] },
@@ -711,7 +711,7 @@ export const INTERNATIONAL_FEEDS = [
   { label: "Red Canary", url: "https://redcanary.com/feed", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "Volexity", url: "https://volexity.com/feed", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "Avast Decoded", url: "https://www.gendigital.com/blog/rss/v1/blogs/rss.xml/15299,15040,15041", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
-  { label: "Intezer", url: "https://intezer.com/feed/", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
+  { label: "Intezer", url: "https://research.intezer.com/index.xml", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "DoublePulsar (Kevin Beaumont)", url: "https://doublepulsar.com/feed", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "Troy Hunt", url: "https://www.troyhunt.com/rss/", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
   { label: "A Few Thoughts on Cryptographic Engineering", url: "https://blog.cryptographyengineering.com/feed/", hint: "資安", tier: "expanded", topic: "cyber", topics: ["cyber"] },
@@ -1501,6 +1501,43 @@ export const INTERNATIONAL_FEEDS = [
   { label: "Redacción Médica", url: "https://www.redaccionmedica.com/rss.xml", hint: "災害", tier: "expanded", topic: "health", topics: ["health"] },
   { label: "Diario Médico", url: "https://diariomedico.com/feed", hint: "災害", tier: "expanded", topic: "health", topics: ["health"] },
 ];
+
+// These direct RSS endpoints intermittently fail or return zero items in CI.
+// A 2026-09-29 probe found recent indexed articles for most of them. Keep
+// direct feeds first; fetch-rss marks a site-scoped Google News result as a
+// fallback and retains the primary error in provenance.
+const SITE_FALLBACK_LABELS = new Set([
+  "Health Policy Watch", "Telecompetitor", "All About Circuits", "Electropages",
+  "Electronic Specifier", "Electronics Weekly", "9to5Linux", "RCR Wireless News",
+  "The Sequence", "Dataconomy", "Marcus on AI", "Property Week", "Funds Europe",
+  "Money Marketing", "Trade Finance Global", "Borsen-Zeitung", "World Cargo News",
+  "Air Cargo News", "Railway Gazette International", "RailFreight.com", "RailTech.com",
+  "Future Farming", "Daily Coffee News", "Drovers", "Grainews", "International Mining",
+  "Natural Gas Intelligence", "Windpower Monthly", "Johns Hopkins Hub", "UC Santa Cruz News",
+  "American Society for Microbiology", "Sciences et Avenir", "Sky & Telescope",
+  "The Third Pole", "The Energy Mix", "BusinessGreen", "Redacción Médica",
+  "Data Center Knowledge", "GBHackers on Security", "Light Reading", "Telecoms.com",
+  "MarkTechPost", "AI Business", "Towards AI", "WealthManagement.com",
+  "Private Debt Investor", "PERE", "The Asset", "Seatrade Maritime News",
+  "Perfect Daily Grind", "Carbon Herald", "Farm Progress", "World Nuclear News",
+  "Space.com", "Anthropocene Magazine", "Cancer Network",
+  "Robohub",
+]);
+
+function siteFallbackUrl(feed) {
+  const hostname = new URL(feed.url).hostname.replace(/^www\./, "");
+  const query = encodeURIComponent(`site:${hostname} when:7d`);
+  // Google News' English index omits recent Redacción Médica articles even
+  // though its Spanish index returns them. Keep the same site restriction.
+  const locale = feed.label === "Redacción Médica"
+    ? { hl: "es-ES", gl: "ES", ceid: "ES:es" }
+    : { hl: "en-US", gl: "US", ceid: "US:en" };
+  return `https://news.google.com/rss/search?q=${query}&hl=${locale.hl}&gl=${locale.gl}&ceid=${locale.ceid}`;
+}
+
+export const INTERNATIONAL_FEEDS = DIRECT_INTERNATIONAL_FEEDS.map((feed) =>
+  SITE_FALLBACK_LABELS.has(feed.label) ? { ...feed, fallbackUrl: siteFallbackUrl(feed) } : feed,
+);
 
 export const INTERNATIONAL_TOPICS = ["general", "police", "cyber", "disaster", "health", "humanitarian", "finance"];
 

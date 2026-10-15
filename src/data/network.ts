@@ -2,8 +2,10 @@
 // 前端零計算（關聯在抓取階段算好），這裡只做 O(E) 建索引與查詢。
 import type { Scope } from "../types/event";
 import { computeSha256Hex } from "../utils/sha256";
+import type { CohortManifest } from "./manifest";
 
-export type EdgeType = "same-incident" | "same-entity" | "same-topic";
+// follow-up：人工更正 ledger（#44）產生的「後續報導」有向邊（from→to）。
+export type EdgeType = "same-incident" | "same-entity" | "same-topic" | "follow-up";
 
 export interface NetEdge {
   a: string;
@@ -11,6 +13,15 @@ export interface NetEdge {
   type: EdgeType;
   weight: number;
   why: string;
+  /** auto = 自動候選；manual = 人工更正 ledger 覆寫（附 curationId 對回記錄）。 */
+  origin?: "auto" | "manual";
+  decision?: string;
+  curationId?: string;
+  /** Retained automatic same-incident basis; a manual union alone adds no corroboration. */
+  automaticIncidentEvidence?: boolean;
+  /** follow-up 方向：from（較早報導）→ to（後續報導）。 */
+  from?: string;
+  to?: string;
 }
 
 export interface NetNode {
@@ -26,6 +37,12 @@ export interface NetNode {
   // 只計群內 same-incident 直接佐證來源；同實體／同題關聯不計入。
   sourceCount?: number;
   evidenceSources?: string[];
+  // location_correction 人工更正後的衍生欄位與審計標記（原始事件資料不變）。
+  locationRole?: string;
+  locationPrecision?: string;
+  lat?: number;
+  lng?: number;
+  curated?: { id?: string; decision?: string; fields?: string[] };
 }
 
 export interface ClusterTemporalBucket {
@@ -76,12 +93,33 @@ export interface NetCluster {
   incoherent?: boolean;
 }
 
+/** 人工更正 ledger 的逐筆套用審計（#44）：自動候選／人工決策／最終輸出分層可追溯。 */
+export interface CurationAudit {
+  entries: number;
+  applied: number;
+  needsReview: number;
+  conflicts: number;
+  invalid: number;
+  removedAutoEdges: number;
+  vetoedUnions: number;
+  vetoes?: { a: string; b: string; type: string; blockedPair: string[] }[];
+  decisions: {
+    id?: string | null;
+    line?: number | null;
+    decision?: string | null;
+    subjects?: string[] | null;
+    status: "applied" | "needs_review" | "conflict" | "invalid";
+    note?: string | null;
+  }[];
+}
+
 export interface ScopeNetwork {
   // 舊產物可省略；新產物保留事件摘要與直接佐證來源。
   nodes?: NetNode[];
   edges: NetEdge[];
   clusters: NetCluster[];
   stats: Record<string, unknown>;
+  curation?: CurationAudit;
 }
 
 export type NetworkState = "ready" | "empty" | "error" | "stale";
@@ -107,6 +145,7 @@ const TYPE_LABEL: Record<EdgeType, string> = {
   "same-incident": "同事件候選（待查證）",
   "same-entity": "共享實體",
   "same-topic": "同題情勢（弱關聯）",
+  "follow-up": "後續報導（人工更正）",
 };
 
 export const NETWORK_FETCH_TIMEOUT_MS = 5_000;
@@ -162,8 +201,10 @@ export class NetworkIndex {
       for (const id of c.members) this.clusterByMember.set(id, c);
     }
     for (const e of net.edges ?? []) {
-      this.push(e.a, { id: e.b, type: e.type, weight: e.weight, why: e.why });
-      this.push(e.b, { id: e.a, type: e.type, weight: e.weight, why: e.why });
+      const why = (id: string) => e.type === "follow-up"
+        ? `${(e.from ?? e.a) === id ? "後續報導" : "前情報導"}：${e.why}` : e.why;
+      this.push(e.a, { id: e.b, type: e.type, weight: e.weight, why: why(e.a) });
+      this.push(e.b, { id: e.a, type: e.type, weight: e.weight, why: why(e.b) });
     }
     for (const list of this.adj.values()) list.sort((x, y) => y.weight - x.weight);
   }
@@ -218,6 +259,8 @@ export class NetworkIndex {
 }
 
 export interface LoadNetworkOptions {
+  // null 表示無法鎖定 manifest；只允許未傳此選項的 legacy 呼叫略過 cohort 驗證。
+  manifest?: CohortManifest | null;
   signal?: AbortSignal;
   timeoutMs?: number;
   previousIndex?: NetworkIndex | null;
@@ -226,11 +269,62 @@ export interface LoadNetworkOptions {
   expectedSha256?: string;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+// Validate the fields consumed by the index before deciding that a response is
+// empty or promoting it as ready. Missing optional legacy metadata/nodes remain
+// compatible; malformed records must degrade through the explicit error state.
+function scopeShapeError(value: unknown): string | null {
+  if (!isRecord(value)) return "領域資料必須是 JSON 物件";
+  if (!Array.isArray(value.edges) || !Array.isArray(value.clusters)) {
+    return "領域 edges 與 clusters 必須是陣列";
+  }
+  if (value.nodes !== undefined && (!Array.isArray(value.nodes) || value.nodes.some((node) => !isRecord(node) || !isNonEmptyString(node.id)))) {
+    return "領域 nodes 必須是具有字串 id 的物件陣列";
+  }
+  for (const edge of value.edges) {
+    if (!isRecord(edge) || !isNonEmptyString(edge.a) || !isNonEmptyString(edge.b) ||
+      typeof edge.type !== "string" || !["same-incident", "same-entity", "same-topic", "follow-up"].includes(edge.type) ||
+      typeof edge.weight !== "number" || !Number.isFinite(edge.weight) || typeof edge.why !== "string") {
+      return "領域 edge 的端點、類型、權重或原因格式錯誤";
+    }
+  }
+  for (const cluster of value.clusters) {
+    if (!isRecord(cluster) || !isNonEmptyString(cluster.id) || !Array.isArray(cluster.members) ||
+      cluster.members.some((member) => !isNonEmptyString(member))) {
+      return "領域 cluster 的 id 或 members 格式錯誤";
+    }
+  }
+  return null;
+}
+
 // 載入並建索引；明確區分 ready、empty、error、stale。
 export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}): Promise<NetworkIndex> {
-  const url = options.networkUrl ?? "./data/network.json";
+  const manifestFile = options.manifest?.scopes?.[scope]?.network;
+  const url = options.networkUrl ?? (manifestFile ? `./data/${manifestFile}` : "./data/network.json");
+  const expectedSha256 = options.expectedSha256 ?? options.manifest?.files?.[manifestFile || ""]?.sha256;
+  const expectedSnapshotId = options.expectedSnapshotId ?? options.manifest?.snapshotId;
   const timeoutMs = options.timeoutMs ?? NETWORK_FETCH_TIMEOUT_MS;
   const previous = options.previousIndex && options.previousIndex.state !== "error" ? options.previousIndex : null;
+  const failed = (err: unknown, describe: (reason: string) => string): NetworkIndex => {
+    const reason = err instanceof Error ? err.message : String(err);
+    const isTimeout =
+      (err instanceof DOMException && err.name === "TimeoutError") ||
+      (err instanceof Error && /timeout|aborted/i.test(`${err.name} ${err.message}`));
+    const errorMsg = isTimeout
+      ? `載入情報網逾時 (超過 ${Math.round(timeoutMs / 1000)} 秒)`
+      : describe(reason);
+    return previous ? NetworkIndex.createStale(previous, errorMsg) : NetworkIndex.createError(errorMsg);
+  };
+  if (options.manifest === null || (options.manifest && !expectedSha256)) {
+    return failed(new Error("情報網缺少 SHA-256，無法驗證"), (reason) => reason);
+  }
 
   let res: Response;
   try {
@@ -243,14 +337,7 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
 
     res = await fetch(url, { signal });
   } catch (err: unknown) {
-    const isTimeout =
-      (err instanceof DOMException && err.name === "TimeoutError") ||
-      (err instanceof Error && /timeout|aborted/i.test(err.message));
-    const errorMsg = isTimeout
-      ? `載入情報網逾時 (超過 ${Math.round(timeoutMs / 1000)} 秒)`
-      : `網路連線異常: ${err instanceof Error ? err.message : String(err)}`;
-    if (previous) return NetworkIndex.createStale(previous, errorMsg);
-    return NetworkIndex.createError(errorMsg);
+    return failed(err, (reason) => `網路連線異常: ${reason}`);
   }
 
   if (!res.ok) {
@@ -265,11 +352,25 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   let rawText: string | null = null;
   let net: IntelNetwork;
   if (typeof res.text === "function") {
-    rawText = await res.text();
-    if (options.expectedSha256 && globalThis.crypto?.subtle) {
-      const hash = await computeSha256Hex(rawText);
-      if (hash && hash !== options.expectedSha256) {
-        const errorMsg = `情報網 SHA-256 不符 (期望 ${options.expectedSha256}，實收 ${hash})`;
+    try {
+      // AbortSignal also governs response body consumption, not only response headers.
+      // Convert a slow/truncated body into relation error state so Promise.all consumers
+      // can still render the independently loaded event data.
+      rawText = await res.text();
+    } catch (err: unknown) {
+      return failed(err, (reason) => `讀取情報網失敗: ${reason}`);
+    }
+    if (expectedSha256) {
+      let hash = "";
+      try {
+        hash = await computeSha256Hex(rawText);
+      } catch {
+        // Digest failure must not promote bytes that the manifest cannot verify.
+      }
+      if (!hash || hash !== expectedSha256) {
+        const errorMsg = hash
+          ? `情報網 SHA-256 不符 (期望 ${expectedSha256}，實收 ${hash})`
+          : "情報網 SHA-256 無法驗證";
         if (previous) return NetworkIndex.createStale(previous, errorMsg);
         return NetworkIndex.createError(errorMsg);
       }
@@ -282,12 +383,15 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
       return NetworkIndex.createError(errorMsg);
     }
   } else {
+    if (expectedSha256) {
+      const errorMsg = "情報網 SHA-256 無法驗證";
+      if (previous) return NetworkIndex.createStale(previous, errorMsg);
+      return NetworkIndex.createError(errorMsg);
+    }
     try {
       net = (await res.json()) as IntelNetwork;
     } catch (err: unknown) {
-      const errorMsg = `情報網資料格式錯誤 (JSON 無法解析: ${err instanceof Error ? err.message : String(err)})`;
-      if (previous) return NetworkIndex.createStale(previous, errorMsg);
-      return NetworkIndex.createError(errorMsg);
+      return failed(err, (reason) => `情報網資料格式錯誤 (JSON 無法解析: ${reason})`);
     }
   }
 
@@ -297,14 +401,22 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
     return NetworkIndex.createError(errorMsg);
   }
 
-  if (options.expectedSnapshotId) {
-    if (!net.snapshotId || !net.snapshotId.trim()) {
-      const errorMsg = `情報網缺少快照版本 (期望 ${options.expectedSnapshotId}，實收無版本)`;
+  for (const field of ["snapshotId", "rulesVersion", "generatedAt"] as const) {
+    if (net[field] !== undefined && typeof net[field] !== "string") {
+      const errorMsg = `情報網資料格式錯誤 (${field} 必須是字串)`;
       if (previous) return NetworkIndex.createStale(previous, errorMsg);
-      return NetworkIndex.createError(errorMsg, { snapshotId: options.expectedSnapshotId });
+      return NetworkIndex.createError(errorMsg);
     }
-    if (net.snapshotId !== options.expectedSnapshotId) {
-      const errorMsg = `情報網快照版本不符 (期望 ${options.expectedSnapshotId}，實收 ${net.snapshotId})`;
+  }
+
+  if (expectedSnapshotId) {
+    if (!net.snapshotId || !net.snapshotId.trim()) {
+      const errorMsg = `情報網缺少快照版本 (期望 ${expectedSnapshotId}，實收無版本)`;
+      if (previous) return NetworkIndex.createStale(previous, errorMsg);
+      return NetworkIndex.createError(errorMsg, { snapshotId: expectedSnapshotId });
+    }
+    if (net.snapshotId !== expectedSnapshotId) {
+      const errorMsg = `情報網快照版本不符 (期望 ${expectedSnapshotId}，實收 ${net.snapshotId})`;
       if (previous) return NetworkIndex.createStale(previous, errorMsg);
       return NetworkIndex.createError(errorMsg, { snapshotId: net.snapshotId });
     }
@@ -317,6 +429,13 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
     return NetworkIndex.createError(errorMsg);
   }
 
+  const shapeError = scopeShapeError(scopeNet);
+  if (shapeError) {
+    const errorMsg = `情報網資料格式錯誤 (${shapeError})`;
+    if (previous) return NetworkIndex.createStale(previous, errorMsg);
+    return NetworkIndex.createError(errorMsg);
+  }
+
   const meta = {
     generatedAt: net.generatedAt,
     snapshotId: net.snapshotId,
@@ -325,4 +444,3 @@ export async function loadNetwork(scope: Scope, options: LoadNetworkOptions = {}
   const hasData = (scopeNet.edges?.length ?? 0) > 0 || (scopeNet.clusters?.length ?? 0) > 0 || (scopeNet.nodes?.length ?? 0) > 0;
   return hasData ? NetworkIndex.createReady(scopeNet, meta) : NetworkIndex.createEmpty(meta);
 }
-
