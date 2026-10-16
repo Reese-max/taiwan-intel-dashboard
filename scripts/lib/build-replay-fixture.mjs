@@ -4,7 +4,7 @@
 // 已知託管 CI/CD 一律拒絕，避免假資料掩蓋 pipeline 產物缺失
 // （真實 build 仍需 restore-state 成功）。不在清單內的 CI 可用
 // BUILD_REPLAY_FIXTURE=0 強制停用。
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -90,22 +90,33 @@ export const BUILD_REPLAY_FIXTURE = {
   ],
 };
 
+export function assertBuildReplayFixtureAllowed(env = process.env, dataDir = DEFAULT_DATA_DIR) {
+  if (canUseBuildReplayFixture(env)) return;
+  for (const scope of Object.keys(BUILD_REPLAY_FIXTURE)) {
+    const file = join(dataDir, `${scope}.json`);
+    if (!existsSync(file)) continue;
+    const events = JSON.parse(readFileSync(file, "utf8"));
+    if (Array.isArray(events) && events.some((event) => event?.source?.name === "build-replay-fixture")) {
+      throw new Error("build replay fixture is not allowed in this environment");
+    }
+  }
+}
+
 export function writeBuildReplayFixture(env = process.env, dataDir = DEFAULT_DATA_DIR) {
+  assertBuildReplayFixtureAllowed(env, dataDir);
   if (!canUseBuildReplayFixture(env) || existsSync(dataDir)) return false;
-  mkdirSync(dataDir, { recursive: true });
-  const written = [];
+  mkdirSync(dirname(dataDir), { recursive: true });
+  const stagingDir = mkdtempSync(join(dirname(dataDir), ".build-replay-"));
   try {
     for (const [name, events] of Object.entries(BUILD_REPLAY_FIXTURE)) {
-      const file = join(dataDir, `${name}.json`);
-      // wx：不覆寫已存在的檔案——若 existsSync 之後有其他程序補上真實快照，
-      // 寫入直接失敗（fail-closed），不會以假資料覆蓋真實產物。
+      const file = join(stagingDir, `${name}.json`);
       writeFileSync(file, JSON.stringify(events) + "\n", { flag: "wx" });
-      written.push(file);
     }
-  } catch (err) {
-    // 半途失敗時移除已寫入的 fixture，不留「一半假資料」讓下一次 build 誤用。
-    for (const file of written) rmSync(file, { force: true });
-    throw err;
+    // 整組發布；並行還原若已寫入資料，rename 失敗且不動其內容。
+    renameSync(stagingDir, dataDir);
+  } finally {
+    // 只清理本次擁有的暫存目錄，不依正式路徑刪除其他程序的快照。
+    rmSync(stagingDir, { recursive: true, force: true });
   }
   return true;
 }

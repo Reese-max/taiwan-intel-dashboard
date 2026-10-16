@@ -1,0 +1,32 @@
+{
+  "pr": 71,
+  "head": "5cc140b97b83a47a42dea77c96385de183edcd62",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "scripts/lib/build-replay-fixture.mjs",
+      "line": 94,
+      "issue": "The environment gate only prevents creating fixtures. Previously seeded snapshots are still consumed by build-network and build-static when BUILD_REPLAY_FIXTURE=0, in plain local runs, or with hosted-CI markers, producing deployable synthetic data despite the deny policy. Reproduced with two successive isolated CLI builds; both exited 0."
+    },
+    {
+      "severity": "high",
+      "file": "scripts/lib/build-replay-fixture.mjs",
+      "line": 95,
+      "issue": "The existsSync/recursive-mkdir check and per-file writes do not publish a cohort atomically. A concurrent restore can leave real and synthetic files mixed; if international wx then fails, the rollback at line 107 deletes domestic.json even after another writer replaced it with real data. A write that creates a file before throwing also leaves untracked truncated JSON behind."
+    },
+    {
+      "severity": "med",
+      "file": "scripts/build-network.mjs",
+      "line": 61,
+      "issue": "needs-human: linked issue #41 explicitly authorizes audit coordination only, not implementation. Automatically seeding event snapshots changes the build behavior outside that issue's scope. A maintainer must decide whether to retain this separately authorized work or split it into another PR; this review does not remove or broaden the feature."
+    },
+    {
+      "severity": "low",
+      "file": "docs/audits/50-persona-round-6-2026-10-01.md",
+      "line": 57,
+      "issue": "needs-human: the immutable historical report quotes 845 tests including this PR's fixture tests, while the reviewed head has seven added tests and the verified baseline is 848 tests in 113 files. Its df7cee1 product SHA predates those added tests. Author evidence or a supplemental historical correction is needed; do not rewrite the immutable report or treat that receipt as final-head validation."
+    }
+  ],
+  "fixed": true,
+  "summary": "Fixed denied-environment fixture reuse and unsafe per-file publication/rollback, with four regression tests confirmed failing before the fix. Git-Bash CI=true BUILD_REPLAY_FIXTURE=1 npm run check passed 852 tests in 114 files plus typecheck and build. needs-human: #41 is audit-only, and the immutable report's 845-test receipt does not validate the reviewed head; these findings remain open."
+}

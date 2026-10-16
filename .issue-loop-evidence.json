@@ -1,0 +1,17 @@
+{
+  "repo": "Reese-max/taiwan-intel-dashboard",
+  "issue": 71,
+  "base_sha": "5cc140b97b83a47a42dea77c96385de183edcd62",
+  "red_proof": "Before implementation changes, npm test -- tests/build-replay-safety.test.ts exited 1 with all 4 regression tests failing: denied CLI build exited 0 instead of 1; a concurrently restored directory was accepted; real domestic.json was deleted by rollback; and a failed write left a partial data directory. The unchanged reviewed head first passed npm test: 848 tests in 113 files.",
+  "test_command": "CI=true BUILD_REPLAY_FIXTURE=1 npm run check",
+  "test_exit": 0,
+  "tests_passed": 852,
+  "tests_failed": 0,
+  "summary": "Reject persisted replay fixtures before network consumption or static output cleanup when the environment disallows them. Publish complete fixture directories by rename and clean only the owned staging directory, preserving concurrently restored real files and removing truncated staging writes. Four red-to-green regression tests cover actual CLI entrypoints, allowed replay, denied reuse, real snapshot acceptance, restore races, and write errors; the full Git-Bash check passed on Windows with Node v26.7.0. README documents the replay boundary.",
+  "not_done": [
+    "needs-human: issue #41 grants audit coordination only; a maintainer must approve retaining the build behavior or split it into separately authorized work. This review did not remove or broaden that behavior.",
+    "needs-human: the immutable historical report quotes 845 tests and an earlier product SHA. The reviewed-head baseline is verified here as 848 tests; original author receipts or a supplemental historical correction remain outstanding. Historical reports were not edited.",
+    "Replay/build and external restore writers must be coordinated. Directory publication is atomic, but another writer can overwrite files after publication; no shared producer lock or separate replay data directory was introduced.",
+    "No push, other branch changes, merge, deployment, Preview validation, or remote CI run. The full suite ran on Windows via Git Bash; a separate Linux/WSL filesystem probe confirmed directory-rename behavior, not full Linux-suite acceptance."
+  ]
+}

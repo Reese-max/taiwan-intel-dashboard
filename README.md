@@ -59,6 +59,8 @@ npm run refresh:news   # 抓台灣新聞（吃 LLM 成本）
 node --env-file=.env scripts/fetch-live.mjs --sources=rss,gdelt   # 抓國際 RSS＋GDELT 補充
 ```
 
+尚未還原 `public/data` 的本機工作樹，可在 Git Bash 執行 `BUILD_REPLAY_FIXTURE=1 npm run check`，以合成快照驗證建置。已知託管 CI 禁用此模式；停用 fixture 或進入託管環境後，建置也會拒絕先前留下的合成事件，須先還原真實資料快照。
+
 ## 稽核（CI 皆有掛）
 
 ```bash

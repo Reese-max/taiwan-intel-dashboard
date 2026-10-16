@@ -17,11 +17,13 @@ import { emptyDirContents } from "./lib/fs-safe.mjs";
 import { minifyOrCopyJson } from "./lib/minify-json.mjs";
 import { buildCohortManifest, writeCohortManifest } from "./lib/manifest.mjs";
 import { isValidCoordinate } from "./lib/geo-policy.mjs";
+import { assertBuildReplayFixtureAllowed } from "./lib/build-replay-fixture.mjs";
 
 const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
   throw new Error("BUILD_STATIC_OUT 只能指定專用產物目錄 dist");
 }
+assertBuildReplayFixtureAllowed(process.env, resolve("public/data"));
 if (existsSync(OUT)) emptyDirContents(OUT);
 mkdirSync(`${OUT}/assets`, { recursive: true });
 
