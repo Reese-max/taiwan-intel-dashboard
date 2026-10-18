@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-10-18T00:59:39.163Z",
+  "windowHours": 24,
+  "windowStart": "2026-10-17T00:59:39.163Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 994,
+    "accepted": 467,
+    "rejected": 527
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "嘉義鹿草涸魚文化季 民眾牽罟捕魚重溫農村記憶",
+        "link": "https://news.ltn.com.tw/news/ChiayiCounty/breakingnews/5609987",
+        "pubDate": "Sun, 18 Oct 2026 08:57:52 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "嘉義縣鹿草鄉鹿東社區昨舉辦「埤頭堀涸魚文化季—埤頭風貌老記憶‧魚躍龍門」，除鄉親踴躍共襄盛舉，也吸引不少遊客體驗早年攜手牽罟捕魚情景，大家合力從埤頭堀撈起的上百斤魚蚌全都免費發...…"
+      },
+      {
+        "title": "週日出遊注意！中部連2天空品恐亮橘燈 10/20才好轉",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5609988",
+        "pubDate": "Sun, 18 Oct 2026 08:55:38 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "進入空污季，出遊小心空污！近日環境風場偏東風，台灣西半部今（18）明兩日西半部空品恐達「橘色提醒」等級，預計20日才會恢復普通等級。 台中市環保局表示，西半部位於背風側，...…"
+      },
+      {
+        "title": "張善政連任有利？命理師看面相 揭黃世杰勝選「必補關鍵」",
+        "link": "https://news.ltn.com.tw/news/Taoyuan/breakingnews/5609977",
+        "pubDate": "Sun, 18 Oct 2026 08:49:00 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "桃園縣長選情白熱化，知名命理師楊登嵙分析台灣重大選舉趨勢，以「面相學」分析國民黨桃園市長候選人張善政與民進黨候選人黃世杰，張善政眼神和惠溫和，下巴格局收攏得當，晚運穩定與基層支...…"
+      },
+      {
+        "title": "韓國瑜回來了！率韓粉力挺柯志恩 賴瑞隆邀小英助陣「藍綠高雄人數大PK」",
+        "link": "https://www.mirrormedia.mg/story/20261018edi001",
+        "pubDate": "Sun, 18 Oct 2026 08:45:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "科博館「一天限定」夜未眠 秒變「台版侏儸紀公園」",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5609974",
+        "pubDate": "Sun, 18 Oct 2026 08:38:00 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國立自然科學博物館每年一天限定夜間開放，今年選昨（17日）限時開放民眾入館，民眾可以自由在館內體驗經典展品，還有美食區，其中恐龍館打上霓虹燈光，更吸引不少人穿恐龍裝進場，跟大小...…"
+      },
+      {
+        "title": "拆解 Deepfake 與 AI 幻覺，蘇格蘭高中設立全英首位「AI 素養專責教師」",
+        "link": "https://technews.tw/2026/10/18/ai-literacy-teachers/",
+        "pubDate": "Sun, 18 Oct 2026 00:30:43 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "蘇格蘭東倫弗魯郡的米恩斯城堡高中（Mearns Castle High School）近日成為英國首批、也是被 [&#8230;]"
+      },
+      {
+        "title": "複習愛情摩天輪始末 好過日：柯志恩是韓國瑜一脈相傳",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5609976",
+        "pubDate": "Sun, 18 Oct 2026 08:30:15 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "立法院長韓國瑜昨晚為國民黨高雄市長候選人柯志恩站台時，再度喊出「愛情摩天輪」!臉書社群高雄好過日順勢複習愛情摩天輪始末，解析韓國瑜宣布「愛情摩天輪」政策復活，象徵柯志恩是韓國瑜...…"
+      },
+      {
+        "title": "政府確定發大紅包！全台符合資格「每月5000元現金自動入帳」， 成長津貼發放金額對象一次看 - 風傳媒",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBIZjkxVFdjekxjcVlZN2RxOGdPOHVVSHRjSzMtdWlKSFpyby1sOWRGYXkyeGNnTm8wWVVOOXRVTXd5Rm4xQlp3QXJjcklwTTFY?oc=5",
+        "pubDate": "Sun, 18 Oct 2026 00:30:00 GMT",
+        "source": "GN 風傳媒綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "政府確定發大紅包！全台符合資格「每月5000元現金自動入帳」， 成長津貼發放金額對象一次看 風傳媒"
+      },
+      {
+        "title": "法國示威失控！55萬人上街怒吼警民激烈流血衝突400人被捕| 國際 - 三立新聞",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE5BQWM0LTRhTExmeG80T3VfTXlmVXFTV0g2d3Zyd0QzM1RGbDF5ZHNTRmZXZDVSeFc5dUdRQ3JiOUM1cUxBZzhPYw?oc=5",
+        "pubDate": "Sun, 18 Oct 2026 00:29:00 GMT",
+        "source": "GN 三立綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "法國示威失控！55萬人上街怒吼警民激烈流血衝突400人被捕| 國際 三立新聞"
+      },
+      {
+        "title": "重陽節限定 65歲以上長者今搭高雄捷運、高雄輕軌可「坐到飽」",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5609980",
+        "pubDate": "Sun, 18 Oct 2026 08:28:38 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "重陽節限定，高雄捷運公司宣布，65歲以上長者不限設籍縣市，今天只要持敬老卡或個人身分證，可享高雄捷運、高雄輕軌不限距離不限次數免費搭乘。 今天是農曆9月9日重陽節，高...…"
+      },
+      {
+        "title": "日本免費驗熱水器騙局專呃獨居長者 訛稱不換會起火 涉22億日圓 - 香港01",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFBFRjg2Ump0cHNLclo4NVVpRE9mSVc0VmthYU9FSThLTC1ESmNfMGRGY01fNVluU1psRjlPaVAwN194ekxPYnEtSm9BRzdiZw?oc=5",
+        "pubDate": "Sun, 18 Oct 2026 00:10:59 GMT",
+        "source": "GN 銀髮長者詐騙",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "日本免費驗熱水器騙局專呃獨居長者 訛稱不換會起火 涉22億日圓 香港01"
+      },
+      {
+        "title": "讀饗時光EP182｜香港飲食流行趨勢觀察 - 聯合報數位版",
+        "link": "https://news.google.com/rss/articles/CBMieEFVX3lxTE1HRVI3Zmp5SGx6a3VPMlM5RU1KVEducFJFNlQwZ0dZQ0pCRi1mWWV3TlV3eW16cnUyWVhkRTh6MGlvWURZaFEwOVQ3Y1h2NnJhYmwzZDlmMFY5alBlc0x5U0VLS2xRNW13X21xVjdfZFlZdVQ1bUU4Rw?oc=5",
+        "pubDate": "Sun, 18 Oct 2026 00:07:00 GMT",
+        "source": "GN 情殺仇殺",
+        "hint": "治安",
+        "authority": "media",
+        "description": "讀饗時光EP182｜香港飲食流行趨勢觀察 聯合報數位版"
+      },
+      {
+        "title": "台股叩關五萬點怎麼布局？名家公開「真 AI」供應鏈口袋名單",
+        "link": "https://finance.technews.tw/2026/10/18/which-taiwan-ai-stocks-are-worth-buying/",
+        "pubDate": "Sun, 18 Oct 2026 00:00:50 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "台股挑戰五萬點該買什麼股票？哪些 AI 股拉回值得安心布局？投資名家們在此分享他們的口袋名單與操作策略。 台股 [&#8230;]"
+      },
+      {
+        "title": "刷出高回饋2／百貨週年慶刷卡攻略！達人教3招疊優惠 回饋衝13%",
+        "link": "https://www.mirrormedia.mg/story/20261016-184mon-203526",
+        "pubDate": "Sun, 18 Oct 2026 08:00:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "刷出高回饋1／買筆電冰箱先別網購！百貨週年慶滿萬回饋千元 刷卡再省一筆",
+        "link": "https://www.mirrormedia.mg/story/20261016-184mon-203044",
+        "pubDate": "Sun, 18 Oct 2026 08:00:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "14歲老狗2度遭遺棄！老翁為領養「不會用GPS導航」仍跨洲駕車21小時 背後原因惹鼻酸",
+        "link": "https://www.mirrormedia.mg/story/20261016edi082",
+        "pubDate": "Sun, 18 Oct 2026 08:00:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "Military to enlist civilians to map coast",
+        "link": "https://www.taipeitimes.com/News/front/archives/2026/10/18/2003866157",
+        "pubDate": "2026-10-18T08:00:00+08:00",
+        "source": "Taipei Times (EN)",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "Official warns of China poll risk",
+        "link": "https://www.taipeitimes.com/News/front/archives/2026/10/18/2003866158",
+        "pubDate": "2026-10-18T08:00:00+08:00",
+        "source": "Taipei Times (EN)",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "Mortgage numbers for seniors surge to historic peak",
+        "link": "https://www.taipeitimes.com/News/front/archives/2026/10/18/2003866159",
+        "pubDate": "2026-10-18T08:00:00+08:00",
+        "source": "Taipei Times (EN)",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "Trump’s sanctions waiver ‘rewards’ Putin: Zelenskiy",
+        "link": "https://www.taipeitimes.com/News/front/archives/2026/10/18/2003866160",
+        "pubDate": "2026-10-18T08:00:00+08:00",
+        "source": "Taipei Times (EN)",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "「翻牆不違法」 畫家指深圳警方非法羈押網民 - 大紀元",
+        "link": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBmVUhTQ3pYTGtIdkhMa2gzQS1Dbm9LVk9lZ191Y2NKdmdESUJKTm52WDQzTU5vWHA2Zm9kUDJDNkw2Z0pRUDJTSC1hMXBRMWFKTFZ3TzFWdWU2MU5aMVZwWl9n0gFnQVVfeXFMUGFlbmNBV0NVWGJWdXY4b04wZFBPT1F3TDUzSEF1TTdxNmRjYllhM3ZLdGxDZFRCVFJWTUpVemJ0OVpjZlFmM2hhQ01zM3Q2N3V4X29FcU52ZG1rNVljSEwycUhEWEl0dw?oc=5",
+        "pubDate": "Sun, 18 Oct 2026 00:59:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「翻牆不違法」 畫家指深圳警方非法羈押網民 大紀元"
+      },
+      {
+        "title": "ㄎㄧㄤ掉！桃園男毒駕上路 右轉切進對向車道碰撞等紅燈車輛 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5zM1JPNDVmdTZMNDJUYlhzWWRBckZzM2RNNHhaUnhfdWZvbDZ6a0ZVVGlmUkh6cjFBamE1N2VNUmpQVFp1QVljcXJjSGZyWXBQYS1zTWNrNXUwR2ZhYWfSAUtBVV95cUxNT2NnQWNJZHpaY0xraHRyeExvRHlrZ3N1bVEydlZ3d0lCQjJyX3Z4akdvSGhpSUd3QTcwZEFjQlJhYVlIOWxuOGRqUUk?oc=5",
+        "pubDate": "Sun, 18 Oct 2026 00:59:00 GMT",
+        "source": "GN ETtoday 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "ㄎㄧㄤ掉！桃園男毒駕上路 右轉切進對向車道碰撞等紅燈車輛 ETtoday新聞雲"
+      },
+      {
+        "title": "遭冒名收400則猥褻訊息！ 她揪出幕後黑手竟是「15年以上前男友的女友」",
+        "link": "https://www.mirrormedia.mg/story/20261015edi056",
+        "pubDate": "Sun, 18 Oct 2026 08:58:59 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "《絕命毒師》腦麻男星驟逝！曾慘遭詐騙 醫喊話：他們智商沒問題 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE45c3JTY1ZUTENxSkxscGZad0dFeVNCWW5sdzhvV3JGZll3VXFJRkZpM0pjcll2V1hGSVdXTWt0YldHd0Zsb1gwZ3NLZDNOZ2M?oc=5",
+        "pubDate": "Sun, 18 Oct 2026 00:57:00 GMT",
+        "source": "GN 租屋詐騙",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "《絕命毒師》腦麻男星驟逝！曾慘遭詐騙 醫喊話：他們智商沒問題 TVBS新聞網"
+      },
+      {
+        "title": "高雄「權利車行虐殺案」爆炸性進展！主嫌「南韓落網押解回台」 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMi-AJBVV95cUxOMnhERGRGaE1BdkNZYXFtdFBMT3lpSE85b0dlZktEZU81MmJEY1R6RWNGWk52MExFampLd25LVkJ0eVpJaWM5dHo0S2lmNEg5WmtWNUpHcDlrQzVXRTdZbXZPd0ktVFF6WE9vXzA4WnBQdVN3S1Q0bHBkOF95V1Etang2V3JvdGZVQmZYMnVOQWVUZjRLcDhnX0JSX05acl85RGt3Mm5Gb1JmT0xZT2drbmQ5VGtwMFgtY0VJN1RPWGhVa1VqcEZJYWxjZkJEaHJydVd2dTN6TXZoMEkyaTF5RDNROG04OVdzN1lSbDBtc1FmeXd4bGR2MWxpNVY3a25POWF4bXVJY2o2UFlqNjYwVlQ3dGtPRzVOdDNhUWxibFhJWGFNZWdYY3EzcXkxZmtTbDl6SkxVanpGYnZteFNVdnhkRHV6U3JTb01SNGVGcXZMT1VzTHI4OUN3Y24wa1hJa05JcVJxbVVENHZUR1kzTXlINzFEamM4?oc=5",
+        "pubDate": "Sun, 18 Oct 2026 00:43:25 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄「權利車行虐殺案」爆炸性進展！主嫌「南韓落網押解回台」 Yahoo新聞"
+      },
+      {
+        "title": "苗栗苑裡垃圾場燒了7天終撲滅！PM2.5監測數據曝光",
+        "link": "https://news.ltn.com.tw/news/Miaoli/breakingnews/5609985",
+        "pubDate": "Sun, 18 Oct 2026 08:41:17 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "苗栗縣苑裡垃圾場轉運站於11日下午火警，經消防局與公所連日全力搶救，至昨（17）日下午現場火勢已撲滅，僅剩零星區域還有少量煙塵，由怪手輪流開挖清理並持續灑水降溫，確保不會再次復...…"
+      },
+      {
+        "title": "南湖大山登山客左腳扭傷求援 查獲未投保、無救護能力等違規開罰2萬元 - 蕃新聞",
+        "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1veEZuU3RMOEw5RnVyc0pTV1lLNklUMENVTllnYUF6MHZKNDI3ZjFQeU1oVmFfZ2N1VWtucWJTQndkbndCYUxxMzdRZ25IdVJJNFE?oc=5",
+        "pubDate": "Sun, 18 Oct 2026 00:36:00 GMT",
+        "source": "GN 登山山域事故",
+        "hint": "災防",
+        "authority": "media",
+        "description": "南湖大山登山客左腳扭傷求援 查獲未投保、無救護能力等違規開罰2萬元 蕃新聞"
+      },
+      {
+        "title": "台中24歲男當車手收145萬 製造斷點沒用判1年10月",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5609983",
+        "pubDate": "Sun, 18 Oct 2026 08:35:15 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台中一名顧姓男子（24歲）加入詐騙集團擔任車手，該集團謊稱投資可獲利，徐姓男子信以為真，前年8月相約在台中惠智公園面交145萬現金，顧男接獲指示出面取款，並立即交給上手「收水」...…"
+      },
+      {
+        "title": "新／嘉義凶殺案！男子身插水果刀 鄰房男子犯案桃園被逮 - 東森新聞",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5zbk1DclRjZWo1QTZWVHNsY0pUYjgxRHVENV84cVZ5Q0hOeFZlUjBILXB1ekRJN05jc3hkNzBCNW5YcHJTdDI2WUtzTy0yMnBMVEhkWW9R?oc=5",
+        "pubDate": "Sun, 18 Oct 2026 00:31:00 GMT",
+        "source": "GN 命案兇殺",
+        "hint": "治安",
+        "authority": "media",
+        "description": "新／嘉義凶殺案！男子身插水果刀 鄰房男子犯案桃園被逮 東森新聞"
+      },
+      {
+        "title": "射後抖2下就睡過夜？懶男內褲驚見黴菌 醫師揭正確清槍2步驟",
+        "link": "https://www.mirrormedia.mg/story/20261017web004",
+        "pubDate": "Sun, 18 Oct 2026 08:29:58 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "‘Sunflower Queen’ indicted on drug trafficking charges",
+        "link": "https://www.taipeitimes.com/News/taiwan/archives/2026/10/18/2003866174",
+        "pubDate": "2026-10-18T08:00:00+08:00",
+        "source": "Taipei Times (EN)",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "獨／高雄權利車行殺人運屍案重大發展主嫌逃南韓遭遣返押回台| 焦點事件| 社會 - udn",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5UR0t5Y0FiX2lnblhhTDZ5bU5SMVlJaVRRM1ZIaGR4YnRfOURKRHhnRVY3OTlId1pxOHZ6SVdMWXhLZlJjTUVJRnh6OElURmpa?oc=5",
+        "pubDate": "Sat, 17 Oct 2026 23:58:07 GMT",
+        "source": "GN 殺人分屍",
+        "hint": "治安",
+        "authority": "media",
+        "description": "獨／高雄權利車行殺人運屍案重大發展主嫌逃南韓遭遣返押回台| 焦點事件| 社會 udn"
+      },
+      {
+        "title": "美奧勒岡小學槍擊釀4死 勇師壓制嫌犯遭持槍家長擊斃 - 民視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1qVFNHNlZ3XzZvQXdjSjcwNHBjeURicHFaNkR6VHV0N1gzX3p6LWdGaFY3RUxVdmg1dnZ1cnJNNG5kR1ozRjc5ZE44MXF5Q2NfRjFpNGowaDdES2FOYnBiUA?oc=5",
+        "pubDate": "Sat, 17 Oct 2026 23:54:16 GMT",
+        "source": "GN 槍械",
+        "hint": "治安",
+        "authority": "media",
+        "description": "美奧勒岡小學槍擊釀4死 勇師壓制嫌犯遭持槍家長擊斃 民視新聞網"
+      },
+      {
+        "title": "快訊》高溫猛攻2縣市！氣象署急示警：嚴防熱傷害| 生活 - Newtalk新聞",
+        "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE1FZjRaMnV6Z2lmbEZNWlc2R2NSU1hEWW9kWFFqdUVRTDB6cEJlaEU1M0RsNnhQS2p2TFM0dW5XNjJta1pyU0stUC0zbFY5QXhFTGk4WE1LRjlRZzA?oc=5",
+        "pubDate": "Sat, 17 Oct 2026 23:36:00 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "快訊》高溫猛攻2縣市！氣象署急示警：嚴防熱傷害| 生活 Newtalk新聞"
+      },
+      {
+        "title": "年底砍帳號！LINE下通牒：只綁臉書沒綁電話將刪帳 貼圖代幣全歸零",
+        "link": "https://www.mirrormedia.mg/story/20261017web005",
+        "pubDate": "Sun, 18 Oct 2026 07:29:58 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "財經時事／麥味登少主翻轉屠宰業 卓靖倫衝刺品牌挑戰大成卜蜂",
+        "link": "https://www.mirrormedia.mg/story/20260918fin001",
+        "pubDate": "Sun, 18 Oct 2026 07:28:59 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "德國執政黨地方電郵遭入侵 默茨等逾6千人接詐騙郵件 - 商業電台",
+        "link": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE13YkNLZU5vVWxZaGtTTEFqUWo1cGNfWG5PYkg0MUVLTExSWHdyREJRbUFWTVkyLWd1Mkd5VHdvQ1NSa2F0bWhTRDU0YjRxd2picWlhakRkMXI0NlVpV0t0ZUZKUdIBY0FVX3lxTE13YkNLZU5vVWxZaGtTTEFqUWo1cGNfWG5PYkg0MUVLTExSWHdyREJRbUFWTVkyLWd1Mkd5VHdvQ1NSa2F0bWhTRDU0YjRxd2picWlhakRkMXI0NlVpV0t0ZUZKUQ?oc=5",
+        "pubDate": "Sat, 17 Oct 2026 23:28:00 GMT",
+        "source": "GN 詐騙簡訊釣魚",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "德國執政黨地方電郵遭入侵 默茨等逾6千人接詐騙郵件 商業電台"
+      },
+      {
+        "title": "法律生淪偷拍狼2／偷拍逾百人遭法院撤銷緩刑 成大記色狼「2大過」挨轟懲處太輕 - 鏡新聞",
+        "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE9aa3VtOHVJanFMYVhKSWFpRnZqSHRNNU1YU3hpbW5WRTZCUno5Nm13NUpSNUZPOXhHOGppSkxxazlkeUlKYVNDZE54UHVoYUQ2Q0RDaWRVUUVKNThy0gFcQVVfeXFMT1prdW04dUlqcUxhWEpJYWlGdmpIdE01TVhTeGltblZFNkJSejk2bXc1SlI1Rk85eEc4amlKTHFrOWR5SUphU0NkTnhQdWhhRDZDRENpZFVRRUo1OHI?oc=5",
+        "pubDate": "Sat, 17 Oct 2026 23:20:00 GMT",
+        "source": "GN 偷拍性影像",
+        "hint": "治安",
+        "authority": "media",
+        "description": "法律生淪偷拍狼2／偷拍逾百人遭法院撤銷緩刑 成大記色狼「2大過」挨轟懲處太輕 鏡新聞"
+      },
+      {
+        "title": "法律生淪偷拍狼1／成大法律生淪偷拍色狼 潛伏南一中等校廁所偷拍、185人受害 - 鏡週刊Mirror Media",
+        "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBnRGc5cTRMQTlvbk5QZFpvb0c5TF8xLTBSVlNBbUw5dFR2MFBuSlRDa3F4cHR2UUtaU2RDVEd6WlFLTE9Ja1lxa2RNcW9FTTMyMU1XQV9IWVBlSGPSAWBBVV95cUxQTTRScS0xNXhac3JhdE44MGlKZmhYd2JBaEVlT0htd0xuTGZfMm0tLUc1OEE5RGtlQlFSVjRKLWVrSlA3dkhtcnlCVWtxdnIzemUwY0hZU0tYQnlVajRaclc?oc=5",
+        "pubDate": "Sat, 17 Oct 2026 23:00:59 GMT",
+        "source": "GN 偷拍性影像",
+        "hint": "治安",
+        "authority": "media",
+        "description": "法律生淪偷拍狼1／成大法律生淪偷拍色狼 潛伏南一中等校廁所偷拍、185人受害 鏡週刊Mirror Media"
+      },
+      {
+        "title": "蘇清泉成立總部南高屏連線 韓國瑜：讓屏東好人才出頭！",
+        "link": "https://newtalk.tw/news/view/2026-10-18/1066166",
+        "pubDate": "Sun, 18 Oct 2026 06:51:25 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 國民黨屏東縣長候選人蘇清泉競選總部17日舉行成立晚會，包括立法院長韓國瑜、同黨高雄市長候選人柯志恩、台南市長候選人謝龍介、立委羅智強、洪孟楷、盧縣一、黃仁等人均到場助講，現場湧入約1萬5千人，將光明街封街會場擠得水洩不通，眾人齊聲高喊「蘇清泉當選」，期盼屏東綠地變藍天。韓國瑜上台時受到眾人熱情歡迎， 延伸閱讀： 韓國瑜合體柯志恩廟口開講 近5千人擠爆小港鳳儀宮 採購阿拉斯加天然"
+      }
+    ]
+  }
+}
