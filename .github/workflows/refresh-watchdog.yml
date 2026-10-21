@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Require exact main ref
+        run: test "$GITHUB_REF" = refs/heads/main
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:

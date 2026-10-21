@@ -39,6 +39,8 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Require exact main ref
+        run: test "$GITHUB_REF" = refs/heads/main
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -191,6 +193,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
+      - name: Require exact main ref
+        run: test "$GITHUB_REF" = refs/heads/main
       - name: 失敗／取消通知（Telegram；未設 secrets 靜默跳過）
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

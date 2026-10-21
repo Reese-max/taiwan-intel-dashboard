@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import YAML from 'yaml'
@@ -6,12 +7,13 @@ import YAML from 'yaml'
 // Action, load provider credentials or claim actual GitHub job execution.
 // Read the actual checked-in YAML rather than a second copied implementation.
 type Result = 'success' | 'failure' | 'skipped' | 'cancelled'
-type Job = { needs?: string | string[]; if?: string }
+type Job = { needs?: string | string[]; if?: string; steps?: { run?: string }[] }
 type Workflow = { on: Record<string, unknown>; jobs: Record<string, Job> }
 type Context = { ref: string | undefined; eventName?: string; cancelled?: boolean }
 const workflow = YAML.parse(readFileSync('.github/workflows/update-and-deploy.yml', 'utf8')) as Workflow
 const dryRun = YAML.parse(readFileSync('.github/workflows/pipeline-dry-run.yml', 'utf8')) as Workflow
 const watchdog = YAML.parse(readFileSync('.github/workflows/refresh-watchdog.yml', 'utf8')) as Workflow
+const fetchWorkflow = YAML.parse(readFileSync('.github/workflows/pipeline-fetch.yml', 'utf8')) as Workflow
 const privilegedJobs = ['operating-state', 'save-state', 'deploy'] as const
 const pipelineJobs = ['operating-state', 'fetch', 'audit', 'build-approved', 'save-state', 'deploy', 'next-refresh'] as const
 
@@ -37,7 +39,7 @@ function eligible(job: Job, context: Context, results: Record<string, Result>): 
   const condition = expression(job.if)
   // Job conditions without a status function have the implicit success gate.
   if (condition === undefined) return allSuccess
-  if (condition === "github.ref == 'refs/heads/main'") return allSuccess && context.ref === 'refs/heads/main'
+  if (condition === "github.ref == 'refs/heads/main'") return allSuccess && context.ref?.toLowerCase() === 'refs/heads/main'
   if (condition === "always() && !cancelled() && needs['operating-state'].result == 'success'") {
     if (!needs.includes('operating-state')) throw new Error('Refresh must actually depend on operating-state')
     return !context.cancelled && results['operating-state'] === 'success'
@@ -68,6 +70,27 @@ function evaluatePipeline(context: Context, injected: Partial<Record<string, Res
 }
 
 describe('Issue42: formal data publication uses the complete main branch ref', () => {
+  it('models GitHub string equality as case-insensitive', () => {
+    expect(eligible(dryRun.jobs.fetch, { ref: 'refs/heads/MAIN' }, {})).toBe(true)
+  })
+
+  it.each([
+    ['shared source fetch', fetchWorkflow.jobs.fetch],
+    ['watchdog dispatch', watchdog.jobs['check-and-dispatch']],
+    ['operating-state entry', workflow.jobs['operating-state']],
+    ['failure notification', workflow.jobs.notify],
+  ])('checks the case-sensitive ref before any %s checkout or secret-bearing step', (_label, job) => {
+    const gate = job.steps?.[0]
+    expect(gate?.run).toBe('test "$GITHUB_REF" = refs/heads/main')
+    for (const ref of ['refs/heads/main', 'refs/heads/MAIN', 'refs/heads/Main', 'refs/heads/feature/issue-42', 'refs/heads/production', 'refs/tags/main', '']) {
+      const result = spawnSync('bash', ['--noprofile', '--norc', '-c', gate!.run!], {
+        env: { ...process.env, BASH_ENV: '', GITHUB_REF: ref }, encoding: 'utf8', timeout: 5_000,
+      })
+      expect(result.error).toBeUndefined()
+      expect(result.status, ref).toBe(ref === 'refs/heads/main' ? 0 : 1)
+    }
+  })
+
   it.each([
     ['dry-run source secrets', dryRun.jobs.fetch],
     ['watchdog production dispatch', watchdog.jobs['check-and-dispatch']],

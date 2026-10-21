@@ -26,6 +26,8 @@ jobs:
     outputs:
       fetch_args: ${{ steps.mode.outputs.args }}
     steps:
+      - name: Require exact main ref
+        run: test "$GITHUB_REF" = refs/heads/main
       - name: Checkout 原始碼
         uses: actions/checkout@v4
 

@@ -41,9 +41,11 @@
 
 `audit` 或 operating-state validation 失敗時，`save-state` 與 `deploy` 都不會執行。`build-approved` 會以同一份候選資料 checkout `ops/approved-code.json` 的 SHA，執行 `npm run check`；資料稽核與核准版本建置通過後，依序更新 `pipeline-state`、部署正式站，再執行線上 smoke。smoke 失敗不會自動回復已寫入的資料狀態或已部署版本，必須依事故程序處理。
 
-`operating-state`、`save-state` 與 `deploy` job 均帶 `if: github.ref == 'refs/heads/main'`。其他 branch 或 tag 的 `workflow_dispatch` 會跳過這些入口，既有 `needs` 鏈也阻止 fetch、audit、approved build 與接力 refresh；跳過不是驗證／部署成功。合法 main 排程、push 或手動更新仍可無人值守。此來源防護不取代平台對 workflow、環境與 Secrets 的控制，不能宣稱它可阻止有權修改 workflow 的操作者移除條件。
+`operating-state`、`save-state` 與 `deploy` job 均帶 `if: github.ref == 'refs/heads/main'` 作為初步篩選。不符合該條件的 branch 或 tag `workflow_dispatch` 會跳過這些入口，既有 `needs` 鏈也阻止 fetch、audit、approved build 與接力 refresh；跳過不是驗證／部署成功。合法 main 排程、push 或手動更新仍可無人值守。此來源防護不取代平台對 workflow、環境與 Secrets 的控制，不能宣稱它可阻止有權修改 workflow 的操作者移除條件。
 
-同一個完整 main ref 條件也涵蓋 `pipeline-dry-run.yml` 的 fetch（繼承來源 secrets）與 `refresh-watchdog.yml` 的 check-and-dispatch（可觸發正式資料更新）。非 main 的手動執行會在 job 執行前跳過；dry-run 的 audit 仍依賴 fetch，main 的全來源 dry-run 與無人值守 watchdog 維持既有流程。`update-and-deploy.yml` 的 notify 也要求 main，保留正式流程失敗／取消時的通知，非 main 取消不會取得通知 secrets 或對外發送。[GitHub job 條件規則](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions)
+同一個完整 main ref 條件也涵蓋 `pipeline-dry-run.yml` 的 fetch（繼承來源 secrets）與 `refresh-watchdog.yml` 的 check-and-dispatch（可觸發正式資料更新）。不符合條件的手動執行會在 job 執行前跳過；dry-run 的 audit 仍依賴 fetch，main 的全來源 dry-run 與無人值守 watchdog 維持既有流程。`update-and-deploy.yml` 的 notify 也要求 main，保留正式流程失敗／取消時的通知。[GitHub job 條件規則](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions)
+
+Actions 的字串 `==` 不區分大小寫，因此 `MAIN`／`Main` 分支仍可能通過初步條件。共用 fetch、watchdog、operating-state 與 notify 的第一個步驟均以 Bash `test "$GITHUB_REF" = refs/heads/main` 區分大小寫檢查 runner 提供的 ref；大小寫變體會在 checkout、來源 secrets、正式更新觸發或通知之前失敗，後續步驟及相依發布 job 不會執行。[GitHub expression 比較規則](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#operators)
 
 ## 正常發布步驟
 
