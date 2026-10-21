@@ -43,6 +43,8 @@
 
 `operating-state`、`save-state` 與 `deploy` job 均帶 `if: github.ref == 'refs/heads/main'`。其他 branch 或 tag 的 `workflow_dispatch` 會跳過這些入口，既有 `needs` 鏈也阻止 fetch、audit、approved build 與接力 refresh；跳過不是驗證／部署成功。合法 main 排程、push 或手動更新仍可無人值守。此來源防護不取代平台對 workflow、環境與 Secrets 的控制，不能宣稱它可阻止有權修改 workflow 的操作者移除條件。
 
+同一個完整 main ref 條件也涵蓋 `pipeline-dry-run.yml` 的 fetch（繼承來源 secrets）與 `refresh-watchdog.yml` 的 check-and-dispatch（可觸發正式資料更新）。非 main 的手動執行會在 job 執行前跳過；dry-run 的 audit 仍依賴 fetch，main 的全來源 dry-run 與無人值守 watchdog 維持既有流程。`update-and-deploy.yml` 的 notify 也要求 main，保留正式流程失敗／取消時的通知，非 main 取消不會取得通知 secrets 或對外發送。[GitHub job 條件規則](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions)
+
 ## 正常發布步驟
 
 1. 在 `main` 以 pull request 完成程式碼變更，確認 `test`、`check` 與 preview 通過。
@@ -50,7 +52,7 @@
 3. 由專案負責人對該版本明確核准正式發布；未取得核准，不合併發布 PR。
 4. 合併後由下一輪成功資料更新建置並部署；必要時才在核准後手動觸發 `更新資料並部署`。
 
-2026-10-09 唯讀核對的 GitHub ruleset 皆 active：`main` 與 `production` required `test` + `build-preview`，均禁止刪除與 non-fast-forward，required approving review count 為 0，Admin bypass 僅限 pull request。平台設定不能以 repository 檔案取代；`check`／實際 Preview 與正式程式碼版本的使用者核准仍是營運及 `AGENTS.md` 的政策。CI 綠燈不是對該正式版本的使用者核准；本次不變更 ruleset 或 `ops/approved-code.json`。
+2026-10-14 唯讀核對的 GitHub ruleset 皆 active：`main`（ruleset `23773493`）與 `production`（ruleset `23773502`）required `test` + `build-preview`，均禁止刪除與 non-fast-forward，required approving review count 為 0，Admin bypass 僅限 pull request。平台設定不能以 repository 檔案取代；`check`／實際 Preview 與正式程式碼版本的使用者核准仍是營運及 `AGENTS.md` 的政策。CI 綠燈不是對該正式版本的使用者核准；本次不變更 ruleset 或 `ops/approved-code.json`。
 
 ## Break-glass（僅限事故修復）
 
@@ -59,7 +61,7 @@
 1. 操作前在 incident issue 或受控事件紀錄寫下操作者、原因、時間（UTC）、目標 ref、commit SHA 與預期影響；不得記錄任何 secret 值。
 2. Admin 只處理必要的事故修復 commit，並保留 GitHub ruleset bypass 的操作連結。GitHub audit log 是平台側佐證。
 3. 24 小時內建立後補 PR 或 `docs/operations/receipts/break-glass-YYYYMMDD-<sha>.md` 收據，列出操作者、原因、時間、commit SHA、incident/PR/run URL、繞過的 required checks 與結果。
-4. 事後必須對該 exact commit 補跑完整 Quality Gate：`npm test`、`npm run build`、`npm run check`、`npm run ops:validate`、`npm run ops:verify-docs`，以及同一份候選資料的 pipeline audit（source freshness、coverage、source health、summary、provenance、network quality、data size）與 deploy smoke；收據只在全部成功時標記 pass。
+4. 事後必須對該 exact commit 補跑完整 Quality Gate：`npm test`、`npm run build`、`npm run check`、`python3 -m unittest discover -s tests -p test_crime_weekly_parser.py`、`npm run ops:validate`、`npm run ops:verify-docs`、`node scripts/approved-code.mjs`、`npm run check:network-contract`，以及同一份候選資料的 pipeline audit（source freshness、coverage、source health、summary、provenance、network quality、data size）與 deploy smoke；收據只在全部成功時標記 pass。
 
 非事故的直推不屬於 break-glass，應視為流程違規並停止後續發布、保留證據、回復後走正常 PR。資料來源失敗時則保留已稽核的上一版網站，依 [`pause-and-restore.md`](pause-and-restore.md) 處理。
 

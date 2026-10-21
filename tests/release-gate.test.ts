@@ -100,6 +100,15 @@ describe("release gate contract (Issue #42)", () => {
     }
   });
 
+  it("includes required Python, manifest and network checks in the break-glass follow-up gate", () => {
+    const breakGlass = releaseGateDoc.split("## Break-glass")[1].split("## 不做的事")[0];
+    const commands = deployWorkflow.jobs["build-preview"].steps
+      .flatMap((step: { run?: string }) => (step.run || "").split("\n"))
+      .filter((run: string) => /^(python3 |node scripts\/approved-code|npm run check:network-contract)/.test(run));
+    expect(commands).toHaveLength(3);
+    for (const command of commands) expect(breakGlass).toContain(command);
+  });
+
   it("documents that post-deploy smoke does not roll back publication", () => {
     expect(refreshWorkflow.jobs.deploy.needs).toContain("save-state");
     const steps = refreshWorkflow.jobs.deploy.steps;
