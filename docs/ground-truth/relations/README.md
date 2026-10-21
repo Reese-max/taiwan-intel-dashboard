@@ -17,6 +17,8 @@
 
 候選已按共同事件、來源 URL 與既有 family 合併，修正歷史候選中跨 family 的事件。`family` 由人工確認同案件／故事族群；不同 URL 的同案轉載仍須人工合併，程式不能替代此審查。保守合併可能減少獨立族群數；不得為湊兩個 split 把同一故事拆開。
 
+新 sampler 保存完整輸入新聞語料的有限 metadata，包含未被抽中 pair 引用的中介事件，避免重播時遺失傳遞群集或改變實體頻率判斷。既有 v1 是歷史的部分語料，不改寫其固定資料；它的結果只代表這份 metadata，不能當成完整原始語料的重播。
+
 ## 重播與操作
 
 ```bash
@@ -67,6 +69,8 @@ pair label 保留 `same_event | different_event | follow_up | same_original_repo
 
 sampler 使用現有 `loadCurationLedger`／`ledgerBenchmarkEvidence`，只引用明確標 `benchmark=tuning|holdout` 的 ledger pair（`ledgerId/ledgerDecision/benchmark`），不自動填 label，也不把 ledger 答案套入 benchmark prediction。人工更正不是免費的 holdout。
 
+ledger 指定的 split 套用到整個候選 family；同族群的核准紀錄若分別指定 tuning 與 holdout，sampler 會在寫檔前拒絕，須人工核對族群或 split。pair／location 依 `schema` 區分，額外欄位不影響事件引用與隔離檢查；空白候選的 split 也須符合值域。
+
 ## 指標與樣本
 
 | 輸出 | 定義 |
@@ -82,6 +86,8 @@ sampler 使用現有 `loadCurationLedger`／`ledgerBenchmarkEvidence`，只引�
 | `diff/errorChanges` | 各指標改善／退化與錯誤樣本 introduced／resolved |
 
 unknown／缺值不計成功或錯誤，只排除該維度並報覆蓋量；region 為未知也不進 region 準確率分母。沒有可計分資料時 rate/accuracy 為 `null`，不能解讀成 0% 或 100%。unknown／uncertain 覆蓋量變化不會被標成品質退化。
+
+地點 prediction 變成 unknown 而移出計分時，不會被列為 `errorChanges.resolved`；只有符合原人工標註才算解決。未同群的 `follow_up` 也是 same-event 分類的 true negative，是否漏掉續報關係則另由 `missedRelation` 計數。
 
 ## 驗收對照與尚缺工作
 

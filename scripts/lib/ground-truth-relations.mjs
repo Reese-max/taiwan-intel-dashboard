@@ -94,7 +94,9 @@ export function loadLabeledJsonl(text, validate, keyOf) {
             ? "invalid-pair"
             : typeof row.family !== "string" || !row.family.trim()
               ? "missing-family"
-              : null;
+              : row.benchmark !== undefined && !SPLITS.includes(row.benchmark)
+                ? "invalid-split"
+                : null;
         if (structural) errors.push({ line: index + 1, error: structural });
         else {
           row._line = index + 1;
@@ -144,7 +146,7 @@ export function groupCandidateFamilies(rows, events = []) {
   };
   const byFamily = new Map();
   for (const row of rows) {
-    const ids = row.event ? [row.event] : [row.a, row.b];
+    const ids = row.schema === LOCATION_SCHEMA ? [row.event] : [row.a, row.b];
     for (const id of ids) union(ids[0], id);
     if (row.family) {
       if (byFamily.has(row.family)) union(ids[0], byFamily.get(row.family));
@@ -158,7 +160,7 @@ export function groupCandidateFamilies(rows, events = []) {
     if (bySource.has(key)) union(event.id, bySource.get(key));
     else bySource.set(key, event.id);
   }
-  return rows.map((row) => ({ ...row, family: `fam:${find(row.event ?? row.a)}` }));
+  return rows.map((row) => ({ ...row, family: `fam:${find(row.schema === LOCATION_SCHEMA ? row.event : row.a)}` }));
 }
 
 export function splitLeakageErrors(rows, events) {
@@ -167,7 +169,7 @@ export function splitLeakageErrors(rows, events) {
   const errors = [];
   for (const row of rows) {
     const split = splitOf(row);
-    const ids = row.event ? [row.event] : [row.a, row.b];
+    const ids = row.schema === LOCATION_SCHEMA ? [row.event] : [row.a, row.b];
     const keys = [`family:${row.family}`, ...ids.map((id) => `event:${id}`),
       ...ids.map((id) => byId.get(id)?.source?.recordRef).filter(Boolean).map((url) => `source:${url}`)];
     for (const key of keys) {
@@ -382,14 +384,13 @@ function relationMetricsFor(rows, net) {
         fp += 1;
         examples.falseMerges.push(pairKeyOf(row.a, row.b));
         examples.falseMergeSources.push(sourceFor(row));
-      } else if (row.label === "different_event") {
-        tn += 1;
-      } else if (hasLink) {
-        // follow_up：有邊未同群 = 命中（不計 tp/fp/tn）
       } else {
-        missed += 1;
-        examples.missedRelations.push(pairKeyOf(row.a, row.b));
-        examples.missedRelationSources.push(sourceFor(row));
+        tn += 1;
+        if (row.label === "follow_up" && !hasLink) {
+          missed += 1;
+          examples.missedRelations.push(pairKeyOf(row.a, row.b));
+          examples.missedRelationSources.push(sourceFor(row));
+        }
       }
     }
   }

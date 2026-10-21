@@ -5,7 +5,7 @@
 //     [--out=docs/ground-truth/relations/pairs-YYYYMMDD.jsonl] [--events-out=docs/ground-truth/relations/events-YYYYMMDD.json] \
 //     [--max=200] [--seed=43] [--date=YYYYMMDD]
 //
-// 輸出 pair 候選（label 留空給人工填）+ 被引用事件的 metadata 快照（固定 SHA 可重播）。
+// 輸出 pair 候選（label 留空給人工填）+ 完整新聞語料的 metadata 快照（固定 SHA 可重播）。
 // 候選涵蓋：已連線邊、同群無邊成員（false merge 高風險）、同縣市未連線 pair（missed
 // relation 候選）。ledger 命中的 pair 打 ledgerDecision 標記。
 
@@ -90,16 +90,21 @@ export async function runSample(argv = process.argv.slice(2)) {
   const ledgerByPair = new Map(ledgerBenchmarkEvidence(ledger)
     .filter((record) => record.subjects.length === 2)
     .map((record) => [[...record.subjects].sort().join("|"), record]));
+  const familySplits = new Map();
   for (const row of pairs) {
     const record = ledgerByPair.get([row.a, row.b].sort().join("|"));
-    if (record) Object.assign(row, { ledgerDecision: record.decision, ledgerId: record.id, benchmark: record.benchmark });
+    if (!record) continue;
+    const split = familySplits.get(row.family);
+    if (split && split !== record.benchmark) throw new Error(`Conflicting benchmark splits for family: ${row.family}`);
+    familySplits.set(row.family, record.benchmark);
+    Object.assign(row, { ledgerDecision: record.decision, ledgerId: record.id, benchmark: record.benchmark });
   }
+  for (const row of pairs) if (familySplits.has(row.family)) row.benchmark = familySplits.get(row.family);
 
   mkdirSync(dirname(repoPath(outPath)), { recursive: true });
   writeFileSync(repoPath(outPath), pairs.map((r) => JSON.stringify(r)).join("\n") + (pairs.length ? "\n" : ""), "utf8");
 
-  const referenced = new Set(pairs.flatMap((p) => [p.a, p.b]));
-  const snapshot = events.filter((e) => referenced.has(e.id)).map(snapshotEvent);
+  const snapshot = events.map(snapshotEvent);
   mkdirSync(dirname(repoPath(eventsPath)), { recursive: true });
   writeFileSync(
     repoPath(eventsPath),

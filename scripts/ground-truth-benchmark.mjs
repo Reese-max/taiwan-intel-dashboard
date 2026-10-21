@@ -23,6 +23,7 @@ import {
   loadLabeledJsonl,
   pairKeyOf,
   splitLeakageErrors,
+  LOCATION_SCHEMA,
   LOCATION_ROLES,
   LOCATION_PRECISIONS,
   validateLocationRow,
@@ -124,7 +125,7 @@ export function runBenchmark(argv = process.argv.slice(2)) {
   }
 
   const leaks = splitLeakageErrors([...pairRows, ...pairs.unlabeled, ...locationRows], events);
-  for (const { row, line, error } of leaks) report.errors[row.event ? "locations" : "pairs"].push({ line, error });
+  for (const { row, line, error } of leaks) report.errors[row.schema === LOCATION_SCHEMA ? "locations" : "pairs"].push({ line, error });
 
   const totalErrors = report.errors.pairs.length + report.errors.locations.length;
   report.status = totalErrors ? "invalid" : report.relation.evaluated || report.location?.role.total || report.location?.precision.total ? "baseline" : "needs_review";
@@ -150,11 +151,17 @@ export function runBenchmark(argv = process.argv.slice(2)) {
     const diffs = diffBenchmarkReports({ relation: before.relation, location: before.location }, { relation: report.relation, location: report.location });
     report.diff = diffs.filter((d) => d.direction !== "unchanged");
     report.errorChanges = {};
+    const locationsById = new Map(locationRows.map((row) => [row.event, row]));
+    const predictionsById = new Map(predictedEvents.map((event) => [event.id, event]));
     for (const [kind, section] of [["falseMerges", "relation"], ["sameEventFalseNegatives", "relation"], ["missedRelations", "relation"], ["roleErrors", "location"], ["precisionErrors", "location"], ["regionErrors", "location"]]) {
       const keys = (value) => (value?.[section]?.examples?.[kind] || []).map((entry) => typeof entry === "string" ? entry : entry.event);
       const previous = keys(before);
       const current = keys(report);
-      report.errorChanges[kind] = { resolved: previous.filter((key) => !current.includes(key)), introduced: current.filter((key) => !previous.includes(key)) };
+      const field = { roleErrors: "locationRole", precisionErrors: "locationPrecision", regionErrors: "region" }[kind];
+      report.errorChanges[kind] = {
+        resolved: previous.filter((key) => !current.includes(key) && (!field || predictionsById.get(key)?.[field] === locationsById.get(key)?.[field])),
+        introduced: current.filter((key) => !previous.includes(key)),
+      };
     }
     for (const d of report.diff) {
       console.log(`  ${d.direction === "improved" ? "▲" : d.direction === "regressed" ? "▼" : "◆"} ${d.metric}: ${d.before} → ${d.after}`);

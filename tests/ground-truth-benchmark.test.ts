@@ -1,11 +1,11 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runBenchmark } from "../scripts/ground-truth-benchmark.mjs";
 import { runSample } from "../scripts/ground-truth-relations-sample.mjs";
-import { assignSplit, computeLocationMetrics, computeRelationMetrics } from "../scripts/lib/ground-truth-relations.mjs";
+import { assignSplit, computeLocationMetrics, computeRelationMetrics, groupCandidateFamilies } from "../scripts/lib/ground-truth-relations.mjs";
 import { fingerprintEvent } from "../scripts/lib/curation-ledger.mjs";
 import { RULES_VERSION } from "../scripts/lib/manifest.mjs";
 
@@ -167,5 +167,93 @@ describe("versioned relation/location benchmark", () => {
     await runSample([`--input=${f.paths.events}`, `--ledger=${ledger}`, `--out=${out}`, `--events-out=${eventsOut}`, "--max=20", "--date=20260917"]);
     expect(readFileSync(out, "utf8")).toBe(first);
     expect(readFileSync(eventsOut, "utf8")).not.toContain("Synthetic reviewed record");
+  });
+
+  it("replays sampled transitive pairs with their unsampled correlation context", async () => {
+    const sourceEvents = events.slice(0, 3).map((event, index) => ({
+      ...event, aiEntities: [["甲乙集團"], ["丙丁集團"], ["甲乙集團", "丙丁集團"]][index],
+    }));
+    const f = fixture([], [], sourceEvents);
+    const out = join(f.dir, "candidates.jsonl");
+    const snapshot = join(f.dir, "snapshot.json");
+    const sampled = await runSample([
+      `--input=${f.paths.events}`, `--ledger=${join(f.dir, "empty-ledger.jsonl")}`,
+      `--out=${out}`, `--events-out=${snapshot}`, "--max=1", "--seed=4",
+    ]);
+    expect(sampled.pairs).toEqual([expect.objectContaining({ a: "a", b: "b", candidateSource: "auto-cluster" })]);
+    writeFileSync(out, JSON.stringify({ ...pair(), ...sampled.pairs[0], label: "same_event",
+      evidence: pair().evidence, labeledAt: pair().labeledAt, labeledBy: "human" }));
+    const report = runBenchmark([`--pairs=${out}`, `--events=${snapshot}`]);
+    expect(report.relation.sameEvent.tp).toBe(1);
+    expect(report.relation.sameEvent.fn).toBe(0);
+  });
+
+  it.each(["", "same_event"])("rejects split leakage in %j pairs with an extra event field", (label) => {
+    const rows = [
+      pair({ label, benchmark: "tuning", event: "other-a" }),
+      pair({ label, b: "c", family: "story-c", benchmark: "holdout", event: "other-b" }),
+    ];
+    const f = fixture(rows, []);
+    const report = runBenchmark(f.args);
+    expect(report.errors.pairs).toEqual([
+      { line: 1, error: "split-leakage" }, { line: 2, error: "split-leakage" },
+    ]);
+    expect(report.errors.locations).toEqual([]);
+    expect(report.status).toBe("invalid");
+    expect(process.exitCode).toBe(1);
+    expect(new Set(groupCandidateFamilies(rows, events).map((row: any) => row.family)).size).toBe(1);
+  });
+
+  it("rejects invalid splits on unlabeled candidates", () => {
+    const report = runBenchmark(fixture([pair({ label: "", benchmark: "production" })], []).args);
+    expect(report.errors.pairs).toEqual([{ line: 1, error: "invalid-split" }]);
+    expect(report.status).toBe("invalid");
+    expect(process.exitCode).toBe(1);
+  });
+
+  it.each([false, true])("counts unmerged follow-ups as same-event true negatives (linked=%s)", (linked) => {
+    const edges = linked ? [{ a: "a", b: "b", type: "follow-up" }] : [];
+    const result = computeRelationMetrics([pair({ label: "follow_up" })], { edges, clusters: [] });
+    expect(result.sameEvent).toMatchObject({ tp: 0, fp: 0, fn: 0, tn: 1 });
+  });
+
+  it.each([
+    ["locationRole", "roleErrors"], ["locationPrecision", "precisionErrors"], ["region", "regionErrors"],
+  ])("does not report an unknown %s prediction as a resolved error", (field, kind) => {
+    const f = fixture([], [location({ locationPrecision: "exact", region: "臺北市" })]);
+    const baseline = join(f.dir, "before.json");
+    const before = runBenchmark([...f.args, `--out=${baseline}`]);
+    expect(before.location.examples[kind]).toHaveLength(1);
+    const predictions = join(f.dir, "predictions.json");
+    writeFileSync(predictions, JSON.stringify(events.map((event) => ({ ...event, [field]: "unknown" }))));
+    const after = runBenchmark([...f.args, `--predictions=${predictions}`, `--baseline=${baseline}`]);
+    expect(after.location.examples[kind]).toEqual([]);
+    expect(after.errorChanges[kind].resolved).toEqual([]);
+  });
+
+  it.each([false, true])("keeps admitted ledger splits consistent across a family (conflict=%s)", async (conflict) => {
+    const f = fixture();
+    const ledger = join(f.dir, "ledger.jsonl");
+    const record = (id: string, subjects: string[], benchmark: string) => ({
+      schemaVersion: 1, id, subjects, benchmark, decision: "not_same_event", rulesVersion: RULES_VERSION,
+      reviewedAt: "2026-09-17T00:00:00Z", reason: "Synthetic reviewed record", evidence: pair().evidence,
+      expect: Object.fromEntries(subjects.map((id) => [id, fingerprintEvent(events.find((event) => event.id === id))])),
+    });
+    writeFileSync(ledger, [record("holdout", ["a", "b"], "holdout"),
+      ...(conflict ? [record("tuning", ["a", "c"], "tuning")] : [])].map((row) => JSON.stringify(row)).join("\n"));
+    const out = join(f.dir, "candidates.jsonl");
+    const snapshot = join(f.dir, "snapshot.json");
+    const args = [`--input=${f.paths.events}`, `--ledger=${ledger}`, `--out=${out}`, `--events-out=${snapshot}`, "--max=20"];
+    if (conflict) {
+      await expect(runSample(args)).rejects.toThrow(/conflicting.*split/i);
+      expect(existsSync(out)).toBe(false);
+      expect(existsSync(snapshot)).toBe(false);
+    } else {
+      const sampled = await runSample(args);
+      expect(sampled.pairs.every((row: any) => row.benchmark === "holdout")).toBe(true);
+      const report = runBenchmark([`--pairs=${out}`, `--events=${snapshot}`]);
+      expect(report.errors.pairs).toEqual([]);
+      expect(report.status).toBe("needs_review");
+    }
   });
 });
