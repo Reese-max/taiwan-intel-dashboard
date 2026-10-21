@@ -99,6 +99,12 @@ export function loadLabeledJsonl(text, validate, keyOf) {
                 : null;
         if (structural) errors.push({ line: index + 1, error: structural });
         else {
+          const key = typeof keyOf === "function" ? keyOf(row) : null;
+          if (key != null && seenKeys.has(key)) {
+            errors.push({ line: index + 1, error: "duplicate-key" });
+            return;
+          }
+          if (key != null) seenKeys.add(key);
           row._line = index + 1;
           unlabeled.push(row);
         }

@@ -14,7 +14,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
 import { enumerateCandidatePairs, PAIR_SCHEMA } from "./lib/ground-truth-relations.mjs";
-import { CURATED_LEDGER_REL_PATH, loadCurationLedger, ledgerBenchmarkEvidence } from "./lib/curation-ledger.mjs";
+import { CURATED_LEDGER_REL_PATH, loadCurationLedger, ledgerBenchmarkEvidence, resolveCurationLedger } from "./lib/curation-ledger.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repoPath = (value) => resolve(ROOT, value);
@@ -79,7 +79,7 @@ export async function runSample(argv = process.argv.slice(2)) {
     const existing = JSON.parse(readFileSync(repoPath(args.network), "utf8"));
     net = existing.domestic || existing; // 支援整份 network.json 或單 scope
   } else {
-    net = correlateEvents(events);
+    net = correlateEvents(events.map(snapshotEvent));
   }
 
   const pairs = enumerateCandidatePairs(events, net, { maxPairs: args.max, seed: args.seed });
@@ -87,7 +87,8 @@ export async function runSample(argv = process.argv.slice(2)) {
   // Only explicitly admitted ledger records are referenced, never auto-labeled.
   const ledger = loadCurationLedger(repoPath(args.ledger));
   if (ledger.entries.some((entry) => entry.error)) throw new Error("Invalid curation ledger");
-  const ledgerByPair = new Map(ledgerBenchmarkEvidence(ledger)
+  const appliedIds = new Set(resolveCurationLedger(ledger, events).decisions.filter((decision) => decision.status === "applied").map((decision) => decision.id));
+  const ledgerByPair = new Map(ledgerBenchmarkEvidence(ledger).filter((record) => appliedIds.has(record.id))
     .filter((record) => record.subjects.length === 2)
     .map((record) => [[...record.subjects].sort().join("|"), record]));
   const familySplits = new Map();

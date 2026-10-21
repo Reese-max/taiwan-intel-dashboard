@@ -104,6 +104,25 @@ describe("versioned relation/location benchmark", () => {
     expect(report.location.examples.roleErrors[0]).toMatchObject({ event: "a", expected: "incident", actual: "agency", evidence: location().evidence });
   });
 
+  it("marks a human-labeled all-unknown location baseline as established", () => {
+    const f = fixture([], [location({ locationRole: "unknown", locationPrecision: "unknown" })]);
+    const predictions = join(f.dir, "predictions.json");
+    writeFileSync(predictions, JSON.stringify(events.map((event) => ({ ...event, locationRole: "unknown", locationPrecision: "unknown" }))));
+    const report = runBenchmark([...f.args, `--predictions=${predictions}`]);
+    expect(report.location.labeled).toBe(1);
+    expect(report.location.unknownRate).toBe(1);
+    expect(report.status).toBe("baseline");
+  });
+
+  it("rejects duplicate pair keys across labeled and unlabeled rows", () => {
+    const report = runBenchmark(fixture([pair({ label: "" }), pair({ label: "" }), pair()], []).args);
+    expect(report.errors.pairs).toEqual([
+      { line: 2, error: "duplicate-key" }, { line: 3, error: "duplicate-key" },
+    ]);
+    expect(report.counts.unlabeledPairs).toBe(1);
+    expect(report.status).toBe("invalid");
+  });
+
   it("does not accept same-topic as evidence that a follow-up was found", () => {
     const result = computeRelationMetrics([pair({ label: "follow_up" })], { edges: [{ a: "a", b: "b", type: "same-topic" }], clusters: [] });
     expect(result.missedRelation.count).toBe(1);
@@ -169,6 +188,20 @@ describe("versioned relation/location benchmark", () => {
     expect(readFileSync(eventsOut, "utf8")).not.toContain("Synthetic reviewed record");
   });
 
+  it("does not tag stale benchmark ledger entries", async () => {
+    const f = fixture();
+    const ledger = join(f.dir, "ledger.jsonl");
+    const stale = {
+      schemaVersion: 1, id: "stale", subjects: ["a", "b"], benchmark: "holdout", decision: "not_same_event",
+      rulesVersion: RULES_VERSION, reviewedAt: "2026-09-17T00:00:00Z", reason: "Stale synthetic record",
+      evidence: "https://example.invalid/review", expect: { a: "stale", b: "stale" },
+    };
+    writeFileSync(ledger, JSON.stringify(stale));
+    const sampled = await runSample([`--input=${f.paths.events}`, `--ledger=${ledger}`,
+      `--out=${join(f.dir, "candidates.jsonl")}`, `--events-out=${join(f.dir, "snapshot.json")}`, "--max=20"]);
+    expect(sampled.pairs.find((row: any) => [row.a, row.b].sort().join("|") === "a|b").ledgerId).toBeUndefined();
+  });
+
   it("replays sampled transitive pairs with their unsampled correlation context", async () => {
     const sourceEvents = events.slice(0, 3).map((event, index) => ({
       ...event, aiEntities: [["甲乙集團"], ["丙丁集團"], ["甲乙集團", "丙丁集團"]][index],
@@ -186,6 +219,20 @@ describe("versioned relation/location benchmark", () => {
     const report = runBenchmark([`--pairs=${out}`, `--events=${snapshot}`]);
     expect(report.relation.sameEvent.tp).toBe(1);
     expect(report.relation.sameEvent.fn).toBe(0);
+  });
+
+  it("samples correlations from the same truncated summaries saved in the snapshot", async () => {
+    const sourceEvents = events.slice(0, 2).map((event, index) => ({
+      ...event, summary: `${"前文".repeat(160)} 後段共同關鍵詞黑鷹行動${index}`,
+    }));
+    const f = fixture([], [], sourceEvents);
+    const out = join(f.dir, "candidates.jsonl");
+    const snapshot = join(f.dir, "snapshot.json");
+    await runSample([`--input=${f.paths.events}`, `--ledger=${join(f.dir, "empty-ledger.jsonl")}`,
+      `--out=${out}`, `--events-out=${snapshot}`, "--max=20"]);
+    const savedEvents = JSON.parse(readFileSync(snapshot, "utf8")).events;
+    expect(savedEvents.every((event: any) => event.summary.length <= 301)).toBe(true);
+    expect(readFileSync(out, "utf8")).not.toContain('"candidateSource":"auto-cluster"');
   });
 
   it.each(["", "same_event"])("rejects split leakage in %j pairs with an extra event field", (label) => {

@@ -128,7 +128,8 @@ export function runBenchmark(argv = process.argv.slice(2)) {
   for (const { row, line, error } of leaks) report.errors[row.schema === LOCATION_SCHEMA ? "locations" : "pairs"].push({ line, error });
 
   const totalErrors = report.errors.pairs.length + report.errors.locations.length;
-  report.status = totalErrors ? "invalid" : report.relation.evaluated || report.location?.role.total || report.location?.precision.total ? "baseline" : "needs_review";
+  const hasHumanAnnotations = pairRows.some((row) => row.labeledBy === "human") || locationRows.some((row) => row.labeledBy === "human");
+  report.status = totalErrors ? "invalid" : report.relation.evaluated || report.location?.role.total || report.location?.precision.total || hasHumanAnnotations ? "baseline" : "needs_review";
   if (totalErrors) process.exitCode = 1;
   const r = report.relation;
   console.log(
