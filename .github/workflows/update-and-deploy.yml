@@ -187,7 +187,7 @@ jobs:
 
   notify:
     needs: [operating-state, fetch, save-state, audit, build-approved, deploy]
-    if: ${{ always() && (failure() || cancelled()) }}
+    if: ${{ always() && github.ref == 'refs/heads/main' && (failure() || cancelled()) }}
     runs-on: ubuntu-latest
     permissions: {}
     steps:
