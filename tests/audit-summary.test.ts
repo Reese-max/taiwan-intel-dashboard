@@ -250,4 +250,42 @@ describe("summary quality & semantic audit gate (Issue #18)", () => {
     expect(cliStrict.code).toBe(1);
     expect(cliStrict.out).toContain("SUMMARY_AUDIT_FAIL");
   });
+
+  it("回歸：統計備援的「共 N 起」必須與寫入快照的事件數一致（Issue #80）", () => {
+    // 模擬：預驗證有 2 筆事件（含 1 筆不合格），驗證後只剩 1 筆合格
+    // 統計備援若使用預驗證清單會產生「共 2 起」，但實際寫入只有 1 筆 → 應失敗
+    const fallbackMismatch = `國內事件共 2 起，以 治安 2 起 為主。（AI 摘要暫時無法生成，事件資料仍可查閱；此為系統統計備援）`;
+
+    const result = auditSummary({
+      summary: {
+        domestic: fallbackMismatch,
+        international: "（暫無資料）",
+        degraded: { domestic: true, international: false },
+        generatedAt: "2026-10-21T00:00:00Z",
+      },
+      domesticCount: 1, // 實際寫入的合格事件數
+      internationalCount: 0,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.failures.some((f) => f.code === "fallback-count-mismatch")).toBe(true);
+  });
+
+  it("回歸：統計備援的「共 N 起」與事件數一致時審計通過（Issue #80）", () => {
+    const fallbackMatch = `國內事件共 1 起，以 治安 1 起 為主。（AI 摘要暫時無法生成，事件資料仍可查閱；此為系統統計備援）`;
+
+    const result = auditSummary({
+      summary: {
+        domestic: fallbackMatch,
+        international: "（暫無資料）",
+        degraded: { domestic: true, international: false },
+        generatedAt: "2026-10-21T00:00:00Z",
+      },
+      domesticCount: 1,
+      internationalCount: 0,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.failures.some((f) => f.code === "fallback-count-mismatch")).toBe(false);
+  });
 });
