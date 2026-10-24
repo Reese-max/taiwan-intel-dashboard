@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-10-24T18:00:52.264Z",
+  "windowHours": 24,
+  "windowStart": "2026-10-23T18:00:52.264Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 836,
+    "accepted": 410,
+    "rejected": 426
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "非登不可 - FDA食藥登錄平台 - 衛生福利部食品藥物管理署",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBqeUpfZnVqcXRVazNGUTRKUzdrT3VZN2tKWHhyVHpMTGMzVkk3NVVsRUhHclYzZGxzXzBjTGdyZURkQU1WX2JXeUIxS0wybERWWkNJa0ZR?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 17:06:47 GMT",
+        "source": "食藥署官網",
+        "hint": "食安",
+        "authority": "official",
+        "description": "非登不可 - FDA食藥登錄平台 衛生福利部食品藥物管理署"
+      },
+      {
+        "title": "耳公Satellite-生活篇：148 - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1IbnhyN2prd0V4dEUySWxCRWdEOVBkNC0xYmljU1dObHNoenRrZGxrMEFQX29ncS16RWRFSi1OdHI3RUhrZHBGMUZ3eDdfeWpBamk0WVNsMjljZ0RsUHg0eA?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 16:57:20 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "耳公Satellite-生活篇：148 Rti 中央廣播電臺"
+      },
+      {
+        "title": "王偉忠《有這麼一家周到的小店》又火了、近萬人拆解高級酸！他點評：蔣萬安應該真的不會去節目了 - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNYlRKd2lqMzJnd2JyTV9CWVIzODZSY2hjR3dmTEdhU0p5ZU1KdHVCODhrYjNtVEJhQVZnbi1YZWJPY29SLVFfRFVFMkJVT1Qzc0ZGQTdmcnRTbHlXUGFjUE5YMEZNd0ZLZld3Vy1XSnlrQ01PdlhqNWJwTzZweHllRA?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 16:41:35 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "王偉忠《有這麼一家周到的小店》又火了、近萬人拆解高級酸！他點評：蔣萬安應該真的不會去節目了 今周刊"
+      },
+      {
+        "title": "花生醬日吃3湯匙、肌少症機率降！65歲後增加「起立」爆發力…微小飲食選擇就能預防跌倒：10年後有勇腿 - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOMm5aYjdkeGhJMzZzTUlZNzRFV0ZET3NXY1ZMTjNaaEJGRWpfVW41Q0wteFkxMXM0S0RsbHZXOVJBVlNFcnJKdXVxSnlXTXhfZnplTks4RnlDRktLeFRYcHlUZHNELXZEcDIyZVd6NVlZTEhOclUxRXczeTNjaVNwSw?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 16:41:24 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "花生醬日吃3湯匙、肌少症機率降！65歲後增加「起立」爆發力…微小飲食選擇就能預防跌倒：10年後有勇腿 今周刊"
+      },
+      {
+        "title": "颱風攪局不減熱情 高雄小林夜祭照常登場",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5617779",
+        "pubDate": "Sun, 25 Oct 2026 00:36:03 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄三大平埔祭典之一「小林大武壠族夜祭」，昨（24日）晚在甲仙小林公廨（Kuba）熱鬧登場，今年夜祭除舉辦太祖祭祀、牽戲等傳統祭儀，亦推出小林部落美食市集、大武壠族文化特展、工...…"
+      },
+      {
+        "title": "高雄綠藍白11/1激戰三民！陳其邁、賴瑞隆領軍尬「韓柯柯」",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5617776",
+        "pubDate": "Sun, 25 Oct 2026 00:10:50 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄市長與議員選情加溫，綠藍白11月1日將首度聚集三民區激戰！高雄市長陳其邁、民進黨高雄市長候選人賴瑞隆、議長康裕成攜手綠營選將，槓上立法院長韓國瑜、前民眾黨主席柯文哲、國民黨...…"
+      },
+      {
+        "title": "天文學者透過 EAGLE 模擬揭密：銀河系外圍是全宇宙最佳「星際宜居帶」",
+        "link": "https://technews.tw/2026/10/25/milky-way-best-cradle-for-life/",
+        "pubDate": "Sat, 24 Oct 2026 16:00:39 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "一支研究團隊利用 EAGLE 宇宙模擬系統比較不同星系對生命的友善程度，發現太陽所在的銀河系外圍幾乎擁有最好的 [&#8230;]"
+      },
+      {
+        "title": "過去觀測全是一片空白，韋伯望遠鏡揪出憑空冒出的不明發射線",
+        "link": "https://technews.tw/2026/10/25/webb-telescope-spots-a-puzzling-object/",
+        "pubDate": "Sat, 24 Oct 2026 16:00:36 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "在天爐座南部的一片微小天區中，藏著全人類記錄最詳盡的宇宙深空。哈伯太空望遠鏡曾凝視此處超過 270 小時，拍攝 [&#8230;]"
+      },
+      {
+        "title": "糖尿病藥物可能也能「護心」？研究發現 empagliflozin 能降低與心血管相關的發炎反應",
+        "link": "https://technews.tw/2026/10/25/the-secret-heart-benefit-of-a-common-diabetes-drug/",
+        "pubDate": "Sat, 24 Oct 2026 16:00:23 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "一項最新人體研究顯示，常用於治療糖尿病的藥物 empagliflozin（台灣商品名「恩排糖」），可能不只幫助 [&#8230;]"
+      },
+      {
+        "title": "屏東枋警休假酒後騎車自摔受困！酒測值超標 恐遭記2大過免職 - 屏東小鎮資訊",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFBDWkZQY2w2R2Z0RVc3QnZHT2lRa205ZkQ0V3BqQlpyQzBidnJjMDlYdk5kbkVjckdRQmVKUkk0SjZjZU1iVUlzd3pBd2VyQQ?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:55:00 GMT",
+        "source": "GN 酒駕毒駕",
+        "hint": "交通",
+        "authority": "media",
+        "description": "屏東枋警休假酒後騎車自摔受困！酒測值超標 恐遭記2大過免職 屏東小鎮資訊"
+      },
+      {
+        "title": "屏東市民歌經典之夜 辛曉琪、周治平開唱 湧近1.5萬人同歡",
+        "link": "https://news.ltn.com.tw/news/Pingtung/breakingnews/5617715",
+        "pubDate": "Sat, 24 Oct 2026 23:52:15 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "屏東市「時光留聲機－民歌經典之夜音樂會」今（24）日晚間在千禧公園登場，邀請療傷歌后辛曉琪、民歌抒情才子周治平、民歌搖滾女聲金智娟、民歌吉他才女曾淑勤、民歌俠少施孝榮及民歌運動...…"
+      },
+      {
+        "title": "《港墘仔》回東港「娘家」 王爺吹配樂、宋江陣共演 惹在地人笑淚交織",
+        "link": "https://news.ltn.com.tw/news/Pingtung/breakingnews/5617766",
+        "pubDate": "Sat, 24 Oct 2026 23:40:55 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "屏東縣政府原創音樂劇《港墘仔》不僅登上屏東演藝廳的殿堂，今天更是回到劇本發源的「廟堂」前演出，東港東隆宮的黃金牌樓成為背景，大漢樂團「王爺吹」和下頭角「宋江陣」還登台共演，與在...…"
+      },
+      {
+        "title": "屯門安定邨9歲女童情緒激動持刀父奪刀傷女兒胸口涉傷人被捕- 港聞 - dotdotnews",
+        "link": "https://news.google.com/rss/articles/CBMiekFVX3lxTE4yZGRYek42RjVQXzFuN1lxcnlNUjV5N3UybHAwU0s2ZXo2MFptclhJMEp1WVA0dUlVcGFYVmY0TVVVWTg1VnBidXhiSHRVZ0RkczBIUnUxay1PbXBOUkZCNWw2TjRyQjBkaDJtNDlrVU9JS2pVT0lyM1dR?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:33:45 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "屯門安定邨9歲女童情緒激動持刀父奪刀傷女兒胸口涉傷人被捕- 港聞 dotdotnews"
+      },
+      {
+        "title": "火神祭、浪人祭首度跨界 漁光島白天聽團、晚上看火舞 國際卡司連演3天",
+        "link": "https://news.ltn.com.tw/news/Tainan/breakingnews/5617721",
+        "pubDate": "Sat, 24 Oct 2026 23:32:06 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「2026國際火舞藝術節—火神祭」今（24）日起一連3天在台南安平漁光島登場，今年首度結合浪人祭，集結美國、義大利、匈牙利、日本等國火舞藝術家，還有登上《英國達人秀》的台灣表演...…"
+      },
+      {
+        "title": "颱風遠離管制未解 花東5人違規遭舉發 - 海巡署全球資訊網",
+        "link": "https://news.google.com/rss/articles/CBMifkFVX3lxTE1veGM1UTk1QVFmbFI4VG50NWducHRITzhhdEdWYUNSeXlLSV9ZUVdHaUt1cmVLUU9BTC04WFNIdVJHaERyZnk3SFQxU0IwekNYNnQ1Q2NoZ2wxYWc3NGFfYnRldkxxeUNSdVVQdXFZRDRqTzhKMDFBcUpfd2o1dw?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:30:38 GMT",
+        "source": "海巡署官網",
+        "hint": "治安",
+        "authority": "official",
+        "description": "颱風遠離管制未解 花東5人違規遭舉發 海巡署全球資訊網"
+      },
+      {
+        "title": "萬聖節群魔亂舞 台南選舉奧步再進化 陳昌輝成立「抓鬼大隊」",
+        "link": "https://newtalk.tw/news/view/2026-10-24/1067320",
+        "pubDate": "Sat, 24 Oct 2026 23:21:53 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 萬聖節即將到來，無黨籍台南市中西區、北區市議員候選人陳昌輝指出，隨著選舉逼近，不當選舉手法不斷翻新，從綁樁腳、里長，到利用人情壓力整合組織，甚至出現疑似藉由政府經費大辦活動，以公家資源做人情等爭議，是否涉及行政不中立、利益輸送或變相選舉利益交換，值得檢調深入追查。他宣布將在萬聖節成立「抓鬼大隊」，號 延伸閱讀： 黃博郎觀點》台南市議員第十一選區 南關線人口增席次加一 「9搶6」"
+      },
+      {
+        "title": "新型態選舉召喚術！台中候選人搶祭出這項票房保證催出支持者",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5617732",
+        "pubDate": "Sat, 24 Oct 2026 23:18:48 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "九合一選舉倒數35天，民進黨台北市長候選人沈伯洋掀洋流熱潮，洋流儼然成新型態「選舉召喚術」！台中市不少民眾瘋洋流飄帶，民進黨市議員候選人近來多準備有限量洋流飄帶每每秒殺，人氣超...…"
+      },
+      {
+        "title": "巴黎郊區爆種族恐攻釀1死5傷 法國檢方延長拘留槍手 | 民視新聞網 - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5UZ0RaWndNb211bzJ4bjQyQ2s2RUxQVTJCM3ZDSTR3YmIzWkpkbWQ3R1loMzl1eDlsalF4czFZWU83SkE2M091RlpDV18talRoRzdhV0Nn?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:13:27 GMT",
+        "source": "GN 槍械",
+        "hint": "治安",
+        "authority": "media",
+        "description": "巴黎郊區爆種族恐攻釀1死5傷 法國檢方延長拘留槍手 | 民視新聞網 LINE TODAY"
+      },
+      {
+        "title": "(新聞)晚間新聞 - 2026-10-24 - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5RMFFHUElPNzBRdlpUcmZSeWxmNGI1bldoMkd0a2lMQ1oyOHBkekpndFQzYlpzeVhRTTlEczBhNWUxUDM5ZklNbDRGNmNVcTFlT2RVaTlUVG5pRDZYN3hKdg?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:12:43 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "(新聞)晚間新聞 - 2026-10-24 Rti 中央廣播電臺"
+      },
+      {
+        "title": "屏東鐵道文化觀光季枋寮、麟洛雙主場 搭噹噹一族彩繪列車暢玩",
+        "link": "https://news.ltn.com.tw/news/Pingtung/breakingnews/5617719",
+        "pubDate": "Sat, 24 Oct 2026 23:10:52 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「屏東鐵道文化觀光祭」已成秋季屏東特有的觀光帶狀節目，今年首度回到「藍皮解憂號」作為基地的枋寮站，屏東縣長周春米、台鐵公司總經理馮輝昇、立委徐富癸等人今晚按下舊式列車上的「服務...…"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "美31歲婦涉亂倫性侵未滿12歲男童 遭重罪起訴恐面臨終身監禁 - 自由時報",
+        "link": "https://news.google.com/rss/articles/CBMiZkFVX3lxTFBiVUJJZkVqaTZubDJrREFpNWs1bElZdHF5WmNSWVZfS0tfZTNHYnFzYUZ2Vy13Vnh2Skw0VWpDRTV1cU1PVU9jV25IUDFWZy1DUmo5M3BxUE1Qal8wSlVMQmNUYmdxQdIBa0FVX3lxTFBRbC1lLVE5b1l1ZEI2ZDNUdmJueVRXLTFmRGZyR0tWeVlBYkJndG00M1R1bVRtanhRSWdRUVdYUmRnWEdaSjdDeHNCV0dEYVBIWFhNaWlVTUlBYUZEQTVZVkVkdnZIYUhHSkNJ?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 16:23:43 GMT",
+        "source": "GN 性侵性騷",
+        "hint": "治安",
+        "authority": "media",
+        "description": "美31歲婦涉亂倫性侵未滿12歲男童 遭重罪起訴恐面臨終身監禁 自由時報"
+      },
+      {
+        "title": "台籍女赴日遭殺害 河口湖飯店血案時間軸全曝光！",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5617733",
+        "pubDate": "Sun, 25 Oct 2026 00:15:32 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "日本山梨縣富士河口湖町本月19日發生一起駭人聽聞的凶殺事件。參加團體旅遊的台籍女子在抵達日本觀光旅遊，卻在飯店內遭砍死，魂斷異鄉。日本警方已逮捕同行台籍嫌疑人，並於21日上午被送...…"
+      },
+      {
+        "title": "-建立防護網絡 金湖警分局召開社區治安會議 - 金門日報",
+        "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9FSk5xRzNuc2pva0tiZ2dEWjQ1TFJBOWpMR2tEM2FPVlgyalk1eFF4REVQM2xvZkp5bXVyTDU1U0QyNGtGcTBQUEZHMG1XWEFuVDBmSXBsajQxZw?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 16:02:38 GMT",
+        "source": "GN 假網拍一頁式",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "-建立防護網絡 金湖警分局召開社區治安會議 金門日報"
+      },
+      {
+        "title": "北薩馬省頭號通緝犯共產主義恐怖分子落網 - United News Ph",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5NRjJyOWNuZDUwc0dhOXZUZUk3SkFWN1NrVVB2MzNvMUk5dzZRYnk0VjJKRk0wZExFZU05LXRoTExaOXFKRXJNdjQ2aGNOR3pBYnlwZEdsNm5zcUdGZ0E?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 16:01:42 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "北薩馬省頭號通緝犯共產主義恐怖分子落網 United News Ph"
+      },
+      {
+        "title": "詐團車手私吞700萬贓款被逼跳崖險喪命 主嫌棄保潛逃落網重判13年",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5617714",
+        "pubDate": "Sun, 25 Oct 2026 00:00:01 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "詐騙集團主要成員陳伯羿不滿旗下張姓車手私吞贓款700萬元，率領孫男等4名手下當街擄走張男加以拘禁施暴凌虐，並意圖殺人滅口，逼迫張男跳下約4樓高的懸崖，張男因攀住樹木才倖免於難，...…"
+      },
+      {
+        "title": "台南海佃路爆炸案2個月 空地廢棄物四散如廢墟…居民憂強風釀二次傷害 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE43emt6UlNzeDcxb2VQNUFrcVp6eWZKemlkWlhmMHd5Z0FFV3NmYTZRV0VVMndGOFo3SVN6bExzZ3FhRUJqbnYxOTR0b3ZWdjJvZHBOempB0gFWQVVfeXFMTVRkd3VZeHFGdzVreW8tX0NIQXB0UlJleUtQYjFIMnpPN0t0MU1wbDJiM2xxUzZ6a0p4S3J5bnJFMGR0Y1F1QjQteUZWSHBpajZsRGNKM2c?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 16:00:00 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台南海佃路爆炸案2個月 空地廢棄物四散如廢墟…居民憂強風釀二次傷害 UDN"
+      },
+      {
+        "title": "騎紅色單車來偷車！49歲男爽偷開鎮長宣傳車 跨3縣市2小時落網 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFByWkMtR2huNV9mT0E1SGlQbldIRDZ1OS1MSlpwQmdRajVIYVphbFUtYmloeWlTdndkb3V5YUdyaldLeHdzUGpLazJNbnFUTms?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:49:00 GMT",
+        "source": "GN 竊盜搶奪",
+        "hint": "治安",
+        "authority": "media",
+        "description": "騎紅色單車來偷車！49歲男爽偷開鎮長宣傳車 跨3縣市2小時落網 TVBS新聞網"
+      },
+      {
+        "title": "桃園賣場地下停車場淹水 新屋鐵皮屋傳火警 - 民視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1oSFQwOUx6UW0wUlY5bGJDX3RBQmhMcjY0Y1BZY1hWRnBsN2Z2QmdxT0JBX21TS0VIXzZSMThnVmFYaHdkdmh0VFNhQ09qTXZDYzVaS2V5RTFyQ2w1dzk1ZQ?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:40:13 GMT",
+        "source": "GN 火警氣爆",
+        "hint": "災防",
+        "authority": "media",
+        "description": "桃園賣場地下停車場淹水 新屋鐵皮屋傳火警 民視新聞網"
+      },
+      {
+        "title": "前NBA後衛Malik Beasley涉假球賭博案 傳正協商認罪協議 - 民視運動網",
+        "link": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1ZaWFta2g1c1pwZThlOG5OTHpNbmJ0QUxFcVZubkxjMmpqZXlubk1EZVhUWUo5SG1KMV9sU0VKcGI5Rm9XSkNpd0stN0pkU1FDWGdTSWtHQW9xbktMS1Z4eVJ1bw?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:38:00 GMT",
+        "source": "GN 洗錢",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "前NBA後衛Malik Beasley涉假球賭博案 傳正協商認罪協議 民視運動網"
+      },
+      {
+        "title": "才剛服刑完出獄...北市家暴男又持椅子毆打 親人果斷報警 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE03SWVvekZkeDdLcTF4bkFyMlJYalJieDlUMmVDcEVDeHhndUk1aEdyVEMyU0RlQXctemgyODgzaUc0Si05dEVMU0dWVmczVEE?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:31:00 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "才剛服刑完出獄...北市家暴男又持椅子毆打 親人果斷報警 TVBS新聞網"
+      },
+      {
+        "title": "高市工地又傳工安意外…夾土機脫落砸翻大貨車 駕駛受困搶救畫面曝 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5DT0lqS1lBWXB1LVVUd1JfTDRCWW51a291YWVnYVg0QTlNQjVkS3BFZU9LNkRnM0FfNTRqU3hKVFotZmRGUEpKXzBEOEZwQ2k30gFWQVVfeXFMUEpJZ2pnWFZjM0d2UVNRb3JNVWZCMmU5UGZyd2paYTJmcXozUHNPbmZfbFVWMUtsbDRETzhkcmdsczBPZF9iYy16S0xMdS12elJSMnR1ekE?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:28:48 GMT",
+        "source": "GN 工安職災",
+        "hint": "災防",
+        "authority": "media",
+        "description": "高市工地又傳工安意外…夾土機脫落砸翻大貨車 駕駛受困搶救畫面曝 UDN"
+      },
+      {
+        "title": "颱風天傳惡火！桃園鐵皮屋陷火海 71歲翁救出已無呼吸心跳 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1KSTUtZ1hyWU95Yzlpd216ZTIwaXgxTGUwX2IwQ3BwTzlGWHJxV3JLc0pJLVdDMG43c0taemtxekVxOWZUZFlrZGlLZ01YN2M?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:27:00 GMT",
+        "source": "GN 火警氣爆",
+        "hint": "災防",
+        "authority": "media",
+        "description": "颱風天傳惡火！桃園鐵皮屋陷火海 71歲翁救出已無呼吸心跳 TVBS新聞網"
+      },
+      {
+        "title": "酒精加持、技術歸零？枋寮警「酒駕」慘摔進水溝 - 大成報",
+        "link": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5UWjZVT1g1bEszc3UtSXhrQzRBVkxYc25rbWM4MWJDcVBfVTJiZXBnYkhEVGUzSkFDc2F1amV2c2NqYS1sRXF6dUFrcktXZW1seFpUd3N5bHRVSlN3UmJNakFveTh1aFdPYTBFNlBtNTg?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 15:03:20 GMT",
+        "source": "GN 酒駕毒駕",
+        "hint": "交通",
+        "authority": "media",
+        "description": "酒精加持、技術歸零？枋寮警「酒駕」慘摔進水溝 大成報"
+      },
+      {
+        "title": "距退休剩一年！巡佐放假酒駕自摔卡水溝 退休金恐成泡影",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5617738",
+        "pubDate": "Sat, 24 Oct 2026 22:59:09 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "屏東縣警察局枋寮分局枋寮派出所的張姓巡佐，家住佳冬的他今天休假卻酒駕上路，下午竟因自撞直接摔進魚塭旁水溝且動彈不得，由於其出事地點就是在同分局轄區內，同仁到場進行酒測，發現其酒...…"
+      },
+      {
+        "title": "薔琵颱風竹市124件災情 其中115件已迅速處置 - 台灣新聞雲報",
+        "link": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE03V2dpcmF0cV9YV1hnc2xxd3Z4UTJwUjUzeUJHVTlabFNWYUFaZlB3eW5ZRmM5dVU3cHc1eG1PU2pUcUZpMlE?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 14:40:31 GMT",
+        "source": "GN 土石流坍方",
+        "hint": "災防",
+        "authority": "media",
+        "description": "薔琵颱風竹市124件災情 其中115件已迅速處置 台灣新聞雲報"
+      },
+      {
+        "title": "火神祭首度攜手浪人祭 黃偉哲邀民眾體驗漁光島藝術盛宴",
+        "link": "https://newtalk.tw/news/view/2026-10-24/1067318",
+        "pubDate": "Sat, 24 Oct 2026 22:38:21 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 「2026國際火舞藝術節—火神祭」今（24）日起一連三天在台南安平漁光島登場，匯集美國、義大利、匈牙利、日本等國火舞藝術家及亞運國手，並首度結合「浪人祭」，以火舞、音樂及海岸景觀打造跨界藝術盛會。市長黃偉哲晚間出席開幕，與文化部政務次長李靜慧、藝術發展司司長周雅菁及現場民眾一同欣賞演出，邀請全國民眾 延伸閱讀： 薔琵颱風逼近台南可能進入暴風範圍 黃偉哲籲嚴防強風確保市民安全 黃"
+      },
+      {
+        "title": "謝龍介授戰旗拚里長議員全壘打 邀對手辯論市政正面回應黑金問題",
+        "link": "https://newtalk.tw/news/view/2026-10-24/1067316",
+        "pubDate": "Sat, 24 Oct 2026 22:29:15 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 薔琵颱風逐漸遠離，臺南所幸未傳重大災情。臺南市長候選人謝龍介今（24）日傍晚在中華東路與小東路口開講，與國民黨市議員候選人林燕祝、李秉倫、周宏昌、蔡宗豪、童小芸、歐政豪，以及民眾黨市議員候選人江明宗、陳進男一同向民眾問好，宣講婚育宅、重陽敬老金提高至3,000元、敬老卡比照臺中提高至1,000元等政 延伸閱讀： 吳子嘉涉選罷法遭搜索 鄭朝方：不法介選行為絕不姑息 薔琵颱風逼近台"
+      },
+      {
+        "title": "屏東巡佐酒駕自摔卡水溝酒測0.58 記2大過恐免職- 社會新聞 - PChome Online 新聞",
+        "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxNMWVNX3ptaXlVa09lMFBBUWFDZ1BFWnZOa2JSNDF0WlFtSnRIWGVxT1gxaUkzTHJ0T0xmU3BjbVdiSkhEeTZtZjVjenNaT0xRN01BVS1US05rTXBvdUptSUsydjJkX2ZPRVNYTmMzaDZuUFVzakdGc253czlMY1ZWZzdHTzR1bWZ5T01F?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 14:16:40 GMT",
+        "source": "GN 酒駕毒駕",
+        "hint": "交通",
+        "authority": "media",
+        "description": "屏東巡佐酒駕自摔卡水溝酒測0.58 記2大過恐免職- 社會新聞 PChome Online 新聞"
+      },
+      {
+        "title": "討論牆 | 台中社宅工地驚爆意外 46歲外籍工人突昏迷急送醫 - LINE TODAY",
+        "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE1kelZ4QWgtTjNMTm9abVlUVmV4QktDY1FVS0JyZURaeFMzQ0U2QmszcGJLRUMwN2dzWHZqSUVjWTdkWDlqLUY0cnpyRlpjaEhFUVBxSEY5U0wzeXJ3YzVlOUs2N3E?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 14:16:08 GMT",
+        "source": "GN 工安職災",
+        "hint": "災防",
+        "authority": "media",
+        "description": "討論牆 | 台中社宅工地驚爆意外 46歲外籍工人突昏迷急送醫 LINE TODAY"
+      },
+      {
+        "title": "員警休假酒駕自摔困水溝 酒測值0.58送者績會懲處 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5yUVdlOGg5Y3NjNFVIU1pteE10UlVjUlpOejcybFNaeW9LbzY0dnYzM1dEazRpUVlDVld2ZnhCekcxVXp0LWJQYmp1SkstZXps0gFWQVVfeXFMT2ZZSW9zYlNWVkx1RFJrZWMySXJtRWdSQUpyc2VmZUdiQ2RoNU9GdVFuVmlDMVFwcmNnWTVGZ19NZ3F6YU11RkpRSWFKMVhINmdlSlYtLXc?oc=5",
+        "pubDate": "Sat, 24 Oct 2026 14:12:03 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "員警休假酒駕自摔困水溝 酒測值0.58送者績會懲處 UDN"
+      }
+    ]
+  }
+}
