@@ -20,6 +20,12 @@ export function isDeterministicFallback(text) {
   return text.includes(FALLBACK_SIGNATURE) || text.includes("AI 摘要暫時無法生成");
 }
 
+export function extractFallbackCount(text) {
+  if (!text || typeof text !== "string") return null;
+  const match = text.match(/共\s+(\d+)\s+起/);
+  return match ? Number(match[1]) : null;
+}
+
 // Reject visible reasoning traces and unexpectedly long or English-only model
 // output before it can be mislabeled as a finished Chinese narrative.
 export function isUsableNarrative(text) {
@@ -111,7 +117,15 @@ export function auditSummary({
           reason: `${label}AI 摘要含推理痕跡、過長或不是可用的繁體中文敘述`,
         });
       } else if (isDegraded) {
-        if (requireNarrative) {
+        // 統計備援時：驗證「共 N 起」的計數是否與實際事件數一致
+        const fallbackCount = extractFallbackCount(text);
+        if (fallbackCount !== null && fallbackCount !== count) {
+          failures.push({
+            code: "fallback-count-mismatch",
+            field,
+            reason: `${label}統計備援「共 ${fallbackCount} 起」與實際事件數 ${count} 不符（可能計入已剔除的不合格事件）`,
+          });
+        } else if (requireNarrative) {
           failures.push({
             code: "narrative-required-but-degraded",
             field,

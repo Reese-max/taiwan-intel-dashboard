@@ -697,6 +697,7 @@ export async function run() {
     { historical: 0, judicial: 0 },
   );
   console.log(`[時效] historical ${temporalCounts.historical} 筆 / judicial ${temporalCounts.judicial} 筆`);
+  let domesticValid = [];
   if (domesticEvents.length) {
     const { valid, invalid } = validateEventContract(domesticEvents);
     if (invalid.length) {
@@ -708,6 +709,7 @@ export async function run() {
       console.error("[合約] domestic.json 全部事件不符契約，疑似 mapper 欄位漂移；保留舊 domestic.json，本輪標記失敗。");
       process.exitCode = 1;
     } else {
+      domesticValid = valid;
       writeJson("domestic.json", valid);
     }
   } else {
@@ -748,6 +750,7 @@ export async function run() {
     : dropIntlStale
       ? []
       : oldIntl;
+  let intlValid = [];
   if (intlOk) {
     const { valid, invalid } = validateEventContract(intlEvents);
     if (invalid.length) {
@@ -759,6 +762,7 @@ export async function run() {
       console.error("[合約] international.json 全部事件不符契約，疑似 mapper 欄位漂移；保留舊 international.json，本輪標記失敗。");
       process.exitCode = 1;
     } else {
+      intlValid = valid;
       writeJson("international.json", valid);
     }
   } else if (dropIntlStale) {
@@ -772,18 +776,18 @@ export async function run() {
 
   const prevRollup = readJson("daily-rollup.json", { days: {} });
   // 清單型 reference 來源（設施點位/歷史批次/統計）不進事件統計，避免灌水（保留於地圖/tree）
-  const domesticIncidents = domesticEvents.filter((e) => !isReferenceEvent(e));
-  const dailyRollup = applyDailyRollup(prevRollup, [...domesticIncidents, ...intlEvents]);
+  const domesticIncidents = domesticValid.filter((e) => !isReferenceEvent(e));
+  const dailyRollup = applyDailyRollup(prevRollup, [...domesticIncidents, ...intlValid]);
   writeJson("daily-rollup.json", dailyRollup);
   const rollupToday = taiwanLocalDay(nowIso);
   const rollupTodayDomestic = rollupToday
-    ? domesticEvents.filter((event) => taiwanLocalDay(event.timestamp) === rollupToday).length
+    ? domesticValid.filter((event) => taiwanLocalDay(event.timestamp) === rollupToday).length
     : 0;
   const rollupTodayInternational = rollupToday
-    ? intlEvents.filter((event) => taiwanLocalDay(event.timestamp) === rollupToday).length
+    ? intlValid.filter((event) => taiwanLocalDay(event.timestamp) === rollupToday).length
     : 0;
   console.log(
-    `[rollup] 每日基線 ${Object.keys(dailyRollup.days || {}).length} 天（今日 domestic ${rollupTodayDomestic} / international ${rollupTodayInternational}）`,
+    `[rollup] 每日基線 ${Object.keys(dailyRollup.days || {}).length} 天（今日 domestic ${rollupTodayDomestic} / international ${rollupTodayInternational})`,
   );
 
   // --- 情報網：把新聞事件串成關聯圖（純加法，不影響既有輸出）---
@@ -792,8 +796,8 @@ export async function run() {
   let domesticClusters = []; // 供 AI 群摘要用（cluster id 與 build-network 一致，因同 correlateEvents/同 domestic.json）
   let network = null;
   try {
-    const domesticNews = domesticEvents.filter(isNewsLikeEvent);
-    const intlNews = intlEvents.filter(isNewsLikeEvent);
+    const domesticNews = domesticValid.filter(isNewsLikeEvent);
+    const intlNews = intlValid.filter(isNewsLikeEvent);
     network = {
       snapshotId: `cohort-${nowIso.slice(0, 10).replace(/-/g, "")}-${createHash("sha256").update(nowIso).digest("hex").slice(0, 8)}`,
       generatedAt: nowIso,
@@ -802,8 +806,8 @@ export async function run() {
       domestic: correlateEvents(domesticNews, { curation: curationLedger.entries, rulesVersion: RULES_VERSION, scope: "domestic" }),
       international: correlateEvents(intlNews, { curation: curationLedger.entries, rulesVersion: RULES_VERSION, scope: "international" }),
       excluded: {
-        domestic: domesticEvents.length - domesticNews.length,
-        international: intlEvents.length - intlNews.length,
+        domestic: domesticValid.length - domesticNews.length,
+        international: intlValid.length - intlNews.length,
       },
     };
     const contractErrors = validateNetworkContract(network);
@@ -825,10 +829,10 @@ export async function run() {
 
   // --- AI 摘要（NVIDIA）---
   try {
-    const summary = await summarize({ domestic: domesticIncidents, international: intlEvents, clusters: domesticClusters });
+    const summary = await summarize({ domestic: domesticIncidents, international: intlValid, clusters: domesticClusters });
     writeJson("summary.json", summary);
     const domHasEvents = domesticIncidents.length > 0;
-    const intlHasEvents = intlEvents.length > 0;
+    const intlHasEvents = intlValid.length > 0;
     const domPlaceholder = isPlaceholder(summary.domestic);
     const intlPlaceholder = isPlaceholder(summary.international);
     const placeholderWithEvidence = (domHasEvents && domPlaceholder) || (intlHasEvents && intlPlaceholder);
