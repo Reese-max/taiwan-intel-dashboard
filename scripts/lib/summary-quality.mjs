@@ -91,6 +91,25 @@ export function auditSummary({
     const isDegraded = isScopeDegraded(field) || isDeterministicFallback(text);
     const placeholder = isPlaceholder(text);
 
+    // 備援必須對齊實際快照分母，不能僅憑簽名就放行被剔除／過期事件的計數。
+    if (isDeterministicFallback(text)) {
+      const match = text.match(/^.+?共 ([0-9]+) 起(?:，|。|$)/);
+      const fallbackCount = match ? Number(match[1]) : NaN;
+      if (!Number.isSafeInteger(fallbackCount)) {
+        failures.push({
+          code: "fallback-count-missing",
+          field,
+          reason: `${label}統計備援缺少可驗證的整數事件數，無法核對快照`,
+        });
+      } else if (fallbackCount !== count) {
+        failures.push({
+          code: "fallback-count-mismatch",
+          field,
+          reason: `${label}統計備援為 ${fallbackCount} 起，但快照只有 ${count} 筆事件`,
+        });
+      }
+    }
+
     if (count > 0) {
       if (placeholder) {
         failures.push({

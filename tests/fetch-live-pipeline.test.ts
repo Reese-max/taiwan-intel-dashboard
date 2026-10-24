@@ -505,6 +505,58 @@ afterEach(() => {
 });
 
 describe("fetch-live pipeline integration (CWA)", () => {
+  it("只使用已發布的合約有效事件產生 rollup、network 與摘要（Issue #80）", async () => {
+    const dataDir = setupEnv();
+    process.env.SOURCES = "cwa,mofa";
+    process.env.LLM_API_KEY = "";
+    process.env.NVIDIA_API_KEY = "";
+    process.env.SUMMARY_API_KEY = "";
+    const domesticGood = makeCarryOverTwnews();
+    const domesticBad = {
+      ...domesticGood,
+      id: "domestic-invalid-summary",
+      title: "臺北警方破獲另一詐騙機房",
+      summary: "",
+      source: { ...domesticGood.source, recordRef: "https://example.test/rejected-domestic" },
+    };
+    const internationalGood = {
+      ...domesticGood,
+      id: "international-valid",
+      scope: "international",
+      region: "全球",
+      source: { ...domesticGood.source, datasetId: "international-rss", recordRef: "https://example.test/intl-valid" },
+    };
+    const internationalBad = {
+      ...internationalGood,
+      id: "international-invalid-summary",
+      summary: "",
+      source: { ...internationalGood.source, recordRef: "https://example.test/intl-rejected" },
+    };
+    writeFileSync(join(dataDir, "domestic.json"), JSON.stringify([domesticGood, domesticBad]));
+    writeFileSync(join(dataDir, "international.json"), JSON.stringify([internationalGood, internationalBad]));
+    makeMockFetch();
+    const run = await importRun();
+
+    await run();
+
+    const domestic = readJson(join(dataDir, "domestic.json"));
+    const international = readJson(join(dataDir, "international.json"));
+    expect(domestic).toHaveLength(4); // 3 CWA + 1 valid carried news item.
+    expect(international).toHaveLength(4); // 3 MOFA + 1 valid carried news item.
+    expect(domestic.some((e: any) => e.id === domesticBad.id)).toBe(false);
+    expect(international.some((e: any) => e.id === internationalBad.id)).toBe(false);
+    const rollup = readJson(join(dataDir, "daily-rollup.json"));
+    expect.soft(rollup.days[taiwanToday()].byScope).toEqual({ domestic: domestic.length, international: international.length });
+    const network = readJson(join(dataDir, "network.json"));
+    expect.soft(network.domestic.stats.events).toBe(1);
+    expect.soft(network.international.stats.events).toBe(1);
+    expect.soft(JSON.stringify(network)).not.toContain(domesticBad.id);
+    expect.soft(JSON.stringify(network)).not.toContain(internationalBad.id);
+    const summary = readJson(join(dataDir, "summary.json"));
+    expect.soft(summary.domestic).toContain(`共 ${domestic.length} 起`);
+    expect.soft(summary.international).toContain(`共 ${international.length} 起`);
+  }, 20_000);
+
   it(
     "writes domestic/provenance/daily-rollup for the happy CWA skeleton",
     async () => {
