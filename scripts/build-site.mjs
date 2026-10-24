@@ -12,13 +12,15 @@ import { prepareCleanCheckoutBuild } from "./prepare-build-data.mjs";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BUILD_STEPS = ["build-network.mjs", "build-static.mjs"];
 
-export function buildSite({ root = ROOT, prepareOptions, spawn = spawnSync, log = console.log, env = process.env } = {}) {
+export function buildSite({ root = ROOT, prepareOptions, spawn = spawnSync, log = console.log, env = process.env, previewSnapshot = false } = {}) {
   const prepared = prepareCleanCheckoutBuild(prepareOptions);
   let buildCwd;
   try {
     // 一定用明確的 env：外部殘留的 BUILD_DATA_DIR／BUILD_SYNTHETIC_INPUT 不得蓋過本輪
     // prepare 的驗證結果（否則會拿未驗證的目錄當輸入，甚至跳過 dist 鏡射）。
-    const { BUILD_DATA_DIR: _ambientDir, BUILD_SYNTHETIC_INPUT: _ambientFlag, ...inherited } = env;
+    const { BUILD_DATA_DIR: _ambientDir, BUILD_SYNTHETIC_INPUT: _ambientFlag, BUILD_PREVIEW_SNAPSHOT: _ambientPreview, ...inherited } = env;
+    if (previewSnapshot && prepared.seeded) throw new Error("Preview requires a verified restored snapshot");
+    if (previewSnapshot) inherited.BUILD_PREVIEW_SNAPSHOT = "1";
     // BUILD_SYNTHETIC_INPUT 讓 build-network 不把合成產物鏡射進 checkout/dist/data。
     const childEnv = prepared.seeded
       ? { ...inherited, BUILD_DATA_DIR: prepared.dataDir, BUILD_SYNTHETIC_INPUT: "1" }
@@ -56,7 +58,7 @@ export function buildSite({ root = ROOT, prepareOptions, spawn = spawnSync, log 
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   try {
-    const exitCode = buildSite();
+    const exitCode = buildSite({ previewSnapshot: process.argv.includes("--preview-snapshot") });
     if (exitCode !== 0) process.exitCode = exitCode;
   } catch (error) {
     console.error(`build 失敗：${error.message}`);

@@ -19,16 +19,17 @@ jobs:
           ref: pipeline-state
           path: pipeline-state
           persist-credentials: false
-      - name: Restore deploy data
-        run: |
-          mkdir -p public/data
-          cp -f pipeline-state/data/*.json public/data/
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npm run check
+      - name: Prepare verified preview snapshot
+        run: node scripts/prepare-preview-data.mjs --source=pipeline-state/data --output=public/data
+      - name: Check preview code and build the retained cohort
+        run: |
+          npm test
+          npm run build -- --preview-snapshot
       - name: Run Python regressions
         run: python3 -m unittest discover -s tests -p test_crime_weekly_parser.py
       - name: Audit preview data
