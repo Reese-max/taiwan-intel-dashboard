@@ -176,6 +176,43 @@ describe("summary quality & semantic audit gate (Issue #18)", () => {
     expect(r2.failures).toHaveLength(0);
   });
 
+  it.each(["domestic", "international"])("拒絕 %s 統計備援與快照事件數不符（Issue #80）", (field) => {
+    for (const count of [0, 1, 3]) {
+      const result = auditSummary({
+        summary: { [field]: deterministicBrief("事件", [sampleEvent("e1"), sampleEvent("e2")]) },
+        domesticCount: field === "domestic" ? count : 0,
+        internationalCount: field === "international" ? count : 0,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures).toContainEqual(expect.objectContaining({ code: "fallback-count-mismatch", field }));
+    }
+  });
+
+  it("統計備援缺少可驗證整數計數時拒絕發布（Issue #80）", () => {
+    const result = auditSummary({
+      summary: { domestic: "國內事件共很多起。（此為系統統計備援）" },
+      domesticCount: 1,
+    });
+    expect(result.ok).toBe(false);
+    expect(result.failures).toContainEqual(expect.objectContaining({ code: "fallback-count-missing", field: "domestic" }));
+  });
+
+  it("CLI 以實際快照事件數阻擋錯誤的統計備援（Issue #80）", () => {
+    const f = fixture({
+      "summary.json": { domestic: deterministicBrief("國內事件", [sampleEvent("e1"), sampleEvent("rejected")]) },
+      "domestic.json": [sampleEvent("e1")],
+      "international.json": [],
+    });
+    try {
+      const cli = runCli(f.dir);
+      expect(cli.code).toBe(1);
+      expect(cli.out).toContain("SUMMARY_AUDIT_FAIL");
+      expect(cli.out).toContain("快照");
+    } finally {
+      f.cleanup();
+    }
+  });
+
   it("拒絕誤標成功的模型推理文字與未標明的降級內容", () => {
     const leaked = "We need to produce a concise Chinese summary. " + "Analyze the events before answering. ".repeat(25);
     expect(isUsableNarrative(leaked)).toBe(false);

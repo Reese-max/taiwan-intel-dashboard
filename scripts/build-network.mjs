@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { correlateEvents, isNewsLikeEvent } from "./lib/correlate.mjs";
+import { previewSnapshotContext } from "./prepare-preview-data.mjs";
 import {
   formatNetworkContractErrors,
   NETWORK_FILE,
@@ -119,9 +120,10 @@ function main() {
   }
   const domestic = readEvents("domestic.json");
   const international = readEvents("international.json");
-  const nowIso = new Date().toISOString();
+  const preview = previewSnapshotContext(DATA_DIR);
+  const nowIso = preview?.generatedAt || new Date().toISOString();
   const curation = loadCurationLedger(CURATED_LEDGER_PATH);
-  const net = buildNetwork(domestic, international, nowIso, { curation });
+  const net = buildNetwork(domestic, international, nowIso, { curation, ...(preview ? { snapshotId: preview.snapshotId } : {}) });
   const contractErrors = validateNetworkContract(net);
   if (contractErrors.length) {
     throw new Error(`產物契約驗收失敗：\n${formatNetworkContractErrors(NETWORK_FILE, contractErrors)}`);

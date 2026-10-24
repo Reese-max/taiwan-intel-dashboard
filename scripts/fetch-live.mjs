@@ -687,7 +687,7 @@ export async function run() {
     ...newsEvents,
   ]);
   if (domesticClamp.clamped) console.warn(`[時間戳] 夾住 ${domesticClamp.clamped} 筆遠未來時間戳（疑來源解析錯誤，如民國→西元誤植）`);
-  const domesticEvents = applyTemporal(domesticClamp.events.sort(byTimeDesc), { now: nowMs, historicalDays: TEMPORAL_HISTORICAL_DAYS });
+  let domesticEvents = applyTemporal(domesticClamp.events.sort(byTimeDesc), { now: nowMs, historicalDays: TEMPORAL_HISTORICAL_DAYS });
   const temporalCounts = domesticEvents.reduce(
     (acc, event) => {
       if (event.temporal === "historical") acc.historical++;
@@ -707,11 +707,14 @@ export async function run() {
     if (!valid.length) {
       console.error("[合約] domestic.json 全部事件不符契約，疑似 mapper 欄位漂移；保留舊 domestic.json，本輪標記失敗。");
       process.exitCode = 1;
+      domesticEvents = validateEventContract(oldDomestic).valid;
     } else {
+      domesticEvents = valid;
       writeJson("domestic.json", valid);
     }
   } else {
     console.warn("國內無任何事件，保留舊 domestic.json");
+    domesticEvents = validateEventContract(oldDomestic).valid;
   }
 
   if (policeEvents.length) {
@@ -739,7 +742,7 @@ export async function run() {
   if (status.international?.ok) status.international.accumCap = intlAccumCap;
   // 累積式滾動視窗：成功時合併本輪 + 舊快照（依 id 去重、保留近 INTL_RETENTION_DAYS 天、
   // 分主題輪詢挑選至 INTL_ACCUM_CAP），取代「每輪只留當輪 ≤maxEvents」，讓國際數量穩定更多、主題分布更廣。
-  const intlEvents = intlOk
+  let intlEvents = intlOk
     ? accumulateInternational(freshIntlEvents, oldIntl, {
         retentionDays: Number(process.env.INTL_RETENTION_DAYS) || 5,
         // 約與台灣新聞快照同級；可由 CI 以 INTL_ACCUM_CAP 覆蓋。
@@ -758,7 +761,9 @@ export async function run() {
     if (!valid.length) {
       console.error("[合約] international.json 全部事件不符契約，疑似 mapper 欄位漂移；保留舊 international.json，本輪標記失敗。");
       process.exitCode = 1;
+      intlEvents = validateEventContract(oldIntl).valid;
     } else {
+      intlEvents = valid;
       writeJson("international.json", valid);
     }
   } else if (dropIntlStale) {
@@ -769,6 +774,9 @@ export async function run() {
   } else {
     console.warn("國際無任何事件，保留舊 international.json");
   }
+
+  // 所有衍生產物只使用合約有效的快照；來源未選／失敗而 carry-over 的國際資料亦須經相同閘門。
+  intlEvents = validateEventContract(intlEvents).valid;
 
   const prevRollup = readJson("daily-rollup.json", { days: {} });
   // 清單型 reference 來源（設施點位/歷史批次/統計）不進事件統計，避免灌水（保留於地圖/tree）

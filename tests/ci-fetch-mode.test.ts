@@ -196,7 +196,8 @@ describe("resolveFetchMode", () => {
     const deploySteps = refresh.jobs.deploy.steps;
 
     expect(workflow.on.push).toBeUndefined();
-    expect(previewBuildSteps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);
+    expect(previewBuildSteps.some((step: { run?: string }) => step.run?.includes("npm test") && step.run?.includes("npm run build -- --preview-snapshot"))).toBe(true);
+    expect(previewBuildSteps.some((step: { run?: string }) => step.run === "node scripts/prepare-preview-data.mjs --source=pipeline-state/data --output=public/data")).toBe(true);
     expect(previewBuildSteps.some((step: { name?: string }) => step.name === "Upload checked preview artifact")).toBe(true);
     expect(JSON.stringify(workflow.jobs["build-preview"])).not.toContain("CLOUDFLARE_API_TOKEN");
     expect(workflow.jobs.check.needs).toBe("build-preview");
