@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 
 // @ts-expect-error — JS ESM module without types
 import { validateEventContract } from "../scripts/lib/event-contract.mjs";
+import { auditSummary, deterministicBrief } from "../scripts/lib/summary-quality.mjs";
 
 type UnexpectedFetch = { url: string; status: number };
 
@@ -490,6 +491,8 @@ function makeCarryOverTwnews() {
 
 
 afterEach(() => {
+  vi.doUnmock("../scripts/lib/fetch-cwa.mjs");
+  vi.doUnmock("../scripts/lib/fetch-mofa.mjs");
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   vi.resetModules();
@@ -502,6 +505,90 @@ afterEach(() => {
   while (tempDirs.length) {
     rmSync(tempDirs.pop()!, { recursive: true, force: true });
   }
+});
+
+describe("fetch-live validated snapshots (Issue #80)", () => {
+  it.each(["skipped", "failed", "empty", "exclusive", "invalid-domestic", "invalid-international"])(
+    "keeps downstream artifacts aligned with retained snapshots: %s",
+    async (scenario) => {
+      const dataDir = setupEnv();
+      const domestic = makeCarryOverTwnews();
+      if (scenario === "invalid-domestic") domestic.source.datasetId = "retired-news";
+      const international = {
+        ...domestic,
+        id: "intl-carry-over",
+        scope: "international",
+        source: { ...domestic.source, datasetId: "international-news" },
+      };
+      writeFileSync(join(dataDir, "domestic.json"), JSON.stringify([domestic]));
+      writeFileSync(join(dataDir, "international.json"), JSON.stringify([international]));
+      process.env.SOURCES = scenario === "exclusive" ? "cwa" : "cwa,mofa";
+      process.env.EXCLUSIVE = scenario === "exclusive" ? "1" : "";
+      if (scenario === "skipped") process.env.SOURCES = "cwa";
+      vi.doMock("../scripts/lib/fetch-cwa.mjs", () => ({
+        fetchCwa: async () => scenario === "invalid-domestic" ? [{ ...domestic, summary: "" }] : [],
+        fetchCwaWarnings: async () => [],
+      }));
+      vi.doMock("../scripts/lib/fetch-mofa.mjs", () => ({
+        fetchMofaTravelWarnings: async () => {
+          if (scenario === "failed") throw new Error("fixture source failure");
+          return scenario === "invalid-international" ? [{ ...international, timestamp: new Date().toISOString(), summary: "" }] : [];
+        },
+      }));
+      // Expire only the accumulation candidate; the last-good file remains intact on rejection.
+      if (scenario === "invalid-international") {
+        international.timestamp = new Date(Date.now() - 6 * 864e5).toISOString();
+        writeFileSync(join(dataDir, "international.json"), JSON.stringify([international]));
+      }
+      makeMockFetch();
+      const run = await importRun();
+      await run();
+
+      expect(process.exitCode).toBe(scenario.startsWith("invalid-") ? 1 : undefined);
+      expect(readJson(join(dataDir, "domestic.json"))).toEqual([domestic]);
+      const expectedInternational = scenario === "exclusive" ? [] : [international];
+      expect(readJson(join(dataDir, "international.json"))).toEqual(expectedInternational);
+      const summary = readJson(join(dataDir, "summary.json"));
+      expect(summary.domestic).toBe(deterministicBrief("國內事件", [domestic]));
+      expect(summary.international).toBe(deterministicBrief("國際事件", expectedInternational));
+      expect(auditSummary({ summary, domesticCount: 1, internationalCount: expectedInternational.length }).ok).toBe(true);
+      const network = readJson(join(dataDir, "network.json"));
+      expect(network.domestic.stats.events).toBe(1);
+      expect(network.international.stats.events).toBe(expectedInternational.length);
+      const days = Object.values(readJson(join(dataDir, "daily-rollup.json")).days) as any[];
+      expect(days.reduce((sum, day) => sum + day.byScope.domestic, 0)).toBe(1);
+      expect(days.reduce((sum, day) => sum + day.byScope.international, 0)).toBe(expectedInternational.length);
+    },
+    20_000,
+  );
+
+  it("excludes missing-summary events from both snapshots and every downstream consumer", async () => {
+    const dataDir = setupEnv();
+    process.env.SOURCES = "cwa,mofa";
+    const domestic = makeCarryOverTwnews();
+    const international = { ...domestic, id: "intl-valid", scope: "international" };
+    vi.doMock("../scripts/lib/fetch-cwa.mjs", () => ({
+      fetchCwa: async () => [domestic, { ...domestic, id: "dom-invalid", summary: "" }],
+      fetchCwaWarnings: async () => [],
+    }));
+    vi.doMock("../scripts/lib/fetch-mofa.mjs", () => ({
+      fetchMofaTravelWarnings: async () => [international, { ...international, id: "intl-invalid", summary: "" }],
+    }));
+    makeMockFetch();
+    const run = await importRun();
+    await run();
+
+    expect(readJson(join(dataDir, "domestic.json"))).toEqual([expect.objectContaining({ id: domestic.id })]);
+    expect(readJson(join(dataDir, "international.json"))).toEqual([international]);
+    const summary = readJson(join(dataDir, "summary.json"));
+    expect(summary.domestic).toBe(deterministicBrief("國內事件", [domestic]));
+    expect(summary.international).toBe(deterministicBrief("國際事件", [international]));
+    expect(auditSummary({ summary, domesticCount: 1, internationalCount: 1 }).ok).toBe(true);
+    const network = readJson(join(dataDir, "network.json"));
+    expect(network.domestic.stats.events).toBe(1);
+    expect(network.international.stats.events).toBe(1);
+    expect(readJson(join(dataDir, "daily-rollup.json")).days[taiwanToday()].total).toBe(2);
+  });
 });
 
 describe("fetch-live pipeline integration (CWA)", () => {

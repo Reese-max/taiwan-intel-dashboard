@@ -271,6 +271,21 @@ describe("summary quality & semantic audit gate (Issue #18)", () => {
     expect(result.failures.some((f) => f.code === "fallback-count-mismatch")).toBe(true);
   });
 
+  it.each(["domestic", "international"])("拒絕 %s 無事件時仍宣稱有事件的統計備援（Issue #80）", (field) => {
+    const result = auditSummary({
+      summary: {
+        domestic: SUMMARY_PLACEHOLDER,
+        international: SUMMARY_PLACEHOLDER,
+        [field]: deterministicBrief("事件", [sampleEvent("stale")]),
+      },
+      domesticCount: 0,
+      internationalCount: 0,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.failures).toContainEqual(expect.objectContaining({ code: "fallback-count-mismatch", field }));
+  });
+
   it("回歸：統計備援的「共 N 起」與事件數一致時審計通過（Issue #80）", () => {
     const fallbackMatch = `國內事件共 1 起，以 治安 1 起 為主。（AI 摘要暫時無法生成，事件資料仍可查閱；此為系統統計備援）`;
 

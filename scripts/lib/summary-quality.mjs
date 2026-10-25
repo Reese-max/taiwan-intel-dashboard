@@ -97,6 +97,17 @@ export function auditSummary({
     const isDegraded = isScopeDegraded(field) || isDeterministicFallback(text);
     const placeholder = isPlaceholder(text);
 
+    // 空快照也須拒絕宣稱有事件的過期統計備援。
+    const fallbackCount = isDegraded ? extractFallbackCount(text) : null;
+    if (fallbackCount !== null && fallbackCount !== count) {
+      failures.push({
+        code: "fallback-count-mismatch",
+        field,
+        reason: `${label}統計備援「共 ${fallbackCount} 起」與實際事件數 ${count} 不符（可能計入已剔除的不合格事件）`,
+      });
+      continue;
+    }
+
     if (count > 0) {
       if (placeholder) {
         failures.push({
@@ -117,15 +128,7 @@ export function auditSummary({
           reason: `${label}AI 摘要含推理痕跡、過長或不是可用的繁體中文敘述`,
         });
       } else if (isDegraded) {
-        // 統計備援時：驗證「共 N 起」的計數是否與實際事件數一致
-        const fallbackCount = extractFallbackCount(text);
-        if (fallbackCount !== null && fallbackCount !== count) {
-          failures.push({
-            code: "fallback-count-mismatch",
-            field,
-            reason: `${label}統計備援「共 ${fallbackCount} 起」與實際事件數 ${count} 不符（可能計入已剔除的不合格事件）`,
-          });
-        } else if (requireNarrative) {
+        if (requireNarrative) {
           failures.push({
             code: "narrative-required-but-degraded",
             field,

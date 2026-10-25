@@ -1,50 +1,20 @@
 {
-  "pr": 79,
-  "head": "b8a0322ce3292b0f1df03c2b99046dcf5722b803",
+  "pr": 82,
+  "head": "17faf642abeedde0282138800adcaae0e9f1b36e",
   "findings": [
     {
       "severity": "high",
-      "file": "scripts/ground-truth-relations-sample.mjs",
-      "line": 101,
-      "issue": "Snapshots retain only selected pair endpoints, dropping intermediary events and corpus context used by correlateEvents. A selected auto-cluster A-B connected through C replays without its cluster and is incorrectly scored as a false negative."
+      "file": "scripts/fetch-live.mjs",
+      "line": 753,
+      "issue": "Validated downstream arrays default to empty when an existing snapshot is retained. With international sources skipped, failed or empty, international.json keeps valid old events but summary/network are overwritten as empty and rollup omits them. Both scopes also lose retained events when all fresh candidates fail validation; initialize from validated retained snapshots and clear only on explicit clearing."
     },
     {
       "severity": "med",
-      "file": "scripts/lib/ground-truth-relations.mjs",
-      "line": 170,
-      "issue": "Row type is inferred from an optional event property instead of schema. Valid pair rows with extra event fields hide their real a/b references from family grouping and split-leakage validation, allowing the same event into tuning and holdout; CLI also routes resulting errors by the wrong discriminator."
-    },
-    {
-      "severity": "med",
-      "file": "scripts/ground-truth-relations-sample.mjs",
-      "line": 95,
-      "issue": "An explicitly admitted ledger benchmark split is attached only to its matching pair. Other pairs in the same generated family retain the hash split, so a valid holdout ledger record can make the sampler's own output fail split-leakage validation."
-    },
-    {
-      "severity": "med",
-      "file": "scripts/ground-truth-benchmark.mjs",
-      "line": 157,
-      "issue": "Before/after comparison marks a location error resolved whenever its example disappears, including when a prediction becomes unknown and is excluded from scoring. This misreports lost coverage as a corrected role, precision or region."
-    },
-    {
-      "severity": "low",
-      "file": "scripts/lib/ground-truth-relations.mjs",
-      "line": 90,
-      "issue": "Unlabeled pair candidates bypass benchmark enum validation, so benchmark=production is silently accepted even though this field already controls split isolation."
-    },
-    {
-      "severity": "low",
-      "file": "scripts/lib/ground-truth-relations.mjs",
-      "line": 385,
-      "issue": "follow_up is counted as a same-event negative and contributes false positives when merged, but an unmerged follow_up never contributes a true negative, leaving the confusion counts incomplete."
-    },
-    {
-      "severity": "med",
-      "file": "docs/ground-truth/relations/README.md",
-      "line": 3,
-      "issue": "needs-human: Both human annotation datasets are empty and the real candidates span only one week. Issue #43's human baseline and required hard-negative strata, including cross-month follow-ups, remain unfulfilled; synthetic tests cannot supply that acceptance evidence."
+      "file": "scripts/lib/summary-quality.mjs",
+      "line": 97,
+      "issue": "The new fallback count comparison is nested under count > 0. A stale deterministic brief claiming one or more events passes the audit when the actual incident count is zero, despite violating issue #80 count equality. Apply the comparison to both scopes even at zero."
     }
   ],
   "fixed": true,
-  "summary": "Fixed six defects in replay corpus context, schema-based split isolation, ledger family splits, unknown-location comparisons, candidate split validation and follow-up confusion counts. Eleven regression cases went red-to-green; Git Bash verification passes 1036 Vitest tests, 5 Python tests, typecheck/build and operational checks. needs-human: human annotation datasets remain empty and real hard-negative coverage is incomplete, so issue #43 baseline acceptance remains pending; all fixes are local, with no push or deployment."
+  "summary": "Fixed two defects: retained validated snapshots now feed rollup/network/summary, and fallback count mismatches are rejected even for zero incidents. Eight regression cases were proven red-to-green; final Git Bash checks pass 1055 Vitest tests, five Python tests, typecheck and build. Fixes are local; no push or deployment."
 }

@@ -31,6 +31,8 @@
 
 失敗容錯：單源失敗沿用上一版快照（carry-over），不以空資料覆蓋。
 
+每日統計、情報網與摘要只使用寫入或保留快照中通過事件契約驗證的資料。發布前的摘要稽核會比對統計備援「共 N 起」與實際事件數，包含快照為 0 筆的情境。
+
 管線分層：`source-plan.mjs` 管理來源選擇與 exclusive 規則；`direct-official-sources.mjs` 集中直連官方來源 registry 與 fail-soft 執行；各 `fetch-*.mjs` 只負責來源 adapter；`fetch-live.mjs` 僅組合事件、快照與 provenance。
 
 完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」。移除第三方 MCP 後，採購、司法、空品、停車、經濟等原 MCP 來源不再刷新，待改成官方直連後再恢復。

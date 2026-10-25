@@ -697,7 +697,8 @@ export async function run() {
     { historical: 0, judicial: 0 },
   );
   console.log(`[時效] historical ${temporalCounts.historical} 筆 / judicial ${temporalCounts.judicial} 筆`);
-  let domesticValid = [];
+  // 保留舊快照時，下游仍須使用該快照中通過契約的事件。
+  let domesticValid = validateEventContract(oldDomestic).valid;
   if (domesticEvents.length) {
     const { valid, invalid } = validateEventContract(domesticEvents);
     if (invalid.length) {
@@ -750,7 +751,7 @@ export async function run() {
     : dropIntlStale
       ? []
       : oldIntl;
-  let intlValid = [];
+  let intlValid = validateEventContract(oldIntl).valid;
   if (intlOk) {
     const { valid, invalid } = validateEventContract(intlEvents);
     if (invalid.length) {
@@ -766,6 +767,7 @@ export async function run() {
       writeJson("international.json", valid);
     }
   } else if (dropIntlStale) {
+    intlValid = [];
     writeJson("international.json", []);
     console.warn("國際本次未選（EXCLUSIVE），清空 international.json");
   } else if (intlEvents.length) {
