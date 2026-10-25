@@ -196,7 +196,8 @@ describe("resolveFetchMode", () => {
     const deploySteps = refresh.jobs.deploy.steps;
 
     expect(workflow.on.push).toBeUndefined();
-    expect(previewBuildSteps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);
+    expect(previewBuildSteps.some((step: { run?: string }) => step.run?.includes("npm test") && step.run?.includes("npm run build -- --preview-snapshot"))).toBe(true);
+    expect(previewBuildSteps.some((step: { run?: string }) => step.run === "node scripts/prepare-preview-data.mjs --source=pipeline-state/data --output=public/data")).toBe(true);
     expect(previewBuildSteps.some((step: { name?: string }) => step.name === "Upload checked preview artifact")).toBe(true);
     expect(JSON.stringify(workflow.jobs["build-preview"])).not.toContain("CLOUDFLARE_API_TOKEN");
     expect(workflow.jobs.check.needs).toBe("build-preview");
@@ -206,6 +207,13 @@ describe("resolveFetchMode", () => {
     expect(checkSteps.some((step: { name?: string }) => step.name === "Deploy Preview")).toBe(true);
     expect(checkSteps.some((step: { uses?: string }) => step.uses?.startsWith("actions/checkout"))).toBe(false);
     expect(checkSteps.some((step: { run?: string }) => step.run?.includes("npm"))).toBe(false);
+    expect(workflow.on.pull_request.types).toContain("ready_for_review");
+    const verification = workflow.jobs["verify-preview"];
+    expect(verification.needs).toBe("check");
+    expect(verification.if).toBe("${{ !github.event.pull_request.draft }}");
+    expect(JSON.stringify(verification)).not.toContain("secrets.");
+    expect(verification.permissions).toEqual({ contents: "read", actions: "read" });
+    expect(verification.steps.some((step: { run?: string }) => step.run?.includes("node scripts/verify-preview-deployment.mjs"))).toBe(true);
     expect(buildSteps.find((step: { name?: string }) => step.name === "Checkout 核准的網站程式碼").with.ref)
       .toBe("${{ steps.approved.outputs.sha }}");
     expect(buildSteps.some((step: { run?: string }) => step.run === "npm run check")).toBe(true);

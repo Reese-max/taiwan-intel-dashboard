@@ -19,6 +19,7 @@ import { buildCohortManifest, writeCohortManifest } from "./lib/manifest.mjs";
 import { isValidCoordinate } from "./lib/geo-policy.mjs";
 import { CURATED_LEDGER_REL_PATH, loadCurationLedger, resolveCurationLedger } from "./lib/curation-ledger.mjs";
 import { isNewsLikeEvent } from "./lib/correlate.mjs";
+import { previewSnapshotContext } from "./prepare-preview-data.mjs";
 
 const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
@@ -135,7 +136,8 @@ for (const f of readdirSync(DATA_DIR)) {
   }
 }
 
-const manifest = buildCohortManifest({ dataDir: `${OUT}/data` });
+const preview = previewSnapshotContext(DATA_DIR);
+const manifest = buildCohortManifest({ dataDir: `${OUT}/data`, ...(preview ? { snapshotId: preview.snapshotId, nowIso: preview.generatedAt } : {}) });
 writeCohortManifest(`${OUT}/data`, manifest);
 // The manifest binds the transformed output bytes. The source snapshot retains
 // its own manifest because development serves those untrimmed files directly.

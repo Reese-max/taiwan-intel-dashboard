@@ -134,6 +134,7 @@ describe("release gate contract (Issue #42)", () => {
       cpSync("scripts/lib", join(root, "scripts/lib"), { recursive: true });
       const script = join(root, "scripts/build-network.mjs");
       cpSync("scripts/build-network.mjs", script);
+      cpSync("scripts/prepare-preview-data.mjs", join(root, "scripts/prepare-preview-data.mjs"));
       const build = (env: Record<string, string>) => {
         // Model an owned local environment even when the parent test runs in CI.
         // The production helper's stronger hosted-presence policy stays intact.
