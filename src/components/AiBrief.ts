@@ -49,14 +49,17 @@ export function isDeterministicFallback(text: string): boolean {
 }
 
 export function getActionableDegradedReason(summary: AiSummary, scope: Scope): string {
+  if (!summary) return "原因未記錄";
   const reasonObj = summary.degradedReason;
   if (reasonObj) {
-    if (typeof reasonObj === "string") return reasonObj;
-    if (reasonObj[scope]) return reasonObj[scope]!;
+    if (typeof reasonObj === "string" && reasonObj.trim()) return reasonObj;
+    if (typeof reasonObj === "object" && reasonObj[scope] && reasonObj[scope]!.trim()) {
+      return reasonObj[scope]!;
+    }
   }
-  if (summary.reason) return summary.reason;
-  if (summary.error) return summary.error;
-  return `AI 服務連線或 API 金鑰驗證異常（${summary.model || "模型服務"} 暫未回傳有效敘述，請檢查金鑰與配額）`;
+  if (summary.reason && summary.reason.trim()) return summary.reason;
+  if (summary.error && summary.error.trim()) return summary.error;
+  return "原因未記錄";
 }
 
 export function getLastSuccessTimeString(summary: AiSummary, scope: Scope): string {
