@@ -2,29 +2,47 @@ import type { IntelEvent, Scope } from "../types/event";
 import { esc } from "../utils/escape";
 
 const DAY_MS = 86400000;
+const NO_DATA_REASON = "目前範圍無可用資料源";
 
-interface ProvStat {
+export interface ProvStat {
   total: number;
   active: number;
   officialPct: number;
 }
 
-interface ProvSource {
+export interface ProvSource {
+  name?: string;
   type?: string;
   scope?: Scope;
   fetchedAt?: string;
   lastSuccessAt?: string;
   stale?: boolean;
+  authority?: string;
 }
 
-interface ProvManifest {
+export interface ProvManifest {
   generatedAt: string;
   sources: ProvSource[];
+}
+
+interface ContainerWithRenderId extends HTMLElement {
+  _kpiRenderId?: number;
 }
 
 // undefined＝尚未抓取；null＝抓取失敗；物件＝已抓取（原始 manifest，module 內快取僅 fetch 一次；
 // 各 scope 的統計由 computeProvStat 即時依 scope 過濾後算出，避免全域數字誤套到單一 scope）
 let provCache: ProvManifest | null | undefined;
+let provFetchPromise: Promise<ProvManifest | null> | undefined;
+
+export function resetProvCacheForTest(): void {
+  provCache = undefined;
+  provFetchPromise = undefined;
+}
+
+export function setProvCacheForTest(manifest: ProvManifest | null | undefined): void {
+  provCache = manifest;
+  provFetchPromise = undefined;
+}
 
 // 最近 5 天每日計數（對齊 5 天保留窗，避免顯示被剪掉的空日），沿用 TimelineView 的分桶邏輯
 function dailyCounts(events: IntelEvent[], predicate?: (e: IntelEvent) => boolean): number[] {
@@ -66,25 +84,41 @@ function sparkline(values: number[]): string {
   return `<svg class="kpi-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 
-function card(mod: string, label: string, num: string, spark: number[], suffix?: string, action?: string): string {
+function card(
+  mod: string,
+  label: string,
+  num: string,
+  spark: number[],
+  suffix?: string,
+  action?: string,
+  tooltip?: string,
+): string {
   const suffixHtml = suffix ? `<span class="kpi-suffix">${esc(suffix)}</span>` : "";
   const cls = `kpi-card ${mod}${action ? " is-clickable" : ""}`;
-  const attrs = action ? ` data-kpi-action="${esc(action)}" role="button" tabindex="0" aria-label="${esc(label)}，點擊篩選"` : "";
-  return `<article class="${cls}"${attrs}>
+  const actionAttrs = action ? ` data-kpi-action="${esc(action)}" role="button" tabindex="0"` : "";
+  const titleAttr = tooltip ? ` title="${esc(tooltip)}"` : "";
+  const ariaLabel = action
+    ? ` aria-label="${esc(label)}，點擊篩選"`
+    : tooltip
+      ? ` aria-label="${esc(label)}：${esc(tooltip)}"`
+      : "";
+  return `<article class="${cls}"${actionAttrs}${titleAttr}${ariaLabel}>
     <div class="kpi-head">
       <span class="kpi-label">${esc(label)}</span>
       ${sparkline(spark)}
     </div>
-    <div class="kpi-body"><span class="kpi-num">${esc(num)}</span>${suffixHtml}</div>
+    <div class="kpi-body"><span class="kpi-num"${titleAttr}>${esc(num)}</span>${suffixHtml}</div>
   </article>`;
 }
 
 function sourceCards(stat: ProvStat | null, spark: number[]): string {
-  const active = stat ? `${stat.active} / ${stat.total}` : "—";
-  const officialPct = stat ? `${stat.officialPct}%` : "—";
+  const hasData = Boolean(stat && stat.total > 0);
+  const active = hasData ? `${stat!.active} / ${stat!.total}` : "—";
+  const officialPct = hasData ? `${stat!.officialPct}%` : "—";
+  const tooltip = hasData ? undefined : NO_DATA_REASON;
   return (
-    card("is-plain", "活躍資料源", active, spark) +
-    card("is-ok", "官方來源占比", officialPct, spark, "可溯源佐證")
+    card("is-plain", "活躍資料源", active, spark, undefined, undefined, tooltip) +
+    card("is-ok", "官方來源占比", officialPct, spark, "可溯源佐證", undefined, tooltip)
   );
 }
 
@@ -98,10 +132,14 @@ async function fetchProvManifest(): Promise<ProvManifest | null> {
   }
 }
 
+export function isOfficialSource(type?: string, authority?: string): boolean {
+  return type === "gov-open-data" || type === "cwa" || authority === "official";
+}
+
 // 依 scope 過濾來源後計算統計：來源 manifest 每筆帶 scope（domestic/international），
 // 各 scope 的「活躍資料源／官方來源占比」須只算該 scope 的來源，否則國際頁會誤顯國內主導的全域數字。
 export function computeProvStat(manifest: ProvManifest | null, scope: Scope): ProvStat | null {
-  if (!manifest) return null;
+  if (!manifest || !Array.isArray(manifest.sources)) return null;
   const sources = manifest.sources.filter((s) => s.scope === scope);
   const total = sources.length;
   const reference = Date.parse(manifest.generatedAt);
@@ -110,9 +148,70 @@ export function computeProvStat(manifest: ProvManifest | null, scope: Scope): Pr
     const last = Date.parse(s.lastSuccessAt ?? s.fetchedAt ?? "");
     return Number.isFinite(reference) && Number.isFinite(last) && reference - last <= DAY_MS;
   }).length;
-  const official = sources.filter((s) => s.type === "gov-open-data" || s.type === "cwa").length;
+  const official = sources.filter((s) => isOfficialSource(s.type, s.authority)).length;
   const officialPct = total ? Math.round((official / total) * 100) : 0;
   return { total, active, officialPct };
+}
+
+// 當 provenance.json 尚未載入或不可用時，由已載入的事件（loaded items/sources）即時計算資料源統計，
+// 避免使用者看到空破折號 '—'。
+export function computeStatFromEvents(events: IntelEvent[], scope?: Scope): ProvStat | null {
+  if (!Array.isArray(events) || events.length === 0) return null;
+  const scoped = scope ? events.filter((e) => !e.scope || e.scope === scope) : events;
+  if (scoped.length === 0) return null;
+
+  const sourcesMap = new Map<
+    string,
+    {
+      isOfficial: boolean;
+      latestTime: number;
+    }
+  >();
+
+  let reference = 0;
+  for (const e of scoped) {
+    const src = e.source;
+    if (!src) continue;
+    const key = src.name || src.datasetId || src.feedLabel || src.publisherName || "unknown";
+    const official = isOfficialSource(src.type, src.authority);
+    const t = Date.parse(src.fetchedAt || e.timestamp || "");
+    const timeVal = Number.isFinite(t) ? t : 0;
+    if (timeVal > reference) reference = timeVal;
+
+    const existing = sourcesMap.get(key);
+    if (!existing) {
+      sourcesMap.set(key, { isOfficial: official, latestTime: timeVal });
+    } else {
+      if (official) existing.isOfficial = true;
+      if (timeVal > existing.latestTime) existing.latestTime = timeVal;
+    }
+  }
+
+  const total = sourcesMap.size;
+  if (total === 0) return null;
+
+  const refTime = reference > 0 ? reference : Date.now();
+  const active = [...sourcesMap.values()].filter((s) => {
+    if (s.latestTime <= 0) return true;
+    return refTime - s.latestTime <= DAY_MS;
+  }).length;
+
+  const official = [...sourcesMap.values()].filter((s) => s.isOfficial).length;
+  const officialPct = total ? Math.round((official / total) * 100) : 0;
+
+  return { total, active, officialPct };
+}
+
+export function getProvStat(
+  manifest: ProvManifest | null,
+  events: IntelEvent[],
+  scope: Scope,
+): ProvStat | null {
+  const fromManifest = computeProvStat(manifest, scope);
+  if (fromManifest && fromManifest.total > 0) {
+    return fromManifest;
+  }
+  return computeStatFromEvents(events, scope);
 }
 
 export function renderKpiStrip(
@@ -151,8 +250,12 @@ export function renderKpiStrip(
     onRiskClick ? "filter-elevated" : undefined,
   );
 
+  const c = container as ContainerWithRenderId;
+  const renderId = (c._kpiRenderId = (c._kpiRenderId ?? 0) + 1);
+
   const paint = (manifest: ProvManifest | null): void => {
-    container.innerHTML = todayCard + riskCard + sourceCards(computeProvStat(manifest, scope), eventsSpark);
+    const stat = getProvStat(manifest, events, scope);
+    container.innerHTML = todayCard + riskCard + sourceCards(stat, eventsSpark);
     // 「危急/高風險」卡可點：一鍵把清單過濾到高風險以上（paint 重繪後需重綁）。
     if (onRiskClick) {
       const el = container.querySelector<HTMLElement>('[data-kpi-action="filter-elevated"]');
@@ -171,9 +274,14 @@ export function renderKpiStrip(
   paint(provCache ?? null);
 
   if (provCache === undefined) {
-    void fetchProvManifest().then((manifest) => {
+    if (!provFetchPromise) {
+      provFetchPromise = fetchProvManifest();
+    }
+    void provFetchPromise.then((manifest) => {
       provCache = manifest;
-      paint(manifest);
+      if (c._kpiRenderId === renderId) {
+        paint(manifest);
+      }
     });
   }
 }
