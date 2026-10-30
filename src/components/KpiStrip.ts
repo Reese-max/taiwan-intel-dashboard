@@ -44,15 +44,28 @@ export function setProvCacheForTest(manifest: ProvManifest | null | undefined): 
   provFetchPromise = undefined;
 }
 
+export const KPI_TIME_BUCKET_MS = 5 * 60 * 1000; // 5 分鐘粗時間桶，避免常開分頁近 24h 滾動指標過期
+
+export function computeKpiKey(
+  scope: Scope,
+  events: { id: string }[],
+  now: number = Date.now(),
+): string {
+  const timeBucket = Math.floor(now / KPI_TIME_BUCKET_MS);
+  return `${scope}:${events.length}:${events[0]?.id ?? ""}:${timeBucket}`;
+}
+
 // 單趟走訪統計 5 天次數與近 24h 滾動指標，避免多趟 filter 反覆建立與解析數萬個 Date 物件
-function computeKpiMetrics(events: IntelEvent[]): {
+export function computeKpiMetrics(
+  events: IntelEvent[],
+  now: number = Date.now(),
+): {
   eventsSpark: number[];
   riskSpark: number[];
   last24h: number;
   prev24h: number;
   riskCount: number;
 } {
-  const now = Date.now();
   const dayBuckets: { y: number; m: number; d: number }[] = [];
   for (let i = 4; i >= 0; i--) {
     const d = new Date(now - i * DAY_MS);
@@ -249,8 +262,9 @@ export function renderKpiStrip(
   events: IntelEvent[],
   scope: Scope,
   onRiskClick?: () => void,
+  now: number = Date.now(),
 ): void {
-  const { eventsSpark, riskSpark, last24h, prev24h, riskCount } = computeKpiMetrics(events);
+  const { eventsSpark, riskSpark, last24h, prev24h, riskCount } = computeKpiMetrics(events, now);
   const delta = last24h - prev24h;
   const riskPct = events.length ? Math.round((riskCount / events.length) * 100) : 0;
 

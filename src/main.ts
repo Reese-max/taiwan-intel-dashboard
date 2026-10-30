@@ -4,7 +4,7 @@ import { getState, setState, subscribe } from "./store";
 import { loadEvents, filterEvents, loadFirstPaintMapEvents, explainOutOfFilter } from "./data/loader";
 import { edgeTypeLabel, loadNetwork, NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
-import { renderKpiStrip } from "./components/KpiStrip";
+import { computeKpiKey, renderKpiStrip } from "./components/KpiStrip";
 import { renderRelationGraph, type RelationNode } from "./components/RelationGraph";
 import { createRelationGraphController } from "./components/RelationGraphController";
 import { esc } from "./utils/escape";
@@ -765,7 +765,7 @@ async function refresh(): Promise<void> {
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
   const byId = new Map(all.map((e) => [e.id, e] as const));
-  const kpiKey = `${s.scope}:${all.length}:${all[0]?.id ?? ""}`;
+  const kpiKey = computeKpiKey(s.scope, all);
   if (kpiKey !== lastKpiKey) {
     lastKpiKey = kpiKey;
     renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, () => setState({ minRisk: "high" }));
@@ -1316,7 +1316,11 @@ setInterval(() => {
     .then((res) => (res.ok ? (res.json() as Promise<AiSummary>) : null))
     .then((data) => {
       renderStalenessBanner(data?.generatedAt);
-      if (!data?.generatedAt || data.generatedAt === lastGeneratedAt) return;
+      if (!data?.generatedAt || data.generatedAt === lastGeneratedAt) {
+        // 資料摘要未更新時仍觸發 refresh()，讓 KPI 粗時間桶（如近 24h 滾動指標）在分頁常開時定時更新
+        void refresh();
+        return;
+      }
       lastGeneratedAt = data.generatedAt;
       const scope = getState().scope;
       delete cache[scope];
@@ -1324,5 +1328,8 @@ setInterval(() => {
       delete cohortByScope[scope];
       void refresh();
     })
-    .catch(() => {});
+    .catch(() => {
+      // 網路異常或離線時仍觸發本地 refresh() 更新本地時間窗指標與 staleness banner
+      void refresh();
+    });
 }, REFRESH_MS);
