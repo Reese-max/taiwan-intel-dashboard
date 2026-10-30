@@ -761,6 +761,12 @@ async function refresh(): Promise<void> {
 
       // 主資料 fetch 失敗：無既有快取時顯示可重試錯誤卡，不留白、不中斷（不 throw）。
       if (!cache[s.scope]) {
+        delete headCache[s.scope];
+        delete isHeadActive[s.scope];
+        const countEl = document.getElementById("count");
+        if (countEl) countEl.textContent = "";
+        const filterSummaryEl = document.getElementById("filter-summary");
+        if (filterSummaryEl) filterSummaryEl.hidden = true;
         const msg = err instanceof Error ? err.message : String(err);
         eventList.innerHTML = `<div class="empty load-error">情報載入失敗（${esc(msg)}）<button type="button" id="retry-load" class="retry-load">重試</button></div>`;
         document.getElementById("retry-load")?.addEventListener("click", () => {
@@ -1232,14 +1238,16 @@ applyHash();
   });
   // 清單與指標 first-paint：先鎖定 cohort manifest，精簡 head 事件通過 SHA-256 驗證才早繪；
   // 隨後由 refresh() 在背景置換完整快照。
-  void loadFirstPaintHeadEvents(firstPaintScope, { fetchManifest: fetchManifestOnce }).then((res) => {
-    if (!res || getState().scope !== firstPaintScope || cache[firstPaintScope]) return;
-    if (!cohortManifest) cohortManifest = res.manifest;
-    if (cohortManifest.snapshotId !== res.manifest.snapshotId) return;
-    headCache[firstPaintScope] = res.events;
-    isHeadActive[firstPaintScope] = true;
-    renderHeadFirstPaint(firstPaintScope, res.events);
-  });
+  void loadFirstPaintHeadEvents(firstPaintScope, { fetchManifest: fetchManifestOnce })
+    .then((res) => {
+      if (!res || getState().scope !== firstPaintScope || cache[firstPaintScope]) return;
+      if (!cohortManifest) cohortManifest = res.manifest;
+      if (cohortManifest.snapshotId !== res.manifest.snapshotId) return;
+      headCache[firstPaintScope] = res.events;
+      isHeadActive[firstPaintScope] = true;
+      renderHeadFirstPaint(firstPaintScope, res.events);
+    })
+    .catch(() => {});
 }
 renderUsageTip();
 // 側欄警政健康面板只用尾端趨勢、且多在首屏摺線下：捲入視窗才抓 police-hourly-history.json（數 MB），

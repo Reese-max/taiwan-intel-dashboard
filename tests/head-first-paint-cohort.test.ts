@@ -125,6 +125,90 @@ describe("首屏精簡事件同版鎖定（loadFirstPaintHeadEvents / loadHeadEv
     expect(result).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  it("head.json 內容非陣列（例如物件或錯誤訊息）時 fail-soft 回 null，不拋出錯誤", async () => {
+    const errorBody = JSON.stringify({ error: "not an array", code: 404 });
+    const manifest = manifestFor(sha(errorBody));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      text: async () => errorBody,
+    } as Response);
+
+    const result = await loadHeadEvents("domestic", { manifest });
+    expect(result).toBeNull();
+  });
+
+  it("head.json 內容為非 JSON 字串（如 HTML 錯誤頁）時 fail-soft 回 null", async () => {
+    const htmlBody = "<html><body>404 Not Found</body></html>";
+    const manifest = manifestFor(sha(htmlBody));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      text: async () => htmlBody,
+    } as Response);
+
+    const result = await loadHeadEvents("domestic", { manifest });
+    expect(result).toBeNull();
+  });
+
+  it("loadFirstPaintHeadEvents 在 fetchManifest reject 時 fail-soft 回 null", async () => {
+    const result = await loadFirstPaintHeadEvents("domestic", {
+      fetchManifest: async () => Promise.reject(new Error("Manifest fetch failed")),
+    });
+    expect(result).toBeNull();
+  });
+
+  it("loadHeadEvents 未提供 manifest 時 fail-soft 回 null", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    expect(await loadHeadEvents("domestic")).toBeNull();
+    expect(await loadHeadEvents("domestic", { manifest: null })).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("manifest scopes 缺少指定 scope 或 head 欄位不存在時 loadHeadEvents 回 null", async () => {
+    const manifest = manifestFor(sha("test"));
+    delete (manifest.scopes as Record<string, unknown>).domestic;
+    expect(await loadHeadEvents("domestic", { manifest })).toBeNull();
+  });
+
+  it("manifest files 缺少 head 檔案條目時 loadHeadEvents 回 null", async () => {
+    const manifest = manifestFor(sha("test"));
+    delete manifest.files["domestic.head.json"];
+    expect(await loadHeadEvents("domestic", { manifest })).toBeNull();
+  });
+
+  it("loadHeadEvents 請求逾時（timeoutMs）時 fail-soft 回 null", async () => {
+    const manifest = manifestFor(sha("test"));
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      (_url, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          const signal = (init as RequestInit | undefined)?.signal;
+          signal?.addEventListener("abort", () =>
+            reject(signal.reason ?? new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+
+    const result = await loadHeadEvents("domestic", { manifest, timeoutMs: 5 });
+    expect(result).toBeNull();
+  });
+
+  it("呼叫端 signal abort 時 loadHeadEvents 立即放棄並回 null", async () => {
+    const manifest = manifestFor(sha("test"));
+    const controller = new AbortController();
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      (_url, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          const signal = (init as RequestInit | undefined)?.signal;
+          signal?.addEventListener("abort", () =>
+            reject(signal.reason ?? new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+
+    const promise = loadHeadEvents("domestic", { manifest, signal: controller.signal, timeoutMs: 30_000 });
+    controller.abort();
+    expect(await promise).toBeNull();
+  });
 });
 
 describe("buildCohortManifest 首屏精簡事件投影註冊", () => {

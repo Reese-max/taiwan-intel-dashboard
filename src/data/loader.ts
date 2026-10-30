@@ -246,10 +246,14 @@ export async function loadHeadEvents(scope: Scope, options?: LoadEventsOptions):
         const hash = await computeSha256Hex(text);
         if (!hash || hash !== expectedSha256) return null;
       }
-      return JSON.parse(text) as IntelEvent[];
+      const parsed = JSON.parse(text);
+      if (!Array.isArray(parsed)) return null;
+      return parsed as IntelEvent[];
     }
     if (expectedSha256) return null;
-    return (await res.json()) as IntelEvent[];
+    const json = await res.json();
+    if (!Array.isArray(json)) return null;
+    return json as IntelEvent[];
   } catch {
     return null;
   }
@@ -270,14 +274,18 @@ export async function loadFirstPaintHeadEvents(
   scope: Scope,
   options?: FirstPaintHeadOptions,
 ): Promise<FirstPaintHeadResult | null> {
-  const manifest =
-    options?.manifest !== undefined
-      ? options.manifest
-      : options?.fetchManifest
-        ? await options.fetchManifest()
-        : await loadManifest({ signal: options?.signal });
-  if (!manifest) return null;
-  const events = await loadHeadEvents(scope, { manifest, signal: options?.signal });
-  if (!events) return null;
-  return { events, manifest };
+  try {
+    const manifest =
+      options?.manifest !== undefined
+        ? options.manifest
+        : options?.fetchManifest
+          ? await options.fetchManifest()
+          : await loadManifest({ signal: options?.signal });
+    if (!manifest) return null;
+    const events = await loadHeadEvents(scope, { manifest, signal: options?.signal });
+    if (!events) return null;
+    return { events, manifest };
+  } catch {
+    return null;
+  }
 }
