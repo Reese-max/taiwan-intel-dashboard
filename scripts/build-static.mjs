@@ -20,6 +20,7 @@ import { isValidCoordinate } from "./lib/geo-policy.mjs";
 import { CURATED_LEDGER_REL_PATH, loadCurationLedger, resolveCurationLedger } from "./lib/curation-ledger.mjs";
 import { isNewsLikeEvent } from "./lib/correlate.mjs";
 import { previewSnapshotContext } from "./prepare-preview-data.mjs";
+import { trimPoliceHourlyRecent } from "./lib/police-hourly-history.mjs";
 
 const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
@@ -119,7 +120,8 @@ for (const f of readdirSync(DATA_DIR)) {
     f === "domestic.map.json" ||
     f === "international.map.json" ||
     f === "domestic.head.json" ||
-    f === "international.head.json"
+    f === "international.head.json" ||
+    (f === "police-hourly-recent.json" && existsSync(join(DATA_DIR, "police-hourly-history.json")))
   )
     continue;
   if (TRIM_FIELDS.has(f)) {
@@ -148,6 +150,15 @@ for (const f of readdirSync(DATA_DIR)) {
   } else if (f === "network.json") {
     const net = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimNetwork(net)));
+  } else if (f === "police-hourly-history.json") {
+    minifyOrCopyJson(join(DATA_DIR, f), `${OUT}/data/${f}`);
+    try {
+      const history = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
+      const recent = trimPoliceHourlyRecent(history);
+      writeFileSync(`${OUT}/data/police-hourly-recent.json`, JSON.stringify(recent));
+    } catch (err) {
+      console.warn(`[build-static] 警政歷史縮減失敗：${err.message}`);
+    }
   } else {
     minifyOrCopyJson(join(DATA_DIR, f), `${OUT}/data/${f}`);
   }

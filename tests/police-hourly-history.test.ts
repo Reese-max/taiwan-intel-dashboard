@@ -4,6 +4,7 @@ import {
   calibratePoliceHourlyMinimum,
   eventFingerprint,
   taiwanLocalHour,
+  trimPoliceHourlyRecent,
 } from "../scripts/lib/police-hourly-history.mjs";
 
 function event(id: string, category = "治安") {
@@ -328,5 +329,127 @@ describe("police hourly new-record history", () => {
     });
 
     expect(second.history.runs).toHaveLength(2);
+  });
+});
+
+describe("trimPoliceHourlyRecent", () => {
+  it("剝除 newRecords 與 categories，大幅縮減瀏覽器傳輸體積", () => {
+    const history = {
+      generatedAt: "2026-10-30T10:00:00.000Z",
+      minimumNewPerHour: 200,
+      calibration: { minimumNewPerHour: 200, lookbackDays: 7, percentile: 25, sampleSize: 100 },
+      runs: [
+        {
+          generatedAt: "2026-10-30T10:00:00.000Z",
+          hourLocal: "2026-10-30 18:00",
+          totalFetchedPoliceRelated: 500,
+          uniqueFetchedPoliceRelated: 450,
+          newPoliceRelatedCount: 220,
+          duplicateFromPriorCount: 230,
+          deferredNewCandidateCount: 50,
+          minimumNewPerHour: 200,
+          meetsNewHourlyMinimum: true,
+          runAttempts: 1,
+          newRecords: Array.from({ length: 220 }, (_, i) => ({
+            id: `rec-${i}`,
+            title: `Large record title ${i}`,
+            category: "治安",
+            url: `https://example.com/record/${i}`,
+            fingerprint: `fp-${i}`,
+          })),
+          categories: [
+            { name: "治安", count: 220, sources: [{ name: "s1", datasetId: "d1", count: 220 }] },
+          ],
+        },
+      ],
+    };
+
+    const trimmed = trimPoliceHourlyRecent(history);
+
+    expect(trimmed.runs).toHaveLength(1);
+    expect(trimmed.runs[0]).not.toHaveProperty("newRecords");
+    expect(trimmed.runs[0]).not.toHaveProperty("categories");
+    expect(trimmed.runs[0]).not.toHaveProperty("totalFetchedPoliceRelated");
+    expect(trimmed.runs[0]).not.toHaveProperty("uniqueFetchedPoliceRelated");
+    expect(trimmed.runs[0]).toEqual({
+      hourLocal: "2026-10-30 18:00",
+      newPoliceRelatedCount: 220,
+      minimumNewPerHour: 200,
+      deferredNewCandidateCount: 50,
+      meetsNewHourlyMinimum: true,
+      duplicateFromPriorCount: 230,
+      runAttempts: 1,
+    });
+    expect(trimmed.calibration).toEqual(history.calibration);
+    expect(trimmed.generatedAt).toBe(history.generatedAt);
+    expect(trimmed.minimumNewPerHour).toBe(200);
+
+    const originalBytes = Buffer.byteLength(JSON.stringify(history));
+    const trimmedBytes = Buffer.byteLength(JSON.stringify(trimmed));
+    expect(trimmedBytes).toBeLessThan(originalBytes / 10);
+  });
+
+  it("僅保留最近 8 個日期的每小時資料，裁切過舊資料並按時段新至舊排序", () => {
+    const makeRun = (dateStr: string, hour: number) => ({
+      hourLocal: `${dateStr} ${String(hour).padStart(2, "0")}:00`,
+      newPoliceRelatedCount: 10 + hour,
+      minimumNewPerHour: 20,
+      meetsNewHourlyMinimum: false,
+    });
+
+    const dates = [
+      "2026-10-20",
+      "2026-10-21",
+      "2026-10-22",
+      "2026-10-23",
+      "2026-10-24",
+      "2026-10-25",
+      "2026-10-26",
+      "2026-10-27",
+      "2026-10-28",
+      "2026-10-29",
+    ];
+
+    const runs: any[] = [];
+    for (const d of dates) {
+      for (let h = 0; h < 24; h++) {
+        runs.push(makeRun(d, h));
+      }
+    }
+
+    const history = { runs };
+    const trimmed = trimPoliceHourlyRecent(history, { maxDates: 8 });
+
+    // 10 個日期只留最新 8 個（2026-10-22 至 2026-10-29），共 8 * 24 = 192 筆
+    expect(trimmed.runs).toHaveLength(8 * 24);
+    const retainedDates = new Set(trimmed.runs.map((r: any) => r.hourLocal.slice(0, 10)));
+    expect(retainedDates.has("2026-10-20")).toBe(false);
+    expect(retainedDates.has("2026-10-21")).toBe(false);
+    expect(retainedDates.has("2026-10-22")).toBe(true);
+    expect(retainedDates.has("2026-10-29")).toBe(true);
+
+    // runs 應為新至舊排序（相容 intel.html runs[0] 最新慣例）
+    expect(trimmed.runs[0].hourLocal).toBe("2026-10-29 23:00");
+    expect(trimmed.runs.at(-1)?.hourLocal).toBe("2026-10-22 00:00");
+  });
+
+  it("當日期數少於 maxDates 時完整保留所有時段", () => {
+    const history = {
+      runs: [
+        { hourLocal: "2026-10-29 10:00", newPoliceRelatedCount: 5, minimumNewPerHour: 10 },
+        { hourLocal: "2026-10-29 11:00", newPoliceRelatedCount: 15, minimumNewPerHour: 10 },
+      ],
+    };
+
+    const trimmed = trimPoliceHourlyRecent(history, { maxDates: 8 });
+    expect(trimmed.runs).toHaveLength(2);
+    expect(trimmed.runs[0].hourLocal).toBe("2026-10-29 11:00");
+    expect(trimmed.runs[1].hourLocal).toBe("2026-10-29 10:00");
+  });
+
+  it("處理空或無效的 history 輸入時回傳安全的預設結構", () => {
+    expect(trimPoliceHourlyRecent(null as any)).toEqual({ runs: [] });
+    expect(trimPoliceHourlyRecent({} as any)).toEqual({ runs: [] });
+    expect(trimPoliceHourlyRecent({ runs: "invalid" as any })).toEqual({ runs: [] });
   });
 });

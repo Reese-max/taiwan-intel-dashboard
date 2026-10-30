@@ -45,6 +45,9 @@ const stubFetch = (manifest: object, history: object, provenanceOk = true): Fake
       if (String(url).endsWith("provenance.json")) {
         return new Response(JSON.stringify(manifest), { status: provenanceOk ? 200 : 500 });
       }
+      if (String(url).endsWith("police-hourly-recent.json")) {
+        return new Response(JSON.stringify(history), { status: 200 });
+      }
       if (String(url).endsWith("police-hourly-history.json")) {
         return new Response(JSON.stringify(history), { status: 200 });
       }
@@ -219,6 +222,85 @@ describe("renderPoliceHealthPanel", () => {
 
       expect(container.innerHTML).toContain("警政健康檢查不可用");
       expect(container.innerHTML).toContain("<p class=\"empty\">警政健康檢查不可用</p>");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("優先讀取 police-hourly-recent.json，成功時不向 police-hourly-history.json 發送請求", async () => {
+    const manifest = makeManifest(120, 100);
+    const history = makeHistory(120, 100);
+    const requestedUrls: string[] = [];
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        requestedUrls.push(String(url));
+        if (String(url).endsWith("provenance.json")) {
+          return new Response(JSON.stringify(manifest), { status: 200 });
+        }
+        if (String(url).endsWith("police-hourly-recent.json")) {
+          return new Response(JSON.stringify(history), { status: 200 });
+        }
+        if (String(url).endsWith("police-hourly-history.json")) {
+          return new Response(JSON.stringify(history), { status: 200 });
+        }
+        return new Response("{}", { status: 404 });
+      }),
+    );
+
+    const container: FakeContainer = {
+      innerHTML: "",
+      querySelector: () => null,
+      querySelectorAll: () => [],
+    };
+
+    try {
+      await renderPoliceHealthPanel(container);
+
+      expect(requestedUrls.some((u) => u.endsWith("police-hourly-recent.json"))).toBe(true);
+      expect(requestedUrls.some((u) => u.endsWith("police-hourly-history.json"))).toBe(false);
+      expect(container.innerHTML).toContain("目標：100 筆／小時");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("police-hourly-recent.json 404 時自動降級讀取 police-hourly-history.json", async () => {
+    const manifest = makeManifest(150, 100);
+    const history = makeHistory(150, 100);
+    const requestedUrls: string[] = [];
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        requestedUrls.push(String(url));
+        if (String(url).endsWith("provenance.json")) {
+          return new Response(JSON.stringify(manifest), { status: 200 });
+        }
+        if (String(url).endsWith("police-hourly-recent.json")) {
+          return new Response("Not found", { status: 404 });
+        }
+        if (String(url).endsWith("police-hourly-history.json")) {
+          return new Response(JSON.stringify(history), { status: 200 });
+        }
+        return new Response("{}", { status: 404 });
+      }),
+    );
+
+    const container: FakeContainer = {
+      innerHTML: "",
+      querySelector: () => null,
+      querySelectorAll: () => [],
+    };
+
+    try {
+      await renderPoliceHealthPanel(container);
+
+      expect(requestedUrls.some((u) => u.endsWith("police-hourly-recent.json"))).toBe(true);
+      expect(requestedUrls.some((u) => u.endsWith("police-hourly-history.json"))).toBe(true);
+      expect(container.innerHTML).toContain("目標：100 筆／小時");
+      expect(container.innerHTML).toContain("class=\"fill ok\"");
     } finally {
       vi.unstubAllGlobals();
     }
