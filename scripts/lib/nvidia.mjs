@@ -787,7 +787,16 @@ export function sortForBrief(events) {
 export function formatActionableLlmError(error) {
   if (!error) return "LLM 未回傳有效繁體中文摘要敘述";
   const msg = typeof error === "string" ? error : (error.message || String(error));
-  if (/缺少 API key/i.test(msg)) {
+  if (/缺少 API key|missing env/i.test(msg)) {
+    if (/NVIDIA_API_KEY/i.test(msg)) {
+      return "缺少 LLM API 金鑰（missing env NVIDIA_API_KEY）";
+    }
+    if (/SUMMARY_API_KEY/i.test(msg)) {
+      return "缺少 LLM API 金鑰（missing env SUMMARY_API_KEY）";
+    }
+    if (/LLM_API_KEY/i.test(msg)) {
+      return "缺少 LLM API 金鑰（missing env LLM_API_KEY）";
+    }
     return "缺少 LLM API 金鑰（請配置 LLM_API_KEY / NVIDIA_API_KEY / SUMMARY_API_KEY）";
   }
   if (/401|unauthorized/i.test(msg)) {
@@ -797,7 +806,7 @@ export function formatActionableLlmError(error) {
     return "LLM API 存取被拒絕（HTTP 403，請檢查端點權限與設定）";
   }
   if (/429|quota|rate limit/i.test(msg)) {
-    return "LLM API 請求達頻率上限或配額已耗盡（HTTP 429，請稍後重試或調整配額）";
+    return "LLM API 請求達頻率上限或配額已耗盡（HTTP 429 quota，請稍後重試或調整配額）";
   }
   if (/404|410|retired|not found/i.test(msg)) {
     return "LLM 模型或端點已下線或棄用（HTTP 404/410，請更新模型設定）";

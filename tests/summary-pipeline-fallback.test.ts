@@ -11,9 +11,12 @@ afterEach(() => {
 describe("summary pipeline fallback & carryover", () => {
   it("formatActionableLlmError 針對不同錯誤類型產生精確可操作說明", () => {
     expect(formatActionableLlmError(new Error("缺少 API key（LLM_API_KEY）"))).toContain("缺少 LLM API 金鑰");
+    expect(formatActionableLlmError(new Error("缺少 API key（missing env NVIDIA_API_KEY）"))).toContain("missing env NVIDIA_API_KEY");
     expect(formatActionableLlmError(new Error("LLM HTTP 401: unauthorized"))).toContain("HTTP 401");
-    expect(formatActionableLlmError(new Error("LLM HTTP 429: rate limit"))).toContain("HTTP 429");
+    expect(formatActionableLlmError(new Error("LLM HTTP 429: rate limit"))).toContain("HTTP 429 quota");
+    expect(formatActionableLlmError(new Error("LLM HTTP 429 quota"))).toContain("HTTP 429 quota");
     expect(formatActionableLlmError(new Error("LLM HTTP 410: retired"))).toContain("HTTP 404/410");
+    expect(formatActionableLlmError(new Error("LLM HTTP 404: Not Found for account"))).toContain("HTTP 404/410");
     expect(formatActionableLlmError(new Error("LLM HTTP 503: service unavailable"))).toContain("HTTP 5xx");
     expect(formatActionableLlmError(new Error("The operation was aborted (timeout)"))).toContain("請求逾時");
   });
