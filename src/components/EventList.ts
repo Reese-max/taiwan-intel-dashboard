@@ -9,10 +9,11 @@ export interface EventListOptions {
   relationOf?: (id: string) => RelationChip | undefined;
   corroboration?: (id: string) => CorroborationResult;
   emptyMessage?: string;
+  pageSize?: number;
 }
 
 // 增量渲染批量：初次只進 DOM 這麼多張，其餘捲到底再分批補上。
-const PAGE_SIZE = 50;
+export const PAGE_SIZE = 50;
 
 // 每個容器對應上一輪的清理函式（重新渲染前先拆掉舊 observer，避免洩漏/重複觸發）。
 const teardowns = new WeakMap<HTMLElement, () => void>();
@@ -100,8 +101,9 @@ export function renderEventList(container: HTMLElement, items: EventListItem[], 
       </ul>
     </div>`;
   };
+  const batchSize = Math.max(1, opts.pageSize ?? PAGE_SIZE);
   const total = items.length;
-  let shown = Math.min(PAGE_SIZE, total);
+  let shown = Math.min(batchSize, total);
   let observer: IntersectionObserver | undefined;
 
   const onToggle = (ev: Event): void => {
@@ -117,7 +119,7 @@ export function renderEventList(container: HTMLElement, items: EventListItem[], 
     if (members) members.hidden = !nextExpanded;
   };
 
-  // 初次只渲染第一批，DOM 從 N 張降到最多 PAGE_SIZE 張。
+  // 初次只渲染第一批，DOM 從 N 張降到最多 batchSize 張。
   container.innerHTML = items.slice(0, shown).map(cardHtml).join("");
   container.addEventListener("click", onToggle);
   if (shown >= total) {
@@ -141,16 +143,26 @@ export function renderEventList(container: HTMLElement, items: EventListItem[], 
     status.textContent = `已顯示 ${shown} / ${total} 筆`;
   };
 
+  let loading = false;
   const loadMore = (): void => {
-    const next = items.slice(shown, shown + PAGE_SIZE).map(cardHtml).join("");
+    if (loading || shown >= total) return;
+    loading = true;
+    const next = items.slice(shown, shown + batchSize).map(cardHtml).join("");
     footer.insertAdjacentHTML("beforebegin", next);
-    shown = Math.min(shown + PAGE_SIZE, total);
+    shown = Math.min(shown + batchSize, total);
     if (shown >= total) {
       observer?.disconnect();
       footer.remove();
       return;
     }
     updateLabels();
+    if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(() => {
+        loading = false;
+      });
+    } else {
+      loading = false;
+    }
   };
 
   updateLabels();

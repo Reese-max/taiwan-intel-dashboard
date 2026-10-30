@@ -26,23 +26,53 @@ interface ProvManifest {
 // 各 scope 的統計由 computeProvStat 即時依 scope 過濾後算出，避免全域數字誤套到單一 scope）
 let provCache: ProvManifest | null | undefined;
 
-// 最近 5 天每日計數（對齊 5 天保留窗，避免顯示被剪掉的空日），沿用 TimelineView 的分桶邏輯
-function dailyCounts(events: IntelEvent[], predicate?: (e: IntelEvent) => boolean): number[] {
-  const out: number[] = [];
+// 單趟走訪統計 5 天次數與近 24h 滾動指標，避免多趟 filter 反覆建立與解析數萬個 Date 物件
+function computeKpiMetrics(events: IntelEvent[]): {
+  eventsSpark: number[];
+  riskSpark: number[];
+  last24h: number;
+  prev24h: number;
+  riskCount: number;
+} {
+  const now = Date.now();
+  const dayBuckets: { y: number; m: number; d: number }[] = [];
   for (let i = 4; i >= 0; i--) {
-    const d = new Date(Date.now() - i * DAY_MS);
-    const count = events.filter((e) => {
-      if (predicate && !predicate(e)) return false;
-      const t = new Date(e.timestamp);
-      return (
-        t.getFullYear() === d.getFullYear() &&
-        t.getMonth() === d.getMonth() &&
-        t.getDate() === d.getDate()
-      );
-    }).length;
-    out.push(count);
+    const d = new Date(now - i * DAY_MS);
+    dayBuckets.push({ y: d.getFullYear(), m: d.getMonth(), d: d.getDate() });
   }
-  return out;
+  const eventsSpark = [0, 0, 0, 0, 0];
+  const riskSpark = [0, 0, 0, 0, 0];
+  let last24h = 0;
+  let prev24h = 0;
+  let riskCount = 0;
+
+  for (let idx = 0; idx < events.length; idx++) {
+    const e = events[idx];
+    const elevated = isElevated(e);
+    if (elevated) riskCount++;
+
+    const t = Date.parse(e.timestamp);
+    if (Number.isFinite(t)) {
+      const age = now - t;
+      if (age >= 0 && age < DAY_MS) last24h++;
+      else if (age >= DAY_MS && age < 2 * DAY_MS) prev24h++;
+
+      const dt = new Date(t);
+      const y = dt.getFullYear();
+      const m = dt.getMonth();
+      const d = dt.getDate();
+      for (let b = 0; b < 5; b++) {
+        const bucket = dayBuckets[b];
+        if (bucket.y === y && bucket.m === m && bucket.d === d) {
+          eventsSpark[b]++;
+          if (elevated) riskSpark[b]++;
+          break;
+        }
+      }
+    }
+  }
+
+  return { eventsSpark, riskSpark, last24h, prev24h, riskCount };
 }
 
 function isElevated(e: IntelEvent): boolean {
@@ -121,18 +151,8 @@ export function renderKpiStrip(
   scope: Scope,
   onRiskClick?: () => void,
 ): void {
-  const eventsSpark = dailyCounts(events);
-  const riskSpark = dailyCounts(events, isElevated);
-  // 近 24 小時滾動視窗取代「日曆當日」：不會清晨偏低、跨午夜歸零、無嚇人負值。
-  const now = Date.now();
-  const inWindow = (e: IntelEvent, fromAgo: number, toAgo: number): boolean => {
-    const t = Date.parse(e.timestamp);
-    return Number.isFinite(t) && now - t >= fromAgo && now - t < toAgo;
-  };
-  const last24h = events.filter((e) => inWindow(e, 0, DAY_MS)).length;
-  const prev24h = events.filter((e) => inWindow(e, DAY_MS, 2 * DAY_MS)).length;
+  const { eventsSpark, riskSpark, last24h, prev24h, riskCount } = computeKpiMetrics(events);
   const delta = last24h - prev24h;
-  const riskCount = events.filter(isElevated).length;
   const riskPct = events.length ? Math.round((riskCount / events.length) * 100) : 0;
 
   const todayCard = card(

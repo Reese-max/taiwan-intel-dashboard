@@ -125,6 +125,18 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
       }
     }
 
+    if (groupMembers.length === 1) {
+      groups.push({
+        representative: seed,
+        members: [seed],
+        sourceCount: 1,
+        channelCount: 1,
+        rawReportCount: 1,
+        isMultiChannel: false,
+      });
+      continue;
+    }
+
     const representative = groupMembers.reduce((best, e) => betterRepresentative(best, e, originalIndex));
     const rest = groupMembers
       .filter((e) => e.id !== representative.id)

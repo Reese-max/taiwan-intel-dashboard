@@ -441,6 +441,8 @@ let applyingHash = false;
 let lastQuery = "";
 let lastViewKey = "";
 let lastMapKey = "";
+let lastKpiKey = "";
+let lastTopClustersKey = "";
 let lastGeneratedAt: string | null = null;
 
 function isScope(v: string | null): v is Scope {
@@ -763,7 +765,11 @@ async function refresh(): Promise<void> {
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
   const byId = new Map(all.map((e) => [e.id, e] as const));
-  renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, () => setState({ minRisk: "high" }));
+  const kpiKey = `${s.scope}:${all.length}:${all[0]?.id ?? ""}`;
+  if (kpiKey !== lastKpiKey) {
+    lastKpiKey = kpiKey;
+    renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, () => setState({ minRisk: "high" }));
+  }
   const triageEvents = filterTriageEvents(all, s, net);
   const renderInbox = (): void => {
     renderTriageInbox(document.getElementById("triageinbox")!, triageEvents, {
@@ -965,13 +971,17 @@ async function refresh(): Promise<void> {
     }
   }
   renderFilterSummary(display.length, all.length, focusSummaryLabel);
-  renderTopClusters(
-    document.getElementById("topclusters")!,
-    net.clusters(),
-    clusterSummariesForScope(summary, s.scope),
-    3,
-    { netState: net.state, netError: net.error },
-  );
+  const topClustersKey = `${s.scope}:${net.clusters().length}:${net.state}:${Boolean(summary)}`;
+  if (topClustersKey !== lastTopClustersKey) {
+    lastTopClustersKey = topClustersKey;
+    renderTopClusters(
+      document.getElementById("topclusters")!,
+      net.clusters(),
+      clusterSummariesForScope(summary, s.scope),
+      3,
+      { netState: net.state, netError: net.error },
+    );
+  }
   const mapKey = `${viewKey}:${display.length}:${display[0]?.id ?? ""}:${display[display.length - 1]?.id ?? ""}`;
   if (mapKey !== lastMapKey) {
     lastMapKey = mapKey;
@@ -1217,7 +1227,37 @@ renderUsageTip();
     io.observe(policeHealthSection ?? policeHealthEl);
   }
 }
-void renderSourcePanel(document.getElementById("sourcepanel")!);
+// 側欄來源總覽面板預設摺疊、在視窗外：捲入視窗或展開時才抓 provenance.json 並渲染，
+// 避免首屏關鍵載入窗被非關鍵側欄請求與渲染卡住（IntersectionObserver 不支援時退回立即渲染）。
+{
+  const sourcePanelEl = document.getElementById("sourcepanel")!;
+  const sourcePanelSection = sourcePanelEl.closest<HTMLDetailsElement>('[data-side-section="sourcepanel"]');
+  let sourcePanelRendered = false;
+  const renderSourcePanelOnce = (): void => {
+    if (sourcePanelRendered) return;
+    sourcePanelRendered = true;
+    void renderSourcePanel(sourcePanelEl);
+  };
+  sourcePanelSection?.addEventListener("toggle", () => {
+    if (sourcePanelSection.open) renderSourcePanelOnce();
+  });
+  if (sourcePanelSection?.open) {
+    renderSourcePanelOnce();
+  } else if (typeof IntersectionObserver === "undefined") {
+    renderSourcePanelOnce();
+  } else {
+    const io = new IntersectionObserver(
+      (entries, obs) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          obs.disconnect();
+          renderSourcePanelOnce();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(sourcePanelSection ?? sourcePanelEl);
+  }
+}
 // 資料新鮮度徽章（topbar）：吃已載入的 summary（含 generatedAt + model），免額外 fetch。
 function renderDataFreshness(s: AiSummary | null): void {
   const el = document.getElementById("data-freshness");
@@ -1251,11 +1291,24 @@ function renderStalenessBanner(generatedAt: string | undefined): void {
 
 void loadSummary().then((s) => {
   summary = s;
-  renderAiBrief(document.getElementById("aibrief")!, summary, getState().scope);
+  const currentScope = getState().scope;
+  renderAiBrief(document.getElementById("aibrief")!, summary, currentScope);
   renderDataFreshness(s);
   renderStalenessBanner(s?.generatedAt);
-  // 摘要含 clusterSummaries → 重渲染一次讓 TopClusters/聚焦群標題帶上群摘要。
-  void refresh();
+  // 摘要含 clusterSummaries → 更新 TopClusters（及若有聚焦群則更新網絡），免全頁重新過濾與渲染
+  const net = netCache[currentScope];
+  if (net && net.state !== "error") {
+    renderTopClusters(
+      document.getElementById("topclusters")!,
+      net.clusters(),
+      clusterSummariesForScope(summary, currentScope),
+      3,
+      { netState: net.state, netError: net.error },
+    );
+  }
+  if (focusCluster) {
+    void refresh();
+  }
 });
 void refresh();
 setInterval(() => {
