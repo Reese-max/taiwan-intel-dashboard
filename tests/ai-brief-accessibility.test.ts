@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAiBrief, type AiSummary } from "../src/components/AiBrief";
+import { getActionableDegradedReason, renderAiBrief, type AiSummary } from "../src/components/AiBrief";
 import type { IntelEvent } from "../src/types/event";
 
 function mockContainer(): HTMLElement {
@@ -128,7 +128,65 @@ describe("AiBrief — Issue #18 語意降級與統計備援無障礙渲染", () 
     // meta 標示統計備援，不冒充 AI 模型
     expect(c.innerHTML).toContain("系統統計備援");
     expect(c.innerHTML).not.toContain("由 test-model 生成");
+    // 無記錄原因時僅顯示「原因未記錄」，杜絕虛構的金鑰或配額推測文案
+    expect(c.innerHTML).toContain("原因：原因未記錄");
+    expect(c.innerHTML).not.toContain("金鑰");
+    expect(c.innerHTML).not.toContain("配額");
+    expect(c.innerHTML).not.toContain("AI 服務連線或 API 金鑰驗證異常");
     // 保留全文內容與可展開特性
+    expect(c.innerHTML).toContain(fallbackText);
+  });
+
+  it("降級且無真實摘要時：提示框呈現精確原因與上次成功生成時間", () => {
+    const fallbackText = "國內事件共 10 起，以 治安 6 起 為主。（AI 摘要暫時無法生成，事件資料仍可查閱；此為系統統計備援）";
+    const degradedSummary: AiSummary = {
+      domestic: fallbackText,
+      international: "正常國際摘要",
+      degraded: { domestic: true, international: false },
+      degradedReason: { domestic: "LLM API 金鑰認證失敗（HTTP 401，請檢查金鑰有效性或權限）" },
+      lastSuccessAt: "2026-09-15T08:30:00Z",
+      model: "test-model",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    const c = mockContainer();
+    renderAiBrief(c, degradedSummary, "domestic", [sampleEvent]);
+
+    expect(c.innerHTML).toContain("ai-brief-fallback-notice");
+    expect(c.innerHTML).toContain("LLM API 金鑰認證失敗（HTTP 401，請檢查金鑰有效性或權限）");
+    expect(c.innerHTML).toContain("上次成功生成：");
+    expect(c.innerHTML).toContain(fallbackText);
+  });
+
+  it("降級但存在前期真實摘要時：優先呈現前期真實摘要並標註生成時間，同時保留即時統計備援", () => {
+    const fallbackText = "國內事件共 10 起，以 治安 6 起 為主。（AI 摘要暫時無法生成，事件資料仍可查閱；此為系統統計備援）";
+    const staleRealText = "昨日國內重點情勢：警政署於臺北查獲重大詐欺機房，整體治安維護良好。";
+    const staleSummary: AiSummary = {
+      domestic: fallbackText,
+      international: "正常國際摘要",
+      degraded: { domestic: true, international: false },
+      model: "test-model",
+      generatedAt: "2026-09-16T12:00:00Z",
+      lastSuccessful: {
+        domestic: staleRealText,
+        international: "前期國際摘要",
+        model: "approved-llm-model",
+        generatedAt: "2026-09-15T18:00:00Z",
+      },
+    };
+
+    const c = mockContainer();
+    renderAiBrief(c, staleSummary, "domestic", [sampleEvent]);
+
+    // 優先顯示真實摘要
+    expect(c.innerHTML).toContain(staleRealText);
+    // 標示前期摘要與生成時間
+    expect(c.innerHTML).toContain("ai-brief-stale-notice");
+    expect(c.innerHTML).toContain("前期摘要");
+    expect(c.innerHTML).toContain("approved-llm-model");
+    expect(c.innerHTML).toContain("前期摘要生成於");
+    // 同時保留最新事件統計備援供查閱與合約驗收
+    expect(c.innerHTML).toContain("ai-brief-stat-backup");
     expect(c.innerHTML).toContain(fallbackText);
   });
 
@@ -160,6 +218,158 @@ describe("AiBrief — Issue #18 語意降級與統計備援無障礙渲染", () 
     expect(c.innerHTML).toContain("ai-brief-empty");
     expect(c.innerHTML).toContain("暫無事件資料");
     expect(c.innerHTML).not.toContain("生成失敗");
+  });
+});
+
+describe("AiBrief — 降級原因判定與 pipeline 欄位呈現 (Worker A Round 3)", () => {
+  it("當無任何 pipeline 錯誤資訊時，精確顯示「原因未記錄」，且不含金鑰或配額推測文案", () => {
+    const degradedSummary: AiSummary = {
+      domestic: "國內事件共 5 起。（AI 摘要暫時無法生成；此為系統統計備援）",
+      international: "國際事件共 2 起。（AI 摘要暫時無法生成；此為系統統計備援）",
+      degraded: true,
+      model: "mistral-nemo",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    expect(getActionableDegradedReason(degradedSummary, "domestic")).toBe("原因未記錄");
+    expect(getActionableDegradedReason(degradedSummary, "international")).toBe("原因未記錄");
+
+    const c = mockContainer();
+    renderAiBrief(c, degradedSummary, "domestic", [sampleEvent]);
+    expect(c.innerHTML).toContain("原因：原因未記錄");
+    expect(c.innerHTML).not.toContain("金鑰");
+    expect(c.innerHTML).not.toContain("配額");
+    expect(c.innerHTML).not.toContain("AI 服務連線或 API 金鑰驗證異常");
+  });
+
+  it("依序採用 pipeline 寫入之原因：degradedReason 字串優先", () => {
+    const summary: AiSummary = {
+      domestic: "國內事件...（系統統計備援）",
+      international: "國際事件...（系統統計備援）",
+      degraded: true,
+      degradedReason: "NVIDIA API HTTP 503 服務維護中",
+      reason: "次要原因",
+      error: "錯誤原因",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    expect(getActionableDegradedReason(summary, "domestic")).toBe("NVIDIA API HTTP 503 服務維護中");
+    expect(getActionableDegradedReason(summary, "international")).toBe("NVIDIA API HTTP 503 服務維護中");
+  });
+
+  it("依序採用 pipeline 寫入之原因：degradedReason 依 scope 取用對應原因", () => {
+    const summary: AiSummary = {
+      domestic: "國內事件...（系統統計備援）",
+      international: "國際事件...（系統統計備援）",
+      degraded: { domestic: true, international: true },
+      degradedReason: {
+        domestic: "國內 LLM 逾時 (timeout 30s)",
+        international: "國際來源模型配額耗盡 (429)",
+      },
+      reason: "全域備援原因",
+      error: "全域錯誤",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    expect(getActionableDegradedReason(summary, "domestic")).toBe("國內 LLM 逾時 (timeout 30s)");
+    expect(getActionableDegradedReason(summary, "international")).toBe("國際來源模型配額耗盡 (429)");
+  });
+
+  it("degradedReason scope 缺漏時，依序退回 reason 與 error 欄位", () => {
+    const summaryWithReason: AiSummary = {
+      domestic: "國內...（系統統計備援）",
+      international: "國際...（系統統計備援）",
+      degraded: true,
+      degradedReason: {
+        domestic: "僅國內原因",
+      },
+      reason: "退回之 reason 欄位描述",
+      error: "退回之 error 欄位描述",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    // domestic 有 scope reason，使用 domestic reason
+    expect(getActionableDegradedReason(summaryWithReason, "domestic")).toBe("僅國內原因");
+    // international 缺漏 scope reason，退回 summary.reason
+    expect(getActionableDegradedReason(summaryWithReason, "international")).toBe("退回之 reason 欄位描述");
+
+    const summaryWithErrorOnly: AiSummary = {
+      domestic: "國內...（系統統計備援）",
+      international: "國際...（系統統計備援）",
+      degraded: true,
+      error: "退回之 error 欄位描述",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    expect(getActionableDegradedReason(summaryWithErrorOnly, "domestic")).toBe("退回之 error 欄位描述");
+    expect(getActionableDegradedReason(summaryWithErrorOnly, "international")).toBe("退回之 error 欄位描述");
+  });
+
+  it("degradedReason、reason 與 error 皆無效（如空字串或純空白）時，回傳「原因未記錄」", () => {
+    const blankSummary: AiSummary = {
+      domestic: "國內...（系統統計備援）",
+      international: "國際...（系統統計備援）",
+      degraded: true,
+      degradedReason: "   ",
+      reason: "",
+      error: "  ",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    expect(getActionableDegradedReason(blankSummary, "domestic")).toBe("原因未記錄");
+    expect(getActionableDegradedReason(blankSummary, "international")).toBe("原因未記錄");
+  });
+
+  it("pipeline 原因中若含有 HTML 特殊字元，UI 渲染時照字面 (verbatim) 呈現並完整 HTML-escaped", () => {
+    const rawReason = "LLM gateway error <502 Bad Gateway> & 'upstream' timeout (check \"proxy\")";
+    const summary: AiSummary = {
+      domestic: "國內事件...（系統統計備援）",
+      international: "國際事件...（系統統計備援）",
+      degraded: true,
+      degradedReason: rawReason,
+      lastSuccessAt: "2026-09-15T08:30:00Z",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    // getActionableDegradedReason 取得原始未竄改之字串
+    expect(getActionableDegradedReason(summary, "domestic")).toBe(rawReason);
+
+    // renderAiBrief 渲染到 DOM 時經過 esc() 轉義
+    const c = mockContainer();
+    renderAiBrief(c, summary, "domestic", [sampleEvent]);
+
+    expect(c.innerHTML).toContain("原因：LLM gateway error &lt;502 Bad Gateway&gt; &amp; &#39;upstream&#39; timeout (check &quot;proxy&quot;)");
+    // 確保沒有直接注入未轉義之 HTML 標籤
+    expect(c.innerHTML).not.toContain("<502 Bad Gateway>");
+    // 保留上次成功時間顯示
+    expect(c.innerHTML).toContain("上次成功生成：");
+  });
+
+  it("保留前期良好真實摘要 (last-good summary) 與上次成功時間不受影響", () => {
+    const staleRealText = "前期國內重點真實情報。";
+    const summary: AiSummary = {
+      domestic: "國內事件...（系統統計備援）",
+      international: "正常國際摘要",
+      degraded: { domestic: true, international: false },
+      lastSuccessful: {
+        domestic: staleRealText,
+        international: "前期國際",
+        model: "approved-model",
+        generatedAt: "2026-09-15T18:00:00Z",
+      },
+      lastSuccessAt: "2026-09-15T18:00:00Z",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    const c = mockContainer();
+    renderAiBrief(c, summary, "domestic", [sampleEvent]);
+
+    // 優先呈現前期真實摘要
+    expect(c.innerHTML).toContain(staleRealText);
+    expect(c.innerHTML).toContain("前期摘要");
+    expect(c.innerHTML).toContain("approved-model");
+    // 保留即時統計備援
+    expect(c.innerHTML).toContain("ai-brief-stat-backup");
   });
 });
 

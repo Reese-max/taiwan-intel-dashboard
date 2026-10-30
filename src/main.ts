@@ -1,10 +1,10 @@
 import "./styles/global.css";
 import { t } from "./i18n/zh-TW";
 import { getState, setState, subscribe } from "./store";
-import { loadEvents, filterEvents, loadFirstPaintMapEvents, explainOutOfFilter } from "./data/loader";
+import { loadEvents, filterEvents, loadFirstPaintMapEvents, loadFirstPaintHeadEvents, explainOutOfFilter } from "./data/loader";
 import { edgeTypeLabel, loadNetwork, NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
-import { renderKpiStrip } from "./components/KpiStrip";
+import { computeKpiKey, renderKpiStrip } from "./components/KpiStrip";
 import { renderRelationGraph, type RelationNode } from "./components/RelationGraph";
 import { createRelationGraphController } from "./components/RelationGraphController";
 import { esc } from "./utils/escape";
@@ -396,6 +396,8 @@ document.getElementById("filter-sheet-close")?.addEventListener("click", () => s
 document.getElementById("filter-sheet-done")?.addEventListener("click", () => setMobileFilters(false));
 const cache: Partial<Record<Scope, IntelEvent[]>> = {};
 const netCache: Partial<Record<Scope, NetworkIndex>> = {};
+const headCache: Partial<Record<Scope, IntelEvent[]>> = {};
+const isHeadActive: Partial<Record<Scope, boolean>> = {};
 type CohortPair = [IntelEvent[], NetworkIndex];
 const cohortPairInflight: Partial<Record<Scope, { key: string; promise: Promise<CohortPair> }>> = {};
 
@@ -441,6 +443,8 @@ let applyingHash = false;
 let lastQuery = "";
 let lastViewKey = "";
 let lastMapKey = "";
+let lastKpiKey = "";
+let lastTopClustersKey = "";
 let lastGeneratedAt: string | null = null;
 
 function isScope(v: string | null): v is Scope {
@@ -525,7 +529,7 @@ function riskFilterLabel(risk?: RiskLevel): string {
   return "";
 }
 
-function renderFilterSummary(displayCount: number, totalCount: number, focusLabel = ""): void {
+function renderFilterSummary(displayCount: number, totalCount: number, focusLabel = "", isLoadingHead = false): void {
   const el = document.getElementById("filter-summary")!;
   const s = getState();
   const chips: string[] = [];
@@ -554,14 +558,41 @@ function renderFilterSummary(displayCount: number, totalCount: number, focusLabe
     mobileCount.hidden = activeFilterCount === 0;
   }
 
+  const countText = isLoadingHead
+    ? `${displayCount} / ${totalCount} 則（載入中…）`
+    : `${displayCount} / ${totalCount} 則`;
+
   el.hidden = false;
   el.innerHTML = `
     <div class="filter-summary-main">
       <span class="filter-summary-label">目前視圖</span>
       <div class="filter-chips">${chips.join("")}</div>
-      <span class="filter-summary-count">${displayCount} / ${totalCount} 則</span>
+      <span class="filter-summary-count">${countText}</span>
     </div>
     <button type="button" class="filter-clear-all" data-clear-filter="all">清除條件</button>`;
+}
+
+function renderHeadFirstPaint(scope: Scope, headEvents: IntelEvent[]): void {
+  if (cache[scope] || getState().scope !== scope) return;
+  const s = getState();
+  const eventListEl = document.getElementById("eventlist");
+  if (!eventListEl) return;
+
+  const display = filterEvents(headEvents, s);
+  const totalCount = cohortManifest?.scopes?.[scope]?.eventCount ?? headEvents.length;
+
+  renderEventList(eventListEl, display, {
+    relatedCount: () => 0,
+  });
+  renderKpiStrip(document.getElementById("kpistrip")!, headEvents, scope, () => setState({ minRisk: "high" }));
+  renderTimeline(document.getElementById("timeline")!, display);
+  const countEl = document.getElementById("count");
+  if (countEl) {
+    countEl.textContent = typeof totalCount === "number" && totalCount > 0
+      ? `${display.length} / ${totalCount} 則（載入中…）`
+      : `${display.length} 則（載入中…）`;
+  }
+  renderFilterSummary(display.length, totalCount, undefined, true);
 }
 
 interface FocusBarDetails {
@@ -650,8 +681,11 @@ async function refresh(): Promise<void> {
 
   // 事件與情報網兩支 fetch 並行（原本串行，第二支要等第一支完成才開始）。
   if (!cache[s.scope] || !netCache[s.scope]) {
-    // 首載/切換 scope 時主資料尚未快取：顯示載入佔位（篩選變更走快取、不會閃爍）。
-    if (!cache[s.scope]) eventList.innerHTML = `<p class="empty">情報載入中…</p>`;
+    // 首載/切換 scope 時主資料尚未快取：若已由 head first-paint 先行繪出則不留白閃爍。
+    if (!cache[s.scope] && !headCache[s.scope]) eventList.innerHTML = `<p class="empty">情報載入中…</p>`;
+    else if (!cache[s.scope] && headCache[s.scope]) {
+      renderHeadFirstPaint(s.scope, headCache[s.scope]!);
+    }
     try {
       let verifiedBy: CohortManifest | null = cohortManifest;
       let [ev, net] = await fetchCohortPair(s.scope, cohortManifest);
@@ -691,6 +725,8 @@ async function refresh(): Promise<void> {
           );
         }
       } else {
+        delete headCache[s.scope];
+        delete isHeadActive[s.scope];
         cache[s.scope] = ev;
         cohortByScope[s.scope] = verifiedBy;
         netCache[s.scope] = net;
@@ -710,6 +746,8 @@ async function refresh(): Promise<void> {
             const [ev, net] = await fetchCohortPair(s.scope, refreshedManifest);
             if (requestId !== refreshRequestId) return;
             cohortManifest = refreshedManifest;
+            delete headCache[s.scope];
+            delete isHeadActive[s.scope];
             cache[s.scope] = ev;
             cohortByScope[s.scope] = refreshedManifest;
             netCache[s.scope] = net;
@@ -723,6 +761,12 @@ async function refresh(): Promise<void> {
 
       // 主資料 fetch 失敗：無既有快取時顯示可重試錯誤卡，不留白、不中斷（不 throw）。
       if (!cache[s.scope]) {
+        delete headCache[s.scope];
+        delete isHeadActive[s.scope];
+        const countEl = document.getElementById("count");
+        if (countEl) countEl.textContent = "";
+        const filterSummaryEl = document.getElementById("filter-summary");
+        if (filterSummaryEl) filterSummaryEl.hidden = true;
         const msg = err instanceof Error ? err.message : String(err);
         eventList.innerHTML = `<div class="empty load-error">情報載入失敗（${esc(msg)}）<button type="button" id="retry-load" class="retry-load">重試</button></div>`;
         document.getElementById("retry-load")?.addEventListener("click", () => {
@@ -763,7 +807,11 @@ async function refresh(): Promise<void> {
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
   const byId = new Map(all.map((e) => [e.id, e] as const));
-  renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, () => setState({ minRisk: "high" }));
+  const kpiKey = computeKpiKey(s.scope, all);
+  if (kpiKey !== lastKpiKey) {
+    lastKpiKey = kpiKey;
+    renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, () => setState({ minRisk: "high" }));
+  }
   const triageEvents = filterTriageEvents(all, s, net);
   const renderInbox = (): void => {
     renderTriageInbox(document.getElementById("triageinbox")!, triageEvents, {
@@ -965,13 +1013,17 @@ async function refresh(): Promise<void> {
     }
   }
   renderFilterSummary(display.length, all.length, focusSummaryLabel);
-  renderTopClusters(
-    document.getElementById("topclusters")!,
-    net.clusters(),
-    clusterSummariesForScope(summary, s.scope),
-    3,
-    { netState: net.state, netError: net.error },
-  );
+  const topClustersKey = `${s.scope}:${net.clusters().length}:${net.state}:${Boolean(summary)}`;
+  if (topClustersKey !== lastTopClustersKey) {
+    lastTopClustersKey = topClustersKey;
+    renderTopClusters(
+      document.getElementById("topclusters")!,
+      net.clusters(),
+      clusterSummariesForScope(summary, s.scope),
+      3,
+      { netState: net.state, netError: net.error },
+    );
+  }
   const mapKey = `${viewKey}:${display.length}:${display[0]?.id ?? ""}:${display[display.length - 1]?.id ?? ""}`;
   if (mapKey !== lastMapKey) {
     lastMapKey = mapKey;
@@ -1184,9 +1236,21 @@ applyHash();
     if (cohortManifest.snapshotId !== res.manifest.snapshotId) return;
     void mapView.render(filterEvents(res.events, getState()), firstPaintScope);
   });
+  // 清單與指標 first-paint：先鎖定 cohort manifest，精簡 head 事件通過 SHA-256 驗證才早繪；
+  // 隨後由 refresh() 在背景置換完整快照。
+  void loadFirstPaintHeadEvents(firstPaintScope, { fetchManifest: fetchManifestOnce })
+    .then((res) => {
+      if (!res || getState().scope !== firstPaintScope || cache[firstPaintScope]) return;
+      if (!cohortManifest) cohortManifest = res.manifest;
+      if (cohortManifest.snapshotId !== res.manifest.snapshotId) return;
+      headCache[firstPaintScope] = res.events;
+      isHeadActive[firstPaintScope] = true;
+      renderHeadFirstPaint(firstPaintScope, res.events);
+    })
+    .catch(() => {});
 }
 renderUsageTip();
-// 側欄警政健康面板只用尾端趨勢、且多在首屏摺線下：捲入視窗才抓 police-hourly-history.json（數 MB），
+// 側欄警政健康面板只用尾端趨勢、且多在首屏摺線下：捲入視窗才抓 police-hourly-recent.json（精簡近期資料），
 // 讓它離開首屏關鍵載入窗，不與 domestic 主資料搶頻寬（IntersectionObserver 不支援時退回立即渲染）。
 {
   const policeHealthEl = document.getElementById("policehealth")!;
@@ -1217,7 +1281,37 @@ renderUsageTip();
     io.observe(policeHealthSection ?? policeHealthEl);
   }
 }
-void renderSourcePanel(document.getElementById("sourcepanel")!);
+// 側欄來源總覽面板預設摺疊、在視窗外：捲入視窗或展開時才抓 provenance.json 並渲染，
+// 避免首屏關鍵載入窗被非關鍵側欄請求與渲染卡住（IntersectionObserver 不支援時退回立即渲染）。
+{
+  const sourcePanelEl = document.getElementById("sourcepanel")!;
+  const sourcePanelSection = sourcePanelEl.closest<HTMLDetailsElement>('[data-side-section="sourcepanel"]');
+  let sourcePanelRendered = false;
+  const renderSourcePanelOnce = (): void => {
+    if (sourcePanelRendered) return;
+    sourcePanelRendered = true;
+    void renderSourcePanel(sourcePanelEl);
+  };
+  sourcePanelSection?.addEventListener("toggle", () => {
+    if (sourcePanelSection.open) renderSourcePanelOnce();
+  });
+  if (sourcePanelSection?.open) {
+    renderSourcePanelOnce();
+  } else if (typeof IntersectionObserver === "undefined") {
+    renderSourcePanelOnce();
+  } else {
+    const io = new IntersectionObserver(
+      (entries, obs) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          obs.disconnect();
+          renderSourcePanelOnce();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(sourcePanelSection ?? sourcePanelEl);
+  }
+}
 // 資料新鮮度徽章（topbar）：吃已載入的 summary（含 generatedAt + model），免額外 fetch。
 function renderDataFreshness(s: AiSummary | null): void {
   const el = document.getElementById("data-freshness");
@@ -1251,11 +1345,24 @@ function renderStalenessBanner(generatedAt: string | undefined): void {
 
 void loadSummary().then((s) => {
   summary = s;
-  renderAiBrief(document.getElementById("aibrief")!, summary, getState().scope);
+  const currentScope = getState().scope;
+  renderAiBrief(document.getElementById("aibrief")!, summary, currentScope);
   renderDataFreshness(s);
   renderStalenessBanner(s?.generatedAt);
-  // 摘要含 clusterSummaries → 重渲染一次讓 TopClusters/聚焦群標題帶上群摘要。
-  void refresh();
+  // 摘要含 clusterSummaries → 更新 TopClusters（及若有聚焦群則更新網絡），免全頁重新過濾與渲染
+  const net = netCache[currentScope];
+  if (net && net.state !== "error") {
+    renderTopClusters(
+      document.getElementById("topclusters")!,
+      net.clusters(),
+      clusterSummariesForScope(summary, currentScope),
+      3,
+      { netState: net.state, netError: net.error },
+    );
+  }
+  if (focusCluster) {
+    void refresh();
+  }
 });
 void refresh();
 setInterval(() => {
@@ -1263,13 +1370,22 @@ setInterval(() => {
     .then((res) => (res.ok ? (res.json() as Promise<AiSummary>) : null))
     .then((data) => {
       renderStalenessBanner(data?.generatedAt);
-      if (!data?.generatedAt || data.generatedAt === lastGeneratedAt) return;
+      if (!data?.generatedAt || data.generatedAt === lastGeneratedAt) {
+        // 資料摘要未更新時仍觸發 refresh()，讓 KPI 粗時間桶（如近 24h 滾動指標）在分頁常開時定時更新
+        void refresh();
+        return;
+      }
       lastGeneratedAt = data.generatedAt;
       const scope = getState().scope;
       delete cache[scope];
       delete netCache[scope];
       delete cohortByScope[scope];
+      delete headCache[scope];
+      delete isHeadActive[scope];
       void refresh();
     })
-    .catch(() => {});
+    .catch(() => {
+      // 網路異常或離線時仍觸發本地 refresh() 更新本地時間窗指標與 staleness banner
+      void refresh();
+    });
 }, REFRESH_MS);

@@ -111,7 +111,12 @@ export function toTraditional(text) {
 }
 
 export async function chatVia(c, messages, maxTokens, temperature) {
-  if (!c.key) throw new Error("缺少 API key（LLM_API_KEY / NVIDIA_API_KEY / SUMMARY_API_KEY）");
+  if (!c.key) {
+    const missingName = c.name === "summary"
+      ? (process.env.SUMMARY_BASE_URL && !process.env.SUMMARY_LLM ? "SUMMARY_API_KEY" : "NVIDIA_API_KEY")
+      : (process.env.LLM_BASE_URL && process.env.LLM_BASE_URL !== process.env.NVIDIA_BASE_URL ? "LLM_API_KEY" : "NVIDIA_API_KEY");
+    throw new Error(`缺少 API key（missing env ${missingName}）`);
+  }
   const endpoint = endpointId(c);
   const terminal = terminalFailures.get(endpoint);
   if (terminal) throw new Error(terminal);
@@ -152,7 +157,7 @@ export async function chatVia(c, messages, maxTokens, temperature) {
         }
         if (!res.ok) {
           const message = `LLM HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`;
-          if (res.status === 401 || res.status === 410) {
+          if (res.status === 401 || res.status === 403 || res.status === 404 || res.status === 410) {
             terminalFailures.set(endpoint, `LLM HTTP ${res.status}: provider configuration requires repair`);
           }
           throw new Error(message);
@@ -230,7 +235,14 @@ export async function chat(messages, { maxTokens = 1024, temperature = 0.3, prof
       const alternate = await trySummaryFallback(`摘要端點失敗（${String(e?.message || e).slice(0, 120)}）`);
       if (alternate) return alternate;
     }
-    if (hasFallback) return await chatVia(primary, messages, maxTokens, temperature);
+    if (hasFallback) {
+      try {
+        return await chatVia(primary, messages, maxTokens, temperature);
+      } catch (fbErr) {
+        if (/缺少 API key/.test(fbErr.message) && c.key) throw e;
+        throw fbErr;
+      }
+    }
     if (hasPrimaryFallback) return await viaFallback(`失敗（${String(e?.message || e).slice(0, 120)}）`);
     throw e;
   }

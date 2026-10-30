@@ -12,9 +12,10 @@ import { categoryFromItem, riskFromTitle } from "./news-bulk.mjs";
 import { titleKey } from "./title-key.mjs";
 import { eventIdFor, slug } from "./event-id.mjs";
 export { eventIdFor } from "./event-id.mjs";
+import { isReferenceEvent } from "./event-contract.mjs";
 
 import { chat, extractJson, llmModel, respondedModel } from "./llm-client.mjs";
-import { deterministicBrief, isUsableNarrative } from "./summary-quality.mjs";
+import { deterministicBrief, isDeterministicFallback, isUsableNarrative } from "./summary-quality.mjs";
 export { llmModel, respondedModel } from "./llm-client.mjs";
 
 const CATEGORIES = ["地緣政治", "治安", "反詐", "協尋", "災害", "資安", "金融", "其他"];
@@ -783,8 +784,44 @@ export function sortForBrief(events) {
     return briefTimestampMs(b?.timestamp) - briefTimestampMs(a?.timestamp);
   });
 }
+export function formatActionableLlmError(error) {
+  if (!error) return "LLM 未回傳有效繁體中文摘要敘述";
+  const msg = typeof error === "string" ? error : (error.message || String(error));
+  if (/缺少 API key|missing env/i.test(msg)) {
+    if (/NVIDIA_API_KEY/i.test(msg)) {
+      return "缺少 LLM API 金鑰（missing env NVIDIA_API_KEY）";
+    }
+    if (/SUMMARY_API_KEY/i.test(msg)) {
+      return "缺少 LLM API 金鑰（missing env SUMMARY_API_KEY）";
+    }
+    if (/LLM_API_KEY/i.test(msg)) {
+      return "缺少 LLM API 金鑰（missing env LLM_API_KEY）";
+    }
+    return "缺少 LLM API 金鑰（請配置 LLM_API_KEY / NVIDIA_API_KEY / SUMMARY_API_KEY）";
+  }
+  if (/401|unauthorized/i.test(msg)) {
+    return "LLM API 金鑰認證失敗（HTTP 401，請檢查金鑰有效性或權限）";
+  }
+  if (/403|forbidden/i.test(msg)) {
+    return "LLM API 存取被拒絕（HTTP 403，請檢查端點權限與設定）";
+  }
+  if (/429|quota|rate limit/i.test(msg)) {
+    return "LLM API 請求達頻率上限或配額已耗盡（HTTP 429 quota，請稍後重試或調整配額）";
+  }
+  if (/404|410|retired|not found/i.test(msg)) {
+    return "LLM 模型或端點已下線或棄用（HTTP 404/410，請更新模型設定）";
+  }
+  if (/500|502|503|504/i.test(msg)) {
+    return "LLM 服務端暫時性異常（HTTP 5xx，上游端點暫無法連線）";
+  }
+  if (/abort|timeout|etimedout|timed out/i.test(msg)) {
+    return "LLM 請求逾時（上游模型端點回應過慢）";
+  }
+  return `LLM 摘要生成異常（${msg.slice(0, 100)}）`;
+}
+
 // 通用 brief：給事件清單與指令，回繁中摘要；失敗回 "" 不中斷。
-async function briefEvents(label, events, instruction, maxTokens = 2048) {
+async function briefEvents(label, events, instruction, maxTokens = 2048, errors = []) {
   if (!events?.length) return "";
   const lines = sortForBrief(events)
     .slice(0, 20)
@@ -801,8 +838,17 @@ async function briefEvents(label, events, instruction, maxTokens = 2048) {
           { maxTokens, temperature: 0.4, profile: "summary" }
         )) || ""
       ).trim();
-      return isUsableNarrative(output) ? output : "";
-    } catch {
+      if (!output) {
+        errors.push(new Error("LLM 回傳空字串（可能受推理長度截斷）"));
+        return "";
+      }
+      if (!isUsableNarrative(output)) {
+        errors.push(new Error("LLM 回傳內容不符合繁體中文情勢摘要格式標準"));
+        return "";
+      }
+      return output;
+    } catch (err) {
+      errors.push(err);
       return "";
     }
   };
@@ -810,20 +856,27 @@ async function briefEvents(label, events, instruction, maxTokens = 2048) {
   return (await ask()) || (await ask());
 }
 
-export async function summarize({ domestic = [], international = [], clusters = [] }) {
+export async function summarize({ domestic = [], international = [], clusters = [], previousSummary = null }) {
   const now = Date.now();
   const dailyInstr =
     "請寫一段 80-150 字的繁體中文情勢摘要，點出最關鍵的趨勢與風險，不要逐條列出、不要前言。";
 
+  // 清單型 reference 來源不進事件摘要統計，避免灌水
+  const domesticFiltered = (domestic || []).filter((e) => !isReferenceEvent(e));
+  const intlFiltered = (international || []).filter((e) => !isReferenceEvent(e));
+
   // 近 24 小時事件（即時脈動）
-  const recent = domestic.filter((e) => {
+  const recent = domesticFiltered.filter((e) => {
     const t = Date.parse(e.timestamp);
     return Number.isFinite(t) && now - t < DAY_MS;
   });
 
+  const domErrors = [];
+  const intlErrors = [];
+
   const [dom, intl, recent24h] = await Promise.all([
-    briefEvents("國內今日重點事件", domestic, dailyInstr),
-    briefEvents("國際今日重點事件", international, dailyInstr),
+    briefEvents("國內今日重點事件", domesticFiltered, dailyInstr, 2048, domErrors),
+    briefEvents("國際今日重點事件", intlFiltered, dailyInstr, 2048, intlErrors),
     briefEvents(
       "國內最近 24 小時事件",
       recent,
@@ -833,7 +886,7 @@ export async function summarize({ domestic = [], international = [], clusters = 
 
   // 分類別摘要（事件量 top 4 類各一句）
   const byCat = {};
-  for (const e of domestic) (byCat[e.category] ??= []).push(e);
+  for (const e of domesticFiltered) (byCat[e.category] ??= []).push(e);
   const topCats = Object.entries(byCat)
     .sort((a, b) => b[1].length - a[1].length)
     .slice(0, 4);
@@ -855,14 +908,14 @@ export async function summarize({ domestic = [], international = [], clusters = 
     const from = now - (i + 1) * DAY_MS;
     const to = now - i * DAY_MS;
     dailyCounts.push(
-      domestic.filter((e) => {
+      domesticFiltered.filter((e) => {
         const t = Date.parse(e.timestamp);
         return Number.isFinite(t) && t >= from && t < to;
       }).length
     );
   }
   let trend = "";
-  if (domestic.length) {
+  if (domesticFiltered.length) {
     try {
       trend = await chat(
         [
@@ -882,17 +935,77 @@ export async function summarize({ domestic = [], international = [], clusters = 
 
   // Issue #18：有事件時 LLM 空回應不得寫「（暫無資料）」——改用誠實的統計備援。
   // 真正無事件為正常空狀態（degraded=false）。
-  const domesticHasEvents = domestic.length > 0;
-  const intlHasEvents = international.length > 0;
+  const domesticHasEvents = domesticFiltered.length > 0;
+  const intlHasEvents = intlFiltered.length > 0;
 
   const domValid = isUsableNarrative(dom);
   const intlValid = isUsableNarrative(intl);
 
-  const domesticText = domValid ? dom : (domesticHasEvents ? deterministicBrief("國內事件", domestic) : "（暫無資料）");
-  const internationalText = intlValid ? intl : (intlHasEvents ? deterministicBrief("國際事件", international) : "（暫無資料）");
+  const domesticText = domValid ? dom : (domesticHasEvents ? deterministicBrief("國內事件", domesticFiltered) : "（暫無資料）");
+  const internationalText = intlValid ? intl : (intlHasEvents ? deterministicBrief("國際事件", intlFiltered) : "（暫無資料）");
 
   const degradedDomestic = domesticHasEvents && !domValid;
   const degradedInternational = intlHasEvents && !intlValid;
+
+  const pickBestError = (errList) => {
+    if (!errList || !errList.length) return null;
+    return errList.find((e) => /401|403|429|404|410|500|502|503|504|timeout|abort/i.test(e?.message || "")) || errList[0];
+  };
+
+  const domesticReason = degradedDomestic ? formatActionableLlmError(pickBestError(domErrors)) : undefined;
+  const internationalReason = degradedInternational ? formatActionableLlmError(pickBestError(intlErrors)) : undefined;
+
+  const clusterSummaries = await summarizeClusters(clusters, domesticFiltered);
+
+  // 擷取上一輪既有的成功摘要（若有的話）
+  const prevSuccessful = previousSummary?.lastSuccessful || (
+    previousSummary && (
+      (!previousSummary.degraded && isUsableNarrative(previousSummary.domestic)) ||
+      (typeof previousSummary.domestic === "string" && !isDeterministicFallback(previousSummary.domestic) && isUsableNarrative(previousSummary.domestic))
+    )
+      ? {
+          domestic: previousSummary.domestic,
+          international: previousSummary.international,
+          recent24h: previousSummary.recent24h,
+          trend: previousSummary.trend,
+          byCategory: previousSummary.byCategory,
+          clusterSummaries: previousSummary.clusterSummaries,
+          model: previousSummary.model,
+          generatedAt: previousSummary.generatedAt,
+        }
+      : null
+  );
+
+  let lastSuccessful = null;
+  if (domValid && intlValid) {
+    lastSuccessful = {
+      domestic: dom,
+      international: intl,
+      recent24h: (recent24h || "").trim(),
+      byCategory,
+      trend: (trend || "").trim(),
+      clusterSummaries,
+      model: respondedModel(),
+      generatedAt: new Date(now).toISOString(),
+    };
+  } else if (domValid || intlValid) {
+    lastSuccessful = {
+      domestic: domValid ? dom : prevSuccessful?.domestic,
+      international: intlValid ? intl : prevSuccessful?.international,
+      recent24h: domValid ? (recent24h || "").trim() : prevSuccessful?.recent24h,
+      byCategory: domValid ? byCategory : prevSuccessful?.byCategory,
+      trend: domValid ? (trend || "").trim() : prevSuccessful?.trend,
+      clusterSummaries: domValid ? clusterSummaries : prevSuccessful?.clusterSummaries,
+      model: respondedModel(),
+      generatedAt: new Date(now).toISOString(),
+    };
+  } else if (prevSuccessful) {
+    lastSuccessful = prevSuccessful;
+  }
+
+  const lastSuccessAt = (domValid || intlValid)
+    ? new Date(now).toISOString()
+    : (prevSuccessful?.generatedAt || previousSummary?.lastSuccessAt || null);
 
   return {
     domestic: domesticText,
@@ -901,14 +1014,25 @@ export async function summarize({ domestic = [], international = [], clusters = 
     byCategory,
     trend: (trend || "").trim(),
     dailyCounts,
-    clusterSummaries: await summarizeClusters(clusters, domestic),
+    clusterSummaries,
     degraded: {
       domestic: degradedDomestic,
       international: degradedInternational,
     },
+    ...(degradedDomestic || degradedInternational
+      ? {
+          degradedReason: {
+            ...(degradedDomestic ? { domestic: domesticReason } : {}),
+            ...(degradedInternational ? { international: internationalReason } : {}),
+          },
+          reason: domesticReason || internationalReason,
+        }
+      : {}),
+    ...(lastSuccessAt ? { lastSuccessAt } : {}),
+    ...(lastSuccessful ? { lastSuccessful } : {}),
     // 用實際回應的模型名（chat 已記錄），避免標示成不符的設定值。
     model: respondedModel(),
-    generatedAt: new Date().toISOString(),
+    generatedAt: new Date(now).toISOString(),
   };
 }
 
