@@ -132,6 +132,59 @@ describe("AiBrief — Issue #18 語意降級與統計備援無障礙渲染", () 
     expect(c.innerHTML).toContain(fallbackText);
   });
 
+  it("降級且無真實摘要時：提示框呈現精確原因與上次成功生成時間", () => {
+    const fallbackText = "國內事件共 10 起，以 治安 6 起 為主。（AI 摘要暫時無法生成，事件資料仍可查閱；此為系統統計備援）";
+    const degradedSummary: AiSummary = {
+      domestic: fallbackText,
+      international: "正常國際摘要",
+      degraded: { domestic: true, international: false },
+      degradedReason: { domestic: "LLM API 金鑰認證失敗（HTTP 401，請檢查金鑰有效性或權限）" },
+      lastSuccessAt: "2026-09-15T08:30:00Z",
+      model: "test-model",
+      generatedAt: "2026-09-16T12:00:00Z",
+    };
+
+    const c = mockContainer();
+    renderAiBrief(c, degradedSummary, "domestic", [sampleEvent]);
+
+    expect(c.innerHTML).toContain("ai-brief-fallback-notice");
+    expect(c.innerHTML).toContain("LLM API 金鑰認證失敗（HTTP 401，請檢查金鑰有效性或權限）");
+    expect(c.innerHTML).toContain("上次成功生成：");
+    expect(c.innerHTML).toContain(fallbackText);
+  });
+
+  it("降級但存在前期真實摘要時：優先呈現前期真實摘要並標註生成時間，同時保留即時統計備援", () => {
+    const fallbackText = "國內事件共 10 起，以 治安 6 起 為主。（AI 摘要暫時無法生成，事件資料仍可查閱；此為系統統計備援）";
+    const staleRealText = "昨日國內重點情勢：警政署於臺北查獲重大詐欺機房，整體治安維護良好。";
+    const staleSummary: AiSummary = {
+      domestic: fallbackText,
+      international: "正常國際摘要",
+      degraded: { domestic: true, international: false },
+      model: "test-model",
+      generatedAt: "2026-09-16T12:00:00Z",
+      lastSuccessful: {
+        domestic: staleRealText,
+        international: "前期國際摘要",
+        model: "approved-llm-model",
+        generatedAt: "2026-09-15T18:00:00Z",
+      },
+    };
+
+    const c = mockContainer();
+    renderAiBrief(c, staleSummary, "domestic", [sampleEvent]);
+
+    // 優先顯示真實摘要
+    expect(c.innerHTML).toContain(staleRealText);
+    // 標示前期摘要與生成時間
+    expect(c.innerHTML).toContain("ai-brief-stale-notice");
+    expect(c.innerHTML).toContain("前期摘要");
+    expect(c.innerHTML).toContain("approved-llm-model");
+    expect(c.innerHTML).toContain("前期摘要生成於");
+    // 同時保留最新事件統計備援供查閱與合約驗收
+    expect(c.innerHTML).toContain("ai-brief-stat-backup");
+    expect(c.innerHTML).toContain(fallbackText);
+  });
+
   it("有事件資料但摘要為佔位字串時，明確警示生成失敗", () => {
     const failedSummary: AiSummary = {
       domestic: "（暫無資料）",

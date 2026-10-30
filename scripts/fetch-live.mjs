@@ -833,7 +833,13 @@ export async function run() {
 
   // --- AI 摘要（NVIDIA）---
   try {
-    const summary = await summarize({ domestic: domesticIncidents, international: intlEvents, clusters: domesticClusters });
+    const oldSummary = readJson("summary.json", null);
+    const summary = await summarize({
+      domestic: domesticIncidents,
+      international: intlEvents,
+      clusters: domesticClusters,
+      previousSummary: oldSummary,
+    });
     writeJson("summary.json", summary);
     const domHasEvents = domesticIncidents.length > 0;
     const intlHasEvents = intlEvents.length > 0;
@@ -849,6 +855,8 @@ export async function run() {
         domestic: Boolean(summary.degraded?.domestic),
         international: Boolean(summary.degraded?.international),
       },
+      lastSuccessAt: summary.lastSuccessAt || null,
+      degradedReason: summary.degradedReason || null,
       ...(placeholderWithEvidence ? { error: "有事件資料但 AI 摘要為佔位字串（未取得敘述且無備援）" } : {}),
     };
 

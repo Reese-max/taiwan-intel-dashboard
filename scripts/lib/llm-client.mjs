@@ -230,7 +230,14 @@ export async function chat(messages, { maxTokens = 1024, temperature = 0.3, prof
       const alternate = await trySummaryFallback(`摘要端點失敗（${String(e?.message || e).slice(0, 120)}）`);
       if (alternate) return alternate;
     }
-    if (hasFallback) return await chatVia(primary, messages, maxTokens, temperature);
+    if (hasFallback) {
+      try {
+        return await chatVia(primary, messages, maxTokens, temperature);
+      } catch (fbErr) {
+        if (/缺少 API key/.test(fbErr.message) && c.key) throw e;
+        throw fbErr;
+      }
+    }
     if (hasPrimaryFallback) return await viaFallback(`失敗（${String(e?.message || e).slice(0, 120)}）`);
     throw e;
   }
