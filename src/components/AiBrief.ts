@@ -124,12 +124,15 @@ export async function loadSummary(): Promise<AiSummary | null> {
 }
 
 export function actionDecisionBrief(events: IntelEvent[]): string {
-  const notable = events
-    .filter((e) => RISK_ORDER[e.riskLevel] >= RISK_ORDER.medium)
-    .slice()
-    .sort((a, b) => RISK_ORDER[b.riskLevel] - RISK_ORDER[a.riskLevel] || Date.parse(b.timestamp) - Date.parse(a.timestamp));
+  const notable = events.filter((e) => RISK_ORDER[e.riskLevel] >= RISK_ORDER.medium);
   if (!notable.length) return "";
-  const decisions = notable.slice(0, 6).map((e) => getActionDecision(e));
+  const withTime = notable.map((e) => ({
+    event: e,
+    riskRank: RISK_ORDER[e.riskLevel],
+    timeMs: Date.parse(e.timestamp) || 0,
+  }));
+  withTime.sort((a, b) => b.riskRank - a.riskRank || b.timeMs - a.timeMs);
+  const decisions = withTime.slice(0, 6).map((item) => getActionDecision(item.event));
   const domains = [...new Set(decisions.map((d) => d.domain))].slice(0, 3).join("、");
   const recommendations = [...new Set(decisions.map((d) => d.recommendation))].slice(0, 2).join("；");
   return `行動判斷：${notable.length} 則｜${domains}｜${recommendations}`;
