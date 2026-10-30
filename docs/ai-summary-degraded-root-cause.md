@@ -12,7 +12,7 @@
 * **實際錯誤日誌**：
   在即時抓取過程中，所有國際新聞正規化、國內新聞正規化及情勢摘要請求皆向 `https://integrate.api.nvidia.com/v1/chat/completions` 發送，模型名稱為 `nvidia/nemotron-3-super-120b-a12b`，全數收到 NVIDIA API 回應：
   ```
-  LLM HTTP 404: {"status":404,"title":"Not Found","detail":"Function 'ac74040f-9fc9-4c5e-ac74-279ba5161d69': Not found for account 'OMfj_h0Q_3S4nzhLFOzsJd8Ay7N3z200oInJpOJ3D1Q'"}
+  LLM HTTP 404: {"status":404,"title":"Not Found","detail":"Function 'ac74040f-9fc9-4c5e-ac74-279ba5161d69': Not found for account '<redacted-account-id>'"}
   ```
 * **原因分析**：
   NVIDIA Build (NIM) 平台將該模型映射為函數 ID `ac74040f-9fc9-4c5e-ac74-279ba5161d69`。錯誤指出該函數對此 API Key 所屬帳號未開通（Not found for account），或該模型於 NVIDIA 託管端點已調整/下線。
