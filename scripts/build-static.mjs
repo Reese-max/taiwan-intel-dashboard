@@ -114,8 +114,14 @@ function trimNetwork(net) {
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
 const curation = loadCurationLedger(CURATED_LEDGER_REL_PATH);
 for (const f of readdirSync(DATA_DIR)) {
-  // 這兩份衍生 map 由本輪事件產生，不能再被輸入中的舊投影覆蓋。
-  if (f === "domestic.map.json" || f === "international.map.json") continue;
+  // 衍生 map 與 head 由本輪事件產生，不能再被輸入中的舊投影覆蓋。
+  if (
+    f === "domestic.map.json" ||
+    f === "international.map.json" ||
+    f === "domestic.head.json" ||
+    f === "international.head.json"
+  )
+    continue;
   if (TRIM_FIELDS.has(f)) {
     const arr = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
     const scope = f.replace(/\.json$/, "");
@@ -127,6 +133,17 @@ for (const f of readdirSync(DATA_DIR)) {
     // 同時輸出地圖 first-paint 精簡檔 <scope>.map.json（僅可定位事件 + 精簡欄位）。
     if (Array.isArray(derived)) {
       writeFileSync(`${OUT}/data/${scope}.map.json`, JSON.stringify(derived.filter(isLocated).map(mapTrim)));
+    }
+    // 同時輸出首屏清單與指標精簡檔 <scope>.head.json（最新 N 筆精簡事件，供首屏秒開）。
+    if (Array.isArray(trimmed)) {
+      const headEvents = [...trimmed]
+        .sort((a, b) => {
+          const ta = a.timestamp ? Date.parse(a.timestamp) : 0;
+          const tb = b.timestamp ? Date.parse(b.timestamp) : 0;
+          return (Number.isFinite(tb) ? tb : 0) - (Number.isFinite(ta) ? ta : 0);
+        })
+        .slice(0, 60);
+      writeFileSync(`${OUT}/data/${scope}.head.json`, JSON.stringify(headEvents));
     }
   } else if (f === "network.json") {
     const net = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
@@ -159,6 +176,7 @@ const dashboardHtml = `<!doctype html>
     <title>台灣情報儀表板</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" href="./data/manifest.json" as="fetch" crossorigin="anonymous" />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;800&display=swap"

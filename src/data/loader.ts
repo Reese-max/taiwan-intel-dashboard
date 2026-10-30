@@ -223,3 +223,61 @@ export async function loadFirstPaintMapEvents(
   if (!events) return null;
   return { events, manifest };
 }
+
+// 清單與指標 first-paint：首屏只取最新 N 筆精簡事件，不必等完整 <scope>.json 與 network.json。
+// 同版鎖定契約：以具名檔案與 SHA-256 驗證後才允許早繪；缺失或不符一律回 null（fail-closed）。
+export async function loadHeadEvents(scope: Scope, options?: LoadEventsOptions): Promise<IntelEvent[] | null> {
+  const manifest = options?.manifest;
+  if (!manifest) return null;
+
+  const manifestFile = manifest.scopes?.[scope]?.head;
+  if (!manifestFile) return null;
+
+  const expectedSha256 = options?.expectedSha256 ?? manifest.files?.[manifestFile]?.sha256;
+  if (!expectedSha256) return null;
+  const url = options?.url ?? `./data/${manifestFile}`;
+
+  try {
+    const res = await fetch(url, { signal: eventsFetchSignal(options) });
+    if (!res.ok) return null;
+    if (typeof res.text === "function") {
+      const text = await res.text();
+      if (expectedSha256) {
+        const hash = await computeSha256Hex(text);
+        if (!hash || hash !== expectedSha256) return null;
+      }
+      return JSON.parse(text) as IntelEvent[];
+    }
+    if (expectedSha256) return null;
+    return (await res.json()) as IntelEvent[];
+  } catch {
+    return null;
+  }
+}
+
+export interface FirstPaintHeadOptions {
+  manifest?: CohortManifest | null;
+  fetchManifest?: () => Promise<CohortManifest | null>;
+  signal?: AbortSignal;
+}
+
+export interface FirstPaintHeadResult {
+  events: IntelEvent[];
+  manifest: CohortManifest;
+}
+
+export async function loadFirstPaintHeadEvents(
+  scope: Scope,
+  options?: FirstPaintHeadOptions,
+): Promise<FirstPaintHeadResult | null> {
+  const manifest =
+    options?.manifest !== undefined
+      ? options.manifest
+      : options?.fetchManifest
+        ? await options.fetchManifest()
+        : await loadManifest({ signal: options?.signal });
+  if (!manifest) return null;
+  const events = await loadHeadEvents(scope, { manifest, signal: options?.signal });
+  if (!events) return null;
+  return { events, manifest };
+}

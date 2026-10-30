@@ -1,6 +1,7 @@
 export interface ScopeFiles {
   events: string;
   map: string;
+  head?: string;
   network: string;
   eventCount?: number;
   sha256?: string;
