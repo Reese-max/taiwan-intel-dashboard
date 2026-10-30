@@ -245,3 +245,46 @@ export function applyPoliceHourlyRun({
     },
   };
 }
+
+function slimHourlyRun(run) {
+  const item = {
+    hourLocal: String(run?.hourLocal || ""),
+    newPoliceRelatedCount: Number(run?.newPoliceRelatedCount) || 0,
+    minimumNewPerHour: Number(run?.minimumNewPerHour) || 0,
+  };
+  if (typeof run?.deferredNewCandidateCount === "number") {
+    item.deferredNewCandidateCount = run.deferredNewCandidateCount;
+  }
+  if (typeof run?.meetsNewHourlyMinimum === "boolean") {
+    item.meetsNewHourlyMinimum = run.meetsNewHourlyMinimum;
+  } else {
+    item.meetsNewHourlyMinimum = item.newPoliceRelatedCount >= item.minimumNewPerHour;
+  }
+  if (typeof run?.duplicateFromPriorCount === "number") {
+    item.duplicateFromPriorCount = run.duplicateFromPriorCount;
+  }
+  if (typeof run?.runAttempts === "number") {
+    item.runAttempts = run.runAttempts;
+  }
+  return item;
+}
+
+export function trimPoliceHourlyRecent(history, { maxDates = 8 } = {}) {
+  const rawRuns = Array.isArray(history?.runs) ? history.runs : [];
+  const sorted = [...rawRuns]
+    .filter((run) => typeof run?.hourLocal === "string" && run.hourLocal.length >= 10)
+    .sort((a, b) => String(a.hourLocal).localeCompare(String(b.hourLocal)));
+  const dates = [...new Set(sorted.map((r) => String(r.hourLocal).slice(0, 10)))];
+  const keepDates = new Set(dates.slice(-maxDates));
+  const trimmedRuns = sorted
+    .filter((r) => keepDates.has(String(r.hourLocal).slice(0, 10)))
+    .map(slimHourlyRun)
+    .sort((a, b) => String(b.hourLocal).localeCompare(String(a.hourLocal)));
+
+  return {
+    ...(history?.generatedAt ? { generatedAt: history.generatedAt } : {}),
+    ...(typeof history?.minimumNewPerHour === "number" ? { minimumNewPerHour: history.minimumNewPerHour } : {}),
+    ...(history?.calibration ? { calibration: history.calibration } : {}),
+    runs: trimmedRuns,
+  };
+}

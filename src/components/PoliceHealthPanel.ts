@@ -237,17 +237,32 @@ async function retryFailedSources(container: HTMLElement, failedSources: ProvSou
   }
 }
 
+export async function fetchPoliceHourlyHistory(): Promise<HourlyHistory> {
+  try {
+    const recentRes = await fetch("./data/police-hourly-recent.json");
+    if (recentRes.ok) return (await recentRes.json()) as HourlyHistory;
+  } catch {
+    // 容錯降級至完整快照
+  }
+  try {
+    const historyRes = await fetch("./data/police-hourly-history.json");
+    if (historyRes.ok) return (await historyRes.json()) as HourlyHistory;
+  } catch {
+    // 兩者皆不可用
+  }
+  return { runs: [] };
+}
+
 export async function renderPoliceHealthPanel(container: HTMLElement): Promise<void> {
-  const [provRes, historyRes] = await Promise.all([
+  const [provRes, history] = await Promise.all([
     fetch("./data/provenance.json"),
-    fetch("./data/police-hourly-history.json"),
+    fetchPoliceHourlyHistory(),
   ]);
   if (!provRes.ok) {
     container.innerHTML = `<p class="empty">警政健康檢查不可用</p>`;
     return;
   }
   const provenance = (await provRes.json()) as ProvenanceManifest;
-  const history = historyRes.ok ? ((await historyRes.json()) as HourlyHistory) : { runs: [] };
   const police = provenance.pipeline?.police;
   const latestRun = [...history.runs].sort((a, b) => a.hourLocal.localeCompare(b.hourLocal)).at(-1);
   const historicalRun = police?.skipped === true ? latestRun : undefined;

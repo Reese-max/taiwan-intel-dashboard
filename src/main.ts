@@ -1242,7 +1242,7 @@ applyHash();
   });
 }
 renderUsageTip();
-// 側欄警政健康面板只用尾端趨勢、且多在首屏摺線下：捲入視窗才抓 police-hourly-history.json（數 MB），
+// 側欄警政健康面板只用尾端趨勢、且多在首屏摺線下：捲入視窗才抓 police-hourly-recent.json（精簡近期資料），
 // 讓它離開首屏關鍵載入窗，不與 domestic 主資料搶頻寬（IntersectionObserver 不支援時退回立即渲染）。
 {
   const policeHealthEl = document.getElementById("policehealth")!;
