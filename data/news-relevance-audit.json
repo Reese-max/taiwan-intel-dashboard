@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-10-31T18:59:00.102Z",
+  "windowHours": 24,
+  "windowStart": "2026-10-30T18:59:00.102Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 981,
+    "accepted": 491,
+    "rejected": 490
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "基隆推學齡前兒童發展篩檢講座 21組親子參與掌握成長關鍵 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE82cTkxYV9Xb1RFNmlLeG9CdzRzc0pWUUsyemxORU42OG5RU1hSZDNLOFMxX3UzRHBHZkl3dmJPYXl5U2ZBZUQzWWpiREhWYks5OUlER1AtUmNnUDh4VmfSAUtBVV95cUxNcWhZWUIyN01udDFFZjdJQk9XeTYzZ2dvbEo3OUwzRUlDQVhrWVBKcHMyLWxrTlptMUp3bUhXajl0SnJjY2pHdFg2aVE?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 18:48:00 GMT",
+        "source": "GN 工安職災",
+        "hint": "災防",
+        "authority": "media",
+        "description": "基隆推學齡前兒童發展篩檢講座 21組親子參與掌握成長關鍵 ETtoday新聞雲"
+      },
+      {
+        "title": "7 Wonders of Future Cities 全球投票正式啟動 - Taiwan News",
+        "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE52dFhzUjJ5QUd3S1RHalJHbUpoRGY2NUdHcEpjbTZyLVluMUs3UXFiVV9Vc2NlOC1xUTZjdTNKaFFrMHFPZG95UzNweWZoWjRJNVVuZlFrT3Q?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 18:04:00 GMT",
+        "source": "Taiwan News EN 治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "7 Wonders of Future Cities 全球投票正式啟動 Taiwan News"
+      },
+      {
+        "title": "人潮重回30年前榮景 台南新光中山店熄燈告別青春",
+        "link": "https://news.ltn.com.tw/news/Tainan/breakingnews/5625364",
+        "pubDate": "Sun, 01 Nov 2026 01:06:27 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「看到今天的人潮，就像回到30年前的榮景。」資深員工回憶，當年週年慶還得到百貨周邊定點發傳單，如今新光三越台南中山店在歡呼聲中熄燈，也向大家的青春歲月道別。 ​熄燈前夕...…"
+      },
+      {
+        "title": "沈伯洋強調都更需重視陪伴遭藍白嘲諷 他翻到蔣萬安也這樣說過！",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5625354",
+        "pubDate": "Sun, 01 Nov 2026 01:02:35 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北市長選舉首場電視辯論於週六（10/31）登場，交叉詰問環節一開始雙方就針對都更議題交鋒。針對民進黨候選人沈伯洋強調都更「最重要是陪伴」，遭不少藍白粉嘲諷是在「講幹話」，沒想到...…"
+      },
+      {
+        "title": "紫斑蝶山谷飛舞 高雄茂林雙年賞蝶季熱鬧揭幕",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5625363",
+        "pubDate": "Sun, 01 Nov 2026 00:59:15 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "一年一度的紫斑蝶越冬生態盛會「2026-2027茂林雙年賞蝶季」熱鬧揭開序幕，茂林國家風景區管理處今年以「蝶舞茂林・踩街嘉年華」為主題，結合紫斑蝶生態、創意踩街、精彩表演及在地...…"
+      },
+      {
+        "title": "王婉諭是否應道歉?「縣市長出國考察網」黃偉哲55趟最多 網怒轟抹黑",
+        "link": "https://news.ltn.com.tw/news/Tainan/breakingnews/5625362",
+        "pubDate": "Sun, 01 Nov 2026 00:55:57 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "時代力量主席王婉諭在網路推出「全台縣市長出國考察網」，整理全台23位縣市首長4年任內出國考察紀錄，統計共241趟、1411天。其中，台南市長黃偉哲以55趟、累計220天，成為出...…"
+      },
+      {
+        "title": "評北市長辯論 羅智強：沈伯洋信心受挫 被蔣萬安瞬間反殺",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5625361",
+        "pubDate": "Sun, 01 Nov 2026 00:49:31 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北市長候選人首場辯論落幕，台北市長蔣萬安競選總幹事、立委羅智強表示，明顯看到對手沈伯洋信心受挫，蔣萬安面對沈提出的問題都能瞬間反殺。沈伯洋最後還說要第二場辯論，因為覺得自己這...…"
+      },
+      {
+        "title": "中選會個資外洩！台南市長候選人急喊「別登入我的魔力寶貝」 81級弓箭手還在裡面 - 記者爆料網",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE9CUUNsZXpyQ2pRcEk0NmFrN3RNWFB4a1phMm5Ud1Y5TC1kV2dKdmhHWjMtdWJjeTVWYWJCOWZQWDBjaEJ6SUpfbHBTZ1M4UQ?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:48:00 GMT",
+        "source": "GN 個資駭客",
+        "hint": "資安",
+        "authority": "media",
+        "description": "中選會個資外洩！台南市長候選人急喊「別登入我的魔力寶貝」 81級弓箭手還在裡面 記者爆料網"
+      },
+      {
+        "title": "靠沈伯洋免費網課考上律師！他在洋流車掃做這事 數萬人感動到哭",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5625346",
+        "pubDate": "Sun, 01 Nov 2026 00:47:27 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨台北市長候選人沈伯洋週六（10/31）到中正萬華舉行車掃，一位「小水滴」在迎接隊伍中，興奮分享靠著沈伯洋的網路課程成功考上律師，沒想到在車上的沈伯洋居然聽到，對他比了一個讚...…"
+      },
+      {
+        "title": "「府中搞什麼鬼」變裝踩街同樂 侯友宜化身胡迪警長發糖果 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9kX0JIU2Q5VFpGSlhrcXItUWJQR1lCNXBoUGY5LXNmZmdsZTF5QklTZGlkaTRka2pJLUdWeE1FbUpPMWkwU2hkUktwQWs5aWJValphX2V0cXYwRzRJSWfSAUtBVV95cUxQMGozdXBTa29LRHZ0T05JNnZERHNjZTR3OW1iQ1RDNGJwdGZOQzdUanRSXzhXdkI3OGgyTjRwSWNfYk80NV9IV1F2dDg?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:35:00 GMT",
+        "source": "GN 工安職災",
+        "hint": "災防",
+        "authority": "media",
+        "description": "「府中搞什麼鬼」變裝踩街同樂 侯友宜化身胡迪警長發糖果 ETtoday新聞雲"
+      },
+      {
+        "title": "巧合默契再+1 沈伯洋莊競程同扮勇者「欣梅爾」寓意新MAYOR新市長",
+        "link": "https://news.ltn.com.tw/news/HsinchuCity/breakingnews/5625348",
+        "pubDate": "Sun, 01 Nov 2026 00:32:36 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北市長候選人沈伯洋與新竹市長候選人莊競程巧合默契再+1。兩人昨晚都同扮勇者「欣梅爾」參與大掃街及萬聖節活動，也都取其諧音，寓意「新MAYOR」，希望1128成為台北與新竹的新...…"
+      },
+      {
+        "title": "台糖粗油採購案流標！市場吃緊 沙拉油缺口難補 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1qcVY1S1d4QnlkalVOMksxMXFKOERLc2htN1RrdmotdnVDWGl4dE5vMnVzS2RVdDE4c25yQjNrWFBQZ3JpRm14NFp5MHdRazhx0gFWQVVfeXFMTzdzWkpmbzVFRzFHWjJiQjF3bG9ITW5LaXFkaloyODNoVzJSSlZhdDdJOUxWQzI5emhlc29PNzMweHhVb3NUbEFTLVgxczVVRHVqZzBsbWc?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:29:25 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台糖粗油採購案流標！市場吃緊 沙拉油缺口難補 UDN"
+      },
+      {
+        "title": "粗油招標案流標！學者呼籲 鬆綁台糖價格管制 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBKcVY1ZmdEVTFGV09yVDFmNWI4TGNtWlQ4UzRrTmZxMmVwWTNvZnRNWWtod1hXU3FwQzVmYWFBN0JvMUFnbVNCUVN0VjRBRnZB0gFWQVVfeXFMT3czNXhGOW1PeHFCazM5bVVPc0w3aGxqZ19PY2ZQZnczVGtDRGZnbjFTOXpTSkpUUW5VMUgwT3BfRGQtU0NkRW15MlJNTEgxSnFPTTkzYUE?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:26:14 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "粗油招標案流標！學者呼籲 鬆綁台糖價格管制 UDN"
+      },
+      {
+        "title": "金門「後浦搞什麼鬼」歡樂登場 21組創意變裝走秀假鬼假怪",
+        "link": "https://news.ltn.com.tw/news/Kinmen/breakingnews/5625347",
+        "pubDate": "Sun, 01 Nov 2026 00:25:38 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "金門縣金城鎮年度搞怪盛事「後浦搞什麼鬼」－萬聖節活動昨天晚間在金城鎮北鎮廟前中興路及後浦商圈「封街」登場；除了21組創意變裝走秀吸引目光，不少素人也是鬼妝打扮，大人、小孩搞笑同...…"
+      },
+      {
+        "title": "不是有拿到題目？被問通勤內湖 蔣萬安竟回：可坐到中永和",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5625345",
+        "pubDate": "Sun, 01 Nov 2026 00:25:06 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北市長選舉首場電視辯論於10月31日登場，在最後的媒體人提問環節中，蔣萬安面對有關內湖通勤族4年後生活改變的問題時，蔣萬安竟扯到中永和，跟內湖完全反方向，讓大批網友超傻眼。 ...…"
+      },
+      {
+        "title": "稱蔣萬安贏在交叉詰問 陳以信曝2大「絕殺」",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5625353",
+        "pubDate": "Sun, 01 Nov 2026 00:22:02 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北市長首場辯論落幕，國民黨文傳會主委陳以信表示，為何他判台北市長蔣萬安電視辯論獲勝？蔣萬安真正勝出的地方，就是交叉詰問展現的精密設計與臨場反應。這不只是口才的勝利，更是充分準...…"
+      },
+      {
+        "title": "從 LLM 到企業級 AI Agent：MCP、向量搜尋與 RAG 一次掌握！ - iThome",
+        "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE9hdHhmLTQyLXQ4NU1qMnkycFVYcW5jRXZSMndWUF9aX05sQ1JHNEU4N0ZMSGw4cFpPcG43NC14VGxGVkdaU0k3V1AtYw?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:19:12 GMT",
+        "source": "GN iThome 資安",
+        "hint": "資安",
+        "authority": "media",
+        "description": "從 LLM 到企業級 AI Agent：MCP、向量搜尋與 RAG 一次掌握！ iThome"
+      },
+      {
+        "title": "AI 時代的企業應用開發：用 Oracle APEX 低程式碼快速上線 - iThome",
+        "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTFBCQTZMMkFNUTN3amd1NTB2Uk80UVFrTi0xeUFUeEZNRWc3dkxVTzk3bFJfeWJ2WFNqTFMteldiSWNiTndXanJZM3g5cw?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:19:09 GMT",
+        "source": "GN iThome 資安",
+        "hint": "資安",
+        "authority": "media",
+        "description": "AI 時代的企業應用開發：用 Oracle APEX 低程式碼快速上線 iThome"
+      },
+      {
+        "title": "本週節目表 - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTE5lYTRtbE9JZVF1YTN5QVlMYnJBLUZXbGRGbDR3T2p6cjRfU2NzM3o3bjRGZFRDQzNZcFlBYWpSakszaUJ5Z2FXY2E1aXRyZkd0VXZ2Y1hwS0pidWxsbXJFdS1EQ2c3eGpFaXR1cw?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:15:15 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "本週節目表 Rti 中央廣播電臺"
+      },
+      {
+        "title": "南大128週年校慶聖火抵新北 校友齊聚文聖國小溫馨接棒 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE56TV9XcThBRU96UVh3NThIcHhqS01EV0dId1pHSWVnaGJBTGEyU3JxNmNDa1dZZ2FOMHRNR3ZGUDlGTHlfV29HcjAyT2dBOW5vdXpqRHVNMEE0RGNyX2fSAUtBVV95cUxQanp3TFlFdG40VmtMcnlYWTRTaUJrX2w0WHRJbU9TblpvbHo2U1oyMkV5QmpDVndVc1YwdUtwR2Z4QXVIUzBLdm8tdG8?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:04:00 GMT",
+        "source": "GN 工安職災",
+        "hint": "災防",
+        "authority": "media",
+        "description": "南大128週年校慶聖火抵新北 校友齊聚文聖國小溫馨接棒 ETtoday新聞雲"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "救災機器人助攻化災搶救 基隆消防實兵演練強化安全防護 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFAxbWR1eXJZaEtKMFVOMHlyd0pQYmEyUHZQcG1xNUlYY1dNUGJKdDhkX2pvX2tJRzZjU1o4OXRObDFhTzBEOWQ3bDFKd1lra241SnhaakNNZmk4ejBTZlHSAUtBVV95cUxQem5FbHh3Y0JWSjVEbVdZZEJ2RTVBMWVjSFZUeGdfZlFCWTkyVTJKNUppTFFDNG45bl9CaFExaFk0Z1hJSUJlTUs0aGM?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 18:40:00 GMT",
+        "source": "GN 工安職災",
+        "hint": "災防",
+        "authority": "media",
+        "description": "救災機器人助攻化災搶救 基隆消防實兵演練強化安全防護 ETtoday新聞雲"
+      },
+      {
+        "title": "毒駕新制上路首日！高雄男拒測被罰27萬 乘客、借車人被連帶開罰 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5jWFI1VTJTZVBjVlF0RVZsQ0FoaWZGcWdWSThYcTRRODV6NEFWVVBjMXVOWGlOek9tMVF5THh6OGFwWi0yTGlfMEJYYm1QUnV6WmRIY0JhSXQzZzJvdHfSAUtBVV95cUxPYlhGdWtfdFZvOGZxdm1Ca001RlpxcWI3NER6THc5RkY5R3d2OXlYMFpvdDNUZWRxbF9jYlU2WGZmb2lYX1FNcE01eU0?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 18:11:00 GMT",
+        "source": "GN ETtoday 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "毒駕新制上路首日！高雄男拒測被罰27萬 乘客、借車人被連帶開罰 ETtoday新聞雲"
+      },
+      {
+        "title": "見短裙妹起色心！噁男3度偷拍遭重判 - 鏡週刊Mirror Media",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5rWlB3bFJYZG05WFVZamV4ZWpUT0JGemxNUlNkWjVoeUJpYnNlY0N6aEV0RXVMbnVLclVuU0FTelBENkhUenFGZWY3YzFtNTNlQWtYcW9wWml6Nkd6cGfSAWJBVV95cUxPUGxKbTJfcElhWEpDLWkwQWRHdHRsd0JYR0RzS2lNT3A1LVpvMDV2Y2JKM3NKTkZfd096ZWw1bDRlLTBIV0JsZ1FjV3Vycy1CREVTcEx4UktkRTEteEMwRnczQQ?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 17:47:00 GMT",
+        "source": "GN 偷拍性影像",
+        "hint": "治安",
+        "authority": "media",
+        "description": "見短裙妹起色心！噁男3度偷拍遭重判 鏡週刊Mirror Media"
+      },
+      {
+        "title": "【火燒城中城奪46命！縱火犯黃格格獄中遭辱 獄友拿沾血衛生棉抹臉】 獄友被判2個月。 （#起啵） - Facebook",
+        "link": "https://news.google.com/rss/articles/CBMikwRBVV95cUxPRHdRVXRpX2xQR21MdjV0NEoxbWhwQXFjNU03bkp1cGtvQjRYdDVVb2hVdGYyRlBkbjVIMkFJOU9qZHN6ZURWYnlxTjkxbjE0OUVjTnFBNTNfVU5JQWVXbVJNTmpxWWQxaDNlRDViaXl6R0swdU5OdjNqQzZzUUo2MmtfXzJyUFpoSm9kVWV2dmFqeWY1Nm5qQndfVjN2SkRTMDFtTWhjcHgwTVhaamZ1anMxR0hPWV9Sd0VNX0ZSRDNvTTVka09KLWRxSGRTbi1TM2RaQjVTeUl4WmdCVERSQl9wRGtyeGhRVzFOM2JUVzByanV2R2lYSEtlRHNoVjQzSVRMV0thUm5pOFFuWFF0bTlod0Z1c0hkNkZYTXVKSFVfZ0FJUGp0VTUybFdQb2dlVUNlNWxNS0FEZXN3TmpRU3JIZGRFNjdZZllvejI3ajRRLTJ4bml6QkJKaWtfXzY0WkhUWWZpZHRpaV9fSXJBYkZlVEc5Tm05d1VmUG9ERExyNndsemc0TjUxay1pcVdwWGFnUExxRHhnbXNabXktVFdRbkY1SU1hZWtVMnl3MzZFOUZGVUFOVTVURFcxc3B3Y3Fwa3VYUFhIMzc3UEF1M3lYUDR3UUdmRE9wa1JOUjJDSzhjazlNanV3RGRtY2NoMnE1N1lZaXpxQzB1cTN4MG5EVkZSTDhTSTduVEJNU2s3LTg?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 17:28:22 GMT",
+        "source": "GN 縱火死傷",
+        "hint": "災防",
+        "authority": "media",
+        "description": "【火燒城中城奪46命！縱火犯黃格格獄中遭辱 獄友拿沾血衛生棉抹臉】 獄友被判2個月。 （#起啵） Facebook"
+      },
+      {
+        "title": "泰版N號房！女星遭偷拍「23萬人暗黑群」意淫截圖曝光 導演、BL男星全在內 - ETtoday星光雲| ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE5Wckc4RTlSemZORFZaaEc4bEtQU2lvQ0t1QXdkVGtSRDlsQmxKNlZrZzZJMnlxelhEOFVPVnc2RFdESXJ2c3U4V09MY2V6QdIBTEFVX3lxTE56YXplNzNsbGxOamE2OFFhaUhNdUZQX0sxMG1jM2h3Q1dvdmQzUURCeEt3a3FIdFcwdVpCal9Bak1tWk9fai1NdXE2Tmk?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 17:17:36 GMT",
+        "source": "GN 偷拍性影像",
+        "hint": "治安",
+        "authority": "media",
+        "description": "泰版N號房！女星遭偷拍「23萬人暗黑群」意淫截圖曝光 導演、BL男星全在內 ETtoday星光雲| ETtoday新聞雲"
+      },
+      {
+        "title": "幣安稱已補回史上最大加密貨幣駭客事件中63億美元失竊資產的90% 作者 Investing.com - Investing.com 香港 - 股市報價& 財經新聞",
+        "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTE12eFBvQktNVmRQbC1Ta0YxTWFUN2hsa3pHUFgxLVh4WkpUeVZiaTFpR25SVkdBVGw4WU13UDNoWXVWdE1jczYzV2V4czl1LXh4cDBTWURaMG5rZ0tacTR5cjRxanBRTnpJRXdyeFY5SEp2TWc?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 17:01:26 GMT",
+        "source": "GN 個資駭客",
+        "hint": "資安",
+        "authority": "media",
+        "description": "幣安稱已補回史上最大加密貨幣駭客事件中63億美元失竊資產的90% 作者 Investing.com Investing.com 香港 - 股市報價& 財經新聞"
+      },
+      {
+        "title": "幣安大失血 北韓駭客軍團養成術 - Taiwan News",
+        "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE81SG8zQkRJenlZX193MENkTm5WUnlMN2FMYXJPR0JmLWhNYVJreDA3WnB3QWNBQkJrb2hFZmU1bWtmVGlubGRHdUtjcmFoRW10TmVaRVFOQ24?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:45:00 GMT",
+        "source": "GN 個資駭客",
+        "hint": "資安",
+        "authority": "media",
+        "description": "幣安大失血 北韓駭客軍團養成術 Taiwan News"
+      },
+      {
+        "title": "錦州街轎車行車不穩遭攔 車內查獲愷他命 快篩陽性男子被逮 - 蕃新聞",
+        "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE0wVmJlWkd0TTZVWGg3Mjc5dllBajZ1VVRXVGhheTNGNEJwMkdaaThYc3pCeFQ0b3VqUktCNWFsRnp0T0Y4S3FJVEhNLWtwNXhtdWc?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:41:48 GMT",
+        "source": "GN 毒品查獲",
+        "hint": "治安",
+        "authority": "media",
+        "description": "錦州街轎車行車不穩遭攔 車內查獲愷他命 快篩陽性男子被逮 蕃新聞"
+      },
+      {
+        "title": "幣安表示已補回破紀錄駭客竊盜案造成的損失 很快將讓用戶提領資金 - Business Insider Taiwan",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBFcW9Tang2dFBTS0xkc3JXZEhlb3ZfQWtZSEZuajdtNWU1TXFHeTNaNkdYS0tUQjVkaFI0MVdac1pkZkJ1X0Y5T3l5REszel9TVjdHVmN3?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:41:14 GMT",
+        "source": "GN 個資駭客",
+        "hint": "資安",
+        "authority": "media",
+        "description": "幣安表示已補回破紀錄駭客竊盜案造成的損失 很快將讓用戶提領資金 Business Insider Taiwan"
+      },
+      {
+        "title": "提高廚餘違規裁罰 違規搬運並餵豬首次合計罰100萬 - 農業知識入口網",
+        "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE1oVFFiWTF2aEtzXzNPVHpxRmlUaHpueWxQTkc0UnJkcDFKSjFtdzdhQXlNUGpnUjNmeDZwUl9xbDZIR3hzS29LYlpPR3VPanNpXzY3aDN3UTFtVEFMQW0tZk5BNy1OUzRFOWFjVlZaT1U0Z3lUWHFZWkVVakFjM3c?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:38:42 GMT",
+        "source": "農業部官網",
+        "hint": "食安",
+        "authority": "official",
+        "description": "提高廚餘違規裁罰 違規搬運並餵豬首次合計罰100萬 農業知識入口網"
+      },
+      {
+        "title": "新聞眼／食安風暴 演變為物價危機 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9LbC1LWFQyd0JfQktoeTVZXzhRdnhEczg3cTBJUzBGb3pqdXNRdVpiN2VsdklHU0ZsNThPa2NFeGpVUGR1Q04tbDlKZ0ZqNlFx0gFWQVVfeXFMT1BqanplcXFFOXNFTzVBdzdvU0hreEt5OXRZRHJDWVl6aDZSMExtcnBxcmNLV215RFJjbEdGdnZDcFo1ZTV6MlJZaU1sOVJUb054RG8wX2c?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:27:04 GMT",
+        "source": "GN 食安黑心",
+        "hint": "食安",
+        "authority": "media",
+        "description": "新聞眼／食安風暴 演變為物價危機 UDN"
+      },
+      {
+        "title": "高雄20歲男無照硬闖單行道！拒檢撞警車逃逸 落網恐吞10萬罰單 - 記者爆料網",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE9Sd0NrNEctUHdmMnZoRlc1MHdVdnlRNllPQjF0ZXRmNktUUFd6V2NUWEc5TmdDd1V4T1FzTFlzMFRNdWF6aDVvVnNCNFpndw?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:24:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄20歲男無照硬闖單行道！拒檢撞警車逃逸 落網恐吞10萬罰單 記者爆料網"
+      },
+      {
+        "title": "泰版N號房爆案外案！知名BL男星遭影射「偷拍同門女星」 沉痛發聲：將採法律行動 - ETtoday星光雲| ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFBJVnNvNWxUb0VvaDlBZDl1eFpObXdJRHBFTmlUZTBqclFMSXZWbENQbnc1ek1HLXBXdEh0UFU4U0hCa3kxY1I1Wm9MRjFMUdIBTEFVX3lxTE1PS1JVY09qMUxkSkk2YUt0a1MzRW5NRC05Z1k0ZEkxSnd5VE0tZkJWZHhRdkhJWmxXZVpxNkZDMEFaRUs1dWhJdThNNDc?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:22:00 GMT",
+        "source": "GN 偷拍性影像",
+        "hint": "治安",
+        "authority": "media",
+        "description": "泰版N號房爆案外案！知名BL男星遭影射「偷拍同門女星」 沉痛發聲：將採法律行動 ETtoday星光雲| ETtoday新聞雲"
+      },
+      {
+        "title": "假冒戶政、刑警稱個資遭冒用 白沙警提醒：提高警覺慎防詐騙 - 澎湖e傳媒",
+        "link": "https://news.google.com/rss/articles/CBMiwwJBVV95cUxQOTMxbzIzVFdINWFfR3V0WFdqZnZzdlFHNDFTT2hUVHVGLWpBdktKNEpUejRUd2hZWTF2cHY5YndySUxkOVBiR3BOQlE5aGU0YjliLWUxam9tejVUMWJvdkRjV0drMjgxbFRDWUJDVG1waEdPRS01N2U0T2JvSGk3UlZYS2dsT1FMQm9DdTBPazNhbGwteVI2eEVmVklPSldqeU9tdUQ1T05mOVVFdW9ydVhib0VnUGluVVkyRWVsbkowSTV6NXFER3B1NWFKZWVua0NKLWNsNk5scFR1Tms5NzJHcFpaQnBwNFh2SzJoVTJwb2JtTXRqRk9icy14a3lCblIzMTA2dmQtSnRXNGZBRFpibjVoeVcwOHY5eGFyeW13WlZfVlIxTnVYclAwZ2xxVUs5V2pVN3N2NmxRZWdvWk9lWQ?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:06:41 GMT",
+        "source": "GN 假冒銀行檢警",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "假冒戶政、刑警稱個資遭冒用 白沙警提醒：提高警覺慎防詐騙 澎湖e傳媒"
+      },
+      {
+        "title": "警查個資規範嚴 行政懲處成公審把柄 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE0yV2E0SWtvc0QyNHRTSFM3UTNnS1VCOUxFZGdydGZhZmVsb2Q3c01VdjVZc1oxeXVYNWNBUlIxeXNKREN4TmR1bS1oTHZaWXYx0gFWQVVfeXFMTlhCSC15YU52eFhWX2phNEtXV0h4dHpSdVliWkhNbXJnRXRGVHJmRWRZX3djV3VLcHpKZS1MMXd6TTBTVHZGbVFNdGJxVmpUQ2IzQlk2REE?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:05:55 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "警查個資規範嚴 行政懲處成公審把柄 UDN"
+      },
+      {
+        "title": "鑑識巡官暗槓百萬贓款 遭羈押免職 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5Hc2NFY1lxOFJwQnVfWE1fZlZRcUhwd3VScmRneUdKX080aXVJWXhWRldBYkJTbWNFY29tQ2h5TER3Tm5ib2NTcFI0WnRwaWUwV3BGN2VR0gFWQVVfeXFMTkdzY0VjWXE4UnBCdV9YTV9mVlFxSHB3dVJyZGd5R0pfTzRpdUlZeFZGV0FiQlNtY0Vjb21DaHlMRHdObmJvY1NwUjRadHBpZTBXcEY3ZVE?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:05:33 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "鑑識巡官暗槓百萬贓款 遭羈押免職 UDN"
+      },
+      {
+        "title": "一律起訴最保險？ 律師：司法資源永不夠 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5TX2JCc0FzbVdFZVlXdlg0OTBOdXItVEJMMFJNTTA1bFhDMXZuVVJuZ2N3N01NS0dfQjFod2cxaTd1MUFyWjFMUkxFbUNyb0Rw0gFWQVVfeXFMUF9HdkhIUW5FV0pjVHBzUmlsZXptc3o2Wmp6dTVFV21lY0ZGeUZyeUh5WXNrX2xpZGRiTFY3NjBSVk40SDdPNjJfOHF4VUdVQ1hjNTMwd1E?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:04:42 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "一律起訴最保險？ 律師：司法資源永不夠 UDN"
+      },
+      {
+        "title": "男告警察不起訴 不肯罷休 拉布條公審辱警判6月 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBTelRMbFVJMzhOMXFnMnZBNk5SODhOYnNaREFNR2p1OXdUTVNCUExrRGhyQ1h2Z2g2X3FQcGpyajJYLU03UHlfMGppSi1SRkxO0gFWQVVfeXFMTjFySmFFY2hzMExMZ2lFUUpFYnB2ZHZudUt1NnhQQjdBelRNbUl0dWF0a1RQcE5YeDMzaUswWmFQMldYODk3LXVubHRMVEZPTFpIdjljbXc?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:03:35 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "男告警察不起訴 不肯罷休 拉布條公審辱警判6月 UDN"
+      },
+      {
+        "title": "台南15歲少女逛美妝店遭偷拍 噁男二審加重判10月 - 壹蘋新聞網",
+        "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBxeGo2S09rZnpnY2pBcmdpbjdhcV9Nc01GZTI1S0FLS3hfc05sWWV6aHdKNDZTU0llT1JKeFhpbFhlLWp2RGtBQUJRZXhoUk1TOHdQMDVWeERnc2JUeE02ME1qaUZiS2Nkc2hpa0hWQWxtSGdlOXZJbzB0c2FJZ1U?oc=5",
+        "pubDate": "Sat, 31 Oct 2026 16:01:00 GMT",
+        "source": "GN 偷拍性影像",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台南15歲少女逛美妝店遭偷拍 噁男二審加重判10月 壹蘋新聞網"
+      },
+      {
+        "title": "「擄骨灰罈」勒贖6000萬嗆丟糞池 正新輪胎創辦人前司機假釋了",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5625339",
+        "pubDate": "Sat, 31 Oct 2026 23:56:06 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "正新輪胎創辦人「輪胎大王」羅結2019年辭世，竟遭任職18年的前司機凃英倫夥同友人盜走骨灰罈，向羅家勒索6000萬元，甚至揚言不給錢就丟進糞池，凃男判刑3年8月定讞，服刑2年多...…"
+      }
+    ]
+  }
+}
