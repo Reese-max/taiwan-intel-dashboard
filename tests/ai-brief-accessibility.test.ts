@@ -172,6 +172,7 @@ describe("AiBrief — Issue #18 語意降級與統計備援無障礙渲染", () 
         international: "前期國際摘要",
         model: "approved-llm-model",
         generatedAt: "2026-09-15T18:00:00Z",
+        scopeMetadata: { domestic: { generatedAt: "2026-09-15T18:00:00Z", model: "approved-llm-model" } },
       },
     };
 
@@ -356,6 +357,7 @@ describe("AiBrief — 降級原因判定與 pipeline 欄位呈現 (Worker A Roun
         international: "前期國際",
         model: "approved-model",
         generatedAt: "2026-09-15T18:00:00Z",
+        scopeMetadata: { domestic: { generatedAt: "2026-09-15T18:00:00Z", model: "approved-model" } },
       },
       lastSuccessAt: "2026-09-15T18:00:00Z",
       generatedAt: "2026-09-16T12:00:00Z",

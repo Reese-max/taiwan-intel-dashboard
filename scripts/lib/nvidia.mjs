@@ -15,7 +15,7 @@ export { eventIdFor } from "./event-id.mjs";
 import { isReferenceEvent } from "./event-contract.mjs";
 
 import { chat, extractJson, llmModel, respondedModel } from "./llm-client.mjs";
-import { deterministicBrief, isDeterministicFallback, isUsableNarrative } from "./summary-quality.mjs";
+import { deterministicBrief, isUsableNarrative } from "./summary-quality.mjs";
 export { llmModel, respondedModel } from "./llm-client.mjs";
 
 const CATEGORIES = ["地緣政治", "治安", "反詐", "協尋", "災害", "資安", "金融", "其他"];
@@ -821,7 +821,7 @@ export function formatActionableLlmError(error) {
 }
 
 // 通用 brief：給事件清單與指令，回繁中摘要；失敗回 "" 不中斷。
-async function briefEvents(label, events, instruction, maxTokens = 2048, errors = []) {
+async function briefEvents(label, events, instruction, maxTokens = 2048, errors = [], provenance = null) {
   if (!events?.length) return "";
   const lines = sortForBrief(events)
     .slice(0, 20)
@@ -829,13 +829,14 @@ async function briefEvents(label, events, instruction, maxTokens = 2048, errors 
     .join("\n");
   const ask = async () => {
     try {
+      let responseModel;
       const output = (
         (await chat(
           [
             { role: "system", content: "你是情報儀表板的分析助理，用繁體中文寫精煉的情勢摘要。" },
             { role: "user", content: `以下是${label}：\n${lines}\n\n${instruction}` },
           ],
-          { maxTokens, temperature: 0.4, profile: "summary" }
+          { maxTokens, temperature: 0.4, profile: "summary", onResponseModel: (model) => { responseModel = model; } }
         )) || ""
       ).trim();
       if (!output) {
@@ -846,6 +847,7 @@ async function briefEvents(label, events, instruction, maxTokens = 2048, errors 
         errors.push(new Error("LLM 回傳內容不符合繁體中文情勢摘要格式標準"));
         return "";
       }
+      if (provenance) provenance.model = responseModel;
       return output;
     } catch (err) {
       errors.push(err);
@@ -873,10 +875,12 @@ export async function summarize({ domestic = [], international = [], clusters = 
 
   const domErrors = [];
   const intlErrors = [];
+  const domProvenance = {};
+  const intlProvenance = {};
 
   const [dom, intl, recent24h] = await Promise.all([
-    briefEvents("國內今日重點事件", domesticFiltered, dailyInstr, 2048, domErrors),
-    briefEvents("國際今日重點事件", intlFiltered, dailyInstr, 2048, intlErrors),
+    briefEvents("國內今日重點事件", domesticFiltered, dailyInstr, 2048, domErrors, domProvenance),
+    briefEvents("國際今日重點事件", intlFiltered, dailyInstr, 2048, intlErrors, intlProvenance),
     briefEvents(
       "國內最近 24 小時事件",
       recent,
@@ -960,8 +964,7 @@ export async function summarize({ domestic = [], international = [], clusters = 
   // 擷取上一輪既有的成功摘要（若有的話）
   const prevSuccessful = previousSummary?.lastSuccessful || (
     previousSummary && (
-      (!previousSummary.degraded && isUsableNarrative(previousSummary.domestic)) ||
-      (typeof previousSummary.domestic === "string" && !isDeterministicFallback(previousSummary.domestic) && isUsableNarrative(previousSummary.domestic))
+      isUsableNarrative(previousSummary.domestic) || isUsableNarrative(previousSummary.international)
     )
       ? {
           domestic: previousSummary.domestic,
@@ -976,6 +979,28 @@ export async function summarize({ domestic = [], international = [], clusters = 
       : null
   );
 
+  // A legacy shared timestamp is trustworthy for a scope only when its retained
+  // text is also that scope's successful current text in the previous snapshot.
+  const previousScopeMetadata = (scope) => {
+    if (prevSuccessful?.scopeMetadata) return prevSuccessful.scopeMetadata[scope];
+    const current = previousSummary?.[scope];
+    const degraded = typeof previousSummary?.degraded === "object"
+      ? previousSummary.degraded?.[scope] : previousSummary?.degraded;
+    if (!degraded && isUsableNarrative(current) && current === prevSuccessful?.[scope] && previousSummary?.generatedAt) {
+      // The legacy shared model may be from an unrelated concurrent request.
+      return { generatedAt: previousSummary.generatedAt };
+    }
+    return undefined;
+  };
+  const nowIso = new Date(now).toISOString();
+  const scopeMetadata = {};
+  for (const [scope, valid, provenance] of [["domestic", domValid, domProvenance], ["international", intlValid, intlProvenance]]) {
+    const metadata = valid
+      ? { generatedAt: nowIso, ...(provenance.model ? { model: provenance.model } : {}) }
+      : previousScopeMetadata(scope);
+    if (metadata) scopeMetadata[scope] = metadata;
+  }
+
   let lastSuccessful = null;
   if (domValid && intlValid) {
     lastSuccessful = {
@@ -986,7 +1011,8 @@ export async function summarize({ domestic = [], international = [], clusters = 
       trend: (trend || "").trim(),
       clusterSummaries,
       model: respondedModel(),
-      generatedAt: new Date(now).toISOString(),
+      generatedAt: nowIso,
+      scopeMetadata,
     };
   } else if (domValid || intlValid) {
     lastSuccessful = {
@@ -996,16 +1022,20 @@ export async function summarize({ domestic = [], international = [], clusters = 
       byCategory: domValid ? byCategory : prevSuccessful?.byCategory,
       trend: domValid ? (trend || "").trim() : prevSuccessful?.trend,
       clusterSummaries: domValid ? clusterSummaries : prevSuccessful?.clusterSummaries,
-      model: respondedModel(),
-      generatedAt: new Date(now).toISOString(),
+      model: prevSuccessful?.model || respondedModel(),
+      generatedAt: prevSuccessful?.generatedAt || nowIso,
+      scopeMetadata,
     };
   } else if (prevSuccessful) {
-    lastSuccessful = prevSuccessful;
+    lastSuccessful = { ...prevSuccessful, scopeMetadata };
   }
 
-  const lastSuccessAt = (domValid || intlValid)
-    ? new Date(now).toISOString()
+  const lastSuccessAt = (domValid && intlValid)
+    ? nowIso
+    : (domValid || intlValid)
+      ? (previousSummary?.lastSuccessAt || prevSuccessful?.generatedAt || nowIso)
     : (prevSuccessful?.generatedAt || previousSummary?.lastSuccessAt || null);
+  const lastSuccessAtByScope = Object.fromEntries(Object.entries(scopeMetadata).map(([scope, meta]) => [scope, meta.generatedAt]));
 
   return {
     domestic: domesticText,
@@ -1029,6 +1059,7 @@ export async function summarize({ domestic = [], international = [], clusters = 
         }
       : {}),
     ...(lastSuccessAt ? { lastSuccessAt } : {}),
+    lastSuccessAtByScope,
     ...(lastSuccessful ? { lastSuccessful } : {}),
     // 用實際回應的模型名（chat 已記錄），避免標示成不符的設定值。
     model: respondedModel(),

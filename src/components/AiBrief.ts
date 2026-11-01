@@ -12,6 +12,7 @@ export interface LastSuccessfulSummary {
   clusterSummaries?: Record<string, string>;
   model?: string;
   generatedAt: string;
+  scopeMetadata?: Partial<Record<Scope, { generatedAt: string; model?: string }>>;
 }
 
 export interface AiSummary {
@@ -27,6 +28,7 @@ export interface AiSummary {
   reason?: string;
   error?: string;
   lastSuccessAt?: string | { domestic?: string; international?: string };
+  lastSuccessAtByScope?: Partial<Record<Scope, string>>;
   lastSuccessful?: LastSuccessfulSummary;
   model?: string;
   generatedAt: string;
@@ -63,28 +65,33 @@ export function getActionableDegradedReason(summary: AiSummary, scope: Scope): s
 }
 
 export function getLastSuccessTimeString(summary: AiSummary, scope: Scope): string {
-  const t = typeof summary.lastSuccessAt === "object"
+  const t = summary.lastSuccessAtByScope
+    ? summary.lastSuccessAtByScope[scope]
+    : typeof summary.lastSuccessAt === "object"
     ? summary.lastSuccessAt?.[scope]
-    : (summary.lastSuccessAt || summary.lastSuccessful?.generatedAt);
+    : summary.lastSuccessful?.scopeMetadata?.[scope]?.generatedAt;
   if (t && Number.isFinite(Date.parse(t))) {
     return new Date(t).toLocaleString("zh-TW", { hour12: false });
   }
-  return "無歷史紀錄";
+  const hasUnverifiedHistory = Boolean(summary.lastSuccessful?.[scope]) ||
+    (!summary.lastSuccessAtByScope && typeof summary.lastSuccessAt === "string");
+  return hasUnverifiedHistory ? "時間未記錄" : "無歷史紀錄";
 }
 
 export function getRealSummaryForScope(
   summary: AiSummary | null,
   scope: Scope
-): { text: string; generatedAt: string; model?: string; isStale: boolean } | null {
+): { text: string; generatedAt?: string; model?: string; isStale: boolean } | null {
   if (!summary) return null;
   const currentText = scope === "domestic" ? summary.domestic : summary.international;
   const degradedThisScope = isScopeDegraded(summary, scope) || isDeterministicFallback(currentText);
 
   if (!degradedThisScope && !isBriefPlaceholder(currentText)) {
+    const provenance = summary.lastSuccessful?.scopeMetadata?.[scope];
     return {
       text: currentText,
       generatedAt: summary.generatedAt,
-      model: summary.model,
+      model: summary.lastSuccessful?.scopeMetadata ? provenance?.model : summary.model,
       isStale: false,
     };
   }
@@ -93,10 +100,11 @@ export function getRealSummaryForScope(
   if (lastSucc) {
     const lastText = scope === "domestic" ? lastSucc.domestic : lastSucc.international;
     if (lastText && !isBriefPlaceholder(lastText) && !isDeterministicFallback(lastText)) {
+      const provenance = lastSucc.scopeMetadata?.[scope];
       return {
         text: lastText,
-        generatedAt: lastSucc.generatedAt,
-        model: lastSucc.model || summary.model,
+        generatedAt: provenance?.generatedAt,
+        model: provenance?.model,
         isStale: true,
       };
     }
@@ -110,10 +118,8 @@ export function getRealSummaryForScope(
 // 國際群會誤掛同號的國內群摘要。此處依 scope 收斂：非國內一律回空，杜絕跨 scope 摘要污染。
 export function clusterSummariesForScope(summary: AiSummary | null, scope: Scope): Record<string, string> {
   if (!summary || scope !== "domestic") return {};
-  if (summary.clusterSummaries && Object.keys(summary.clusterSummaries).length) {
-    return summary.clusterSummaries;
-  }
-  return summary.lastSuccessful?.clusterSummaries ?? {};
+  // Sequential IDs are reused for different incidents in later snapshots.
+  return summary.clusterSummaries ?? {};
 }
 
 export async function loadSummary(): Promise<AiSummary | null> {
@@ -173,6 +179,11 @@ function expandableSub(tag: string, text: string, limit: number): string {
   </details>`.trim();
 }
 
+function historicalTime(timestamp?: string): string {
+  if (!timestamp || !Number.isFinite(Date.parse(timestamp))) return "生成時間未記錄";
+  return `生成於 ${new Date(timestamp).toLocaleString("zh-TW", { hour12: false })}`;
+}
+
 function renderBriefBody(summary: AiSummary, scope: Scope, degraded: boolean, hasEvidence: boolean): string {
   const currentText = scope === "domestic" ? summary.domestic : summary.international;
   if (isBriefPlaceholder(currentText)) {
@@ -184,9 +195,9 @@ function renderBriefBody(summary: AiSummary, scope: Scope, degraded: boolean, ha
 
   const realSummary = getRealSummaryForScope(summary, scope);
   if (realSummary && realSummary.isStale) {
-    const staleGen = new Date(realSummary.generatedAt).toLocaleString("zh-TW", { hour12: false });
+    const staleGen = historicalTime(realSummary.generatedAt);
     const modelTag = realSummary.model ? `由 ${esc(realSummary.model)} 生成` : "AI 生成";
-    const notice = `<div class="ai-brief-stale-notice" role="status"><span class="ai-fallback-badge ai-stale-badge">前期摘要</span> ${modelTag} · 生成於 ${esc(staleGen)}（即時更新暫採統計備援）</div>`;
+    const notice = `<div class="ai-brief-stale-notice" role="status"><span class="ai-fallback-badge ai-stale-badge">前期摘要</span> ${modelTag} · ${esc(staleGen)}（即時更新暫採統計備援）</div>`;
     const body = expandableParagraph("ai-brief-body", realSummary.text, 110);
     const statBackup = `<details class="ai-brief-stat-backup"><summary class="ai-stat-toggle">檢視即時統計備援 ▾</summary><div class="ai-full-text">${esc(currentText)}</div></details>`;
     return `${notice}${body}${statBackup}`;
@@ -220,13 +231,13 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
 
   let meta: string;
   if (realSummary && realSummary.isStale) {
-    const staleGen = new Date(realSummary.generatedAt).toLocaleString("zh-TW", { hour12: false });
-    meta = `<p class="ai-brief-meta">前期摘要生成於 ${esc(staleGen)} · 快照時間 ${esc(gen)}</p>`;
+    const staleGen = historicalTime(realSummary.generatedAt);
+    meta = `<p class="ai-brief-meta">前期摘要${esc(staleGen)} · 快照時間 ${esc(gen)}</p>`;
   } else if (degradedThisScope) {
     const lastSuccess = getLastSuccessTimeString(summary, scope);
     meta = `<p class="ai-brief-meta">系統統計備援 · 上次成功生成：${esc(lastSuccess)} · 快照時間 ${esc(gen)}</p>`;
   } else {
-    const modelLabel = summary.model ? `由 ${esc(summary.model)} 生成` : "AI 生成";
+    const modelLabel = realSummary?.model ? `由 ${esc(realSummary.model)} 生成` : "AI 生成";
     meta = `<p class="ai-brief-meta">${modelLabel} · 生成於 ${esc(gen)}</p>`;
   }
 

@@ -1,14 +1,67 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { getRealSummaryForScope, renderAiBrief } from "../src/components/AiBrief";
 
 // @ts-expect-error JS ESM module without declarations
 import { summarize, formatActionableLlmError } from "../scripts/lib/nvidia.mjs";
 
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
 describe("summary pipeline fallback & carryover", () => {
+  it("各範圍在連續部分失敗時保留各自文字、時間及實際回應模型", async () => {
+    for (const [key, value] of Object.entries({
+      SUMMARY_API_KEY: "fake", SUMMARY_BASE_URL: "https://partial.invalid/v1", SUMMARY_MODEL: "configured-model",
+      SUMMARY_LLM: "", LLM_FALLBACK_API_KEY: "", LLM_FALLBACK_BASE_URL: "", LLM_API_KEY: "",
+      SUMMARY_MAX_RETRIES: "0",
+    })) vi.stubEnv(key, value);
+    let failing = "國內今日重點事件";
+    vi.stubGlobal("fetch", vi.fn(async (_url, options) => {
+      const prompt = JSON.parse(options.body).messages[1].content as string;
+      if (prompt.includes(failing)) return new Response("bad request", { status: 400 });
+      const model = prompt.includes("國際今日重點事件") ? "international-model" : prompt.includes("國內今日重點事件") ? "domestic-model" : "auxiliary-model";
+      return Response.json({ model, choices: [{ message: { content: `有效的${model}情勢摘要` } }] });
+    }));
+    const now = vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-10-30T10:00:00Z"));
+    const event = { id: "e1", title: "測試事件", summary: "內容", category: "治安", riskLevel: "high", timestamp: "2026-10-30T09:00:00Z", source: { name: "新聞", datasetId: "news-test" } };
+    const previousSummary = {
+      domestic: "國內舊摘要", international: "國際舊摘要", generatedAt: "2026-10-29T00:00:00Z", model: "old-model", degraded: false,
+    };
+    const first = await summarize({ domestic: [event], international: [event], previousSummary });
+    expect(getRealSummaryForScope(first, "domestic")).toMatchObject({ text: "國內舊摘要", generatedAt: "2026-10-29T00:00:00Z", model: undefined, isStale: true });
+    expect(first.lastSuccessful.scopeMetadata.international).toEqual({ generatedAt: "2026-10-30T10:00:00.000Z", model: "international-model" });
+
+    now.mockReturnValue(Date.parse("2026-10-30T11:00:00Z"));
+    const second = await summarize({ domestic: [event], international: [event], previousSummary: first });
+    expect(getRealSummaryForScope(second, "domestic")).toMatchObject({ text: "國內舊摘要", generatedAt: "2026-10-29T00:00:00Z", model: undefined, isStale: true });
+    expect(second.lastSuccessAtByScope).toEqual({ domestic: "2026-10-29T00:00:00Z", international: "2026-10-30T11:00:00.000Z" });
+
+    failing = "國際今日重點事件";
+    now.mockReturnValue(Date.parse("2026-10-30T12:00:00Z"));
+    const third = await summarize({ domestic: [event], international: [event], previousSummary: second });
+    expect(getRealSummaryForScope(third, "international")).toMatchObject({ generatedAt: "2026-10-30T11:00:00.000Z", model: "international-model", isStale: true });
+    expect(third.lastSuccessful.scopeMetadata.domestic).toEqual({ generatedAt: "2026-10-30T12:00:00.000Z", model: "domestic-model" });
+  });
+
+  it("無法查證舊版部分成功紀錄的範圍時間時，不沿用共用時間冒充確切時間", async () => {
+    for (const key of ["SUMMARY_API_KEY", "SUMMARY_BASE_URL", "SUMMARY_LLM", "NVIDIA_API_KEY", "NVIDIA_BASE_URL", "LLM_API_KEY", "LLM_BASE_URL", "LLM_FALLBACK_API_KEY", "LLM_FALLBACK_BASE_URL"]) vi.stubEnv(key, "");
+    const event = { id: "e", title: "合成事件", summary: "測試", category: "治安", riskLevel: "high", timestamp: new Date().toISOString(), source: { name: "測試" } };
+    const previousSummary = {
+      domestic: "AI 摘要暫時無法生成，系統統計備援", international: "國際正常摘要",
+      generatedAt: "2026-10-30T12:00:00Z", model: "potentially-wrong-model",
+      degraded: { domestic: true, international: false },
+      lastSuccessful: { domestic: "國內真正的舊摘要", international: "國際正常摘要", generatedAt: "2026-10-30T12:00:00Z", model: "potentially-wrong-model" },
+    };
+    const result = await summarize({ domestic: [event], international: [event], previousSummary });
+    expect(getRealSummaryForScope(result, "domestic")).toMatchObject({ text: "國內真正的舊摘要", generatedAt: undefined, model: undefined, isStale: true });
+    const element = { innerHTML: "" } as HTMLElement;
+    renderAiBrief(element, result, "domestic", [event as never]);
+    expect(element.innerHTML).toContain("時間未記錄");
+    expect(element.innerHTML).not.toContain("potentially-wrong-model");
+  });
+
   it("formatActionableLlmError 針對不同錯誤類型產生精確可操作說明", () => {
     expect(formatActionableLlmError(new Error("缺少 API key（LLM_API_KEY）"))).toContain("缺少 LLM API 金鑰");
     expect(formatActionableLlmError(new Error("缺少 API key（missing env NVIDIA_API_KEY）"))).toContain("missing env NVIDIA_API_KEY");

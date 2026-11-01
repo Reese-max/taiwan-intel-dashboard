@@ -444,8 +444,21 @@ let lastQuery = "";
 let lastViewKey = "";
 let lastMapKey = "";
 let lastKpiKey = "";
-let lastTopClustersKey = "";
+let lastTopClustersNet: NetworkIndex | null = null;
+let lastTopClustersScope: Scope | null = null;
+let lastTopClustersSummary: AiSummary | null = null;
+let lastDisplayedEvents: IntelEvent[] = [];
+let lastDisplayedScope: Scope | null = null;
 let lastGeneratedAt: string | null = null;
+
+function renderTopClustersIfChanged(net: NetworkIndex, scope: Scope): void {
+  if (net === lastTopClustersNet && scope === lastTopClustersScope && summary === lastTopClustersSummary) return;
+  lastTopClustersNet = net;
+  lastTopClustersScope = scope;
+  lastTopClustersSummary = summary;
+  renderTopClusters(document.getElementById("topclusters")!, net.clusters(), clusterSummariesForScope(summary, scope), 3,
+    { netState: net.state, netError: net.error });
+}
 
 function isScope(v: string | null): v is Scope {
   return v === "domestic" || v === "international";
@@ -1013,17 +1026,7 @@ async function refresh(): Promise<void> {
     }
   }
   renderFilterSummary(display.length, all.length, focusSummaryLabel);
-  const topClustersKey = `${s.scope}:${net.clusters().length}:${net.state}:${Boolean(summary)}`;
-  if (topClustersKey !== lastTopClustersKey) {
-    lastTopClustersKey = topClustersKey;
-    renderTopClusters(
-      document.getElementById("topclusters")!,
-      net.clusters(),
-      clusterSummariesForScope(summary, s.scope),
-      3,
-      { netState: net.state, netError: net.error },
-    );
-  }
+  renderTopClustersIfChanged(net, s.scope);
   const mapKey = `${viewKey}:${display.length}:${display[0]?.id ?? ""}:${display[display.length - 1]?.id ?? ""}`;
   if (mapKey !== lastMapKey) {
     lastMapKey = mapKey;
@@ -1032,6 +1035,8 @@ async function refresh(): Promise<void> {
     void mapView.render(display, s.scope);
   }
   renderTimeline(document.getElementById("timeline")!, display);
+  lastDisplayedEvents = display;
+  lastDisplayedScope = s.scope;
   renderAiBrief(document.getElementById("aibrief")!, summary, s.scope, display);
   document.getElementById("count")!.textContent = listGroups ? `${display.length} 則 · 收合 ${collapsedGroupCount} 組` : `${display.length}`;
 }
@@ -1345,20 +1350,16 @@ function renderStalenessBanner(generatedAt: string | undefined): void {
 
 void loadSummary().then((s) => {
   summary = s;
+  lastGeneratedAt = s?.generatedAt || null;
   const currentScope = getState().scope;
-  renderAiBrief(document.getElementById("aibrief")!, summary, currentScope);
+  renderAiBrief(document.getElementById("aibrief")!, summary, currentScope,
+    lastDisplayedScope === currentScope ? lastDisplayedEvents : []);
   renderDataFreshness(s);
   renderStalenessBanner(s?.generatedAt);
   // 摘要含 clusterSummaries → 更新 TopClusters（及若有聚焦群則更新網絡），免全頁重新過濾與渲染
   const net = netCache[currentScope];
   if (net && net.state !== "error") {
-    renderTopClusters(
-      document.getElementById("topclusters")!,
-      net.clusters(),
-      clusterSummariesForScope(summary, currentScope),
-      3,
-      { netState: net.state, netError: net.error },
-    );
+    renderTopClustersIfChanged(net, currentScope);
   }
   if (focusCluster) {
     void refresh();
@@ -1376,12 +1377,16 @@ setInterval(() => {
         return;
       }
       lastGeneratedAt = data.generatedAt;
-      const scope = getState().scope;
-      delete cache[scope];
-      delete netCache[scope];
-      delete cohortByScope[scope];
-      delete headCache[scope];
-      delete isHeadActive[scope];
+      summary = data;
+      renderDataFreshness(data);
+      cohortManifest = null;
+      for (const scope of ["domestic", "international"] as const) {
+        delete cache[scope];
+        delete netCache[scope];
+        delete cohortByScope[scope];
+        delete headCache[scope];
+        delete isHeadActive[scope];
+      }
       void refresh();
     })
     .catch(() => {
