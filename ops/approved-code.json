@@ -1,4 +1,4 @@
 {
-  "sha": "45cb16863068c482fb7b5ed522038af28b1a5d40",
-  "note": "Approved 2026-09-26 repair release after PR #53 checks and preview"
+  "sha": "eb18d9b54f8f4fc7edc08351b59de936528af847",
+  "note": "Owner authorized merge and deployment on 2026-11-02. PR #83 verified head; PR checks 41282677889 and Preview verification 41282677894 passed. Release requires separate manifest PR checks and production smoke."
 }
