@@ -20,6 +20,7 @@ import { isValidCoordinate } from "./lib/geo-policy.mjs";
 import { CURATED_LEDGER_REL_PATH, loadCurationLedger, resolveCurationLedger } from "./lib/curation-ledger.mjs";
 import { isNewsLikeEvent } from "./lib/correlate.mjs";
 import { previewSnapshotContext } from "./prepare-preview-data.mjs";
+import { trimPoliceHourlyRecent } from "./lib/police-hourly-history.mjs";
 
 const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
@@ -114,8 +115,15 @@ function trimNetwork(net) {
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
 const curation = loadCurationLedger(CURATED_LEDGER_REL_PATH);
 for (const f of readdirSync(DATA_DIR)) {
-  // 這兩份衍生 map 由本輪事件產生，不能再被輸入中的舊投影覆蓋。
-  if (f === "domestic.map.json" || f === "international.map.json") continue;
+  // 衍生 map 與 head 由本輪事件產生，不能再被輸入中的舊投影覆蓋。
+  if (
+    f === "domestic.map.json" ||
+    f === "international.map.json" ||
+    f === "domestic.head.json" ||
+    f === "international.head.json" ||
+    (f === "police-hourly-recent.json" && existsSync(join(DATA_DIR, "police-hourly-history.json")))
+  )
+    continue;
   if (TRIM_FIELDS.has(f)) {
     const arr = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
     const scope = f.replace(/\.json$/, "");
@@ -128,9 +136,29 @@ for (const f of readdirSync(DATA_DIR)) {
     if (Array.isArray(derived)) {
       writeFileSync(`${OUT}/data/${scope}.map.json`, JSON.stringify(derived.filter(isLocated).map(mapTrim)));
     }
+    // 同時輸出首屏清單與指標精簡檔 <scope>.head.json（最新 N 筆精簡事件，供首屏秒開）。
+    if (Array.isArray(trimmed)) {
+      const headEvents = [...trimmed]
+        .sort((a, b) => {
+          const ta = a.timestamp ? Date.parse(a.timestamp) : 0;
+          const tb = b.timestamp ? Date.parse(b.timestamp) : 0;
+          return (Number.isFinite(tb) ? tb : 0) - (Number.isFinite(ta) ? ta : 0);
+        })
+        .slice(0, 60);
+      writeFileSync(`${OUT}/data/${scope}.head.json`, JSON.stringify(headEvents));
+    }
   } else if (f === "network.json") {
     const net = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
     writeFileSync(`${OUT}/data/${f}`, JSON.stringify(trimNetwork(net)));
+  } else if (f === "police-hourly-history.json") {
+    minifyOrCopyJson(join(DATA_DIR, f), `${OUT}/data/${f}`);
+    try {
+      const history = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
+      const recent = trimPoliceHourlyRecent(history);
+      writeFileSync(`${OUT}/data/police-hourly-recent.json`, JSON.stringify(recent));
+    } catch (err) {
+      console.warn(`[build-static] 警政歷史縮減失敗：${err.message}`);
+    }
   } else {
     minifyOrCopyJson(join(DATA_DIR, f), `${OUT}/data/${f}`);
   }
@@ -145,9 +173,10 @@ writeCohortManifest(`${OUT}/data`, manifest);
 // 首頁＝美化後的儀表板（地圖＋清單＋情報網，吃 data/*.json）。
 // 與 dev 的 index.html 同步：含字型 preconnect/links、theme-color、description。
 const dashboardHtml = `<!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" translate="no">
   <head>
     <meta charset="UTF-8" />
+    <meta name="google" content="notranslate" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#080c17" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2032%2032'%3E%3Crect%20width%3D'32'%20height%3D'32'%20rx%3D'7'%20fill%3D'%23080c17'%2F%3E%3Ccircle%20cx%3D'16'%20cy%3D'16'%20r%3D'9'%20fill%3D'none'%20stroke%3D'%231f6f86'%20stroke-width%3D'1.5'%2F%3E%3Ccircle%20cx%3D'16'%20cy%3D'16'%20r%3D'5'%20fill%3D'none'%20stroke%3D'%232a8aa8'%20stroke-width%3D'1.5'%2F%3E%3Cline%20x1%3D'16'%20y1%3D'16'%20x2%3D'16'%20y2%3D'6'%20stroke%3D'%2338cdf5'%20stroke-width%3D'1.8'%20stroke-linecap%3D'round'%2F%3E%3Ccircle%20cx%3D'16'%20cy%3D'16'%20r%3D'2.3'%20fill%3D'%2338cdf5'%2F%3E%3Ccircle%20cx%3D'23'%20cy%3D'10'%20r%3D'1.5'%20fill%3D'%236366f1'%2F%3E%3C%2Fsvg%3E" />
@@ -158,6 +187,7 @@ const dashboardHtml = `<!doctype html>
     <title>台灣情報儀表板</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" href="./data/manifest.json" as="fetch" crossorigin="anonymous" />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;800&display=swap"

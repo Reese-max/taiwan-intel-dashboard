@@ -1,20 +1,24 @@
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { summarize } from "./lib/nvidia.mjs";
+import { isReferenceEvent } from "./lib/event-contract.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const DATA_DIR = process.env.FETCH_LIVE_DATA_DIR || join(ROOT, "public", "data");
 
 async function loadData() {
+  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
   const domesticPath = join(DATA_DIR, "domestic.json");
   const networkPath = join(DATA_DIR, "network.json");
   const intlPath = join(DATA_DIR, "international.json");
+  const summaryPath = join(DATA_DIR, "summary.json");
 
   let domestic = [];
   let clusters = [];
   let international = [];
+  let previousSummary = null;
 
   // 優先檢查本地檔案是否新鮮（近 24 小時以內），若過舊則自遠端線上快照同步最新事件
   let needRemoteSync = false;
@@ -36,10 +40,11 @@ async function loadData() {
   if (needRemoteSync) {
     try {
       console.log("正在從 taiwan-intel-dashboard.pages.dev 下載今日最新事件與情報網...");
-      const [domRes, netRes, intlRes] = await Promise.all([
+      const [domRes, netRes, intlRes, sumRes] = await Promise.all([
         fetch("https://taiwan-intel-dashboard.pages.dev/data/domestic.json"),
         fetch("https://taiwan-intel-dashboard.pages.dev/data/network.json"),
         fetch("https://taiwan-intel-dashboard.pages.dev/data/international.json").catch(() => null),
+        fetch("https://taiwan-intel-dashboard.pages.dev/data/summary.json").catch(() => null),
       ]);
       if (domRes.ok) {
         domestic = await domRes.json();
@@ -53,6 +58,10 @@ async function loadData() {
       if (intlRes && intlRes.ok) {
         international = await intlRes.json();
         writeFileSync(intlPath, JSON.stringify(international), "utf8");
+      }
+      if (sumRes && sumRes.ok) {
+        previousSummary = await sumRes.json();
+        writeFileSync(summaryPath, JSON.stringify(previousSummary, null, 2) + "\n", "utf8");
       }
       console.log(`同步完成：國內事件 ${domestic.length} 則、情報群 ${clusters.length} 個。`);
     } catch (err) {
@@ -70,22 +79,34 @@ async function loadData() {
         international = JSON.parse(readFileSync(intlPath, "utf8"));
       } catch {}
     }
+    if (existsSync(summaryPath)) {
+      try {
+        previousSummary = JSON.parse(readFileSync(summaryPath, "utf8"));
+      } catch {}
+    }
   }
 
-  return { domestic, international, clusters };
+  return { domestic, international, clusters, previousSummary };
 }
 
 async function main() {
   console.log("=== 產出最新 summary.json ===");
-  const { domestic, international, clusters } = await loadData();
-  console.log(`準備生成摘要：國內 ${domestic.length} 則、國際 ${international.length} 則、情報群 ${clusters.length} 個`);
+  const { domestic, international, clusters, previousSummary } = await loadData();
+  const domesticIncidents = domestic.filter((e) => !isReferenceEvent(e));
+  const intlIncidents = international.filter((e) => !isReferenceEvent(e));
+  console.log(`準備生成摘要：國內 ${domesticIncidents.length} 則事件、國際 ${intlIncidents.length} 則、情報群 ${clusters.length} 個`);
 
   const start = Date.now();
-  const summary = await summarize({ domestic, international, clusters });
+  const summary = await summarize({
+    domestic: domesticIncidents,
+    international: intlIncidents,
+    clusters,
+    previousSummary,
+  });
   const costSec = ((Date.now() - start) / 1000).toFixed(1);
 
   const outPath = join(DATA_DIR, "summary.json");
-  writeFileSync(outPath, JSON.stringify(summary, null, 2), "utf8");
+  writeFileSync(outPath, JSON.stringify(summary, null, 2) + "\n", "utf8");
   console.log(`\n✅ 成功寫入 ${outPath} (耗時 ${costSec}s)`);
   console.log(`模型：${summary.model}`);
   console.log(`國內摘要：\n${summary.domestic}\n`);

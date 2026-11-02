@@ -1439,6 +1439,21 @@ body.layout-compact .col-list {
   font-size: 0.78rem;
   color: var(--color-warning, #f59e0b);
   line-height: 1.4;
+  flex-wrap: wrap;
+}
+.ai-brief-stale-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-sm, 6px);
+  padding: 5px 8px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  color: var(--color-cyan, #38bdf8);
+  line-height: 1.4;
+  flex-wrap: wrap;
 }
 .ai-fallback-badge {
   display: inline-block;
@@ -1449,6 +1464,22 @@ body.layout-compact .col-list {
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #fbbf24;
+}
+.ai-stale-badge {
+  background: rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+}
+.ai-brief-stat-backup {
+  margin-top: 8px;
+  font-size: 0.76rem;
+  color: var(--color-muted);
+}
+.ai-brief-stat-backup summary {
+  cursor: pointer;
+  opacity: 0.85;
+}
+.ai-brief-stat-backup summary:hover {
+  opacity: 1;
 }
 .ai-brief-degraded-body {
   border-left: 2px solid rgba(245, 158, 11, 0.5);

@@ -16,12 +16,15 @@ export function buildCohortManifest({
   rulesVersion = RULES_VERSION,
   nowIso = new Date().toISOString(),
   includeMapProjections = true,
+  includeHeadProjections = true,
 }) {
   const filesToCheck = [
     "domestic.json",
     ...(includeMapProjections ? ["domestic.map.json"] : []),
+    ...(includeHeadProjections ? ["domestic.head.json"] : []),
     "international.json",
     ...(includeMapProjections ? ["international.map.json"] : []),
+    ...(includeHeadProjections ? ["international.head.json"] : []),
     "network.json",
     "summary.json",
   ];
@@ -74,6 +77,7 @@ export function buildCohortManifest({
       domestic: {
         events: "domestic.json",
         map: files["domestic.map.json"] ? "domestic.map.json" : "domestic.json",
+        ...(files["domestic.head.json"] ? { head: "domestic.head.json" } : {}),
         network: "network.json",
         eventCount: files["domestic.json"]?.count ?? 0,
         sha256: files["domestic.json"]?.sha256,
@@ -81,6 +85,7 @@ export function buildCohortManifest({
       international: {
         events: "international.json",
         map: files["international.map.json"] ? "international.map.json" : "international.json",
+        ...(files["international.head.json"] ? { head: "international.head.json" } : {}),
         network: "network.json",
         eventCount: files["international.json"]?.count ?? 0,
         sha256: files["international.json"]?.sha256,

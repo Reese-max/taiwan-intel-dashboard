@@ -3,6 +3,18 @@ import type { IntelEvent, Scope } from "../types/event";
 import { RISK_ORDER } from "../types/event";
 import { getActionDecision } from "../utils/actionDecision";
 
+export interface LastSuccessfulSummary {
+  domestic?: string;
+  international?: string;
+  recent24h?: string;
+  byCategory?: Record<string, string>;
+  trend?: string;
+  clusterSummaries?: Record<string, string>;
+  model?: string;
+  generatedAt: string;
+  scopeMetadata?: Partial<Record<Scope, { generatedAt: string; model?: string }>>;
+}
+
 export interface AiSummary {
   domestic: string;
   international: string;
@@ -12,6 +24,12 @@ export interface AiSummary {
   dailyCounts?: number[];
   clusterSummaries?: Record<string, string>;
   degraded?: boolean | { domestic?: boolean; international?: boolean };
+  degradedReason?: string | { domestic?: string; international?: string };
+  reason?: string;
+  error?: string;
+  lastSuccessAt?: string | { domestic?: string; international?: string };
+  lastSuccessAtByScope?: Partial<Record<Scope, string>>;
+  lastSuccessful?: LastSuccessfulSummary;
   model?: string;
   generatedAt: string;
 }
@@ -27,11 +45,80 @@ export function isBriefPlaceholder(text: string): boolean {
   return !trimmed || trimmed === "（暫無資料）";
 }
 
+export function isDeterministicFallback(text: string): boolean {
+  if (!text) return false;
+  return text.includes("系統統計備援") || text.includes("AI 摘要暫時無法生成");
+}
+
+export function getActionableDegradedReason(summary: AiSummary, scope: Scope): string {
+  if (!summary) return "原因未記錄";
+  const reasonObj = summary.degradedReason;
+  if (reasonObj) {
+    if (typeof reasonObj === "string" && reasonObj.trim()) return reasonObj;
+    if (typeof reasonObj === "object" && reasonObj[scope] && reasonObj[scope]!.trim()) {
+      return reasonObj[scope]!;
+    }
+  }
+  if (summary.reason && summary.reason.trim()) return summary.reason;
+  if (summary.error && summary.error.trim()) return summary.error;
+  return "原因未記錄";
+}
+
+export function getLastSuccessTimeString(summary: AiSummary, scope: Scope): string {
+  const t = summary.lastSuccessAtByScope
+    ? summary.lastSuccessAtByScope[scope]
+    : typeof summary.lastSuccessAt === "object"
+    ? summary.lastSuccessAt?.[scope]
+    : summary.lastSuccessful?.scopeMetadata?.[scope]?.generatedAt;
+  if (t && Number.isFinite(Date.parse(t))) {
+    return new Date(t).toLocaleString("zh-TW", { hour12: false });
+  }
+  const hasUnverifiedHistory = Boolean(summary.lastSuccessful?.[scope]) ||
+    (!summary.lastSuccessAtByScope && typeof summary.lastSuccessAt === "string");
+  return hasUnverifiedHistory ? "時間未記錄" : "無歷史紀錄";
+}
+
+export function getRealSummaryForScope(
+  summary: AiSummary | null,
+  scope: Scope
+): { text: string; generatedAt?: string; model?: string; isStale: boolean } | null {
+  if (!summary) return null;
+  const currentText = scope === "domestic" ? summary.domestic : summary.international;
+  const degradedThisScope = isScopeDegraded(summary, scope) || isDeterministicFallback(currentText);
+
+  if (!degradedThisScope && !isBriefPlaceholder(currentText)) {
+    const provenance = summary.lastSuccessful?.scopeMetadata?.[scope];
+    return {
+      text: currentText,
+      generatedAt: summary.generatedAt,
+      model: summary.lastSuccessful?.scopeMetadata ? provenance?.model : summary.model,
+      isStale: false,
+    };
+  }
+
+  const lastSucc = summary.lastSuccessful;
+  if (lastSucc) {
+    const lastText = scope === "domestic" ? lastSucc.domestic : lastSucc.international;
+    if (lastText && !isBriefPlaceholder(lastText) && !isDeterministicFallback(lastText)) {
+      const provenance = lastSucc.scopeMetadata?.[scope];
+      return {
+        text: lastText,
+        generatedAt: provenance?.generatedAt,
+        model: provenance?.model,
+        isStale: true,
+      };
+    }
+  }
+
+  return null;
+}
+
 // clusterSummaries 僅針對「國內」群生成（見 scripts/lib/nvidia.mjs：只 summarizeClusters(domesticClusters)）。
 // cluster id 是各 scope 網路內的流水號（c0/c1/c2…），跨 scope 會撞號，故國際 scope 若直接套用，
 // 國際群會誤掛同號的國內群摘要。此處依 scope 收斂：非國內一律回空，杜絕跨 scope 摘要污染。
 export function clusterSummariesForScope(summary: AiSummary | null, scope: Scope): Record<string, string> {
   if (!summary || scope !== "domestic") return {};
+  // Sequential IDs are reused for different incidents in later snapshots.
   return summary.clusterSummaries ?? {};
 }
 
@@ -46,12 +133,15 @@ export async function loadSummary(): Promise<AiSummary | null> {
 }
 
 export function actionDecisionBrief(events: IntelEvent[]): string {
-  const notable = events
-    .filter((e) => RISK_ORDER[e.riskLevel] >= RISK_ORDER.medium)
-    .slice()
-    .sort((a, b) => RISK_ORDER[b.riskLevel] - RISK_ORDER[a.riskLevel] || Date.parse(b.timestamp) - Date.parse(a.timestamp));
+  const notable = events.filter((e) => RISK_ORDER[e.riskLevel] >= RISK_ORDER.medium);
   if (!notable.length) return "";
-  const decisions = notable.slice(0, 6).map((e) => getActionDecision(e));
+  const withTime = notable.map((e) => ({
+    event: e,
+    riskRank: RISK_ORDER[e.riskLevel],
+    timeMs: Date.parse(e.timestamp) || 0,
+  }));
+  withTime.sort((a, b) => b.riskRank - a.riskRank || b.timeMs - a.timeMs);
+  const decisions = withTime.slice(0, 6).map((item) => getActionDecision(item.event));
   const domains = [...new Set(decisions.map((d) => d.domain))].slice(0, 3).join("、");
   const recommendations = [...new Set(decisions.map((d) => d.recommendation))].slice(0, 2).join("；");
   return `行動判斷：${notable.length} 則｜${domains}｜${recommendations}`;
@@ -89,19 +179,39 @@ function expandableSub(tag: string, text: string, limit: number): string {
   </details>`.trim();
 }
 
-function renderBriefBody(text: string, degraded: boolean, hasEvidence: boolean): string {
-  if (isBriefPlaceholder(text)) {
+function historicalTime(timestamp?: string): string {
+  if (!timestamp || !Number.isFinite(Date.parse(timestamp))) return "生成時間未記錄";
+  return `生成於 ${new Date(timestamp).toLocaleString("zh-TW", { hour12: false })}`;
+}
+
+function renderBriefBody(summary: AiSummary, scope: Scope, degraded: boolean, hasEvidence: boolean): string {
+  const currentText = scope === "domestic" ? summary.domestic : summary.international;
+  if (isBriefPlaceholder(currentText)) {
     if (hasEvidence) {
       return `<p class="ai-brief-body ai-brief-degraded" role="alert">⚠ AI 摘要生成失敗，請直接檢視下方事件列表</p>`;
     }
     return `<p class="ai-brief-body ai-brief-empty">暫無事件資料</p>`;
   }
-  const isFallback = degraded || text.includes("系統統計備援") || text.includes("AI 摘要暫時無法生成");
-  if (isFallback) {
-    const notice = `<div class="ai-brief-fallback-notice" role="status"><span class="ai-fallback-badge">系統統計備援</span> AI 摘要暫時無法生成，事件資料仍可查閱</div>`;
-    return `${notice}${expandableParagraph("ai-brief-body ai-brief-degraded-body", text, 110)}`;
+
+  const realSummary = getRealSummaryForScope(summary, scope);
+  if (realSummary && realSummary.isStale) {
+    const staleGen = historicalTime(realSummary.generatedAt);
+    const modelTag = realSummary.model ? `由 ${esc(realSummary.model)} 生成` : "AI 生成";
+    const notice = `<div class="ai-brief-stale-notice" role="status"><span class="ai-fallback-badge ai-stale-badge">前期摘要</span> ${modelTag} · ${esc(staleGen)}（即時更新暫採統計備援）</div>`;
+    const body = expandableParagraph("ai-brief-body", realSummary.text, 110);
+    const statBackup = `<details class="ai-brief-stat-backup"><summary class="ai-stat-toggle">檢視即時統計備援 ▾</summary><div class="ai-full-text">${esc(currentText)}</div></details>`;
+    return `${notice}${body}${statBackup}`;
   }
-  return expandableParagraph("ai-brief-body", text, 110);
+
+  const isFallback = degraded || isDeterministicFallback(currentText);
+  if (isFallback) {
+    const reason = getActionableDegradedReason(summary, scope);
+    const lastSuccess = getLastSuccessTimeString(summary, scope);
+    const notice = `<div class="ai-brief-fallback-notice" role="status"><span class="ai-fallback-badge">系統統計備援</span> <span class="ai-fallback-reason">原因：${esc(reason)}</span> · <span class="ai-last-success">上次成功生成：${esc(lastSuccess)}</span></div>`;
+    return `${notice}${expandableParagraph("ai-brief-body ai-brief-degraded-body", currentText, 110)}`;
+  }
+
+  return expandableParagraph("ai-brief-body", currentText, 110);
 }
 
 export function renderAiBrief(container: HTMLElement, summary: AiSummary | null, scope: Scope, events: IntelEvent[] = []): void {
@@ -115,11 +225,21 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
   const gen = new Date(summary.generatedAt).toLocaleString("zh-TW", { hour12: false });
 
   const hasEvidence = events.length > 0 || Boolean(summary.dailyCounts?.some((c) => c > 0));
-  const degradedThisScope = isScopeDegraded(summary, scope) || (scope === "domestic" ? summary.domestic : summary.international).includes("系統統計備援");
-  const modelLabel = degradedThisScope
-    ? "系統統計備援"
-    : (summary.model ? `由 ${esc(summary.model)} 生成` : "AI 生成");
-  const meta = `<p class="ai-brief-meta">${modelLabel} · 生成於 ${esc(gen)}</p>`;
+  const currentText = scope === "domestic" ? summary.domestic : summary.international;
+  const degradedThisScope = isScopeDegraded(summary, scope) || isDeterministicFallback(currentText);
+  const realSummary = getRealSummaryForScope(summary, scope);
+
+  let meta: string;
+  if (realSummary && realSummary.isStale) {
+    const staleGen = historicalTime(realSummary.generatedAt);
+    meta = `<p class="ai-brief-meta">前期摘要${esc(staleGen)} · 快照時間 ${esc(gen)}</p>`;
+  } else if (degradedThisScope) {
+    const lastSuccess = getLastSuccessTimeString(summary, scope);
+    meta = `<p class="ai-brief-meta">系統統計備援 · 上次成功生成：${esc(lastSuccess)} · 快照時間 ${esc(gen)}</p>`;
+  } else {
+    const modelLabel = realSummary?.model ? `由 ${esc(realSummary.model)} 生成` : "AI 生成";
+    meta = `<p class="ai-brief-meta">${modelLabel} · 生成於 ${esc(gen)}</p>`;
+  }
 
   const action = actionDecisionBrief(events);
   let actionHtml = "";
@@ -131,19 +251,26 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
 
   // 國際 scope：只顯示國際每日摘要（近24h/趨勢/分類為國內資料）。
   if (scope !== "domestic") {
-    container.innerHTML = `${head}${renderBriefBody(summary.international, degradedThisScope, hasEvidence)}${actionHtml}${meta}`;
+    container.innerHTML = `${head}${renderBriefBody(summary, scope, degradedThisScope, hasEvidence)}${actionHtml}${meta}`;
     return;
   }
 
   // 國內：每日 + 近 24h 即時 + 趨勢 + 分類別。
-  const parts = [renderBriefBody(summary.domestic, degradedThisScope, hasEvidence)];
+  const parts = [renderBriefBody(summary, scope, degradedThisScope, hasEvidence)];
   if (actionHtml) parts.push(actionHtml);
-  if (summary.recent24h)
-    parts.push(expandableSub("⚡ 近 24 小時", summary.recent24h, 48));
-  if (summary.trend)
-    parts.push(expandableSub("📈 趨勢", summary.trend, 48));
 
-  const cats = summary.byCategory ? Object.entries(summary.byCategory) : [];
+  const effectiveRecent24h = summary.recent24h || (realSummary?.isStale ? summary.lastSuccessful?.recent24h : "");
+  if (effectiveRecent24h)
+    parts.push(expandableSub("⚡ 近 24 小時", effectiveRecent24h, 48));
+
+  const effectiveTrend = summary.trend || (realSummary?.isStale ? summary.lastSuccessful?.trend : "");
+  if (effectiveTrend)
+    parts.push(expandableSub("📈 趨勢", effectiveTrend, 48));
+
+  const rawCats = summary.byCategory && Object.keys(summary.byCategory).length
+    ? summary.byCategory
+    : (realSummary?.isStale ? summary.lastSuccessful?.byCategory : undefined);
+  const cats = rawCats ? Object.entries(rawCats) : [];
   if (cats.length) {
     const [first, ...rest] = cats;
     const firstPreview = compactText(first[1], 42);

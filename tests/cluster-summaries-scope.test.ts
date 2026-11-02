@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionDecisionBrief, clusterSummariesForScope, renderAiBrief, type AiSummary } from "../src/components/AiBrief";
+import { actionDecisionBrief, clusterSummariesForScope, getLastSuccessTimeString, getRealSummaryForScope, renderAiBrief, type AiSummary } from "../src/components/AiBrief";
 import type { IntelEvent } from "../src/types/event";
 
 // 回歸測試：clusterSummaries 只為國內群生成，cluster id（c0/c1/c2…）跨 scope 撞號。
@@ -52,6 +52,36 @@ describe("clusterSummariesForScope", () => {
   it("summary 無 clusterSummaries 欄位時國內 scope 也回空", () => {
     const bare: AiSummary = { domestic: "x", international: "y", generatedAt: "2026-06-27T00:00:00+08:00" };
     expect(clusterSummariesForScope(bare, "domestic")).toEqual({});
+  });
+
+  it("目前沒有群摘要時不把舊快照的同號群摘要掛到新群", () => {
+    const next: AiSummary = {
+      domestic: "國內摘要", international: "國際摘要", generatedAt: "2026-10-30T00:00:00Z",
+      clusterSummaries: {},
+      lastSuccessful: { domestic: "舊摘要", generatedAt: "2026-10-29T00:00:00Z", clusterSummaries: { c0: "另一事件的舊群摘要" } },
+    };
+    expect(clusterSummariesForScope(next, "domestic")).toEqual({});
+  });
+
+  it("舊版共用時間／模型無法證明屬於失敗範圍，保留摘要但顯示時間未記錄", () => {
+    const legacy: AiSummary = {
+      domestic: "系統統計備援", international: "本輪國際摘要", generatedAt: "2026-10-30T10:00:00Z",
+      degraded: { domestic: true, international: false },
+      lastSuccessful: { domestic: "前期國內摘要", international: "本輪國際摘要", generatedAt: "2026-10-30T10:00:00Z", model: "shared-model" },
+    };
+    expect(getRealSummaryForScope(legacy, "domestic")).toMatchObject({ text: "前期國內摘要", generatedAt: undefined, model: undefined, isStale: true });
+    const container = { innerHTML: "" } as HTMLElement;
+    renderAiBrief(container, legacy, "domestic", [event]);
+    expect(container.innerHTML).toContain("生成時間未記錄");
+    expect(container.innerHTML).not.toContain("shared-model");
+  });
+
+  it("僅另一範圍成功時，不把它當成本範圍的歷史成功", () => {
+    const partial: AiSummary = {
+      domestic: "系統統計備援", international: "國際摘要", generatedAt: "2026-10-30T10:00:00Z",
+      lastSuccessAt: "2026-10-30T10:00:00Z", lastSuccessAtByScope: { international: "2026-10-30T10:00:00Z" },
+    };
+    expect(getLastSuccessTimeString(partial, "domestic")).toBe("無歷史紀錄");
   });
 
   it("AI 摘要可共用行動判斷規則產生決策摘要", () => {

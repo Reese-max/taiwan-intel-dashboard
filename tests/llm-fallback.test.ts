@@ -95,6 +95,27 @@ describe("primary→fallback LLM 備援（C1）", () => {
     expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("fallback-circuit"))).toHaveLength(2);
   });
 
+  it("404 模型不存在或未開通時只請求主要端點一次；後續批次直接使用可用備援", async () => {
+    process.env.LLM_API_KEY = "test-primary-key";
+    process.env.LLM_BASE_URL = "https://primary-404-notfound.test/v1";
+    process.env.LLM_MODEL = "not-found-model";
+    process.env.LLM_FALLBACK_API_KEY = "working-fallback-key";
+    process.env.LLM_FALLBACK_BASE_URL = "https://fallback-circuit-404.test/v1";
+    process.env.LLM_FALLBACK_MODEL = "working-model";
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn(async (url: string) =>
+      String(url).includes("primary-404-notfound")
+        ? new Response(JSON.stringify({ status: 404, title: "Not Found", detail: "Function: Not found for account" }), { status: 404 })
+        : okCompletion("備援成功404"),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await chat([{ role: "user", content: "測試" }])).toBe("備援成功404");
+    expect(await chat([{ role: "user", content: "再次測試" }])).toBe("備援成功404");
+    expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("primary-404-notfound"))).toHaveLength(1);
+    expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("fallback-circuit-404"))).toHaveLength(2);
+  });
+
   it("保留獨立摘要模型；摘要端點 410 時改用 NVIDIA 備援模型", async () => {
     process.env.SUMMARY_API_KEY = "dedicated-summary-key";
     process.env.SUMMARY_BASE_URL = "https://summary-retired-20260926.test/v1";

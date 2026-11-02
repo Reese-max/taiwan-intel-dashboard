@@ -471,7 +471,7 @@ function makeCarryOverTwnews() {
     region: "新北市",
     lat: 25.0169826,
     lng: 121.4627868,
-    timestamp: new Date(now.getTime() - 60 * 60 * 1000).toISOString(),
+    timestamp: new Date(now.getTime() - 60 * 1000).toISOString(),
     category: "反詐",
     scope: "domestic",
     riskLevel: "medium",
@@ -482,7 +482,7 @@ function makeCarryOverTwnews() {
       datasetId: "tw-news",
       recordRef: "https://example.test/twnews/carry-over",
       url: "https://example.test/twnews/carry-over",
-      fetchedAt: new Date(now.getTime() - 55 * 60 * 1000).toISOString(),
+      fetchedAt: new Date(now.getTime() - 30 * 1000).toISOString(),
       query: "測試 twnews carry-over",
     },
   };
