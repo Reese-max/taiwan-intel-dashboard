@@ -221,6 +221,8 @@ export class MapView {
   private onFocus?: (eventId: string) => void;
   private onShowList?: () => void;
   private popupOpen = false;
+  // popup 開啟中被延後的 fitToLocated；關閉 popup 時補做，避免 scope 切換後視口與 maxBounds 停在舊範圍。
+  private pendingFit = false;
   private clusterTouchActive = false;
   private emptyEl?: HTMLElement;
   private lastScope: Scope = "domestic";
@@ -263,7 +265,12 @@ export class MapView {
       this.popupOpen = false;
       // Leaflet 尚在移除 popup／來源標記；等移除完成，避免 clearLayers 重入後留下重複標記。
       queueMicrotask(() => {
-        if (!this.popupOpen) this.redraw();
+        if (this.popupOpen) return;
+        if (this.pendingFit) {
+          this.pendingFit = false;
+          this.fitToLocated(this.lastScope);
+        }
+        this.redraw();
       });
     });
     // 雷達掃描裝飾層（pointer-events:none，不擋地圖拖曳/縮放）。
@@ -290,6 +297,9 @@ export class MapView {
       if (regionBtn) {
         ev.preventDefault();
         const reg = regionBtn.dataset.filterRegion;
+        // 先關 popup：開啟中的 popup 會讓 render() 延後重繪，地圖不會反映新的地區篩選。
+        this.popupOpen = false;
+        this.map.closePopup();
         if (reg) setState({ region: reg });
         return;
       }
@@ -361,7 +371,11 @@ export class MapView {
     this.updateEmptyHint(events.length);
     // popup 開啟中只更新資料不補繪：redraw 的 clearLayers 會移除 popup 來源標記而強制關閉它；
     // 延後到使用者關閉時由 popupclose handler 以新資料 redraw。
-    if (this.popupOpen) return;
+    if (this.popupOpen) {
+      if (options.fit !== false) this.pendingFit = true;
+      return;
+    }
+    this.pendingFit = false;
     const shouldFit = options.fit !== false;
     if (shouldFit) this.fitToLocated(scope);
     this.redraw();

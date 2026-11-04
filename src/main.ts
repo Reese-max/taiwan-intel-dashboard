@@ -1270,6 +1270,8 @@ document.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((btn) => {
     focusCluster = null;
     showOutOfFilterRelated = false;
     setActiveScopeTab(scope);
+    // 舊 scope 的 popup 不該留在新 scope 的地圖上；關閉後 render 才會照常重繪並 fit。
+    void mapView.closePopup().catch(() => {});
     setState({
       scope,
       category: undefined,
