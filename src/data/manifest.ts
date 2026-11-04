@@ -49,6 +49,13 @@ export function validateCohortManifest(json: unknown): json is CohortManifest {
 
 const MANIFEST_FETCH_TIMEOUT_MS = 3_000;
 
+export function scopeDataVersion(manifest: CohortManifest | null | undefined, scope: "domestic" | "international"): string {
+  const files = manifest?.scopes[scope];
+  return JSON.stringify([manifest?.snapshotId, manifest?.rulesVersion, files?.events, files?.network,
+    manifest?.files[files?.events ?? ""]?.sha256 ?? files?.sha256,
+    manifest?.files[files?.network ?? ""]?.sha256]);
+}
+
 export async function loadManifest(options?: { signal?: AbortSignal; manifestUrl?: string }): Promise<CohortManifest | null> {
   const url = options?.manifestUrl ?? "./data/manifest.json";
   try {
@@ -59,7 +66,7 @@ export async function loadManifest(options?: { signal?: AbortSignal; manifestUrl
         : options.signal
       : timeoutSignal;
 
-    const res = await fetch(url, { signal });
+    const res = await fetch(url, { signal, cache: "no-store" });
     if (!res.ok) return null;
     const json = await res.json();
     if (!validateCohortManifest(json)) {

@@ -32,5 +32,9 @@ describe("same-topic weak relation UI", () => {
 
     expect(container.innerHTML).toContain("同題情勢（弱關聯）");
     expect(container.innerHTML).toContain("data-type=\"same-topic\"");
+    expect(container.innerHTML).toContain(edgeTypeLabel("same-entity"));
+    expect(container.innerHTML).toContain('class="rg-center-g" role="button" tabindex="0"');
+    expect(container.innerHTML).toContain('data-rtype="中心事件"');
+    expect(container.innerHTML).toContain('data-title="中心事件"');
   });
 });

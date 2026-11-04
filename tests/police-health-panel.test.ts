@@ -221,7 +221,8 @@ describe("renderPoliceHealthPanel", () => {
       await renderPoliceHealthPanel(container);
 
       expect(container.innerHTML).toContain("警政健康檢查不可用");
-      expect(container.innerHTML).toContain("<p class=\"empty\">警政健康檢查不可用</p>");
+      expect(container.innerHTML).toContain("data-reload-health");
+      expect(container.innerHTML).toContain("請重試");
     } finally {
       vi.unstubAllGlobals();
     }

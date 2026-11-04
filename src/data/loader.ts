@@ -12,6 +12,13 @@ export interface FilterOptions {
   includeUnknownTime?: boolean;
   region?: string;
   query?: string;
+  day?: string;
+}
+
+export function eventDay(timestamp: string | number): string {
+  const d = new Date(timestamp);
+  if (!Number.isFinite(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export function explainOutOfFilter(e: IntelEvent, opts: FilterOptions): string[] {
@@ -20,6 +27,8 @@ export function explainOutOfFilter(e: IntelEvent, opts: FilterOptions): string[]
   const cutoff = opts.sinceDays ? now - opts.sinceDays * 86400000 : undefined;
   const maxFuture = opts.sinceDays ? now + 86400000 : undefined;
   const targetRegion = opts.region ? opts.region.trim().replace(/^台(?=[北中南東])/, "臺") : "";
+
+  if (opts.day && eventDay(e.timestamp) !== opts.day) reasons.push(`日期非「${opts.day}」`);
 
   if (opts.category && e.category !== opts.category) {
     reasons.push(`分類非「${opts.category}」`);
@@ -73,6 +82,7 @@ export function filterEvents(events: IntelEvent[], opts: FilterOptions): IntelEv
   const targetRegion = opts.region ? opts.region.trim().replace(/^台(?=[北中南東])/, "臺") : "";
 
   return events.filter((e) => {
+    if (opts.day && eventDay(e.timestamp) !== opts.day) return false;
     if (opts.scope && e.scope !== opts.scope) return false;
     if (opts.category && e.category !== opts.category) return false;
     if (opts.minRisk && RISK_ORDER[e.riskLevel] < RISK_ORDER[opts.minRisk]) return false;

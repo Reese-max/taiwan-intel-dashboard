@@ -1371,6 +1371,10 @@ body.layout-compact .col-list {
   height: 80px;
 }
 .tl-bar {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1391,6 +1395,7 @@ body.layout-compact .col-list {
 .tl-bar:hover .tl-fill {
   filter: brightness(1.22);
 }
+.tl-bar[aria-pressed="true"] { outline: 2px solid var(--color-accent); }
 .tl-hint {
   font-size: 0.75rem;
   color: var(--color-muted);
@@ -2735,6 +2740,7 @@ body.layout-compact .col-list {
 .toggle-out-filter-btn:hover {
   background: var(--accent-soft);
 }
+#map-focus-notice,
 .focus-notice-warn {
   font-size: var(--text-xs);
   color: var(--color-risk-medium, #f59e0b);
@@ -2743,6 +2749,13 @@ body.layout-compact .col-list {
   background: rgba(245, 158, 11, 0.1);
   border-radius: 4px;
   border-left: 3px solid #f59e0b;
+}
+#map-focus-notice {
+  margin: 0 0 var(--space-3);
+}
+.focus-coordinate-notice {
+  display: none;
+  margin: 0;
 }
 .clear-focus {
   background: transparent;
@@ -2930,6 +2943,9 @@ body.layout-compact .col-list {
   body.mobile-view-insights .col-list {
     display: none;
   }
+  body.mobile-view-list .focus-coordinate-notice {
+    display: block;
+  }
   body.mobile-view-map #kpistrip,
   body.mobile-view-list #kpistrip {
     display: none;
@@ -2998,7 +3014,14 @@ body.layout-compact .col-list {
     margin-left: 0;
     min-height: 44px;
   }
-  .clear-focus {
+  #map-focus-notice {
+  margin: 0 0 var(--space-3);
+}
+.focus-coordinate-notice {
+  display: none;
+  margin: 0;
+}
+.clear-focus {
     min-height: 44px;
   }
 }

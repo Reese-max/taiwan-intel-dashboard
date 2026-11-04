@@ -149,7 +149,7 @@ export function renderRelationGraph(
     });
   }
 
-  const centerNode = `<g class="rg-center-g">
+  const centerNode = `<g class="rg-center-g" role="button" tabindex="0" aria-label="預覽中心事件：${esc(center.title)}" data-rel="${esc(center.id)}" data-title="${esc(center.title)}" data-risk="${esc(center.riskLevel)}" data-region="${esc(center.region ?? "")}" data-cat="${esc(center.category)}" data-time="${esc(center.timestamp)}" data-rtype="中心事件">
     <title>${esc(center.title)}</title>
     <circle class="rg-node rg-center risk-${center.riskLevel}" cx="${CX}" cy="${CY}" r="12" />
     <text class="rg-center-label" x="${CX}" y="${(CY + 31).toFixed(1)}" text-anchor="middle">${esc(trunc(center.title, 13))}</text>
@@ -170,7 +170,7 @@ export function renderRelationGraph(
     <div class="rg-preview" hidden></div>
     <div class="rg-legend" role="group" aria-label="依關聯型別篩選">
       <button type="button" class="rg-legend-btn" data-type="same-incident" aria-pressed="true"><i class="edge-same-incident"></i>${esc(edgeTypeLabel("same-incident"))}</button>
-      <button type="button" class="rg-legend-btn" data-type="same-entity" aria-pressed="true"><i class="edge-same-entity"></i>共享實體</button>
+      <button type="button" class="rg-legend-btn" data-type="same-entity" aria-pressed="true"><i class="edge-same-entity"></i>${esc(edgeTypeLabel("same-entity"))}</button>
       <button type="button" class="rg-legend-btn" data-type="same-topic" aria-pressed="true"><i class="edge-same-topic"></i>${esc(edgeTypeLabel("same-topic"))}</button>
       <button type="button" class="rg-legend-btn" data-type="follow-up" aria-pressed="true"><i class="edge-follow-up"></i>${esc(edgeTypeLabel("follow-up"))}</button>
     </div>`;

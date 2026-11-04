@@ -9,11 +9,14 @@ export interface AppState {
   sinceDays?: number;
   query?: string;
   region?: string;
+  day?: string;
 }
 
 type Listener = (s: AppState) => void;
 
-const state: AppState = { scope: "domestic", sinceDays: 3 };
+export const DEFAULT_SINCE_DAYS = 3;
+const state: AppState = { scope: "domestic", sinceDays: DEFAULT_SINCE_DAYS };
+let sinceDaysBeforeDay: number | undefined = DEFAULT_SINCE_DAYS;
 const listeners = new Set<Listener>();
 
 export function getState(): AppState {
@@ -21,6 +24,17 @@ export function getState(): AppState {
 }
 
 export function setState(patch: Partial<AppState>): void {
+  if ("day" in patch) {
+    if (patch.day) {
+      // 網址還原沒有選日前的紀錄，回到預設時間範圍。
+      if (!state.day || "sinceDays" in patch) {
+        sinceDaysBeforeDay = "sinceDays" in patch ? DEFAULT_SINCE_DAYS : state.sinceDays;
+      }
+      patch = { ...patch, sinceDays: undefined };
+    } else if (state.day && !("sinceDays" in patch)) {
+      patch = { ...patch, sinceDays: sinceDaysBeforeDay };
+    }
+  }
   Object.assign(state, patch);
   listeners.forEach((l) => l(getState()));
 }

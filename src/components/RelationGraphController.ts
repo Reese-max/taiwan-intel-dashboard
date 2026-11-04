@@ -85,6 +85,13 @@ export function createRelationGraphController({
       );
       applyTypeFilter();
     }
+    if (rgPinned) {
+      const node = relGraphEl.querySelector(`.rg-node-g[data-rel="${CSS.escape(rgPinned)}"], .rg-center-g[data-rel="${CSS.escape(rgPinned)}"]`);
+      if (node) {
+        applyHighlight(rgPinned);
+        showPreview(node);
+      }
+    }
   }
 
   function applyHighlight(id: string | null): void {
@@ -93,9 +100,10 @@ export function createRelationGraphController({
     svg.querySelectorAll(".is-active").forEach((el) => el.classList.remove("is-active"));
     svg.classList.toggle("has-active", !!id);
     if (!id) return;
-    svg
-      .querySelectorAll(`.rg-node-g[data-rel="${CSS.escape(id)}"], .rg-edge[data-rel="${CSS.escape(id)}"]`)
-      .forEach((el) => el.classList.add("is-active"));
+    const selector = id === rgCtx?.center.id
+      ? ".rg-center-g, .rg-edge:not(.rg-subedge), .rg-node-g:not(.rg-subnode)"
+      : `.rg-node-g[data-rel="${CSS.escape(id)}"], .rg-edge[data-rel="${CSS.escape(id)}"]`;
+    svg.querySelectorAll(selector).forEach((el) => el.classList.add("is-active"));
   }
 
   function showPreview(g: Element): void {
@@ -105,7 +113,7 @@ export function createRelationGraphController({
     const id = d("rel");
     const why = d("why");
     // 主環節點若還有可展開的關聯，提供「展開關聯 N／收合」；子節點不再提供（避免無限展開）。
-    const exCount = g.classList.contains("rg-subnode") ? 0 : expandableCount(id);
+    const exCount = g.classList.contains("rg-subnode") || g.classList.contains("rg-center-g") ? 0 : expandableCount(id);
     const expandBtn =
       exCount > 0
         ? `<button type="button" class="rg-expand" data-rel="${esc(id)}">${
@@ -220,17 +228,17 @@ export function createRelationGraphController({
       applyTypeFilter();
       return;
     }
-    const node = target.closest(".rg-node-g");
+    const node = target.closest(".rg-node-g, .rg-center-g");
     if (node && !node.classList.contains("flt-off")) {
       selectNode(node);
-    } else if (target.closest(".rg-center-g") || target.closest("svg.rg-svg")) {
+    } else if (target.closest("svg.rg-svg")) {
       clearSelection();
     }
   });
 
   relGraphEl.addEventListener("keydown", (ev) => {
     if (ev.key !== "Enter" && ev.key !== " ") return;
-    const node = (ev.target as Element).closest(".rg-node-g");
+    const node = (ev.target as Element).closest(".rg-node-g, .rg-center-g");
     if (node && !node.classList.contains("flt-off")) {
       ev.preventDefault();
       selectNode(node);
@@ -239,15 +247,15 @@ export function createRelationGraphController({
 
   // hover/focus 暫態高亮：離開時還原到釘住的節點。
   relGraphEl.addEventListener("mouseover", (ev) => {
-    const node = (ev.target as Element).closest(".rg-node-g");
+    const node = (ev.target as Element).closest(".rg-node-g, .rg-center-g");
     if (node && !node.classList.contains("flt-off")) applyHighlight(node.getAttribute("data-rel"));
   });
   relGraphEl.addEventListener("mouseout", (ev) => {
-    if (!(ev.target as Element).closest(".rg-node-g")) return;
+    if (!(ev.target as Element).closest(".rg-node-g, .rg-center-g")) return;
     applyHighlight(rgPinned);
   });
   relGraphEl.addEventListener("focusin", (ev) => {
-    const node = (ev.target as Element).closest(".rg-node-g");
+    const node = (ev.target as Element).closest(".rg-node-g, .rg-center-g");
     if (node && !node.classList.contains("flt-off")) applyHighlight(node.getAttribute("data-rel"));
   });
   relGraphEl.addEventListener("focusout", () => applyHighlight(rgPinned));

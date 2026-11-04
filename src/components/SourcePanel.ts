@@ -273,46 +273,55 @@ function normalizationHealthBlock(manifest: Manifest): string {
   </section>`;
 }
 
-export async function renderSourcePanel(container: HTMLElement): Promise<void> {
-  const res = await fetch("./data/provenance.json");
-  if (!res.ok) {
-    container.innerHTML = `<p class="empty">來源資訊不可用</p>`;
-    return;
+export async function renderSourcePanel(
+  container: HTMLElement,
+  onReload = (): void => { void renderSourcePanel(container); },
+): Promise<boolean> {
+  try {
+    const res = await fetch("./data/provenance.json", { cache: "no-store" });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const m = (await res.json()) as Manifest;
+    const generated = new Date(m.generatedAt).toLocaleString("zh-TW", { hour12: false });
+    const total = m.sources.reduce((sum, s) => sum + s.count, 0);
+    const official = m.sources.filter((s) => s.type === "gov-open-data" || s.type === "cwa").length;
+    const sorted = [...m.sources].sort((a, b) => freshness(a, m.generatedAt).order - freshness(b, m.generatedAt).order || b.count - a.count);
+    const visibleSources = sorted.slice(0, SOURCE_VISIBLE_LIMIT);
+    const extraSources = sorted.slice(SOURCE_VISIBLE_LIMIT, SOURCE_VISIBLE_LIMIT + SOURCE_EXTRA_LIMIT);
+    const hiddenCount = Math.max(0, sorted.length - SOURCE_VISIBLE_LIMIT - SOURCE_EXTRA_LIMIT);
+    const items = visibleSources
+      .map((s) => sourceItem(s, m.generatedAt))
+      .join("");
+    const extraItems = extraSources.map((s) => sourceItem(s, m.generatedAt)).join("");
+    container.innerHTML = `
+      <section class="source-card">
+        <h4>來源總覽</h4>
+        <div class="source-kpis" aria-label="來源總覽">
+          <div><b>${m.sources.length} 個來源</b><span>來源數</span></div>
+          <div><b>${total} 筆</b><span>事件與資料列</span></div>
+          <div><b>官方來源 ${official}</b><span>政府／氣象署</span></div>
+        </div>
+        <p class="source-generated">擷取於 ${esc(generated)}</p>
+        ${normalizationHealthBlock(m)}
+        ${internationalGapBlock(m)}
+        ${lowContributionBlock(m)}
+        <ul class="source-list">${items}</ul>
+        ${
+          extraItems
+            ? `<details class="source-more">
+                <summary>查看 ${extraSources.length} 個代表來源${hiddenCount ? `（另 ${hiddenCount} 個省略）` : ""}</summary>
+                <ul class="source-list source-list-extra">${extraItems}</ul>
+              </details>`
+            : ""
+        }
+        ${hiddenCount ? `<p class="prov-note">另有 ${hiddenCount} 個低量來源已省略，保留面板可讀性；完整清單見 provenance.json。</p>` : ""}
+      </section>
+      ${m.note ? `<p class="prov-note">${esc(m.note)}</p>` : ""}`;
+    return true;
+  } catch {
+    container.innerHTML = `<p class="empty" role="status">來源資訊不可用，請重試。 <button type="button" data-retry-source>重新載入來源資訊</button></p>`;
+    container.querySelector?.<HTMLButtonElement>("[data-retry-source]")?.addEventListener("click", onReload);
+    return false;
   }
-  const m = (await res.json()) as Manifest;
-  const generated = new Date(m.generatedAt).toLocaleString("zh-TW", { hour12: false });
-  const total = m.sources.reduce((sum, s) => sum + s.count, 0);
-  const official = m.sources.filter((s) => s.type === "gov-open-data" || s.type === "cwa").length;
-  const sorted = [...m.sources].sort((a, b) => freshness(a, m.generatedAt).order - freshness(b, m.generatedAt).order || b.count - a.count);
-  const visibleSources = sorted.slice(0, SOURCE_VISIBLE_LIMIT);
-  const extraSources = sorted.slice(SOURCE_VISIBLE_LIMIT, SOURCE_VISIBLE_LIMIT + SOURCE_EXTRA_LIMIT);
-  const hiddenCount = Math.max(0, sorted.length - SOURCE_VISIBLE_LIMIT - SOURCE_EXTRA_LIMIT);
-  const items = visibleSources
-    .map((s) => sourceItem(s, m.generatedAt))
-    .join("");
-  const extraItems = extraSources.map((s) => sourceItem(s, m.generatedAt)).join("");
-  container.innerHTML = `
-    <section class="source-card">
-      <h4>來源總覽</h4>
-      <div class="source-kpis" aria-label="來源總覽">
-        <div><b>${m.sources.length} 個來源</b><span>來源數</span></div>
-        <div><b>${total} 筆</b><span>事件與資料列</span></div>
-        <div><b>官方來源 ${official}</b><span>政府／氣象署</span></div>
-      </div>
-      <p class="source-generated">擷取於 ${esc(generated)}</p>
-      ${normalizationHealthBlock(m)}
-      ${internationalGapBlock(m)}
-      ${lowContributionBlock(m)}
-      <ul class="source-list">${items}</ul>
-      ${
-        extraItems
-          ? `<details class="source-more">
-              <summary>查看 ${extraSources.length} 個代表來源${hiddenCount ? `（另 ${hiddenCount} 個省略）` : ""}</summary>
-              <ul class="source-list source-list-extra">${extraItems}</ul>
-            </details>`
-          : ""
-      }
-      ${hiddenCount ? `<p class="prov-note">另有 ${hiddenCount} 個低量來源已省略，保留面板可讀性；完整清單見 provenance.json。</p>` : ""}
-    </section>
-    ${m.note ? `<p class="prov-note">${esc(m.note)}</p>` : ""}`;
 }

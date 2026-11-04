@@ -5,6 +5,7 @@ import { esc } from "../utils/escape";
 import { getActionDecision } from "../utils/actionDecision";
 import { locationPrecisionLabel, locationRoleLabel } from "../utils/geoPolicy";
 import { setState } from "../store";
+import { VAGUE_REGIONS } from "../utils/locationLink";
 
 const RISK_COLOR: Record<RiskLevel, string> = {
   low: "#3b82f6",
@@ -20,7 +21,13 @@ const RISK_LABEL: Record<RiskLevel, string> = {
 };
 const RISK_RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, critical: 3 };
 // 聚合網格邊長（像素）：同網格內多個事件聚成一顆計數泡泡，避免市區大量標點重疊。
-const CELL = 46;
+export const CLUSTER_CELL_SIZE = 64;
+export const CLUSTER_HIT_SIZE = 48;
+
+export function clusterGridPoint(x: number, y: number): [number, number] {
+  return [Math.floor(x / CLUSTER_CELL_SIZE) * CLUSTER_CELL_SIZE + CLUSTER_CELL_SIZE / 2,
+    Math.floor(y / CLUSTER_CELL_SIZE) * CLUSTER_CELL_SIZE + CLUSTER_CELL_SIZE / 2];
+}
 const CLUSTER_POPUP_ITEMS = 2;
 const CLUSTER_TITLE_LIMIT = 34;
 const CLUSTER_TAP_MOVE_PX = 12;
@@ -158,8 +165,9 @@ export function clusterPopupHtml(events: IntelEvent[]): string {
   const primaryAction = primary
     ? `<a class="map-cluster-action map-focus-btn" data-map-focus="${esc(primary.id)}" href="${esc(eventFocusHash(primary))}">查看最高風險</a>`
     : "";
-  const regionAction = primary && primary.region
-    ? `<button type="button" class="map-cluster-action filter-region-btn" data-filter-region="${esc(primary.region)}">此區新聞</button>`
+  const region = sorted.map((event) => (event.region ?? "").trim()).find((value) => !VAGUE_REGIONS.has(value.toLowerCase()));
+  const regionAction = region
+    ? `<button type="button" class="map-cluster-action filter-region-btn" data-filter-region="${esc(region)}">此區新聞</button>`
     : "";
 
   const more = hidden
@@ -252,7 +260,10 @@ export class MapView {
     });
     this.map.on("popupclose", () => {
       this.popupOpen = false;
-      this.redraw();
+      // Leaflet 尚在移除 popup／來源標記；等移除完成，避免 clearLayers 重入後留下重複標記。
+      queueMicrotask(() => {
+        if (!this.popupOpen) this.redraw();
+      });
     });
     // 雷達掃描裝飾層（pointer-events:none，不擋地圖拖曳/縮放）。
     const radar = document.createElement("div");
@@ -286,10 +297,11 @@ export class MapView {
 
   async locateEvent(id: string): Promise<boolean> {
     await this.ready;
+    this.map.invalidateSize(false);
     const target = this._cachedLocated.find((e) => e.id === id);
     if (!target || target.lat == null || target.lng == null) return false;
 
-    this.map.setView([target.lat, target.lng], Math.max(this.map.getZoom(), 14));
+    this.map.setView([target.lat, target.lng], Math.max(this.map.getZoom(), 14), { animate: false });
     this.redraw();
 
     window.setTimeout(() => {
@@ -498,14 +510,15 @@ export class MapView {
     // 視口裁切：只聚合/渲染目前可見範圍（含 20% 邊距，讓小幅平移前邊緣標點已在）內的事件；
     // 縮放越深、跳過的離畫面事件越多。moveend 已掛重繪 → 平移後補上新視口標點。
     const bounds = this.map.getBounds().pad(0.2);
-    const grid = new Map<string, { events: IntelEvent[]; sx: number; sy: number }>();
+    const grid = new Map<string, { events: IntelEvent[]; sx: number; sy: number; point: [number, number] }>();
     for (const e of this.located) {
       if (!bounds.contains([e.lat, e.lng])) continue;
       const p = this.map.project([e.lat!, e.lng!], z);
-      const key = `${Math.floor(p.x / CELL)}:${Math.floor(p.y / CELL)}`;
+      const point = clusterGridPoint(p.x, p.y);
+      const key = point.join(":");
       let c = grid.get(key);
       if (!c) {
-        c = { events: [], sx: 0, sy: 0 };
+        c = { events: [], sx: 0, sy: 0, point };
         grid.set(key, c);
       }
       c.events.push(e);
@@ -519,16 +532,18 @@ export class MapView {
       }
       const n = c.events.length;
       const centroid = this.map.unproject([c.sx / n, c.sy / n], z);
+      // 固定網格中心避免相鄰群的平均座標靠在邊界，讓命中區互相攔截。
+      const markerPoint = this.map.unproject(c.point, z);
       const top = c.events.reduce((a, b) => (RISK_RANK[b.riskLevel] > RISK_RANK[a.riskLevel] ? b : a)).riskLevel;
-      const size = Math.min(48, 26 + Math.round(Math.log2(n) * 6));
-      const hitSize = Math.max(48, size + 10);
+      const size = Math.min(40, 26 + Math.round(Math.log2(n) * 6));
+      const hitSize = CLUSTER_HIT_SIZE;
       const icon = this.lib.divIcon({
         html: `<div class="map-cluster-hit" style="width:${hitSize}px;height:${hitSize}px"><div class="map-cluster risk-${top}" style="width:${size}px;height:${size}px">${n}</div></div>`,
         className: "",
         iconSize: [hitSize, hitSize],
         iconAnchor: [hitSize / 2, hitSize / 2],
       });
-      const marker = this.lib.marker(centroid, { icon, keyboard: false }).bindPopup(clusterPopupHtml(c.events), { maxWidth: 360 });
+      const marker = this.lib.marker(markerPoint, { icon, keyboard: false }).bindPopup(clusterPopupHtml(c.events), { maxWidth: 360 });
       marker.on("dblclick", () => {
         this.map.flyTo(centroid, Math.min(z + 2, 12));
       });

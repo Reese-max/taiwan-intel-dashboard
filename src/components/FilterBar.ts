@@ -1,18 +1,59 @@
-import { getState, setState } from "../store";
-import type { NewsAuthority, RiskLevel, Scope } from "../types/event";
+import { getState, setState, type AppState } from "../store";
+import type { IntelEvent, NewsAuthority, RiskLevel, Scope } from "../types/event";
 import { esc } from "../utils/escape";
 import { debounce } from "../utils/debounce";
+import { VAGUE_REGIONS } from "../utils/locationLink";
 
-const CATS: Record<Scope, string[]> = {
+export const CATS: Record<Scope, string[]> = {
   domestic: ["治安", "社會", "反詐", "災防", "國防", "海事", "司法判決", "消防", "採購", "協尋", "交通", "食安", "衛生", "環境", "資安", "能源", "水情", "經濟", "農業", "國會", "教育", "社福", "觀光", "金融", "勞動"],
   international: ["地緣政治", "災害", "資安", "金融"],
 };
 
-export function renderFilterBar(container: HTMLElement, scope: Scope): void {
-  const state = getState();
-  const cats = CATS[scope].map((c) => `<option value="${c}">${c}</option>`).join("");
+const renderedScope = new WeakMap<HTMLElement, Scope>();
+
+export function regionCounts(events: IntelEvent[], scope: Scope): [string, number][] {
+  const counts = new Map<string, number>();
+  for (const e of events) {
+    const region = (e.region ?? "").trim().replace(/^台(?=[北中南東])/, "臺");
+    if (e.scope === scope && !VAGUE_REGIONS.has(region.toLowerCase())) counts.set(region, (counts.get(region) ?? 0) + 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "zh-TW"));
+}
+
+export function syncFilterBar(container: HTMLElement, state: AppState, events: IntelEvent[] = []): void {
+  if (renderedScope.get(container) !== state.scope) {
+    renderFilterBar(container, state.scope, events);
+    return;
+  }
+  for (const [id, value] of Object.entries({ "f-cat": state.category, "f-risk": state.minRisk,
+    "f-authority": state.newsAuthority, "f-range": state.sinceDays == null ? "" : String(state.sinceDays) })) {
+    const el = container.querySelector<HTMLSelectElement>(`#${id}`);
+    if (el) el.value = value ?? "";
+  }
+  const region = container.querySelector<HTMLSelectElement>("#f-region");
+  if (region) {
+    const counts = regionCounts(events, state.scope);
+    const selectedRegion = state.region?.trim().replace(/^台(?=[北中南東])/, "臺");
+    if (selectedRegion && !counts.some(([name]) => name === selectedRegion)) counts.unshift([selectedRegion, 0]);
+    region.innerHTML = '<option value="">全部地區</option>' + counts.map(([name, count]) =>
+      `<option value="${esc(name)}">${esc(name)}（${count}）</option>`).join("");
+    region.value = selectedRegion ?? "";
+  }
+  const input = container.querySelector<HTMLInputElement>("#f-query");
+  if (input && (typeof document === "undefined" || document.activeElement !== input)) input.value = state.query ?? "";
+  const chip = container.querySelector<HTMLElement>("#region-chip-slot");
+  if (chip) chip.innerHTML = state.region ? `<span class="region-filter-chip" id="region-chip" aria-label="地區條件：${esc(state.region)}">📍 ${esc(state.region)} <button type="button" id="clear-region-btn" class="clear-region-btn" aria-label="清除地區條件">✕</button></span>` : "";
+  const clear = container.querySelector<HTMLButtonElement>("#clear-region-btn");
+  if (clear) clear.onclick = () => setState({ region: undefined });
+}
+
+export function renderFilterBar(container: HTMLElement, scope: Scope, events: IntelEvent[] = []): void {
+  renderedScope.set(container, scope);
+  const state = { ...getState(), scope };
+  const cats = CATS[scope].map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
   container.innerHTML = `
     <select id="f-cat" aria-label="分類篩選"><option value="">全部分類</option>${cats}</select>
+    <select id="f-region" aria-label="地區篩選"><option value="">全部地區</option></select>
     ${scope === "domestic" ? `<select id="f-authority" aria-label="警政新聞來源篩選">
       <option value="">全部警政新聞</option>
       <option value="official">官方警政新聞</option>
@@ -34,12 +75,14 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
       <input id="f-query" type="search" aria-label="關鍵字搜尋" placeholder="搜尋情報關鍵字…（自動帶出關聯）" value="${esc(state.query ?? "")}">
       <kbd class="search-hint" aria-hidden="true">/</kbd>
     </div>
-    ${state.region ? `
+    <span id="region-chip-slot">${state.region ? `
       <span class="region-filter-chip" id="region-chip" aria-label="地區條件：${esc(state.region)}">
         📍 ${esc(state.region)}
         <button type="button" id="clear-region-btn" class="clear-region-btn" aria-label="清除地區條件" title="清除地區條件">✕</button>
       </span>
-    ` : ""}`;
+    ` : ""}</span>`;
+  const region = container.querySelector<HTMLSelectElement>("#f-region");
+  if (region) region.onchange = () => setState({ region: region.value || undefined });
   container.querySelector<HTMLSelectElement>("#f-cat")!.value = state.category ?? "";
   const authority = container.querySelector<HTMLSelectElement>("#f-authority");
   if (authority) authority.value = state.newsAuthority ?? "";
@@ -57,7 +100,7 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
     });
   container.querySelector<HTMLSelectElement>("#f-range")!.onchange = (ev) => {
     const v = (ev.target as HTMLSelectElement).value;
-    setState({ sinceDays: v ? Number(v) : undefined });
+    setState({ sinceDays: v ? Number(v) : undefined, day: undefined });
   };
   container.querySelector<HTMLInputElement>("#f-query")!.oninput = debounce((ev: unknown) => {
     const input = (ev as Event).target as HTMLInputElement;
@@ -67,4 +110,5 @@ export function renderFilterBar(container: HTMLElement, scope: Scope): void {
   if (clearRegionBtn) {
     clearRegionBtn.onclick = () => setState({ region: undefined });
   }
+  syncFilterBar(container, state, events);
 }

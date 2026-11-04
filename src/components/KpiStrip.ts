@@ -33,11 +33,15 @@ interface ContainerWithRenderId extends HTMLElement {
 // 各 scope 的統計由 computeProvStat 即時依 scope 過濾後算出，避免全域數字誤套到單一 scope）
 let provCache: ProvManifest | null | undefined;
 let provFetchPromise: Promise<ProvManifest | null> | undefined;
+let provVersion = 0;
 
-export function resetProvCacheForTest(): void {
+export function invalidateProvenanceCache(): void {
+  provVersion++;
   provCache = undefined;
   provFetchPromise = undefined;
 }
+
+export const resetProvCacheForTest = invalidateProvenanceCache;
 
 export function setProvCacheForTest(manifest: ProvManifest | null | undefined): void {
   provCache = manifest;
@@ -167,7 +171,7 @@ function sourceCards(stat: ProvStat | null, spark: number[]): string {
 
 async function fetchProvManifest(): Promise<ProvManifest | null> {
   try {
-    const res = await fetch("./data/provenance.json");
+    const res = await fetch("./data/provenance.json", { cache: "no-store" });
     if (!res.ok) return null;
     return (await res.json()) as ProvManifest;
   } catch {
@@ -308,10 +312,12 @@ export function renderKpiStrip(
   paint(provCache ?? null);
 
   if (provCache === undefined) {
+    const version = provVersion;
     if (!provFetchPromise) {
       provFetchPromise = fetchProvManifest();
     }
     void provFetchPromise.then((manifest) => {
+      if (version !== provVersion) return;
       provCache = manifest;
       if (c._kpiRenderId === renderId) {
         paint(manifest);

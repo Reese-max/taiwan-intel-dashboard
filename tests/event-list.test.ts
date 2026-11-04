@@ -1,6 +1,3 @@
-import { describe, expect, it } from "vitest";
-import { resetEventListScroll } from "../src/components/EventList";
-
 import { describe, expect, it, vi } from "vitest";
 import { PAGE_SIZE, renderEventList, resetEventListScroll } from "../src/components/EventList";
 import type { IntelEvent } from "../src/types/event";
@@ -97,6 +94,13 @@ describe("renderEventList 增量與虛擬化渲染", () => {
     expect(container.innerHTML).toContain("自訂空字串");
   });
 
+  it("空狀態文字插入 HTML 前跳脫", () => {
+    const container = new FakeDomElement("div");
+    renderEventList(container as unknown as HTMLElement, [], { emptyMessage: '<img src=x onerror="bad">' });
+    expect(container.innerHTML).not.toContain("<img");
+    expect(container.innerHTML).toContain("&lt;img");
+  });
+
   it("事件筆數小於等於 pageSize 時初次全數渲染，不掛頁尾與載入更多按鈕", () => {
     const container = new FakeDomElement("div");
     const events = [makeFakeEvent("1"), makeFakeEvent("2")];
@@ -154,6 +158,23 @@ describe("renderEventList 增量與虛擬化渲染", () => {
 
   it("預設匯出 PAGE_SIZE 常數為 50", () => {
     expect(PAGE_SIZE).toBe(50);
+  });
+
+  it("同一視圖重新渲染保留載入筆數，切換篩選才回到第一批", () => {
+    vi.stubGlobal("document", { createElement: (tag: string) => new FakeDomElement(tag) });
+    try {
+      const container = new FakeDomElement("div");
+      const events = Array.from({ length: 8 }, (_, i) => makeFakeEvent(`page-${i}`));
+      renderEventList(container as unknown as HTMLElement, events, { pageSize: 2, viewKey: "same" });
+      container.children[0].children[0].trigger("click");
+      renderEventList(container as unknown as HTMLElement, events, { pageSize: 2, viewKey: "same" });
+      expect(container.innerHTML).toContain("測試事件 page-3");
+      expect(container.innerHTML).not.toContain("測試事件 page-4");
+      renderEventList(container as unknown as HTMLElement, events, { pageSize: 2, viewKey: "changed-filter" });
+      expect(container.innerHTML).not.toContain("測試事件 page-2");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

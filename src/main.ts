@@ -1,22 +1,22 @@
 import "./styles/global.css";
 import { t } from "./i18n/zh-TW";
-import { getState, setState, subscribe } from "./store";
+import { DEFAULT_SINCE_DAYS, getState, setState, subscribe } from "./store";
 import { loadEvents, filterEvents, loadFirstPaintMapEvents, loadFirstPaintHeadEvents, explainOutOfFilter } from "./data/loader";
 import { edgeTypeLabel, loadNetwork, NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
-import { computeKpiKey, renderKpiStrip } from "./components/KpiStrip";
+import { computeKpiKey, renderKpiStrip, invalidateProvenanceCache } from "./components/KpiStrip";
 import { renderRelationGraph, type RelationNode } from "./components/RelationGraph";
 import { createRelationGraphController } from "./components/RelationGraphController";
 import { esc } from "./utils/escape";
 import { debounce } from "./utils/debounce";
-import { renderFilterBar } from "./components/FilterBar";
+import { syncFilterBar, CATS } from "./components/FilterBar";
 import { renderTimeline } from "./components/TimelineView";
 import { renderSourcePanel } from "./components/SourcePanel";
 import { clusterSummariesForScope, loadSummary, renderAiBrief, type AiSummary } from "./components/AiBrief";
 import { renderPoliceHealthPanel } from "./components/PoliceHealthPanel";
 import { renderTopClusters } from "./components/TopClusters";
 import { renderTriageInbox } from "./components/TriageInbox";
-import { MapView } from "./components/MapView";
+import { MapView, isMapDisplayable } from "./components/MapView";
 import type { IntelEvent, NewsAuthority, RiskLevel, Scope } from "./types/event";
 import { emptyListHint } from "./utils/emptyHint";
 import { applySearchSubnet } from "./search";
@@ -24,9 +24,8 @@ import { filterTriageEvents, loadTriageAcked, saveTriageAcked, type TriageSortMo
 import { corroborationOf } from "./utils/corroboration";
 import { collapseSameIncident } from "./utils/collapse";
 import { stalenessNotice } from "./utils/staleness";
-import { loadManifest, createManifestLoader, type CohortManifest } from "./data/manifest";
+import { loadManifest, createManifestLoader, scopeDataVersion, type CohortManifest } from "./data/manifest";
 
-const DEFAULT_SINCE_DAYS = 3;
 const REFRESH_MS = 300000;
 const TIP_KEY = "taiwan-intel-link-tip-dismissed";
 const COMPACT_LAYOUT_KEY = "taiwan-intel-compact-layout";
@@ -43,6 +42,18 @@ const manifestAutoRetried: Record<string, number> = {};
 // 記錄各 scope 快取事件是用哪一份 manifest 驗證的（null = 未驗證的獨立新聞備援）。
 // 關聯單獨重試只能沿用同一份 manifest；全域 cohortManifest 升版後不得拿新版關聯硬拼舊版事件。
 const cohortByScope: Partial<Record<Scope, CohortManifest | null>> = {};
+const invalidateSidePanels: (() => void)[] = [];
+let provenanceVersion = "";
+
+function snapshotLoaded(manifest: CohortManifest | null): void {
+  if (!manifest) return;
+  const version = JSON.stringify([manifest.snapshotId, manifest.files]);
+  if (version === provenanceVersion) return;
+  provenanceVersion = version;
+  invalidateProvenanceCache();
+  lastKpiKey = "";
+  invalidateSidePanels.forEach((invalidate) => invalidate());
+}
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -92,6 +103,7 @@ app.innerHTML = `
     <section class="col-map">
       <h2>${t.map}</h2>
       <div id="map" class="map"></div>
+      <p id="map-focus-notice" role="status" hidden></p>
       <h2>${t.timeline}</h2>
       <div id="timeline"></div>
     </section>
@@ -213,7 +225,7 @@ function mobileViewTarget(view: MobileView): HTMLElement | null {
   return document.getElementById("kpistrip");
 }
 
-function setMobileView(view: MobileView, options: { scroll?: boolean } = {}): void {
+function setMobileView(view: MobileView, options: { scroll?: boolean; reveal?: boolean } = {}): void {
   setMobileFilters(false, false);
   document.body.classList.toggle("mobile-view-map", view === "map");
   document.body.classList.toggle("mobile-view-list", view === "list");
@@ -228,7 +240,7 @@ function setMobileView(view: MobileView, options: { scroll?: boolean } = {}): vo
   } catch {
     // localStorage 不可用時略過保存
   }
-  if (view === "map" && !options.scroll) void mapView.reveal().catch(() => {});
+  if (view === "map" && !options.scroll && options.reveal !== false) void mapView.reveal().catch(() => {});
   else if (view !== "map") void mapView.closePopup().catch(() => {});
   if (options.scroll) {
     window.requestAnimationFrame(() => {
@@ -438,6 +450,7 @@ let summary: AiSummary | null = null;
 // 情報網聚焦：可選單一事件，或選一個 cluster 展開整群。
 let focusId: string | null = null;
 let focusCluster: string | null = null;
+let missingFocus = false;
 let showOutOfFilterRelated = false;
 let applyingHash = false;
 let lastQuery = "";
@@ -489,7 +502,8 @@ function writeHash(mode: "replace" | "push" = "replace"): void {
   if (s.region) params.set("region", s.region);
   if (s.minRisk) params.set("risk", s.minRisk);
   if (s.newsAuthority) params.set("news", s.newsAuthority);
-  if (s.sinceDays) params.set("since", String(s.sinceDays));
+  params.set("since", s.sinceDays == null ? "all" : String(s.sinceDays));
+  if (s.day) params.set("day", s.day);
   if (s.query) params.set("q", s.query);
   if (focusCluster) params.set("cluster", focusCluster);
   else if (focusId) params.set("focus", focusId);
@@ -502,6 +516,7 @@ function writeHash(mode: "replace" | "push" = "replace"): void {
 
 function applyHash(): void {
   applyingHash = true;
+  missingFocus = false;
   const params = new URLSearchParams(location.hash.replace(/^#/, ""));
   const scopeRaw = params.get("scope");
   const riskRaw = params.get("risk");
@@ -509,21 +524,26 @@ function applyHash(): void {
   const scope: Scope = isScope(scopeRaw) ? scopeRaw : "domestic";
   const risk: RiskLevel | undefined = isRisk(riskRaw) ? riskRaw : undefined;
   const sinceRaw = params.get("since");
-  const sinceDays = sinceRaw && Number.isFinite(Number(sinceRaw)) ? Number(sinceRaw) : DEFAULT_SINCE_DAYS;
+  const sinceDays = sinceRaw === "all" ? undefined : sinceRaw && Number.isFinite(Number(sinceRaw)) && Number(sinceRaw) > 0 ? Number(sinceRaw) : DEFAULT_SINCE_DAYS;
+  const category = params.get("category");
+  const dayRaw = params.get("day") ?? "";
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(dayRaw) && Number.isFinite(Date.parse(dayRaw)) && new Date(dayRaw).toISOString().slice(0, 10) === dayRaw ? dayRaw : undefined;
   focusCluster = params.get("cluster") || null;
   focusId = focusCluster ? null : params.get("focus") || null;
   setState({
     scope,
-    category: params.get("category") || undefined,
+    category: category && CATS[scope].includes(category) ? category : undefined,
     region: params.get("region") || undefined,
     minRisk: risk,
     newsAuthority: scope === "domestic" && isNewsAuthority(newsRaw) ? newsRaw : undefined,
     sinceDays,
+    day,
     query: params.get("q") || undefined,
   });
   setActiveScopeTab(scope);
-  renderFilterBar(document.getElementById("filterbar")!, scope);
+  syncFilterBar(document.getElementById("filterbar")!, getState(), cache[scope] ?? []);
   applyingHash = false;
+  writeHash();
 }
 
 function relationChip(ref: RelatedRef): { label: string; why: string } {
@@ -555,6 +575,7 @@ function renderFilterSummary(displayCount: number, totalCount: number, focusLabe
     chips.push(`<button type="button" class="filter-chip" data-clear-filter="risk">風險：${esc(riskFilterLabel(s.minRisk))} ✕</button>`);
   if (s.sinceDays)
     chips.push(`<button type="button" class="filter-chip" data-clear-filter="since">時間：近 ${s.sinceDays} 天（${s.sinceDays * 24}h） ✕</button>`);
+  if (s.day) chips.push(`<button type="button" class="filter-chip" data-clear-filter="day">日期：${esc(s.day)} ✕</button>`);
   if (s.query) chips.push(`<button type="button" class="filter-chip" data-clear-filter="query">搜尋：${esc(s.query)} ✕</button>`);
   if (focusLabel) chips.push(`<button type="button" class="filter-chip is-focus" data-clear-filter="focus">焦點：${esc(focusLabel)} ✕</button>`);
 
@@ -564,6 +585,7 @@ function renderFilterSummary(displayCount: number, totalCount: number, focusLabe
     Number(Boolean(s.newsAuthority)) +
     Number(Boolean(s.minRisk)) +
     Number(Boolean(s.sinceDays)) +
+    Number(Boolean(s.day)) +
     Number(Boolean(s.query));
   const mobileCount = document.getElementById("mobile-filter-count");
   if (mobileCount) {
@@ -585,6 +607,10 @@ function renderFilterSummary(displayCount: number, totalCount: number, focusLabe
     <button type="button" class="filter-clear-all" data-clear-filter="all">清除條件</button>`;
 }
 
+function toggleElevatedRisk(): void {
+  setState({ minRisk: getState().minRisk === "high" ? undefined : "high" });
+}
+
 function renderHeadFirstPaint(scope: Scope, headEvents: IntelEvent[]): void {
   if (cache[scope] || getState().scope !== scope) return;
   const s = getState();
@@ -597,7 +623,7 @@ function renderHeadFirstPaint(scope: Scope, headEvents: IntelEvent[]): void {
   renderEventList(eventListEl, display, {
     relatedCount: () => 0,
   });
-  renderKpiStrip(document.getElementById("kpistrip")!, headEvents, scope, () => setState({ minRisk: "high" }));
+  renderKpiStrip(document.getElementById("kpistrip")!, headEvents, scope, toggleElevatedRisk);
   renderTimeline(document.getElementById("timeline")!, display);
   const countEl = document.getElementById("count");
   if (countEl) {
@@ -616,6 +642,15 @@ interface FocusBarDetails {
 
 function renderFocusBar(events: IntelEvent[], net: NetworkIndex, details?: FocusBarDetails): void {
   const bar = document.getElementById("focusbar")!;
+  if (missingFocus) {
+    bar.hidden = false;
+    bar.innerHTML = `<p role="status">此事件不在目前快照或時間範圍內</p><button type="button" id="clear-focus">返回清單</button>`;
+    document.getElementById("clear-focus")!.onclick = () => {
+      missingFocus = false;
+      void refresh();
+    };
+    return;
+  }
   if (!focusId && !focusCluster) {
     bar.hidden = true;
     bar.innerHTML = "";
@@ -640,6 +675,12 @@ function renderFocusBar(events: IntelEvent[], net: NetworkIndex, details?: Focus
   }
 
   let extraHtml = "";
+  if (focusId && !isMapDisplayable(events.find((e) => e.id === focusId)!)) {
+    extraHtml += `<p class="focus-notice-warn focus-coordinate-notice" role="status">此事件沒有可標示的座標</p>`;
+  }
+  if (focusCluster && events.length === 0) {
+    extraHtml += `<p role="status">此情報群沒有符合目前篩選條件的事件。 <button type="button" id="clear-cluster-filters">清除篩選</button></p>`;
+  }
   if (details?.centerOutOfFilterReasons && details.centerOutOfFilterReasons.length > 0) {
     extraHtml += `<div class="focus-notice-warn">⚠️ 中心事件超出目前篩選條件（${esc(details.centerOutOfFilterReasons.join("、"))}），保留作為關聯核心</div>`;
   }
@@ -669,6 +710,10 @@ function renderFocusBar(events: IntelEvent[], net: NetworkIndex, details?: Focus
     writeHash("push");
     void refresh();
   };
+  document.getElementById("clear-cluster-filters")?.addEventListener("click", () => {
+    setState({ category: undefined, region: undefined, minRisk: undefined, source: undefined,
+      newsAuthority: undefined, query: undefined, sinceDays: undefined, day: undefined });
+  });
   const toggleBtn = document.getElementById("toggle-out-filter-btn");
   if (toggleBtn) {
     toggleBtn.onclick = () => {
@@ -693,7 +738,7 @@ async function refresh(): Promise<void> {
   }
 
   // 事件與情報網兩支 fetch 並行（原本串行，第二支要等第一支完成才開始）。
-  if (!cache[s.scope] || !netCache[s.scope]) {
+  if (!cache[s.scope] || !netCache[s.scope] || scopeDataVersion(cohortByScope[s.scope], s.scope) !== scopeDataVersion(cohortManifest, s.scope)) {
     // 首載/切換 scope 時主資料尚未快取：若已由 head first-paint 先行繪出則不留白閃爍。
     if (!cache[s.scope] && !headCache[s.scope]) eventList.innerHTML = `<p class="empty">情報載入中…</p>`;
     else if (!cache[s.scope] && headCache[s.scope]) {
@@ -819,11 +864,27 @@ async function refresh(): Promise<void> {
   if (requestId !== refreshRequestId) return;
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
+  snapshotLoaded(cohortByScope[s.scope] ?? null);
+  syncFilterBar(document.getElementById("filterbar")!, s, all);
   const byId = new Map(all.map((e) => [e.id, e] as const));
-  const kpiKey = computeKpiKey(s.scope, all);
+  if (focusId && !byId.has(focusId)) {
+    missingFocus = true;
+    focusId = null;
+    writeHash();
+  }
+  if (focusId && s.sinceDays && filterEvents([byId.get(focusId)!], { sinceDays: s.sinceDays }).length === 0) {
+    setState({ sinceDays: undefined });
+    return;
+  }
+  const mapFocusNotice = document.getElementById("map-focus-notice")!;
+  const noFocusCoordinates = !!focusId && !isMapDisplayable(byId.get(focusId)!);
+  mapFocusNotice.hidden = !noFocusCoordinates;
+  mapFocusNotice.textContent = noFocusCoordinates ? "此事件沒有可標示的座標" : "";
+  const dataVersion = scopeDataVersion(cohortByScope[s.scope], s.scope);
+  const kpiKey = `${dataVersion}:${computeKpiKey(s.scope, all)}`;
   if (kpiKey !== lastKpiKey) {
     lastKpiKey = kpiKey;
-    renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, () => setState({ minRisk: "high" }));
+    renderKpiStrip(document.getElementById("kpistrip")!, all, s.scope, toggleElevatedRisk);
   }
   const triageEvents = filterTriageEvents(all, s, net);
   const renderInbox = (): void => {
@@ -859,15 +920,18 @@ async function refresh(): Promise<void> {
   let listGroups: ReturnType<typeof collapseSameIncident> | null = null;
   let collapsedGroupCount = 0;
   let focusBarDetails: FocusBarDetails | undefined;
-  const viewKey = focusCluster
+  const filterKey = JSON.stringify(s);
+  const viewKey = filterKey + (missingFocus ? ":missing-focus" : focusCluster
     ? `cluster:${focusCluster}`
     : focusId
       ? `focus:${focusId}:${showOutOfFilterRelated ? "all" : "in"}`
-      : `list:${s.scope}:${s.category ?? ""}:${s.region ?? ""}:${s.newsAuthority ?? ""}:${s.minRisk ?? ""}:${s.sinceDays ?? ""}:${s.query ?? ""}`;
+      : "list");
   const relationById = new Map<string, { label: string; why: string }>();
-  if (focusCluster && net.cluster(focusCluster)) {
+  if (missingFocus) {
+    display = [];
+  } else if (focusCluster && net.cluster(focusCluster)) {
     const members = new Set(net.cluster(focusCluster)!.members);
-    display = all.filter((e) => members.has(e.id)).sort(byTimeDesc);
+    display = filterEvents(all.filter((e) => members.has(e.id)), s).filter((e) => explainOutOfFilter(e, s).length === 0).sort(byTimeDesc);
   } else if (focusId && all.some((e) => e.id === focusId)) {
     const center = byId.get(focusId)!;
     const centerReasons = explainOutOfFilter(center, s);
@@ -919,7 +983,7 @@ async function refresh(): Promise<void> {
 
   const emptyMessage =
     display.length === 0
-      ? (focusId || focusCluster) && net.state === "error"
+      ? missingFocus ? "此事件不在目前快照或時間範圍內" : focusCluster && net.state !== "error" ? "此情報群沒有符合目前篩選條件的事件，請清除篩選。" : (focusId || focusCluster) && net.state === "error"
         ? "關聯資料載入失敗，無法顯示延伸事件；請點擊重試或返回全部。"
         : emptyListHint(all, s, Date.now())
       : null;
@@ -932,6 +996,7 @@ async function refresh(): Promise<void> {
   }
 
   renderEventList(eventList, listGroups ?? display, {
+    viewKey,
     relatedCount: (id) => net.count(id),
     relationOf: (id) => relationById.get(id),
     corroboration: (id) => corroborationOf(id, byId, net),
@@ -949,11 +1014,11 @@ async function refresh(): Promise<void> {
         return ev ? { event: ev, rel: r } : null;
       })
       .filter((n): n is RelationNode => n !== null);
-    relationGraph.reset();
+    if (viewKey !== lastViewKey) relationGraph.reset();
     relationGraph.draw({ center, neighbors, net, byId });
   } else if (focusCluster && net.cluster(focusCluster)) {
     const c = net.cluster(focusCluster)!;
-    const memberIds = c.members.filter((id) => byId.has(id));
+    const memberIds = display.map((event) => event.id);
     const memberSet = new Set(memberIds);
     let hub = memberIds[0];
     let hubDeg = -1;
@@ -978,7 +1043,7 @@ async function refresh(): Promise<void> {
       const head = `🕸 情報群網絡　<b>${c.size ?? memberIds.length}</b> 則 · 圖示核心成員的群內關聯${
         clusterAi ? `<span class="rg-ai-summary">🤖 ${esc(clusterAi)}</span>` : ""
       }`;
-      relationGraph.reset();
+      if (viewKey !== lastViewKey) relationGraph.reset();
       relationGraph.draw({ center: hubEvent, neighbors, net, byId, headHtml: head });
     } else {
       relationGraph.clear();
@@ -1027,7 +1092,7 @@ async function refresh(): Promise<void> {
   }
   renderFilterSummary(display.length, all.length, focusSummaryLabel);
   renderTopClustersIfChanged(net, s.scope);
-  const mapKey = `${viewKey}:${display.length}:${display[0]?.id ?? ""}:${display[display.length - 1]?.id ?? ""}`;
+  const mapKey = `${dataVersion}:${viewKey}:${display.map((event) => event.id).join(",")}`;
   if (mapKey !== lastMapKey) {
     lastMapKey = mapKey;
     // 聚焦/情報群切換後也重新 fit：避免從 popup 進關聯網時，焦點事件落在舊視口外，
@@ -1041,7 +1106,16 @@ async function refresh(): Promise<void> {
   document.getElementById("count")!.textContent = listGroups ? `${display.length} 則 · 收合 ${collapsedGroupCount} 組` : `${display.length}`;
 }
 
+function commitPendingSearch(): void {
+  const input = mobileMedia.matches ? mqQuery : document.getElementById("f-query") as HTMLInputElement | null;
+  const query = input?.value.trim() || undefined;
+  if (input && query !== getState().query) setState({ query });
+}
+
 function focusEvent(id: string): void {
+  // 先套用仍在 debounce 等待中的搜尋，避免稍後的 query 更新清掉剛選取的焦點。
+  commitPendingSearch();
+  missingFocus = false;
   focusId = id;
   focusCluster = null;
   showOutOfFilterRelated = false;
@@ -1055,6 +1129,8 @@ function focusEvent(id: string): void {
 }
 
 function focusClusterById(id: string): void {
+  commitPendingSearch();
+  missingFocus = false;
   focusCluster = id;
   focusId = null;
   showOutOfFilterRelated = false;
@@ -1082,7 +1158,8 @@ document.getElementById("eventlist")!.addEventListener("click", (ev) => {
   const locateBtn = (ev.target as HTMLElement).closest<HTMLButtonElement>(".locate-on-page-btn");
   if (locateBtn?.dataset.locate) {
     const id = locateBtn.dataset.locate;
-    void mapView.locateEvent(id).then((ok) => {
+    if (mobileMedia.matches) setMobileView("map", { reveal: false });
+    void new Promise<void>((resolve) => requestAnimationFrame(() => resolve())).then(() => mapView.locateEvent(id)).then((ok) => {
       if (ok) {
         document.getElementById("map")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
@@ -1120,6 +1197,9 @@ document.getElementById("filter-summary")!.addEventListener("click", (ev) => {
     case "since":
       setState({ sinceDays: undefined });
       break;
+    case "day":
+      setState({ day: undefined });
+      break;
     case "query":
       setState({ query: undefined });
       break;
@@ -1131,6 +1211,7 @@ document.getElementById("filter-summary")!.addEventListener("click", (ev) => {
       void refresh();
       break;
     case "all":
+      missingFocus = false;
       focusId = null;
       focusCluster = null;
       showOutOfFilterRelated = false;
@@ -1141,10 +1222,11 @@ document.getElementById("filter-summary")!.addEventListener("click", (ev) => {
         minRisk: undefined,
         query: undefined,
         sinceDays: DEFAULT_SINCE_DAYS,
+        day: undefined,
       });
       break;
   }
-  renderFilterBar(document.getElementById("filterbar")!, scope);
+  syncFilterBar(document.getElementById("filterbar")!, getState(), cache[scope] ?? []);
 });
 
 // 關聯網互動控制器：點節點預覽／前往、hover/tap 高亮、圖例篩選型別。
@@ -1183,6 +1265,7 @@ document.getElementById("topclusters")!.addEventListener("click", (ev) => {
 document.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((btn) => {
   btn.onclick = () => {
     const scope = btn.dataset.scope as Scope;
+    missingFocus = false;
     focusId = null;
     focusCluster = null;
     showOutOfFilterRelated = false;
@@ -1195,8 +1278,9 @@ document.querySelectorAll<HTMLButtonElement>(".tabs button").forEach((btn) => {
       minRisk: undefined,
       query: undefined,
       sinceDays: DEFAULT_SINCE_DAYS,
+      day: undefined,
     });
-    renderFilterBar(document.getElementById("filterbar")!, scope);
+    syncFilterBar(document.getElementById("filterbar")!, getState(), cache[scope] ?? []);
     revealScopeChangeOnMobile();
   };
 });
@@ -1208,9 +1292,14 @@ subscribe((s) => {
     focusCluster = null;
   }
   lastQuery = nextQuery;
-  if (!applyingHash) writeHash("replace");
-  void refresh();
+  if (!applyingHash) missingFocus = false;
+  // applyHash 的呼叫端會在還原完成後 refresh；此時重入會讓自動放寬時間的 hash 寫入被抑制。
+  if (!applyingHash) {
+    writeHash("replace");
+    void refresh();
+  }
   setActiveScopeTab(s.scope);
+  syncFilterBar(document.getElementById("filterbar")!, s, cache[s.scope] ?? []);
   // 桌面搜尋與手機快捷搜尋雙向同步（不覆蓋正在輸入的那個）。
   const qv = s.query ?? "";
   const mqEl = document.getElementById("mq-query") as HTMLInputElement | null;
@@ -1255,68 +1344,47 @@ applyHash();
     .catch(() => {});
 }
 renderUsageTip();
-// 側欄警政健康面板只用尾端趨勢、且多在首屏摺線下：捲入視窗才抓 police-hourly-recent.json（精簡近期資料），
-// 讓它離開首屏關鍵載入窗，不與 domestic 主資料搶頻寬（IntersectionObserver 不支援時退回立即渲染）。
-{
-  const policeHealthEl = document.getElementById("policehealth")!;
-  const policeHealthSection = policeHealthEl.closest<HTMLDetailsElement>('[data-side-section="policehealth"]');
-  let policeHealthRendered = false;
-  const renderPoliceHealthOnce = (): void => {
-    if (policeHealthRendered) return;
-    policeHealthRendered = true;
-    void renderPoliceHealthPanel(policeHealthEl);
+// 側欄離開首屏關鍵載入窗；成功才記錄完成，新快照讓已開啟的面板重繪。
+function setupLazyPanel(id: string, render: (container: HTMLElement, onReload: () => void) => Promise<boolean>): void {
+  const el = document.getElementById(id)!;
+  const section = el.closest<HTMLDetailsElement>("[data-side-section]");
+  let version = 0;
+  let renderedVersion = -1;
+  let pending = false;
+  const renderOnce = (): void => {
+    if (pending || renderedVersion === version) return;
+    pending = true;
+    const requestedVersion = version;
+    void render(el, () => {
+      renderedVersion = -1;
+      renderOnce();
+    }).then((ok) => {
+      if (ok && requestedVersion === version) renderedVersion = version;
+    }).finally(() => {
+      pending = false;
+      if (requestedVersion !== version && section?.open) renderOnce();
+    });
   };
-  policeHealthSection?.addEventListener("toggle", () => {
-    if (policeHealthSection.open) renderPoliceHealthOnce();
+  invalidateSidePanels.push(() => {
+    version++;
+    if (section?.open) renderOnce();
   });
-  if (policeHealthSection?.open) {
-    renderPoliceHealthOnce();
-  } else if (typeof IntersectionObserver === "undefined") {
-    renderPoliceHealthOnce();
-  } else {
-    const io = new IntersectionObserver(
-      (entries, obs) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          obs.disconnect();
-          renderPoliceHealthOnce();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    io.observe(policeHealthSection ?? policeHealthEl);
+  section?.addEventListener("toggle", () => {
+    if (section.open) renderOnce();
+  });
+  if (section?.open || typeof IntersectionObserver === "undefined") renderOnce();
+  else {
+    const io = new IntersectionObserver((entries, observer) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        observer.disconnect();
+        renderOnce();
+      }
+    }, { rootMargin: "200px" });
+    io.observe(section ?? el);
   }
 }
-// 側欄來源總覽面板預設摺疊、在視窗外：捲入視窗或展開時才抓 provenance.json 並渲染，
-// 避免首屏關鍵載入窗被非關鍵側欄請求與渲染卡住（IntersectionObserver 不支援時退回立即渲染）。
-{
-  const sourcePanelEl = document.getElementById("sourcepanel")!;
-  const sourcePanelSection = sourcePanelEl.closest<HTMLDetailsElement>('[data-side-section="sourcepanel"]');
-  let sourcePanelRendered = false;
-  const renderSourcePanelOnce = (): void => {
-    if (sourcePanelRendered) return;
-    sourcePanelRendered = true;
-    void renderSourcePanel(sourcePanelEl);
-  };
-  sourcePanelSection?.addEventListener("toggle", () => {
-    if (sourcePanelSection.open) renderSourcePanelOnce();
-  });
-  if (sourcePanelSection?.open) {
-    renderSourcePanelOnce();
-  } else if (typeof IntersectionObserver === "undefined") {
-    renderSourcePanelOnce();
-  } else {
-    const io = new IntersectionObserver(
-      (entries, obs) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          obs.disconnect();
-          renderSourcePanelOnce();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    io.observe(sourcePanelSection ?? sourcePanelEl);
-  }
-}
+setupLazyPanel("policehealth", renderPoliceHealthPanel);
+setupLazyPanel("sourcepanel", renderSourcePanel);
 // 資料新鮮度徽章（topbar）：吃已載入的 summary（含 generatedAt + model），免額外 fetch。
 function renderDataFreshness(s: AiSummary | null): void {
   const el = document.getElementById("data-freshness");
@@ -1367,30 +1435,20 @@ void loadSummary().then((s) => {
 });
 void refresh();
 setInterval(() => {
-  void fetch("./data/summary.json")
-    .then((res) => (res.ok ? (res.json() as Promise<AiSummary>) : null))
-    .then((data) => {
-      renderStalenessBanner(data?.generatedAt);
-      if (!data?.generatedAt || data.generatedAt === lastGeneratedAt) {
-        // 資料摘要未更新時仍觸發 refresh()，讓 KPI 粗時間桶（如近 24h 滾動指標）在分頁常開時定時更新
-        void refresh();
-        return;
-      }
+  // manifest 獨立於摘要輪詢；離線時保留已驗證的事件／關聯快照。
+  void Promise.all([
+    fetchManifestOnce(),
+    fetch("./data/summary.json", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() as Promise<AiSummary> : null)
+      .catch(() => null),
+  ]).then(([manifest, data]) => {
+    if (manifest) cohortManifest = manifest;
+    if (data?.generatedAt && data.generatedAt !== lastGeneratedAt) {
       lastGeneratedAt = data.generatedAt;
       summary = data;
       renderDataFreshness(data);
-      cohortManifest = null;
-      for (const scope of ["domestic", "international"] as const) {
-        delete cache[scope];
-        delete netCache[scope];
-        delete cohortByScope[scope];
-        delete headCache[scope];
-        delete isHeadActive[scope];
-      }
-      void refresh();
-    })
-    .catch(() => {
-      // 網路異常或離線時仍觸發本地 refresh() 更新本地時間窗指標與 staleness banner
-      void refresh();
-    });
+    }
+    renderStalenessBanner(summary?.generatedAt);
+    void refresh();
+  });
 }, REFRESH_MS);

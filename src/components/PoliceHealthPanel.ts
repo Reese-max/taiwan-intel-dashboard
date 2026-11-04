@@ -212,31 +212,6 @@ function statusOrder(source: ProvSource, police?: PipelineStatus["police"]): num
   return 2;
 }
 
-async function retryFailedSources(container: HTMLElement, failedSources: ProvSource[]): Promise<void> {
-  const status = container.querySelector<HTMLElement>("[data-retry-status]");
-  const keys = [...new Set(failedSources.map((s) => s.key).filter((key): key is string => Boolean(key)))];
-  if (!keys.length) {
-    if (status) status.textContent = "目前沒有可重試的失敗來源。";
-    return;
-  }
-  if (status) status.textContent = `正在送出重試：${keys.join("、")}`;
-  try {
-    const res = await fetch("./api/retry-police-source", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sources: keys }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    if (status) status.textContent = "已送出重試請求，稍後重新載入健康檢查。";
-    window.setTimeout(() => void renderPoliceHealthPanel(container), 1500);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (status) {
-      status.textContent = `後端重試 API 不可用（${message}）。請在主機端執行 npm run fetch:police 後重新整理。`;
-    }
-  }
-}
-
 export async function fetchPoliceHourlyHistory(): Promise<HourlyHistory> {
   try {
     const recentRes = await fetch("./data/police-hourly-recent.json");
@@ -253,142 +228,149 @@ export async function fetchPoliceHourlyHistory(): Promise<HourlyHistory> {
   return { runs: [] };
 }
 
-export async function renderPoliceHealthPanel(container: HTMLElement): Promise<void> {
-  const [provRes, history] = await Promise.all([
-    fetch("./data/provenance.json"),
-    fetchPoliceHourlyHistory(),
-  ]);
-  if (!provRes.ok) {
-    container.innerHTML = `<p class="empty">警政健康檢查不可用</p>`;
-    return;
-  }
-  const provenance = (await provRes.json()) as ProvenanceManifest;
-  const police = provenance.pipeline?.police;
-  const latestRun = [...history.runs].sort((a, b) => a.hourLocal.localeCompare(b.hourLocal)).at(-1);
-  const historicalRun = police?.skipped === true ? latestRun : undefined;
-  const newPoliceRelatedCount = historicalRun?.newPoliceRelatedCount ?? police?.newPoliceRelatedCount ?? 0;
-  const deferredNewCandidateCount = historicalRun?.deferredNewCandidateCount ?? police?.deferredNewCandidateCount ?? 0;
-  const minimumNewPerHour = historicalRun?.minimumNewPerHour ?? police?.newMinimumPerHour ?? 200;
-  const calibration =
-    history.calibration ||
-    (typeof police?.newMinimumSampleSize === "number"
-      ? {
-          minimumNewPerHour,
-          lookbackDays: police.newMinimumLookbackDays || 7,
-          percentile: police.newMinimumPercentile || 25,
-          sampleSize: police.newMinimumSampleSize,
-        }
-      : undefined);
-  const policeSources = provenance.sources.filter(isPoliceSource);
-  const officialNews = newsChannelSummary(provenance.sources, true, provenance.generatedAt);
-  const mediaNews = newsChannelSummary(provenance.sources, false, provenance.generatedAt);
-  const okSources = policeSources.filter((s) => sourceStatus(s, police).cls === "ok").length;
-  const failedSources = policeSources.filter((s) => sourceStatus(s, police).cls === "bad");
-  const generated = new Date(provenance.generatedAt).toLocaleString("zh-TW", { hour12: false });
-  const prioritizedSources = [...policeSources].sort((a, b) => {
-    const order = statusOrder(a, police) - statusOrder(b, police);
-    if (order) return order;
-    return b.count - a.count;
-  });
-  const rowItems = prioritizedSources
-    .map((source) => {
-      const status = sourceStatus(source, police);
-      const sub = sourceSubstatus(source, police);
-      const stack = sub?.stack || sub?.error || "";
-      const lastSuccess = sourceLastSuccess(source, sub);
-      return `<li class="health-source-item">
-        <details>
-          <summary>
-            <span class="health-dot ${status.cls}">${status.label}</span>
-            <b>${esc(source.name)}</b>
-            <small>${esc(status.detail)}</small>
-          </summary>
-          <dl class="source-debug">
-            <div><dt>來源 key</dt><dd>${esc(source.key || "no-key")}</dd></div>
-            <div><dt>Dataset</dt><dd>${esc(source.datasetId || "no-id")}</dd></div>
-            <div><dt>分類</dt><dd>${esc(source.category || "未分類")}</dd></div>
-            <div><dt>本次筆數</dt><dd>${source.count} 筆</dd></div>
-            <div><dt>最近成功時間</dt><dd>${esc(formatDateTime(lastSuccess))}</dd></div>
-            <div><dt>本次抓取時間</dt><dd>${esc(formatDateTime(source.fetchedAt))}</dd></div>
-            <div><dt>查詢</dt><dd>${esc(source.query || "來源查詢資訊未提供")}</dd></div>
-          </dl>
-          ${
-            stack
-              ? `<p class="source-error-title">錯誤摘要</p>
-          <pre class="source-error-stack">${esc(stackPreview(stack))}</pre>`
-              : ""
+export async function renderPoliceHealthPanel(
+  container: HTMLElement,
+  onReload = (): void => { void renderPoliceHealthPanel(container); },
+): Promise<boolean> {
+  try {
+    const [provRes, history] = await Promise.all([
+      fetch("./data/provenance.json", { cache: "no-store" }),
+      fetchPoliceHourlyHistory(),
+    ]);
+    if (!provRes.ok) {
+      throw new Error(`HTTP ${provRes.status}`);
+    }
+    const provenance = (await provRes.json()) as ProvenanceManifest;
+    const police = provenance.pipeline?.police;
+    const latestRun = [...history.runs].sort((a, b) => a.hourLocal.localeCompare(b.hourLocal)).at(-1);
+    const historicalRun = police?.skipped === true ? latestRun : undefined;
+    const newPoliceRelatedCount = historicalRun?.newPoliceRelatedCount ?? police?.newPoliceRelatedCount ?? 0;
+    const deferredNewCandidateCount = historicalRun?.deferredNewCandidateCount ?? police?.deferredNewCandidateCount ?? 0;
+    const minimumNewPerHour = historicalRun?.minimumNewPerHour ?? police?.newMinimumPerHour ?? 200;
+    const calibration =
+      history.calibration ||
+      (typeof police?.newMinimumSampleSize === "number"
+        ? {
+            minimumNewPerHour,
+            lookbackDays: police.newMinimumLookbackDays || 7,
+            percentile: police.newMinimumPercentile || 25,
+            sampleSize: police.newMinimumSampleSize,
           }
+        : undefined);
+    const policeSources = provenance.sources.filter(isPoliceSource);
+    const officialNews = newsChannelSummary(provenance.sources, true, provenance.generatedAt);
+    const mediaNews = newsChannelSummary(provenance.sources, false, provenance.generatedAt);
+    const okSources = policeSources.filter((s) => sourceStatus(s, police).cls === "ok").length;
+    const failedSources = policeSources.filter((s) => sourceStatus(s, police).cls === "bad");
+    const generated = new Date(provenance.generatedAt).toLocaleString("zh-TW", { hour12: false });
+    const prioritizedSources = [...policeSources].sort((a, b) => {
+      const order = statusOrder(a, police) - statusOrder(b, police);
+      if (order) return order;
+      return b.count - a.count;
+    });
+    const rowItems = prioritizedSources
+      .map((source) => {
+        const status = sourceStatus(source, police);
+        const sub = sourceSubstatus(source, police);
+        const stack = sub?.stack || sub?.error || "";
+        const lastSuccess = sourceLastSuccess(source, sub);
+        return `<li class="health-source-item">
+          <details>
+            <summary>
+              <span class="health-dot ${status.cls}">${status.label}</span>
+              <b>${esc(source.name)}</b>
+              <small>${esc(status.detail)}</small>
+            </summary>
+            <dl class="source-debug">
+              <div><dt>來源 key</dt><dd>${esc(source.key || "no-key")}</dd></div>
+              <div><dt>Dataset</dt><dd>${esc(source.datasetId || "no-id")}</dd></div>
+              <div><dt>分類</dt><dd>${esc(source.category || "未分類")}</dd></div>
+              <div><dt>本次筆數</dt><dd>${source.count} 筆</dd></div>
+              <div><dt>最近成功時間</dt><dd>${esc(formatDateTime(lastSuccess))}</dd></div>
+              <div><dt>本次抓取時間</dt><dd>${esc(formatDateTime(source.fetchedAt))}</dd></div>
+              <div><dt>查詢</dt><dd>${esc(source.query || "來源查詢資訊未提供")}</dd></div>
+            </dl>
+            ${
+              stack
+                ? `<p class="source-error-title">錯誤摘要</p>
+            <pre class="source-error-stack">${esc(stackPreview(stack))}</pre>`
+                : ""
+            }
+          </details>
+        </li>`;
+      });
+    const visibleRows = rowItems.slice(0, POLICE_VISIBLE_LIMIT).join("");
+    const extraRows = rowItems.slice(POLICE_VISIBLE_LIMIT, POLICE_VISIBLE_LIMIT + POLICE_EXTRA_LIMIT).join("");
+    const hiddenCount = Math.max(0, rowItems.length - POLICE_VISIBLE_LIMIT - POLICE_EXTRA_LIMIT);
+    const decision = failedSources.length
+      ? `${failedSources.length} 個來源抓取失敗，可重新載入健康資料確認最新狀態`
+      : historicalRun
+        ? "本輪未執行警政來源，顯示上次警政入帳結果"
+        : "來源狀態正常，細節可按需展開";
+    const metricTime = historicalRun
+      ? `警政時段：${esc(historicalRun.hourLocal)}`
+      : `更新：${esc(generated)}`;
+    const minimumLabel = calibration
+      ? `${calibration.lookbackDays} 日 P${calibration.percentile} 動態門檻：${minimumNewPerHour} 筆／小時（${calibration.sampleSize} 個有效時段）`
+      : `目標：${minimumNewPerHour} 筆／小時`;
+
+    container.innerHTML = `
+      <section class="police-health-card">
+        <h4>警政資料源健康檢查</h4>
+        <div class="health-kpis">
+          <div><b>${policeSources.length}</b><span>來源</span></div>
+          <div><b>${okSources}</b><span>正常</span></div>
+          <div><b>${newPoliceRelatedCount}</b><span>本小時全新</span></div>
+          <div><b>${deferredNewCandidateCount}</b><span>候選池</span></div>
+        </div>
+        <h5 class="police-news-title">警政新聞通道</h5>
+        <div class="health-kpis police-news-kpis">
+          <div><b>${officialNews.count}</b><span>官方警政新聞</span><small>${officialNews.freshness}｜最新同步 ${esc(formatDateTime(officialNews.latest))}</small></div>
+          <div><b>${mediaNews.count}</b><span>媒體警政新聞</span><small>${mediaNews.freshness}｜最新同步 ${esc(formatDateTime(mediaNews.latest))}</small></div>
+        </div>
+        <p class="health-decision"><b>處理建議</b>${decision}</p>
+        <p class="health-meta">${metricTime}｜${minimumLabel}</p>
+        <div class="retry-row">
+          <button type="button" class="retry-btn" data-reload-health>
+            重新載入健康資料
+          </button>
+          <span>${failedSources.length ? `${failedSources.length} 個來源失敗` : "目前沒有失敗來源"}</span>
+        </div>
+        <ul class="health-source-list">${visibleRows}</ul>
+        ${
+          extraRows
+            ? `<details class="health-more">
+                <summary>查看 ${Math.min(POLICE_EXTRA_LIMIT, rowItems.length - POLICE_VISIBLE_LIMIT)} 個來源明細${hiddenCount ? `（另 ${hiddenCount} 個省略）` : ""}</summary>
+                <ul class="health-source-list health-source-list-extra">${extraRows}</ul>
+              </details>`
+            : ""
+        }
+        ${hiddenCount ? `<p class="prov-note">另有 ${hiddenCount} 個正常來源已省略；異常與高量來源會優先顯示。</p>` : ""}
+      </section>
+      <section class="police-health-card">
+        <details class="health-trend-details">
+          <summary>查看每小時入帳趨勢</summary>
+          ${renderTrendSwitcher(history.runs)}
         </details>
-      </li>`;
-    });
-  const visibleRows = rowItems.slice(0, POLICE_VISIBLE_LIMIT).join("");
-  const extraRows = rowItems.slice(POLICE_VISIBLE_LIMIT, POLICE_VISIBLE_LIMIT + POLICE_EXTRA_LIMIT).join("");
-  const hiddenCount = Math.max(0, rowItems.length - POLICE_VISIBLE_LIMIT - POLICE_EXTRA_LIMIT);
-  const decision = failedSources.length
-    ? `先重試 ${failedSources.length} 個失敗來源`
-    : historicalRun
-      ? "本輪未執行警政來源，顯示上次警政入帳結果"
-      : "來源狀態正常，細節可按需展開";
-  const metricTime = historicalRun
-    ? `警政時段：${esc(historicalRun.hourLocal)}`
-    : `更新：${esc(generated)}`;
-  const minimumLabel = calibration
-    ? `${calibration.lookbackDays} 日 P${calibration.percentile} 動態門檻：${minimumNewPerHour} 筆／小時（${calibration.sampleSize} 個有效時段）`
-    : `目標：${minimumNewPerHour} 筆／小時`;
+      </section>`;
 
-  container.innerHTML = `
-    <section class="police-health-card">
-      <h4>警政資料源健康檢查</h4>
-      <div class="health-kpis">
-        <div><b>${policeSources.length}</b><span>來源</span></div>
-        <div><b>${okSources}</b><span>正常</span></div>
-        <div><b>${newPoliceRelatedCount}</b><span>本小時全新</span></div>
-        <div><b>${deferredNewCandidateCount}</b><span>候選池</span></div>
-      </div>
-      <h5 class="police-news-title">警政新聞通道</h5>
-      <div class="health-kpis police-news-kpis">
-        <div><b>${officialNews.count}</b><span>官方警政新聞</span><small>${officialNews.freshness}｜最新同步 ${esc(formatDateTime(officialNews.latest))}</small></div>
-        <div><b>${mediaNews.count}</b><span>媒體警政新聞</span><small>${mediaNews.freshness}｜最新同步 ${esc(formatDateTime(mediaNews.latest))}</small></div>
-      </div>
-      <p class="health-decision"><b>處理建議</b>${decision}</p>
-      <p class="health-meta">${metricTime}｜${minimumLabel}</p>
-      <div class="retry-row">
-        <button type="button" class="retry-btn" data-retry-failed ${failedSources.length ? "" : "disabled"}>
-          失敗來源重試
-        </button>
-        <span data-retry-status>${failedSources.length ? `待重試 ${failedSources.length} 個來源` : "目前沒有失敗來源"}</span>
-      </div>
-      <ul class="health-source-list">${visibleRows}</ul>
-      ${
-        extraRows
-          ? `<details class="health-more">
-              <summary>查看 ${Math.min(POLICE_EXTRA_LIMIT, rowItems.length - POLICE_VISIBLE_LIMIT)} 個來源明細${hiddenCount ? `（另 ${hiddenCount} 個省略）` : ""}</summary>
-              <ul class="health-source-list health-source-list-extra">${extraRows}</ul>
-            </details>`
-          : ""
-      }
-      ${hiddenCount ? `<p class="prov-note">另有 ${hiddenCount} 個正常來源已省略；異常與高量來源會優先顯示。</p>` : ""}
-    </section>
-    <section class="police-health-card">
-      <details class="health-trend-details">
-        <summary>查看每小時入帳趨勢</summary>
-        ${renderTrendSwitcher(history.runs)}
-      </details>
-    </section>`;
-
-  container.querySelectorAll<HTMLButtonElement>("[data-trend-range]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const range = button.dataset.trendRange;
-      container.querySelectorAll<HTMLButtonElement>("[data-trend-range]").forEach((b) => {
-        b.classList.toggle("active", b === button);
-      });
-      container.querySelectorAll<HTMLElement>("[data-trend-panel]").forEach((panel) => {
-        panel.classList.toggle("hidden", panel.dataset.trendPanel !== range);
+    container.querySelectorAll<HTMLButtonElement>("[data-trend-range]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const range = button.dataset.trendRange;
+        container.querySelectorAll<HTMLButtonElement>("[data-trend-range]").forEach((b) => {
+          b.classList.toggle("active", b === button);
+        });
+        container.querySelectorAll<HTMLElement>("[data-trend-panel]").forEach((panel) => {
+          panel.classList.toggle("hidden", panel.dataset.trendPanel !== range);
+        });
       });
     });
-  });
 
-  container.querySelector<HTMLButtonElement>("[data-retry-failed]")?.addEventListener("click", () => {
-    void retryFailedSources(container, failedSources);
-  });
+    container.querySelector<HTMLButtonElement>("[data-reload-health]")?.addEventListener("click", onReload);
+    return true;
+  } catch {
+    container.innerHTML = `<p class="empty" role="status">警政健康檢查不可用，請重試。 <button type="button" data-reload-health>重新載入健康資料</button></p>`;
+    container.querySelector<HTMLButtonElement>("[data-reload-health]")?.addEventListener("click", onReload);
+    return false;
+  }
 }
