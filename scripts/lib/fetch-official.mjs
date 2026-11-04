@@ -1230,7 +1230,13 @@ export function mapParkingSummaryEvent(rows, profile, { fetchedAt = new Date().t
       type: "gov-open-data",
       scope: "domestic",
       category: "交通",
-      ...profile,
+      name: profile.name,
+      datasetId: profile.datasetId,
+      url: profile.url,
+      query: profile.query,
+      license: profile.license,
+      cadence: profile.cadence,
+      maxAgeHours: profile.maxAgeHours,
       fetchedAt,
       ...(latestUpdate ? { latestDataDate: latestUpdate } : {}),
       recordRef: `${profile.region}|${latestUpdate || fetchedAt}`,
@@ -1729,9 +1735,11 @@ export async function fetchHealthcareFacilities({ fetchImpl = fetch } = {}) {
   });
   const { columns, rows } = parseCsvRows(text);
   // 維護頁／WAF 錯誤頁常回 200，沒有預期表頭就當來源失敗，避免把錯誤頁行數算成院所數。
-  if (!columns.includes("醫事機構代碼")) throw new Error("健保署居家醫療院所 CSV 表頭不符");
+  const codeIndex = columns.indexOf("醫事機構代碼");
+  if (codeIndex < 0) throw new Error("健保署居家醫療院所 CSV 表頭不符");
   if (!rows.length) throw new Error("健保署居家醫療院所 CSV 沒有資料列");
-  return [mapHealthcareFacilityEvent({ columns: ["n"], rows: [[rows.length]] }, { fetchedAt })];
+  const count = rows.filter((row) => String(row[codeIndex] ?? "").trim()).length;
+  return [mapHealthcareFacilityEvent({ columns: ["n"], rows: [[count]] }, { fetchedAt })];
 }
 
 export async function fetchFireStatistics({ fetchImpl = fetch } = {}) {

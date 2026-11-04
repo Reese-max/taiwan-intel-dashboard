@@ -54,11 +54,6 @@ function tagValue(xml, tag) {
   return m ? decodeXml(m[1]) : "";
 }
 
-function firstBlock(xml, tag) {
-  const m = String(xml || "").match(new RegExp(`<(?:[\\w.-]+:)?${tag}\\b[^>]*>([\\s\\S]*?)<\\/(?:[\\w.-]+:)?${tag}>`, "i"));
-  return m ? m[1] : "";
-}
-
 function allBlocks(xml, tag) {
   const re = new RegExp(`<(?:[\\w.-]+:)?${tag}\\b[^>]*>([\\s\\S]*?)<\\/(?:[\\w.-]+:)?${tag}>`, "gi");
   const out = [];
@@ -115,7 +110,8 @@ function capAreaGeometry(areaXml) {
 
 export function parseCapAlert(xml) {
   const body = String(xml || "");
-  const info = firstBlock(body, "info");
+  const infos = allBlocks(body, "info");
+  const info = infos.find((block) => allBlocks(block, "area").some((area) => capAreaGeometry(area))) || infos[0] || "";
   const areas = allBlocks(info, "area");
   const areaDescs = areas.map((a) => tagValue(a, "areaDesc")).filter(Boolean);
   const areaDesc = areaDescs.join("、") || tagValue(info, "areaDesc");
@@ -228,6 +224,7 @@ function selectEntries(atomJson, { now, maxDetail = 60 } = {}) {
   }
 
   candidates.sort((a, b) => atomUpdatedMs(b.entry) - atomUpdatedMs(a.entry));
+  if (status.raw > 0 && status.whitelisted === 0) status.warning = "沒有任何白名單類別，回傳正常空結果";
   return { entries: candidates.slice(0, Number(maxDetail) || 60), status };
 }
 

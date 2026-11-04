@@ -11,7 +11,7 @@ export function cleanTitle(title) {
   return String(title || "").replace(/\s*[-|｜–—]\s*[^-|｜–—]{1,20}$/, "").trim() || String(title || "").trim();
 }
 
-// 標題短名 → 縣市座標（順序：特定者優先，避免「新北」被「北市」吃掉）。
+// 縣市短名規則；實際命中依文字位置排序。
 const COUNTY_MATCH = [
   [/新北/, "新北市"], [/台北|臺北|北市/, "臺北市"], [/桃園/, "桃園市"],
   [/台中|臺中|中市/, "臺中市"], [/台南|臺南|南市/, "臺南市"], [/高雄|高市/, "高雄市"],
@@ -27,26 +27,22 @@ const COUNTY_DISAMBIGUATION = {
   嘉義市: { county: "嘉義縣", city: /嘉義市|嘉市/, towns: "太保|朴子|布袋|大林|民雄|溪口|新港|六腳|東石|義竹|鹿草|水上|中埔|竹崎|梅山|番路|大埔|阿里山" },
 };
 
-function resolveCountyShortName(key, text, context = "") {
+function resolveCountyShortName(key, text, context = "", index = 0) {
   const rule = COUNTY_DISAMBIGUATION[key];
-  if (!rule || rule.city.test(text)) return key;
+  if (!rule || rule.city.test(text.slice(index, index + 3))) return key;
   const short = key.slice(0, 2);
   // ponytail: 鄉鎮只看短名前後 8 字；更遠的地名靠摘要縣全名，必要時再改用斷句定位。
-  const nearby = new RegExp(`(?:${short}[^，。！？；\\n]{0,8}(?:${rule.towns})|(?:${rule.towns})[^，。！？；\\n]{0,8}${short})`);
-  return text.includes(rule.county) || String(context).includes(rule.county) || nearby.test(`${text} ${context}`)
+  // 「東石路段」仍是鄉鎮路段描述；「寶山路」等道路名稱不算鄉鎮證據。
+  const town = `(?:${rule.towns})(?!路(?!段)|街|大道|巷)`;
+  const after = new RegExp(`^${short}[^，。！？；\\n]{0,8}${town}`);
+  const before = new RegExp(`${town}[^，。！？；\\n]{0,8}$`);
+  return text.includes(rule.county) || String(context).includes(rule.county) ||
+    after.test(`${text.slice(index)} ${context}`) || before.test(text.slice(0, index))
     ? rule.county : key;
 }
 
 export function detectCounty(text, context = "") {
-  const s = String(text || "");
-  for (const [re, key] of COUNTY_MATCH) {
-    if (re.test(s)) {
-      const region = resolveCountyShortName(key, s, context);
-      const [lat, lng] = COUNTY_CENTER[region];
-      return { region, lat, lng };
-    }
-  }
-  return { region: "全國", lat: null, lng: null };
+  return detectCountyEarliest(text, context);
 }
 
 // 全名（含「縣/市」）比對優先於短名規則：避免「嘉義縣」被短名「嘉義」誤判為嘉義市。
@@ -68,8 +64,8 @@ const DATELINE_RES = [
 ];
 
 // 文中「最早出現」的縣市：全名（COUNTY_CENTER 鍵，含台/臺異體）與短名規則一起取最小 index；
-// 同位置全名優先（「嘉義縣」不被短名「嘉義」誤判為嘉義市）。摘要/描述專用；標題維持 detectCounty。
-export function detectCountyEarliest(text) {
+// 同位置全名優先（「嘉義縣」不被短名「嘉義」誤判為嘉義市）。標題與摘要共用。
+export function detectCountyEarliest(text, context = "") {
   const s = String(text || "");
   let best = null;
   for (const name of Object.keys(COUNTY_CENTER)) {
@@ -84,7 +80,7 @@ export function detectCountyEarliest(text) {
     if (!m) continue;
     const idx = m.index;
     if (!best || idx < best.idx || (idx === best.idx && !best.full)) {
-      best = { idx, full: false, key: resolveCountyShortName(key, s) };
+      best = { idx, full: false, key: resolveCountyShortName(key, s, context, idx) };
     }
   }
   if (!best) return { region: "全國", lat: null, lng: null };
@@ -112,7 +108,7 @@ export function detectCountyInBody(text) {
   return detectCountyEarliest(datelines.join(" "));
 }
 
-// 標題優先（維持清單順序行為），無命中才看摘要/描述（剝發稿地、取最早出現縣市）：
+// 標題優先（取最早出現縣市），無命中才看摘要/描述（剝發稿地、取最早出現縣市）：
 // 避免摘要提及的他縣市蓋過標題（如標題無地名、摘要寫「嘉義縣 東石鄉」）。
 function countyFromItem(item) {
   const titleLoc = detectCounty(item?.title, [item?.description, item?.summary].filter(Boolean).join(" "));
