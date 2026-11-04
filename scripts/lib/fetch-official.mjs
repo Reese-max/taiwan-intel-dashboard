@@ -20,6 +20,11 @@ const CGA_BASE = "https://www.cga.gov.tw";
 const CGA_URL = `${CGA_BASE}/GipOpen/wSite/lp?ctNode=650&mp=999`;
 const TWCERT_URL = "https://www.twcert.org.tw/tw/rss-132-1.xml";
 const TAIPOWER_URL = "https://service.taipower.com.tw/data/opendata/apply/file/d006020/001.json";
+const PARKING_HSINCHU_URL = "https://hispark.hccg.gov.tw/OpenData/GetParkInfo";
+const PARKING_TAOYUAN_URL = "https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0daad6e6-0632-44f5-bd25-5e1de1e9146f/download";
+const ECONOMY_DATA_URL = "https://apiservice.mol.gov.tw/OdService/download/A17030000J-000016-xC8";
+const SOCIAL_POPULATION_DATA_URL = "https://newdatacenter.taichung.gov.tw/api/v1/no-auth/resource.download?rid=48c40f97-f15d-48c9-8c05-676fd93c8d05";
+const EDUCATION_DATA_URL = "https://data.ntpc.gov.tw/api/datasets/9766d45c-2dc9-4981-9d72-0d01505f6321/csv/file";
 const WRA_URL = "https://www.wra.gov.tw/ReservoirWarningTable.aspx?n=46046";
 const WRA_RIVER_LEVEL_URL = "https://opendata.wra.gov.tw/api/v2/73c4c3de-4045-4765-abeb-89f9f9cd5ff0?format=JSON&sort=_importdate+asc";
 const WRA_RIVER_STATION_URL = "https://opendata.wra.gov.tw/api/v2/c4acc691-7416-40ca-9464-292c0c00da92?format=JSON&sort=_importdate+asc";
@@ -177,6 +182,7 @@ export const OFFICIAL_SOURCE_META = {
     license: "政府資料開放授權條款-第1版 — 環境部",
     cadence: "daily",
     maxAgeHours: 96,
+    retired: "環境部 data.moenv.gov.tw API 需 api_key（原 Twinkle 代理已移除，無免金鑰官方端點；2026-11-04 實測）",
   },
   parkingHsinchu: {
     ...PARKING_SOURCE_PROFILES.hsinchu,
@@ -244,6 +250,7 @@ export const OFFICIAL_SOURCE_META = {
     license: "政府資料開放授權條款 — 立法院議政資料",
     cadence: "daily",
     maxAgeHours: 96,
+    retired: "ppg.ly.gov.tw 議案頁面與 API 已改版移除（2026-11-04 實測 /ppg/bills 與 /ppg/api/v1/bills 皆 404）",
   },
   tourismStat: {
     name: "交通部觀光署 來臺旅客上月概況",
@@ -255,6 +262,7 @@ export const OFFICIAL_SOURCE_META = {
     license: "觀光署公開資料鏡像（非 data.gov.tw OGDL；研究用途）",
     cadence: "monthly",
     maxAgeHours: 2160,
+    retired: "stat.taiwan.net.tw 已改為前端 SPA，無穩定公開資料端點（原 Twinkle 虛擬資料集停用；2026-11-04 實測）",
   },
   socialPopulation: {
     name: "臺中市民政局 各區人口結構",
@@ -381,6 +389,7 @@ async function fetchChecked(url, {
   attempts = 1,
   retryDelayMs = 1000,
   headers,
+  buffer = false,
 } = {}) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -391,7 +400,7 @@ async function fetchChecked(url, {
         error.status = response.status;
         throw error;
       }
-      return json ? response.json() : response.text();
+      return json ? response.json() : buffer ? response.arrayBuffer() : response.text();
     } catch (error) {
       lastError = error;
       if (attempt >= attempts || !isRetriableFetchError(error)) break;
@@ -1024,6 +1033,66 @@ function rowsAsObjects(payload) {
   );
 }
 
+function objectsAsPayload(list) {
+  const objects = (Array.isArray(list) ? list : []).filter((row) => row && typeof row === "object" && !Array.isArray(row));
+  const columns = [...new Set(objects.flatMap((row) => Object.keys(row)))];
+  return { columns, rows: objects.map((row) => columns.map((column) => row[column])) };
+}
+
+export function parseCsvRows(text) {
+  const rows = [];
+  let field = "";
+  let row = [];
+  let inQuotes = false;
+  const src = String(text || "").replace(/^\uFEFF/, "");
+  const flushRow = () => {
+    row.push(field);
+    field = "";
+    if (row.length > 1 || row[0] !== "") rows.push(row);
+    row = [];
+  };
+  for (let index = 0; index < src.length; index++) {
+    const char = src[index];
+    if (inQuotes) {
+      if (char === "\"") {
+        if (src[index + 1] === "\"") {
+          field += "\"";
+          index++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += char;
+      }
+    } else if (char === "\"") {
+      inQuotes = true;
+    } else if (char === ",") {
+      row.push(field);
+      field = "";
+    } else if (char === "\n" || char === "\r") {
+      if (char === "\r" && src[index + 1] === "\n") index++;
+      flushRow();
+    } else {
+      field += char;
+    }
+  }
+  if (field !== "" || row.length) flushRow();
+  const columns = rows.shift() || [];
+  return { columns, rows };
+}
+
+export function parseParkingTaoyuanXml(xml) {
+  const rows = [];
+  for (const blockMatch of String(xml || "").matchAll(/<parkingLot\b[^>]*>([\s\S]*?)<\/parkingLot>/gi)) {
+    const row = {};
+    for (const match of blockMatch[1].matchAll(/<([A-Za-z0-9_]+)[^>]*>([\s\S]*?)<\/\1>/g)) {
+      row[match[1]] = decodeHtml(match[2]);
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
 function taiwanTimestamp(value, fallback) {
   const parsed = taiwanDateIso(value, fallback);
   return Number.isFinite(Date.parse(parsed)) ? parsed : fallback;
@@ -1212,6 +1281,7 @@ export function mapEconomicIndicatorEvent(payload, { fetchedAt = new Date().toIS
     locationPrecision: "country",
     source: {
       ...OFFICIAL_SOURCE_META.economy,
+      url: ECONOMY_DATA_URL,
       fetchedAt,
       latestDataDate: `${period.slice(0, 4)}-${period.slice(4)}`,
       recordRef: period,
@@ -1586,4 +1656,141 @@ export function mapLaborStatisticsEvent(payload, { fetchedAt = new Date().toISOS
       retentionPolicy: "reference",
     },
   };
+}
+
+async function fetchParkingSource(profile, rowsOrPayload, { fetchedAt, label } = {}) {
+  const events = mapParkingSummaryEvent(rowsOrPayload, profile, { fetchedAt });
+  if (!events.length) throw new Error(`${label || profile.name} 沒有有效停車容量資料`);
+  return events;
+}
+
+export async function fetchParkingHsinchu({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const rows = await fetchChecked(PARKING_HSINCHU_URL, {
+    fetchImpl,
+    json: true,
+    timeoutMs: 60000,
+    attempts: 2,
+    headers: OFFICIAL_USER_AGENT,
+  });
+  if (!Array.isArray(rows)) throw new Error("新竹市停車場剩餘車位回應不是有效資料列陣列");
+  return fetchParkingSource(PARKING_SOURCE_PROFILES.hsinchu, rows, { fetchedAt });
+}
+
+export async function fetchParkingTaoyuan({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const xml = await fetchChecked(PARKING_TAOYUAN_URL, {
+    fetchImpl,
+    timeoutMs: 60000,
+    attempts: 2,
+    headers: OFFICIAL_USER_AGENT,
+  });
+  const rows = parseParkingTaoyuanXml(xml);
+  if (!rows.length) throw new Error("桃園市路外停車資訊 XML 解析為 0 筆");
+  return fetchParkingSource(PARKING_SOURCE_PROFILES.taoyuan, rows, { fetchedAt });
+}
+
+export async function fetchEconomicIndicators({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const rows = await fetchChecked(ECONOMY_DATA_URL, {
+    fetchImpl,
+    json: true,
+    timeoutMs: 60000,
+    attempts: 2,
+    headers: OFFICIAL_USER_AGENT,
+  });
+  if (!Array.isArray(rows) || !rows.length) throw new Error("主計總處經濟指標回應不是有效資料列陣列");
+  return [mapEconomicIndicatorEvent(objectsAsPayload(rows), { fetchedAt })];
+}
+
+export async function fetchAgriculturePrices({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const rows = await fetchChecked(AGRICULTURE_SOURCE_URL, {
+    fetchImpl,
+    json: true,
+    timeoutMs: 90000,
+    attempts: 2,
+    headers: OFFICIAL_USER_AGENT,
+  });
+  if (!Array.isArray(rows) || !rows.length) throw new Error("農產品產地價格回應不是有效資料列陣列");
+  return [mapAgriculturePriceEvent(objectsAsPayload(rows), { fetchedAt })];
+}
+
+export async function fetchHealthcareFacilities({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const text = await fetchChecked(HEALTHCARE_SOURCE_URL, {
+    fetchImpl,
+    timeoutMs: 90000,
+    attempts: 2,
+    headers: OFFICIAL_USER_AGENT,
+  });
+  const { rows } = parseCsvRows(text);
+  if (!rows.length) throw new Error("健保署居家醫療院所 CSV 沒有資料列");
+  return [mapHealthcareFacilityEvent({ columns: ["n"], rows: [[rows.length]] }, { fetchedAt })];
+}
+
+export async function fetchFireStatistics({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const buffer = await fetchChecked(FIRE_SOURCE_URL, {
+    fetchImpl,
+    buffer: true,
+    timeoutMs: 60000,
+    attempts: 2,
+    headers: OFFICIAL_USER_AGENT,
+  });
+  const payload = parseCsvRows(new TextDecoder("big5").decode(buffer));
+  if (!payload.rows.length) throw new Error("臺北市消防統計 CSV 沒有資料列");
+  return [mapFireStatisticsEvent(payload, { fetchedAt })];
+}
+
+export async function fetchSocialPopulation({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const rows = await fetchChecked(SOCIAL_POPULATION_DATA_URL, {
+    fetchImpl,
+    json: true,
+    timeoutMs: 90000,
+    attempts: 2,
+    headers: OFFICIAL_USER_AGENT,
+  });
+  if (!Array.isArray(rows) || !rows.length) throw new Error("臺中市人口結構回應不是有效資料列陣列");
+  return [mapSocialPopulationEvent(objectsAsPayload(rows), { fetchedAt })];
+}
+
+export async function fetchEducationSnapshot({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const text = await fetchChecked(EDUCATION_DATA_URL, {
+    fetchImpl,
+    timeoutMs: 60000,
+    attempts: 2,
+    headers: OFFICIAL_USER_AGENT,
+  });
+  const payload = parseCsvRows(text);
+  if (!payload.rows.length) throw new Error("新北市教育概況 CSV 沒有資料列");
+  return [mapEducationSnapshotEvent(payload, { fetchedAt })];
+}
+
+export async function fetchFinanceDerivatives({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const text = await fetchChecked(FINANCE_SOURCE_URL, {
+    fetchImpl,
+    timeoutMs: 60000,
+    attempts: 2,
+    headers: OFFICIAL_USER_AGENT,
+  });
+  const payload = parseCsvRows(text);
+  if (!payload.rows.length) throw new Error("期貨三大法人 CSV 沒有資料列");
+  return [mapFinanceDerivativesEvent(payload, { fetchedAt })];
+}
+
+export async function fetchLaborStatistics({ fetchImpl = fetch } = {}) {
+  const fetchedAt = new Date().toISOString();
+  const text = await fetchChecked(LABOR_SOURCE_URL, {
+    fetchImpl,
+    timeoutMs: 60000,
+    attempts: 2,
+    headers: OFFICIAL_USER_AGENT,
+  });
+  const payload = parseCsvRows(text);
+  if (!payload.rows.length) throw new Error("新北市失業率統計 CSV 沒有資料列");
+  return [mapLaborStatisticsEvent(payload, { fetchedAt })];
 }

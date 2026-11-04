@@ -32,9 +32,8 @@ describe("source plan", () => {
       "pcc",
       "judicial",
       "moenvAir",
-      "parkingHsinchu",
-      "parkingTaoyuan",
-      "economy",
+      "legislature",
+      "tourismStat",
     ]));
   });
 

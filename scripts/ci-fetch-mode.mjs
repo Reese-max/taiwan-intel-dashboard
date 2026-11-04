@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 // 顯式 CI 清單必須同步列入所有預設來源，否則排程會把未列出的來源標為 skipped。
 export const HOURLY_ARGS = "--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cga,twcert,taipower,wra,wraRiver";
-export const REFRESH_ARGS = "--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver --exclusive";
+export const REFRESH_ARGS = "--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,socialPopulation,education,financeDerivatives,laborStats --exclusive";
 export const CWA_ARGS = "--sources=cwa";
 export const INTERNATIONAL_ARGS = "--sources=rss,gdelt";
 export const CWA_INTERNATIONAL_ARGS = "--sources=cwa,rss,gdelt";

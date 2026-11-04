@@ -652,8 +652,8 @@ describe("fetch-live pipeline integration (CWA)", () => {
         JSON.stringify({
           generatedAt: "2026-08-01T00:00:00.000Z",
           sources: [{
-            name: "主計總處 重要經濟指標月資料",
-            datasetId: "13228",
+            name: "立法院 議案進度",
+            datasetId: "ly-bills",
             fetchedAt: "2026-08-01T00:00:00.000Z",
             lastSuccessAt: "2026-08-01T00:00:00.000Z",
           }],
@@ -666,7 +666,7 @@ describe("fetch-live pipeline integration (CWA)", () => {
       await run();
 
       const provenance = readJson(join(dataDir, "provenance.json"));
-      expect(provenance.sources.some((source: any) => source.datasetId === "13228")).toBe(false);
+      expect(provenance.sources.some((source: any) => source.datasetId === "ly-bills")).toBe(false);
     },
     60_000,
   );

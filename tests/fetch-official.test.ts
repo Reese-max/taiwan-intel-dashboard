@@ -1,10 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 // @ts-expect-error — JS ESM module without types
 import {
   mapCgaEvents,
+  fetchAgriculturePrices,
   fetchCdcInfluenza,
+  fetchEconomicIndicators,
+  fetchEducationSnapshot,
+  fetchFinanceDerivatives,
+  fetchFireStatistics,
+  fetchHealthcareFacilities,
+  fetchLaborStatistics,
   fetchMndActivity,
+  fetchParkingHsinchu,
+  fetchParkingTaoyuan,
+  fetchSocialPopulation,
   fetchTfdaNoncompliant,
   mapCdcInfluenzaEvent,
   mapMndActivityEvent,
@@ -20,8 +32,13 @@ import {
   parseWraReservoirRows,
 } from "../scripts/lib/fetch-official.mjs";
 import { validateEventContract } from "../scripts/lib/event-contract.mjs";
+// @ts-expect-error — JS ESM module without types
+import { fetchDirectOfficialSources } from "../scripts/lib/direct-official-sources.mjs";
 
 const FETCHED_AT = "2026-07-16T02:00:00.000Z";
+const FIXTURES = join("tests", "fixtures");
+const fixtureResponse = (name: string) =>
+  async () => new Response(readFileSync(join(FIXTURES, name)), { status: 200 });
 
 describe("官方來源 mapper", () => {
   it("解析國防部空軍每日臺海動態並映射完整事件", () => {
@@ -238,4 +255,61 @@ describe("官方來源 mapper", () => {
     expect(validateEventContract(events).invalid).toEqual([]);
   });
 
+});
+
+describe("官方直連來源（原 Twinkle 批次）", () => {
+  const cases: Array<{
+    key: string;
+    fixture: string;
+    run: () => Promise<Array<{ title?: string; category?: string; source?: { datasetId?: string } }>>;
+    datasetId: string;
+    category: string;
+  }> = [
+    { key: "parkingHsinchu", fixture: "official-parking-129136.json", run: () => fetchParkingHsinchu({ fetchImpl: fixtureResponse("official-parking-129136.json") }), datasetId: "129136", category: "交通" },
+    { key: "parkingTaoyuan", fixture: "official-parking-25940.xml", run: () => fetchParkingTaoyuan({ fetchImpl: fixtureResponse("official-parking-25940.xml") }), datasetId: "25940", category: "交通" },
+    { key: "economy", fixture: "official-economy-13228.json", run: () => fetchEconomicIndicators({ fetchImpl: fixtureResponse("official-economy-13228.json") }), datasetId: "13228", category: "經濟" },
+    { key: "agriPrices", fixture: "official-agri-70930.json", run: () => fetchAgriculturePrices({ fetchImpl: fixtureResponse("official-agri-70930.json") }), datasetId: "70930", category: "農業" },
+    { key: "healthFacilities", fixture: "official-healthcare-39331.csv", run: () => fetchHealthcareFacilities({ fetchImpl: fixtureResponse("official-healthcare-39331.csv") }), datasetId: "39331", category: "衛生" },
+    { key: "fireStats", fixture: "official-fire-134922.csv", run: () => fetchFireStatistics({ fetchImpl: fixtureResponse("official-fire-134922.csv") }), datasetId: "134922", category: "消防" },
+    { key: "socialPopulation", fixture: "official-population-84049.json", run: () => fetchSocialPopulation({ fetchImpl: fixtureResponse("official-population-84049.json") }), datasetId: "84049", category: "社福" },
+    { key: "education", fixture: "official-education-124173.csv", run: () => fetchEducationSnapshot({ fetchImpl: fixtureResponse("official-education-124173.csv") }), datasetId: "124173", category: "教育" },
+    { key: "financeDerivatives", fixture: "official-finance-11598.csv", run: () => fetchFinanceDerivatives({ fetchImpl: fixtureResponse("official-finance-11598.csv") }), datasetId: "11598", category: "金融" },
+    { key: "laborStats", fixture: "official-labor-123349.csv", run: () => fetchLaborStatistics({ fetchImpl: fixtureResponse("official-labor-123349.csv") }), datasetId: "123349", category: "勞動" },
+  ];
+
+  it.each(cases)("$key 由真實 fixture 產生單一可驗證事件", async ({ run, datasetId, category }) => {
+    const events = await run();
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ category, source: { datasetId } });
+    expect(events[0].title).toBeTruthy();
+    expect(validateEventContract(events).invalid).toEqual([]);
+  });
+
+  it("fetchDirectOfficialSources 透過 wants 開關呼叫新註冊來源", async () => {
+    const calls: string[] = [];
+    vi.stubGlobal("fetch", async (url: string) => {
+      calls.push(url);
+      if (url.includes("hispark.hccg.gov.tw")) return fixtureResponse("official-parking-129136.json")();
+      if (url.includes("data.moa.gov.tw")) return fixtureResponse("official-agri-70930.json")();
+      return new Response("not found", { status: 404 });
+    });
+    try {
+      const result = await fetchDirectOfficialSources({
+        wants: (key: string) => key === "parkingHsinchu" || key === "agriPrices",
+        logger: { log: () => {}, error: () => {} },
+      });
+      expect(result.statusByKey.parkingHsinchu).toMatchObject({ ok: true, count: 1, datasetId: "129136" });
+      expect(result.statusByKey.agriPrices).toMatchObject({ ok: true, count: 1, datasetId: "70930" });
+      expect(result.statusByKey.mnd).toEqual({ skipped: true });
+      expect(result.freshByKey.parkingHsinchu).toHaveLength(1);
+      expect(result.freshByKey.agriPrices).toHaveLength(1);
+      expect(calls).toEqual(expect.arrayContaining([
+        expect.stringContaining("hispark.hccg.gov.tw"),
+        expect.stringContaining("data.moa.gov.tw"),
+      ]));
+      expect(calls).toHaveLength(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
