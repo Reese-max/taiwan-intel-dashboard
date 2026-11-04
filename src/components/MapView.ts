@@ -258,10 +258,14 @@ export class MapView {
         this.attachPopupFocusHandlers((ev as L.PopupEvent).popup.getElement());
       }, 0);
     });
-    this.map.on("popupclose", () => {
+    this.map.on("popupclose", (ev) => {
       this.popupOpen = false;
+      const popup = (ev as L.PopupEvent).popup;
       // Leaflet 尚在移除 popup／來源標記；等移除完成，避免 clearLayers 重入後留下重複標記。
       queueMicrotask(() => {
+        // fadeAnimated 下 Leaflet 讓 popup 淡出 200ms 後才移除容器，期間新開的 popup 會與殘留元素並存
+        // （殘留元素 opacity 0 仍會攔截點擊）；同一 popup 若已被重新開啟則保留，它會重用同一容器。
+        if (!this.map.hasLayer(popup)) popup.getElement()?.remove();
         if (!this.popupOpen) this.redraw();
       });
     });
