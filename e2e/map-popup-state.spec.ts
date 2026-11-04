@@ -42,3 +42,13 @@ test("聚合彈窗「此區新聞」關閉 popup 並套用地區篩選", async (
   await expect(page.locator(".leaflet-popup")).toHaveCount(0);
   await expect(page.locator("#region-chip")).toContainText(region ?? "");
 });
+
+// 使用者改篩選（例如地區下拉）時要關閉 popup 並立即重繪，不能讓清單與地圖顯示不同資料。
+test("popup 開啟時改地區下拉：關閉 popup", async ({ page }) => {
+  await openFirstCluster(page);
+  const region = page.getByRole("combobox", { name: "地區篩選" });
+  const value = await region.locator("option").nth(1).getAttribute("value");
+  test.skip(!value, "沒有可選地區");
+  await region.selectOption(value!);
+  await expect(page.locator(".leaflet-popup")).toHaveCount(0);
+});

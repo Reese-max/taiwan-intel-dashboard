@@ -214,13 +214,13 @@ function statusOrder(source: ProvSource, police?: PipelineStatus["police"]): num
 
 export async function fetchPoliceHourlyHistory(): Promise<HourlyHistory> {
   try {
-    const recentRes = await fetch("./data/police-hourly-recent.json");
+    const recentRes = await fetch("./data/police-hourly-recent.json", { signal: AbortSignal.timeout(15_000) });
     if (recentRes.ok) return (await recentRes.json()) as HourlyHistory;
   } catch {
     // 容錯降級至完整快照
   }
   try {
-    const historyRes = await fetch("./data/police-hourly-history.json");
+    const historyRes = await fetch("./data/police-hourly-history.json", { signal: AbortSignal.timeout(15_000) });
     if (historyRes.ok) return (await historyRes.json()) as HourlyHistory;
   } catch {
     // 兩者皆不可用
@@ -234,7 +234,8 @@ export async function renderPoliceHealthPanel(
 ): Promise<boolean> {
   try {
     const [provRes, history] = await Promise.all([
-      fetch("./data/provenance.json", { cache: "no-store" }),
+      // 有界逾時：請求卡住時要進錯誤畫面並解除面板 pending，重試才有作用。
+      fetch("./data/provenance.json", { cache: "no-store", signal: AbortSignal.timeout(15_000) }),
       fetchPoliceHourlyHistory(),
     ]);
     if (!provRes.ok) {

@@ -278,7 +278,8 @@ export async function renderSourcePanel(
   onReload = (): void => { void renderSourcePanel(container); },
 ): Promise<boolean> {
   try {
-    const res = await fetch("./data/provenance.json", { cache: "no-store" });
+    // 有界逾時：請求卡住時要進錯誤畫面並解除面板 pending，重試才有作用。
+    const res = await fetch("./data/provenance.json", { cache: "no-store", signal: AbortSignal.timeout(15_000) });
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
     }

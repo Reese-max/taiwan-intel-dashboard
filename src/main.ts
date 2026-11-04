@@ -456,6 +456,7 @@ let applyingHash = false;
 let lastQuery = "";
 let lastViewKey = "";
 let lastMapKey = "";
+let lastMapViewKey = "";
 let lastKpiKey = "";
 let lastTopClustersNet: NetworkIndex | null = null;
 let lastTopClustersScope: Scope | null = null;
@@ -1097,7 +1098,9 @@ async function refresh(): Promise<void> {
     lastMapKey = mapKey;
     // 聚焦/情報群切換後也重新 fit：避免從 popup 進關聯網時，焦點事件落在舊視口外，
     // 地圖看起來像「被清空」。一般清單與聚焦狀態都以目前 display 作為地圖真相。
-    void mapView.render(display, s.scope);
+    const viewChanged = viewKey !== lastMapViewKey;
+    lastMapViewKey = viewKey;
+    void mapView.render(display, s.scope, { closePopup: viewChanged });
   }
   renderTimeline(document.getElementById("timeline")!, display);
   lastDisplayedEvents = display;
@@ -1440,7 +1443,8 @@ setInterval(() => {
   // manifest 獨立於摘要輪詢；離線時保留已驗證的事件／關聯快照。
   void Promise.all([
     fetchManifestOnce(),
-    fetch("./data/summary.json", { cache: "no-store" })
+    // 摘要卡住不能擋住 manifest 套用與 refresh。
+    fetch("./data/summary.json", { cache: "no-store", signal: AbortSignal.timeout(15_000) })
       .then((res) => res.ok ? res.json() as Promise<AiSummary> : null)
       .catch(() => null),
   ]).then(([manifest, data]) => {

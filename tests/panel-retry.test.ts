@@ -30,6 +30,20 @@ for (const [name, render] of [["警政健康檢查", renderPoliceHealthPanel], [
       expect(fetch).toHaveBeenCalledTimes(requests);
     });
 
+    it("請求卡住時逾時進入錯誤畫面，不讓面板永遠 pending", async () => {
+      const controller = new AbortController();
+      vi.spyOn(AbortSignal, "timeout").mockReturnValue(controller.signal);
+      vi.stubGlobal("fetch", vi.fn((_url: string, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("timeout", "TimeoutError")));
+      })));
+      const { el } = container();
+      const result = render(el);
+      controller.abort();
+      expect(await result).toBe(false);
+      expect(el.innerHTML).toContain("請重試");
+      vi.restoreAllMocks();
+    });
+
     it.each(["network", "http", "json"])("%s 失敗回傳 false 並提供可恢復的重試", async (failure) => {
       let fail = true;
       vi.stubGlobal("fetch", vi.fn(async (url: string) => {

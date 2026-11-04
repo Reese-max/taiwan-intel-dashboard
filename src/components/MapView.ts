@@ -41,6 +41,8 @@ interface MapViewOptions {
 
 interface RenderOptions {
   fit?: boolean;
+  /** 使用者改變篩選或視圖：先關 popup 再重繪；只有背景同視圖更新才延後。 */
+  closePopup?: boolean;
 }
 
 export type MapDisplayable = IntelEvent & { lat: number; lng: number };
@@ -369,6 +371,10 @@ export class MapView {
     await this.ready;
     this.lastScope = scope;
     this.updateEmptyHint(events.length);
+    if (options.closePopup && this.popupOpen) {
+      this.popupOpen = false;
+      this.map.closePopup();
+    }
     // popup 開啟中只更新資料不補繪：redraw 的 clearLayers 會移除 popup 來源標記而強制關閉它；
     // 延後到使用者關閉時由 popupclose handler 以新資料 redraw。
     if (this.popupOpen) {
