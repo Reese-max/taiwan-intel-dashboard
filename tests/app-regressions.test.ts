@@ -74,6 +74,60 @@ describe("主程式整合回歸", () => {
     expect(tip.hidden).toBe(false); document.querySelector<HTMLButtonElement>("#close-tip")!.click(); expect(tip.hidden).toBe(true);
     document.querySelector<HTMLButtonElement>("#compact-layout-toggle")!.click();
     expect(document.body.classList.contains("layout-compact")).toBe(true);
+    expect(document.querySelector("#triageinbox .triage-storage-warning")?.textContent).toContain("儲存受限");
+  });
+  it("R5：getter 可讀但 setItem 從啟動就失敗時，首屏顯示儲存受限", async () => {
+    const storage = new Window().localStorage as Storage;
+    vi.spyOn(storage, "setItem").mockImplementation(() => { throw new DOMException("儲存額度不足", "QuotaExceededError"); });
+    vi.spyOn(window, "localStorage", "get").mockReturnValue(storage);
+    await import("../src/main");
+    await vi.waitFor(() => expect(document.querySelector("#eventlist")?.textContent).toContain("甲事件"));
+    expect(document.querySelector("#triageinbox .triage-storage-warning")?.textContent).toContain("儲存受限");
+  });
+  it("R6：國際失敗後離線切回國內，保留已成功的 provenance 快取", async () => {
+    const provenance = { generatedAt: new Date().toISOString(), sources: [
+      { name: "官方測試", scope: "domestic", type: "gov-open-data", fetchedAt: new Date().toISOString() },
+    ] };
+    let offline = false;
+    const fetch = vi.fn(async (url: unknown) => {
+      if (offline) throw Error("offline");
+      return new Response(JSON.stringify(String(url).includes("summary.json") ? h.summary : provenance));
+    });
+    vi.stubGlobal("fetch", fetch);
+    await import("../src/main");
+    await vi.waitFor(() => expect(document.querySelector("#kpistrip")?.textContent).toContain("100%"));
+    const requests = fetch.mock.calls.filter(([url]) => String(url).includes("provenance.json")).length;
+    offline = true; h.failInternational = true;
+    document.querySelector<HTMLButtonElement>('[data-scope="international"]')!.click();
+    await vi.waitFor(() => expect(document.querySelector("#eventlist")?.textContent).toContain("情報載入失敗"));
+    document.querySelector<HTMLButtonElement>('[data-scope="domestic"]')!.click();
+    await vi.waitFor(() => expect(document.querySelector("#eventlist")?.textContent).toContain("甲事件"));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(document.querySelector("#kpistrip")?.textContent).toContain("100%");
+    expect(fetch.mock.calls.filter(([url]) => String(url).includes("provenance.json"))).toHaveLength(requests);
+  });
+  it("R6：取消進行中 KPI 渲染，延遲 provenance 不覆蓋錯誤畫面且可供切回國內使用", async () => {
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>((resolve) => { release = resolve; });
+    let requests = 0;
+    vi.stubGlobal("fetch", vi.fn(async (url: unknown) => {
+      if (String(url).includes("summary.json")) return new Response(JSON.stringify(h.summary));
+      if (++requests > 1) throw Error("offline");
+      return pending;
+    }));
+    await import("../src/main");
+    await vi.waitFor(() => expect(document.querySelector("#eventlist")?.textContent).toContain("甲事件"));
+    h.failInternational = true;
+    document.querySelector<HTMLButtonElement>('[data-scope="international"]')!.click();
+    await vi.waitFor(() => expect(document.querySelector("#kpistrip")?.textContent).toContain("情報載入失敗"));
+    release(new Response(JSON.stringify({ generatedAt: new Date().toISOString(), sources: [
+      { name: "官方測試", scope: "domestic", type: "gov-open-data", fetchedAt: new Date().toISOString() },
+    ] })));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(document.querySelector("#kpistrip")?.textContent).toContain("情報載入失敗");
+    document.querySelector<HTMLButtonElement>('[data-scope="domestic"]')!.click();
+    await vi.waitFor(() => expect(document.querySelector("#kpistrip")?.textContent).toContain("100%"));
+    expect(requests).toBe(1);
   });
   it("U2：國際載入失敗清除國內的地圖、指標與側欄，切回國內能恢復", async () => {
     await import("../src/main");

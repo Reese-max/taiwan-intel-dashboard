@@ -4,7 +4,7 @@ import { DEFAULT_SINCE_DAYS, getState, setState, subscribe } from "./store";
 import { loadEvents, filterEvents, loadFirstPaintMapEvents, loadFirstPaintHeadEvents, explainOutOfFilter } from "./data/loader";
 import { edgeTypeLabel, loadNetwork, NetworkIndex, type RelatedRef } from "./data/network";
 import { renderEventList, resetEventListScroll } from "./components/EventList";
-import { computeKpiKey, renderKpiStrip, invalidateProvenanceCache } from "./components/KpiStrip";
+import { computeKpiKey, renderKpiStrip, invalidateProvenanceCache, cancelKpiRender } from "./components/KpiStrip";
 import { renderRelationGraph, type RelationNode } from "./components/RelationGraph";
 import { createRelationGraphController } from "./components/RelationGraphController";
 import { esc } from "./utils/escape";
@@ -445,7 +445,7 @@ function fetchCohortPair(scope: Scope, manifest: CohortManifest | null): Promise
 }
 
 const triageAcked = loadTriageAcked();
-let triageStorageOk = true;
+let triageStorageOk = safeStorage.isAvailable();
 let triageSortMode: TriageSortMode = "default";
 let summary: AiSummary | null = null;
 // 情報網聚焦：可選單一事件，或選一個 cluster 展開整群。
@@ -828,7 +828,7 @@ async function refresh(): Promise<void> {
         lastTopClustersNet = null;
         lastDisplayedEvents = [];
         lastDisplayedScope = s.scope;
-        invalidateProvenanceCache();
+        cancelKpiRender(document.getElementById("kpistrip")!);
         relationGraph.clear();
         void mapView.render([], s.scope, { closePopup: true });
         for (const id of ["kpistrip", "topclusters", "aibrief", "timeline", "triageinbox"]) {

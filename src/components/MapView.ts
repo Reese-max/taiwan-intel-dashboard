@@ -531,6 +531,8 @@ export class MapView {
 
   // 依目前 zoom 將鄰近事件聚成網格群：單一→風險點；多個→計數泡泡（點擊放大去聚合）。
   private redraw(): void {
+    const active = document.activeElement as HTMLElement | null;
+    const focusedCluster = active && this.map.getContainer().contains(active) ? active.dataset.mapClusterPosition : undefined;
     this.layer.clearLayers();
     const z = this.map.getZoom();
     // 視口裁切：只聚合/渲染目前可見範圍（含 20% 邊距，讓小幅平移前邊緣標點已在）內的事件；
@@ -574,7 +576,12 @@ export class MapView {
         this.map.flyTo(centroid, Math.min(this.map.getZoom() + 2, this.map.getMaxZoom()));
       });
       marker.addTo(this.layer);
-      marker.getElement()?.setAttribute("aria-label", `${n} 筆事件群集`);
+      const el = marker.getElement();
+      if (el) {
+        el.setAttribute("aria-label", `${n} 筆事件群集`);
+        el.dataset.mapClusterPosition = `${z}:${c.point.join(":")}`;
+        if (el.dataset.mapClusterPosition === focusedCluster) el.focus({ preventScroll: true });
+      }
       this.attachClusterPopupHandlers(marker, centroid);
     }
   }

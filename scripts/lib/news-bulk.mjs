@@ -23,24 +23,41 @@ const COUNTY_MATCH = [
 ];
 
 const COUNTY_DISAMBIGUATION = {
-  新竹市: { county: "新竹縣", city: /新竹市|竹市/, towns: "竹北|竹東|新埔|關西|湖口|新豐|芎林|橫山|北埔|寶山|峨眉|尖石|五峰|產業園區|工業區" },
-  嘉義市: { county: "嘉義縣", city: /嘉義市|嘉市/, towns: "太保|朴子|布袋|大林|民雄|溪口|新港|六腳|東石|義竹|鹿草|水上|中埔|竹崎|梅山|番路|大埔|阿里山" },
+  新竹市: { county: "新竹縣", city: /新竹市|竹市/, cityPlace: /^新竹(?:東區|北區|香山|巨城|科學工業園區)/, towns: "竹北|竹東|新埔|關西|湖口|新豐|芎林|橫山|北埔|寶山|峨眉|尖石|五峰" },
+  嘉義市: { county: "嘉義縣", city: /嘉義市|嘉市/, cityPlace: /^嘉義(?:東區|西區|文化路|湖美夜市)/, towns: "太保|朴子|布袋|大林|民雄|溪口|新港|六腳|東石|義竹|鹿草|水上|中埔|竹崎|梅山|番路|大埔|阿里山" },
 };
 
 function resolveCountyShortName(key, text, context = "", index = 0) {
   const rule = COUNTY_DISAMBIGUATION[key];
   if (!rule || rule.city.test(text.slice(index, index + 3))) return key;
   const short = key.slice(0, 2);
-  // ponytail: 鄉鎮只看短名前後 8 字；更遠的地名靠摘要縣全名，必要時再改用斷句定位。
+  // ponytail: 鄉鎮只看各次命中前後 8 字；移動目的地與另一案排除，更複雜關係需斷句解析。
   // 「東石路段」仍是鄉鎮路段描述；「寶山路」等道路名稱不算鄉鎮證據。
-  const town = `(?:${rule.towns})(?!路(?!段)|街|大道|巷)`;
+  const sentence = text.slice(0, index).split(/[。！？；\n]/).at(-1) + text.slice(index).split(/[。！？；\n]/)[0];
+  const town = `(?:${rule.towns})(?!${rule.city.test(sentence) ? "路" : "路(?!段)"}|街|大道|巷)`;
   const after = new RegExp(`^${short}[^，。！？；\\n]{0,8}${town}`);
   const before = new RegExp(`${town}[^，。！？；\\n]{0,8}$`);
-  return text.includes(rule.county) || String(context).includes(rule.county) ||
-    [...text.matchAll(new RegExp(short, "g"))].some((m) =>
-      !rule.city.test(text.slice(m.index, m.index + 3)) &&
-      (after.test(`${text.slice(m.index)} ${context}`) || before.test(text.slice(0, m.index))))
-    ? rule.county : key;
+  const next = text.indexOf(short, index + short.length);
+  const hit = text.slice(index, next < 0 ? undefined : next);
+  if (rule.cityPlace.test(hit)) return key;
+  if (after.test(hit) || before.test(text.slice(0, index)) ||
+    (key === "新竹市" && /^新竹(?:產業園區|工業區)/.test(hit))) return rule.county;
+  // 只有第一處仍模糊時，才以後續同名或剝署名後的摘要補足；明確市區不改判。
+  for (const [source, start] of [[text, index + short.length], [stripDatelines(context).body, 0]]) {
+    for (const m of source.matchAll(new RegExp(`${short}(?:縣|市)?|${rule.city.source}`, "g"))) {
+      if (m.index < start) continue;
+      const prefix = source.slice(0, m.index);
+      if (/(?:逃往|逃回|逃到|前往|南下|北上|返回)\s*$|另一案[^。！？；\n]*$/.test(prefix)) continue;
+      if (rule.city.test(m[0])) return key;
+      if (m[0] === rule.county) return rule.county;
+      const end = source.indexOf(short, m.index + m[0].length);
+      const local = source.slice(m.index, end < 0 ? undefined : end);
+      if (rule.cityPlace.test(local)) return key;
+      if (after.test(local) || before.test(prefix) ||
+        (key === "新竹市" && /^新竹(?:產業園區|工業區)/.test(local))) return rule.county;
+    }
+  }
+  return key;
 }
 
 export function detectCounty(text, context = "") {
@@ -59,40 +76,49 @@ export function detectCountyLoose(text) {
 const BRACKET_DATELINE_RE = /[〔【\[［（(][^〔【\[［（(〕】\]］）)\n／/]{1,80}[／/][^〔【\[［（(〕】\]］）)\n／/]{1,15}報導[〕】\]］）)]/g;
 // 中段「（中央社記者X台北1日電）」型署名：必須同時有「記者」與電訊字尾，避免剝掉一般括號。
 const BRACKET_WIRE_DATELINE_RE = /[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{0,40}?記者[^〔【\[［（(〕】\]］）)\n]{0,30}?(?:日電|專電|電訊)[〕】\]］）)]/g;
+const DATELINE_PLACE = `(?:${COUNTY_MATCH.map(([re]) => re.source).join("|")})(?:縣|市)?`;
+// 姓名僅 2–4 字，空白只可隔開姓名與地名，不接受跨子句的正文。
+const REPORTERS = "[\\p{Script=Han}]{2,4}(?:[、 \\t]+[\\p{Script=Han}]{2,4}){0,3}";
+const BYLINE_PREFIX = "[^\\s，。！？；／/]{1,30}";
+const UNBRACKETED_DATELINE_RE = new RegExp(`^\\s*(?:${BYLINE_PREFIX}[／/](?:記者)?${REPORTERS}[ \\t]*(?:${DATELINE_PLACE})?|${BYLINE_PREFIX}記者${REPORTERS}[／/](?:${DATELINE_PLACE})?|${BYLINE_PREFIX}[／/](?:記者${REPORTERS}|[^\\s／/]{1,8}中心)[／/]${DATELINE_PLACE})報導`, "u");
 const DATELINE_RES = [
-  /^\s*[^。！？；\n／/]{1,12}[／/](?:記者)?[\p{Script=Han}、\s]{2,40}?報導/u,
+  UNBRACKETED_DATELINE_RE,
   /^\s*[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{0,80}?(?:記者|報導|日電|專電|電訊|本報訊)[^〔【\[［（(〕】\]］）)\n]{0,30}?[〕】\]］）)]/,
   /^\s*[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{1,10}?訊[〕】\]］）)]/,
   /^\s*[^\s，。、：:（(〔【\[［]{1,10}?訊(?=[\s，。、：:．.]|$)/,
 ];
 
 // 文中「最早出現」的縣市：全名（COUNTY_CENTER 鍵，含台/臺異體）與短名規則一起取最小 index；
-// 同位置全名優先（「嘉義縣」不被短名「嘉義」誤判為嘉義市）。標題與摘要共用。
-export function detectCountyEarliest(text, context = "") {
+// 同位置全名優先（「嘉義縣」不被短名「嘉義」誤判為嘉義市）；機關所在地僅在標題降為備援。
+export function detectCountyEarliest(text, context = "", isTitle = true) {
   const s = String(text || "");
   let best = null;
+  let institution = null;
+  const consider = (idx, full, key, length) => {
+    const candidate = { idx, full, key };
+    if (isTitle && /^(?:縣|市)?(?:地檢署|地院|地方法院|地方檢察署)/.test(s.slice(idx + length))) {
+      if (!institution || idx < institution.idx || (idx === institution.idx && full)) institution = candidate;
+    } else if (!best || idx < best.idx || (idx === best.idx && full)) best = candidate;
+  };
   for (const name of Object.keys(COUNTY_CENTER)) {
-    const idx = s.indexOf(name);
-    if (idx < 0) continue;
-    if (!best || idx < best.idx || (idx === best.idx && !best.full)) {
-      best = { idx, full: true, key: name.replace(/^台/, "臺") };
+    for (const m of s.matchAll(new RegExp(name, "g"))) {
+      consider(m.index, true, name.replace(/^台/, "臺"), name.length);
     }
   }
   for (const [re, key] of COUNTY_MATCH) {
-    const m = s.match(re);
-    if (!m) continue;
-    const idx = m.index;
-    if (!best || idx < best.idx || (idx === best.idx && !best.full)) {
-      best = { idx, full: false, key: resolveCountyShortName(key, s, context, idx) };
+    for (const m of s.matchAll(new RegExp(re.source, "g"))) {
+      if (/^(?:路(?!段)|街(?!頭)|大道|巷)/.test(s.slice(m.index + m[0].length))) continue;
+      consider(m.index, false, resolveCountyShortName(key, s, context, m.index), m[0].length);
     }
   }
+  best ??= institution;
   if (!best) return { region: "全國", lat: null, lng: null };
   const [lat, lng] = COUNTY_CENTER[best.key];
   return { region: best.key, lat, lng };
 }
 
 // 長文（摘要/描述）縣市偵測：剝發稿地→取最早縣市；剝完無命中才回退發稿地縣市。
-export function detectCountyInBody(text) {
+function stripDatelines(text) {
   const s = String(text || "");
   const datelines = [];
   let body = s.replace(BRACKET_DATELINE_RE, (m) => (datelines.push(m), " "))
@@ -101,14 +127,23 @@ export function detectCountyInBody(text) {
   for (let i = 0; i < 4; i++) {
     let next = body;
     for (const re of DATELINE_RES) {
-      next = next.replace(re, (m) => (datelines.push(m), " "));
+      next = next.replace(re, (m) => {
+        if (re === UNBRACKETED_DATELINE_RE && /發生|遭搶|火警|車禍|查獲|追蹤|民宅|銀樓/.test(m)) return m;
+        datelines.push(m);
+        return " ";
+      });
     }
     if (next === body) break;
     body = next;
   }
-  const loc = detectCountyEarliest(body);
+  return { body, datelines };
+}
+
+export function detectCountyInBody(text) {
+  const { body, datelines } = stripDatelines(text);
+  const loc = detectCountyEarliest(body, "", false);
   if (loc.lat != null) return loc;
-  return detectCountyEarliest(datelines.join(" "));
+  return detectCountyEarliest(datelines.join(" "), "", false);
 }
 
 // 標題優先（取最早出現縣市），無命中才看摘要/描述（剝發稿地、取最早出現縣市）：

@@ -3,12 +3,11 @@ const memory = new Map<string, string | null>();
 
 export const safeStorage = {
   getItem(key: string): string | null {
-    if (memory.has(key)) return memory.get(key)!;
     try {
       const value = localStorage.getItem(key);
       memory.set(key, value);
       return value;
-    } catch { return null; }
+    } catch { return memory.get(key) ?? null; }
   },
   setItem(key: string, value: string): boolean {
     memory.set(key, value);
@@ -17,5 +16,13 @@ export const safeStorage = {
   removeItem(key: string): void {
     memory.set(key, null);
     try { localStorage.removeItem(key); } catch { /* 本頁仍保留移除結果。 */ }
+  },
+  isAvailable(): boolean {
+    try {
+      const key = `taiwan-intel-storage-probe-${Math.random()}`;
+      localStorage.setItem(key, key);
+      localStorage.removeItem(key);
+      return true;
+    } catch { return false; }
   },
 };

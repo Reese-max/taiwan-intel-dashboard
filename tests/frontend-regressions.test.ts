@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { Window } from "happy-dom";
 import { renderFilterBar, syncFilterBar } from "../src/components/FilterBar";
 import { renderEventList } from "../src/components/EventList";
 import { renderAiBrief, clusterSummariesForScope, type AiSummary } from "../src/components/AiBrief";
@@ -35,6 +36,19 @@ describe("前端使用回歸", () => {
     expect(safeStorage.getItem("讀取回退測試")).toBe("既存設定");
     get.mockImplementation(() => { throw new DOMException("拒絕儲存", "SecurityError"); });
     expect(safeStorage.getItem("讀取回退測試")).toBe("既存設定");
+  });
+  it("R5：每次優先讀取 localStorage，包含初讀 null、外部分頁更新與清除", () => {
+    const storage = new Window().localStorage as Storage;
+    vi.spyOn(window, "localStorage", "get").mockReturnValue(storage);
+    const key = "R5跨頁更新";
+    storage.removeItem(key);
+    expect(safeStorage.getItem(key)).toBeNull();
+    storage.setItem(key, "第一版");
+    expect(safeStorage.getItem(key)).toBe("第一版");
+    storage.setItem(key, "第二版");
+    expect(safeStorage.getItem(key)).toBe("第二版");
+    storage.removeItem(key);
+    expect(safeStorage.getItem(key)).toBeNull();
   });
   it("U1：getItem／setItem／removeItem 拒絕存取時仍可修改與移除本頁設定", () => {
     const denied = () => { throw new DOMException("儲存額度不足", "QuotaExceededError"); };
@@ -81,13 +95,21 @@ describe("前端使用回歸", () => {
     renderEventList(el, events, { viewKey: "相同視圖" });
     expect(el.textContent).toContain("測試甲");
   });
-  it("U3：新快照的 c0 不得顯示舊摘要，相同快照才顯示", () => {
+  it("U3：有成員版本的新快照 c0 不得顯示舊摘要，相同成員才顯示", () => {
     const el = container();
+    const versioned = { ...summary, clusterVersions: { c0: JSON.stringify(["甲"]) } };
     const forSnapshot = clusterSummariesForScope;
-    renderTopClusters(el, [{ id: "c0", members: ["乙"], size: 1, representativeTitle: "乙事件" }], forSnapshot(summary, "domestic", "2026-11-04T01:00:00Z"));
+    renderTopClusters(el, [{ id: "c0", members: ["乙"], size: 1, representativeTitle: "乙事件" }], forSnapshot(versioned, "domestic", "2026-11-04T01:00:00Z", [{ id: "c0", members: ["乙"], size: 1 }]));
     expect(el.textContent).not.toContain("甲事件的摘要");
-    expect(forSnapshot(summary, "domestic", summary.generatedAt)).toEqual(summary.clusterSummaries);
-    expect(forSnapshot(summary, "domestic", "")).toEqual({});
+    expect(forSnapshot(versioned, "domestic", summary.generatedAt, [{ id: "c0", members: ["甲"], size: 1 }])).toEqual(summary.clusterSummaries);
+    expect(forSnapshot(versioned, "domestic", "", [])).toEqual({});
+  });
+  it("R4：舊摘要與網路差 11 分鐘仍顯示", () => {
+    expect(clusterSummariesForScope(summary, "domestic", "2026-11-03T23:49:00Z", [{ id: "c0", members: ["甲"], size: 1 }])).toEqual(summary.clusterSummaries);
+    expect(clusterSummariesForScope(summary, "domestic", "")).toEqual(summary.clusterSummaries);
+  });
+  it("R4：新格式未提供 clusters 也維持相容", () => {
+    expect(clusterSummariesForScope({ ...summary, clusterVersions: { c0: JSON.stringify(["甲"]) } }, "domestic")).toEqual(summary.clusterSummaries);
   });
   it("U3：摘要生成與網路建置時間不同，以群集成員版本辨識同一事件", () => {
     const versioned = { ...summary, clusterVersions: { c0: JSON.stringify(["乙", "甲"]) } };
@@ -132,6 +154,25 @@ describe("地圖群集實際 Leaflet 互動", () => {
       marker.focus(); expect(document.activeElement).toBe(marker);
       marker.dispatchEvent(new KeyboardEvent("keypress", { key: "Enter", keyCode: 13, bubbles: true }));
       expect(el.querySelector(".leaflet-popup")?.textContent).toContain("此區有 2 則情報");
+    } finally { await Promise.resolve(); map.off(); map.remove(); vi.clearAllTimers(); }
+  });
+  it("R7：Enter 開啟、Escape 關閉後重繪仍聚焦原位置群集，可再次開啟", async () => {
+    const { el, map } = await mapAt(14);
+    try {
+      const marker = el.querySelector<HTMLElement>(".leaflet-marker-icon")!;
+      marker.focus();
+      marker.dispatchEvent(new KeyboardEvent("keypress", { key: "Enter", keyCode: 13, bubbles: true }));
+      expect(el.querySelector(".leaflet-popup")).not.toBeNull();
+      // happy-dom 不模擬地圖容器的瀏覽器焦點事件；啟用 Leaflet 原生鍵盤 handler。
+      map.fire("focus");
+      marker.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27, bubbles: true }));
+      await Promise.resolve();
+      expect(el.querySelector(".leaflet-popup")).toBeNull();
+      const restored = el.querySelector<HTMLElement>(".leaflet-marker-icon")!;
+      expect(restored).not.toBe(marker);
+      expect(document.activeElement).toBe(restored);
+      restored.dispatchEvent(new KeyboardEvent("keypress", { key: "Enter", keyCode: 13, bubbles: true }));
+      expect(el.querySelector(".leaflet-popup")).not.toBeNull();
     } finally { await Promise.resolve(); map.off(); map.remove(); vi.clearAllTimers(); }
   });
 });
