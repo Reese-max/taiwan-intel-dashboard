@@ -23,7 +23,7 @@ const COUNTY_MATCH = [
 ];
 
 const COUNTY_DISAMBIGUATION = {
-  新竹市: { county: "新竹縣", city: /新竹市|竹市/, towns: "竹北|竹東|新埔|關西|湖口|新豐|芎林|橫山|北埔|寶山|峨眉|尖石|五峰" },
+  新竹市: { county: "新竹縣", city: /新竹市|竹市/, towns: "竹北|竹東|新埔|關西|湖口|新豐|芎林|橫山|北埔|寶山|峨眉|尖石|五峰|產業園區|工業區" },
   嘉義市: { county: "嘉義縣", city: /嘉義市|嘉市/, towns: "太保|朴子|布袋|大林|民雄|溪口|新港|六腳|東石|義竹|鹿草|水上|中埔|竹崎|梅山|番路|大埔|阿里山" },
 };
 
@@ -59,6 +59,8 @@ export function detectCountyLoose(text) {
 // 或 ≤10 字以「訊」結尾的短署名（〔台北訊〕（高雄訊）本報訊）。括號內的一般詞（通訊、資訊…）不剝。
 // 中段只移除「署名／地名報導」結構；一般括號內容保留。
 const BRACKET_DATELINE_RE = /[〔【\[［（(][^〔【\[［（(〕】\]］）)\n／/]{1,80}[／/][^〔【\[［（(〕】\]］）)\n／/]{1,15}報導[〕】\]］）)]/g;
+// 中段「（中央社記者X台北1日電）」型署名：必須同時有「記者」與電訊字尾，避免剝掉一般括號。
+const BRACKET_WIRE_DATELINE_RE = /[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{0,40}?記者[^〔【\[［（(〕】\]］）)\n]{0,30}?(?:日電|專電|電訊)[〕】\]］）)]/g;
 const DATELINE_RES = [
   /^\s*[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{0,80}?(?:記者|報導|日電|專電|電訊|本報訊)[^〔【\[［（(〕】\]］）)\n]{0,30}?[〕】\]］）)]/,
   /^\s*[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{1,10}?訊[〕】\]］）)]/,
@@ -94,7 +96,8 @@ export function detectCountyEarliest(text) {
 export function detectCountyInBody(text) {
   const s = String(text || "");
   const datelines = [];
-  let body = s.replace(BRACKET_DATELINE_RE, (m) => (datelines.push(m), " "));
+  let body = s.replace(BRACKET_DATELINE_RE, (m) => (datelines.push(m), " "))
+    .replace(BRACKET_WIRE_DATELINE_RE, (m) => (datelines.push(m), " "));
   // 全域署名剝除後，再處理開頭的日電／短署名；連續署名逐層剝，最多 4 層防呆。
   for (let i = 0; i < 4; i++) {
     let next = body;

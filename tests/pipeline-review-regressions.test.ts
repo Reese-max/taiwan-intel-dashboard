@@ -57,6 +57,17 @@ describe("Devin 資料管線回歸", () => {
     expect(detectCounty("新北車禍 臺北市警方支援").region).toBe("新北市");
   });
 
+  it("V1 新竹產業園區（湖口／新豐）判新竹縣；明確新竹市維持市", () => {
+    expect(detectCountyInBody("新竹產業園區4日凌晨驚傳重大爆炸火警！位於湖口鄉光復路").region).toBe("新竹縣");
+    expect(detectCountyInBody("位於新竹產業園區的台灣松下，湖口現在外面超恐怖").region).toBe("新竹縣");
+    expect(detectCountyInBody("新竹市東區說明竹市工業區活化").region).toBe("新竹市");
+  });
+
+  it("V4 中段「中央社記者…日電」署名剝除，一般括號保留", () => {
+    expect(detectCountyInBody("編按（中央社記者王明台北4日電）台中市警方查獲詐團。").region).toBe("臺中市");
+    expect(detectCountyInBody("編按（台北市電訊業者說明）台中市警方調查。").region).toBe("臺北市");
+  });
+
   it("D2 編按後署名剝除（Devin 原始案例）", () => {
     expect(detectCountyInBody("太可惡！… 〔記者丁偉杰、蔡宗勳／嘉義報導〕三十八歲嘉義縣某國小…").region).toBe("嘉義縣");
   });
