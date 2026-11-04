@@ -12,6 +12,28 @@ import {
 } from "../scripts/lib/nvidia.mjs";
 import { mapBulkNews } from "../scripts/lib/news-bulk.mjs";
 
+describe("嘉義縣標題的 LLM 地點 fallback", () => {
+  it("保留縣市全名並套用嘉義縣中心點", () => {
+    const event = applyDomesticCountyLocation({
+      region: "全國",
+      title: "嘉義縣東石鄉車禍 騎士送醫",
+      summary: "交通事故",
+    });
+    expect(event).toMatchObject({ region: "嘉義縣", locationPrecision: "city" });
+    expect(event.lat).toBeCloseTo(23.4518, 3);
+    expect(event.lng).toBeCloseTo(120.2555, 3);
+  });
+
+  it("短名不足以區分縣市時不猜測", () => {
+    const event = applyDomesticCountyLocation({
+      region: "嘉義",
+      title: "嘉義東石鄉車禍 騎士送醫",
+      summary: "交通事故",
+    });
+    expect(event).toMatchObject({ region: "全國", lat: null, lng: null, locationPrecision: "unknown" });
+  });
+});
+
 describe("LLM optional field clamps", () => {
   it("clampTwRelevance: clamp 0-100, round, non-number/null -> undefined", () => {
     expect(clampTwRelevance(150)).toBe(100);

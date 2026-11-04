@@ -15,6 +15,32 @@ import {
 
 const FETCHED_AT = "2026-06-20T00:00:00.000Z";
 
+describe("嘉義縣市地點辨識", () => {
+  it.each([
+    ["嘉義縣東石鄉車禍 騎士送醫", "嘉義縣", "city"],
+    ["嘉縣道路車禍 騎士送醫", "嘉義縣", "city"],
+    ["嘉義市東區車禍 騎士送醫", "嘉義市", "city"],
+    ["嘉市道路車禍 騎士送醫", "嘉義市", "city"],
+    ["嘉義東石鄉車禍 騎士送醫", "全國", "unknown"],
+    ["嘉義 東石鄉車禍 騎士送醫", "全國", "unknown"],
+    ["嘉義車禍 騎士送醫", "全國", "unknown"],
+  ])("依標題辨識 %s", (title, expectedRegion, expectedPrecision) => {
+    const events = mapBulkNews(
+      [{ title, link: "https://example.test/chiayi", description: "交通事故", source: "s", sourceUrl: "u", hint: "治安", pubDate: "x" }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ region: expectedRegion, locationPrecision: expectedPrecision });
+    if (expectedPrecision === "unknown") {
+      expect(events[0]).toMatchObject({ lat: null, lng: null });
+    }
+  });
+
+  it("摘要只有嘉義短名時不猜測縣市", () => {
+    expect(detectCountyInBody("嘉義東石鄉車禍造成道路中斷")).toMatchObject({ region: "全國", lat: null, lng: null });
+  });
+});
+
 const ITEMS = [
   { title: "高雄街頭砍人 男子背部受傷送醫 - 自由時報", link: "https://x/1", description: "街頭鬥毆", source: "自由時報 社會", sourceUrl: "u1", hint: "治安", pubDate: "Fri, 20 Jun 2026 01:00:00 +0800" },
   { title: "新北詐騙集團車手落網", link: "https://news.google.com/rss/articles/2?oc=5", description: "假檢警詐騙", source: "GN 詐騙逮捕", sourceUrl: "https://news.google.com/rss/search?q=詐騙逮捕", hint: "反詐", pubDate: "Fri, 20 Jun 2026 02:00:00 +0800" },
@@ -221,8 +247,7 @@ describe("mapBulkNews", () => {
     expect(ev[0].region).toBe("高雄市");
   });
 
-  it("標題維持短名清單規則（全名＋最早出現僅用於摘要 fallback，不改標題行為）", () => {
-    // 舊行為：標題命中短名「嘉義」→ 嘉義市；全名比對只適用摘要/描述。
+  it("標題的明確嘉義縣全名不被誤判為嘉義市", () => {
     const ev = mapBulkNews(
       [{
         title: "嘉義縣東石鄉車禍 騎士送醫",
@@ -235,7 +260,7 @@ describe("mapBulkNews", () => {
       }],
       { fetchedAt: FETCHED_AT },
     );
-    expect(ev[0].region).toBe("嘉義市");
+    expect(ev[0].region).toBe("嘉義縣");
   });
 
   it("標題短名清單順序優先：標題內全名不介入（新北車禍 臺北市警方支援 → 新北市）", () => {
