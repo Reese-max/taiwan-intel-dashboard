@@ -48,7 +48,7 @@ export const DOMAIN_COVERAGE = [
   { key: "衛生／食安", scope: "domestic", status: "integrated", categories: ["衛生", "食安"], note: "CDC、TFDA 與健保院所名單官方直連" },
   { key: "資安", scope: "domestic", status: "integrated", categories: ["資安"], note: "TWCERT/CC TVN 與資安新聞" },
   { key: "國防／海事／外交", scope: "domestic", status: "integrated", categories: ["國防", "海事"], note: "國防部、海巡署；外交旅遊警示在國際層" },
-  { key: "採購／經濟", scope: "domestic", status: "gap", categories: ["採購", "經濟"], note: "採購待官方直連；經濟指標已由主計總處資料集接入" },
+  { key: "採購／經濟", scope: "domestic", status: "gap", categories: ["採購", "經濟"], note: "採購待官方直連；經濟指標已由勞動部勞動基金運用局資料集接入" },
   { key: "農業", scope: "domestic", status: "reference", categories: ["農業"], datasetIds: ["70930"], note: "農業資料集參考；官方直連每日刷新，也不是價格預測或交易建議" },
   { key: "司法／法務", scope: "domestic", status: "gap", datasetIds: ["judicial"], note: "舊裁判書來源已移除，待改為司法院官方直連" },
   { key: "消防", scope: "domestic", status: "reference", datasetIds: ["134922", "176522"], note: "消防資料集參考；臺北市統計已直連刷新，全台即時案件仍是缺口" },

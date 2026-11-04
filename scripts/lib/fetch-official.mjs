@@ -197,13 +197,13 @@ export const OFFICIAL_SOURCE_META = {
     category: "交通",
   },
   economy: {
-    name: "主計總處 重要經濟指標月資料",
+    name: "勞動部勞動基金運用局 每月國內主要經濟指標",
     type: "gov-open-data",
     datasetId: ECONOMIC_DATASET_ID,
     scope: "domestic",
     category: "經濟",
-    query: "主計總處開放資料 13228 重要經濟指標月資料（最新月份）",
-    license: "政府資料開放授權條款-第1版 — 行政院主計總處",
+    query: "政府資料開放平臺 13228 每月國內主要經濟指標（勞動部勞動基金運用局，最新月份）",
+    license: "政府資料開放授權條款-第1版 — 勞動部勞動基金運用局",
     cadence: "monthly",
     maxAgeHours: 2160,
   },
@@ -1253,7 +1253,7 @@ export function mapEconomicIndicatorEvent(payload, { fetchedAt = new Date().toIS
     .filter((row) => /^\d{6}$/.test(String(row["日期（月別）"] || "")))
     .sort((a, b) => String(b["日期（月別）"]).localeCompare(String(a["日期（月別）"])));
   const row = rows[0];
-  if (!row) throw new Error("主計總處經濟指標沒有有效資料月份");
+  if (!row) throw new Error("每月國內主要經濟指標沒有有效資料月份");
   const period = String(row["日期（月別）"] || "");
   const value = (name) => {
     const number = numericValue(row[name]);
@@ -1270,7 +1270,7 @@ export function mapEconomicIndicatorEvent(payload, { fetchedAt = new Date().toIS
     : "最新月份沒有可用數值";
   return {
     id: stableId("economy", period),
-    title: `主計總處重要經濟指標：${period.slice(0, 4)} 年 ${Number(period.slice(4))} 月`,
+    title: `每月國內主要經濟指標：${period.slice(0, 4)} 年 ${Number(period.slice(4))} 月`,
     region: "全國",
     timestamp: monthEndIso(period, fetchedAt),
     category: "經濟",
@@ -1699,7 +1699,7 @@ export async function fetchEconomicIndicators({ fetchImpl = fetch } = {}) {
     attempts: 2,
     headers: OFFICIAL_USER_AGENT,
   });
-  if (!Array.isArray(rows) || !rows.length) throw new Error("主計總處經濟指標回應不是有效資料列陣列");
+  if (!Array.isArray(rows) || !rows.length) throw new Error("每月國內主要經濟指標回應不是有效資料列陣列");
   return [mapEconomicIndicatorEvent(objectsAsPayload(rows), { fetchedAt })];
 }
 
@@ -1724,7 +1724,9 @@ export async function fetchHealthcareFacilities({ fetchImpl = fetch } = {}) {
     attempts: 2,
     headers: OFFICIAL_USER_AGENT,
   });
-  const { rows } = parseCsvRows(text);
+  const { columns, rows } = parseCsvRows(text);
+  // 維護頁／WAF 錯誤頁常回 200，沒有預期表頭就當來源失敗，避免把錯誤頁行數算成院所數。
+  if (!columns.includes("醫事機構代碼")) throw new Error("健保署居家醫療院所 CSV 表頭不符");
   if (!rows.length) throw new Error("健保署居家醫療院所 CSV 沒有資料列");
   return [mapHealthcareFacilityEvent({ columns: ["n"], rows: [[rows.length]] }, { fetchedAt })];
 }

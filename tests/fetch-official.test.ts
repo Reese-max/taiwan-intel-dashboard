@@ -285,6 +285,12 @@ describe("官方直連來源（原 Twinkle 批次）", () => {
     expect(validateEventContract(events).invalid).toEqual([]);
   });
 
+  it("healthFacilities 收到 200 的 HTML 錯誤頁時當來源失敗，不產生假統計", async () => {
+    const html = "<!DOCTYPE html>\n<html><body>\n系統維護中\n</body></html>\n";
+    await expect(fetchHealthcareFacilities({ fetchImpl: async () => new Response(html, { status: 200 }) }))
+      .rejects.toThrow("表頭不符");
+  });
+
   it("fetchDirectOfficialSources 透過 wants 開關呼叫新註冊來源", async () => {
     const calls: string[] = [];
     vi.stubGlobal("fetch", async (url: string) => {
