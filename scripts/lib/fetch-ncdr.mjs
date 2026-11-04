@@ -149,8 +149,10 @@ export function parseCapAlert(xml) {
   };
 }
 
-function atomCategory(entry) {
-  return text(entry?.category?.["@term"] || entry?.category?.term || entry?.category || entry?.title);
+function atomCategories(entry) {
+  return arr(entry?.category || entry?.title).flat()
+    .map((category) => text(category?.["@term"] || category?.term || (typeof category === "string" ? category : "")))
+    .filter(Boolean);
 }
 
 function atomHref(entry) {
@@ -206,9 +208,10 @@ function selectEntries(atomJson, { now, maxDetail = 60 } = {}) {
   const candidates = [];
 
   for (const entry of entries) {
-    const category = atomCategory(entry);
-    if (!WHITELIST.has(category)) {
-      if (category) status.excludedCategory[category] = (status.excludedCategory[category] || 0) + 1;
+    const categories = atomCategories(entry);
+    const category = categories.find((value) => WHITELIST.has(value));
+    if (!category) {
+      for (const value of categories) status.excludedCategory[value] = (status.excludedCategory[value] || 0) + 1;
       continue;
     }
     status.whitelisted++;
@@ -323,6 +326,10 @@ export function buildNcdrEvents(atomJson, capByHref, { now, fetchedAt, maxDetail
     status.byCategory[category] = (status.byCategory[category] || 0) + 1;
   }
 
+  // 全部過期／撤銷是正常的平靜期（回空陣列）；只有 feed 為空或明細全部抓不到才算來源失敗。
+  if (status.raw === 0 || (status.failedDetail > 0 && status.kept === 0)) {
+    throw new Error(`NCDR 沒有可用示警（raw=${status.raw}, whitelisted=${status.whitelisted}, kept=${status.kept}, failedDetail=${status.failedDetail}）`);
+  }
   return { events, status };
 }
 

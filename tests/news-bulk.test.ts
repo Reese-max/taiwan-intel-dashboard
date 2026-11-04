@@ -221,8 +221,7 @@ describe("mapBulkNews", () => {
     expect(ev[0].region).toBe("高雄市");
   });
 
-  it("標題維持短名清單規則（全名＋最早出現僅用於摘要 fallback，不改標題行為）", () => {
-    // 舊行為：標題命中短名「嘉義」→ 嘉義市；全名比對只適用摘要/描述。
+  it("標題明確寫嘉義縣時不再誤判為嘉義市", () => {
     const ev = mapBulkNews(
       [{
         title: "嘉義縣東石鄉車禍 騎士送醫",
@@ -235,7 +234,7 @@ describe("mapBulkNews", () => {
       }],
       { fetchedAt: FETCHED_AT },
     );
-    expect(ev[0].region).toBe("嘉義市");
+    expect(ev[0].region).toBe("嘉義縣");
   });
 
   it("標題短名清單順序優先：標題內全名不介入（新北車禍 臺北市警方支援 → 新北市）", () => {

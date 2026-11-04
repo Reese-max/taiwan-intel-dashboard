@@ -99,6 +99,18 @@ describe("fetch-ncdr CAP mapper", () => {
     expect(parsed.description).toContain("低窪地區");
   });
 
+  it("白名單示警全部過期或撤銷是正常平靜期：回空陣列，不當成來源失敗", () => {
+    const atomJson = {
+      entry: [
+        atomEntry({ id: "old", category: "淹水感測", expires: "2026/7/6 下午 11:00:00" }),
+        atomEntry({ id: "cancel", category: "火災", msgType: "Cancel" }),
+      ],
+    };
+    const { events, status } = buildNcdrEvents(atomJson, {}, { now: NOW, fetchedAt: FETCHED_AT });
+    expect(events).toEqual([]);
+    expect(status).toMatchObject({ whitelisted: 2, kept: 0, failedDetail: 0 });
+  });
+
   it("filters whitelist, Cancel and expired entries while keeping counters", () => {
     const ids = ["flood", "water", "reservoir", "quake", "cancel", "expired"];
     const atomJson = {

@@ -1265,9 +1265,8 @@ export function mapEconomicIndicatorEvent(payload, { fetchedAt = new Date().toIS
     ["消費者物價年增率", value("消費者物價-年增率"), "%"],
     ["工業及服務業平均月薪資", value("工業及服務業平均月薪資（元）"), " 元"],
   ].filter(([, current]) => current != null);
-  const summary = indicators.length
-    ? indicators.map(([name, current, unit]) => `${name} ${current}${unit}`).join("；")
-    : "最新月份沒有可用數值";
+  if (!indicators.length) throw new Error("每月國內主要經濟指標沒有可用數值");
+  const summary = indicators.map(([name, current, unit]) => `${name} ${current}${unit}`).join("；");
   return {
     id: stableId("economy", period),
     title: `每月國內主要經濟指標：${period.slice(0, 4)} 年 ${Number(period.slice(4))} 月`,
@@ -1510,12 +1509,15 @@ const POPULATION_AGE_FIELDS = [
 export function mapSocialPopulationEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
   const rows = rowsAsObjects(payload).filter((row) => String(row?.區別 || row?.里別 || "").trim());
   if (!rows.length) throw new Error("臺中市人口結構沒有有效資料列");
-  const totals = rows.filter((row) => String(row?.性別 || "").trim() === "計");
-  const baseRows = totals.length ? totals : rows;
+  const genderRows = rows.filter((row) => ["計", "男", "女"].includes(String(row?.性別 || "").trim()));
+  if (!genderRows.length) throw new Error("臺中市人口結構沒有有效性別欄位");
+  const totals = genderRows.filter((row) => String(row.性別).trim() === "計");
+  const baseRows = totals.length ? totals : genderRows;
   const population = baseRows.reduce((total, row) => total + POPULATION_AGE_FIELDS.reduce((sum, field) => {
     const value = numericValue(row?.[field]);
     return sum + (Number.isFinite(value) ? value : 0);
   }, 0), 0);
+  if (population <= 0) throw new Error("臺中市人口結構沒有有效人口數值");
   const districts = new Set(rows.map((row) => String(row?.區別 || "").trim()).filter(Boolean));
   const villages = new Set(rows.map((row) => String(row?.里別 || "").trim()).filter(Boolean));
   return {
@@ -1554,6 +1556,7 @@ export function mapEducationSnapshotEvent(payload, { fetchedAt = new Date().toIS
   const totalRow = latest.find((row) => String(row?.field2 || "").includes("總計")) || latest[0];
   const schoolCount = numericValue(totalRow?.["item value3"]);
   const studentCount = numericValue(totalRow?.["item value16"]);
+  if (!Number.isFinite(schoolCount) && !Number.isFinite(studentCount)) throw new Error("教育概況沒有可用數值");
   const values = [
     Number.isFinite(schoolCount) ? `學校 ${schoolCount}` : "學校數未提供",
     Number.isFinite(studentCount) ? `學生 ${studentCount}` : "學生數未提供",
@@ -1594,11 +1597,10 @@ export function mapFinanceDerivativesEvent(payload, { fetchedAt = new Date().toI
   if (!rows.length) throw new Error("期貨三大法人資料沒有有效日期");
   const latestDataDate = rows.map((item) => item.date).sort().at(-1);
   const latest = rows.filter((item) => item.date === latestDataDate);
-  const netOpenInterest = latest.reduce((total, { row }) => {
-    const value = numericValue(row?.["多空未平倉契約金額淨額(千元)"]);
-    return total + (Number.isFinite(value) ? value : 0);
-  }, 0);
   const products = new Set(latest.map(({ row }) => String(row?.商品名稱 || "").trim()).filter(Boolean));
+  const netValues = latest.map(({ row }) => numericValue(row?.["多空未平倉契約金額淨額(千元)"])).filter(Number.isFinite);
+  if (!products.size || !netValues.length) throw new Error("期貨三大法人資料沒有有效商品與淨額");
+  const netOpenInterest = netValues.reduce((total, value) => total + value, 0);
   return {
     id: stableId("finance-derivatives", `${FINANCE_DATASET_ID}|${latestDataDate}`),
     title: `臺灣期貨交易所三大法人選擇權：${latestDataDate.slice(0, 4)}-${latestDataDate.slice(4, 6)}-${latestDataDate.slice(6)}`,
@@ -1635,6 +1637,7 @@ export function mapLaborStatisticsEvent(payload, { fetchedAt = new Date().toISOS
     .map(([label, field]) => [label, numericValue(latest[field])])
     .filter(([, value]) => Number.isFinite(value))
     .map(([label, value]) => `${label} ${value}%`);
+  if (!values.length) throw new Error("失業率年度統計沒有可用數值");
   return {
     id: stableId("labor-stats", `${LABOR_DATASET_ID}|${latestYear}`),
     title: `新北市失業率年度統計：${latestYear} 年`,

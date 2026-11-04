@@ -22,12 +22,28 @@ const COUNTY_MATCH = [
   [/連江|馬祖/, "連江縣"],
 ];
 
-export function detectCounty(text) {
+const COUNTY_DISAMBIGUATION = {
+  新竹市: { county: "新竹縣", city: /新竹市|竹市/, towns: "竹北|竹東|新埔|關西|湖口|新豐|芎林|橫山|北埔|寶山|峨眉|尖石|五峰" },
+  嘉義市: { county: "嘉義縣", city: /嘉義市|嘉市/, towns: "太保|朴子|布袋|大林|民雄|溪口|新港|六腳|東石|義竹|鹿草|水上|中埔|竹崎|梅山|番路|大埔|阿里山" },
+};
+
+function resolveCountyShortName(key, text, context = "") {
+  const rule = COUNTY_DISAMBIGUATION[key];
+  if (!rule || rule.city.test(text)) return key;
+  const short = key.slice(0, 2);
+  // ponytail: 鄉鎮只看短名前後 8 字；更遠的地名靠摘要縣全名，必要時再改用斷句定位。
+  const nearby = new RegExp(`(?:${short}[^，。！？；\\n]{0,8}(?:${rule.towns})|(?:${rule.towns})[^，。！？；\\n]{0,8}${short})`);
+  return text.includes(rule.county) || String(context).includes(rule.county) || nearby.test(`${text} ${context}`)
+    ? rule.county : key;
+}
+
+export function detectCounty(text, context = "") {
   const s = String(text || "");
   for (const [re, key] of COUNTY_MATCH) {
     if (re.test(s)) {
-      const [lat, lng] = COUNTY_CENTER[key];
-      return { region: key, lat, lng };
+      const region = resolveCountyShortName(key, s, context);
+      const [lat, lng] = COUNTY_CENTER[region];
+      return { region, lat, lng };
     }
   }
   return { region: "全國", lat: null, lng: null };
@@ -39,8 +55,10 @@ export function detectCountyLoose(text) {
 }
 
 // 發稿地/記者署名區塊：摘要比對前先剝掉（署名地僅作最後 fallback，地方記者駐地多半是事發地）。
-// 只剝「開頭」（允許前置空白）且明確符合署名結構者：括號內含署名標記（記者/報導/日電/專電/電訊/本報訊）、
+// 開頭另處理明確署名標記（記者/報導/日電/專電/電訊/本報訊）、
 // 或 ≤10 字以「訊」結尾的短署名（〔台北訊〕（高雄訊）本報訊）。括號內的一般詞（通訊、資訊…）不剝。
+// 中段只移除「署名／地名報導」結構；一般括號內容保留。
+const BRACKET_DATELINE_RE = /[〔【\[［（(][^〔【\[［（(〕】\]］）)\n／/]{1,80}[／/][^〔【\[［（(〕】\]］）)\n／/]{1,15}報導[〕】\]］）)]/g;
 const DATELINE_RES = [
   /^\s*[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{0,80}?(?:記者|報導|日電|專電|電訊|本報訊)[^〔【\[［（(〕】\]］）)\n]{0,30}?[〕】\]］）)]/,
   /^\s*[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{1,10}?訊[〕】\]］）)]/,
@@ -64,7 +82,7 @@ export function detectCountyEarliest(text) {
     if (!m) continue;
     const idx = m.index;
     if (!best || idx < best.idx || (idx === best.idx && !best.full)) {
-      best = { idx, full: false, key };
+      best = { idx, full: false, key: resolveCountyShortName(key, s) };
     }
   }
   if (!best) return { region: "全國", lat: null, lng: null };
@@ -76,8 +94,8 @@ export function detectCountyEarliest(text) {
 export function detectCountyInBody(text) {
   const s = String(text || "");
   const datelines = [];
-  let body = s;
-  // 署名區塊只剝開頭（各正則皆 ^ 錨定）；連續署名（〔記者…〕（中央社…））逐層剝，最多 4 層防呆。
+  let body = s.replace(BRACKET_DATELINE_RE, (m) => (datelines.push(m), " "));
+  // 全域署名剝除後，再處理開頭的日電／短署名；連續署名逐層剝，最多 4 層防呆。
   for (let i = 0; i < 4; i++) {
     let next = body;
     for (const re of DATELINE_RES) {
@@ -94,7 +112,7 @@ export function detectCountyInBody(text) {
 // 標題優先（維持清單順序行為），無命中才看摘要/描述（剝發稿地、取最早出現縣市）：
 // 避免摘要提及的他縣市蓋過標題（如標題無地名、摘要寫「嘉義縣 東石鄉」）。
 function countyFromItem(item) {
-  const titleLoc = detectCounty(item?.title);
+  const titleLoc = detectCounty(item?.title, [item?.description, item?.summary].filter(Boolean).join(" "));
   if (titleLoc.lat != null) return titleLoc;
   for (const text of [item?.description, item?.summary]) {
     const loc = detectCountyInBody(text);
