@@ -236,7 +236,8 @@ export class MapView {
     const lib = ((await import("leaflet")) as unknown as { default: typeof L }).default;
     this.lib = lib;
     this.layer = lib.layerGroup();
-    this.map = lib.map(el, { preferCanvas: true }).setView([23.7, 121], 7);
+    // fadeAnimation 會讓關閉的 popup 淡出 200ms 才移除 DOM，期間開啟相鄰聚合標記會有兩個彈窗並存（隱形的舊彈窗仍攔截點擊）。
+    this.map = lib.map(el, { preferCanvas: true, fadeAnimation: false }).setView([23.7, 121], 7);
     // OpenStreetMap 官方標準圖磚不需 API key；瀏覽器快取與 Referer 行為符合其 tile policy。
     lib
       .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -258,14 +259,10 @@ export class MapView {
         this.attachPopupFocusHandlers((ev as L.PopupEvent).popup.getElement());
       }, 0);
     });
-    this.map.on("popupclose", (ev) => {
+    this.map.on("popupclose", () => {
       this.popupOpen = false;
-      const popup = (ev as L.PopupEvent).popup;
       // Leaflet 尚在移除 popup／來源標記；等移除完成，避免 clearLayers 重入後留下重複標記。
       queueMicrotask(() => {
-        // fadeAnimated 下 Leaflet 讓 popup 淡出 200ms 後才移除容器，期間新開的 popup 會與殘留元素並存
-        // （殘留元素 opacity 0 仍會攔截點擊）；同一 popup 若已被重新開啟則保留，它會重用同一容器。
-        if (!this.map.hasLayer(popup)) popup.getElement()?.remove();
         if (!this.popupOpen) this.redraw();
       });
     });
