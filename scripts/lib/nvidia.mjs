@@ -1069,6 +1069,7 @@ export async function summarize({ domestic = [], international = [], clusters = 
     trend: (trend || "").trim(),
     dailyCounts,
     clusterSummaries,
+    clusterVersions: Object.fromEntries(clusters.filter((c) => clusterSummaries[c.id]).map((c) => [c.id, JSON.stringify([...c.members].sort())])),
     degraded: {
       domestic: degradedDomestic,
       international: degradedInternational,

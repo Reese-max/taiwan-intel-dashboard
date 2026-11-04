@@ -4,6 +4,7 @@ import { getState, setState } from "../src/store";
 
 type FakeElement = {
   value: string;
+  isConnected?: boolean;
   onchange?: ((ev: Event) => void) | null;
   oninput?: ((ev: Event) => void) | null;
   onclick?: (() => void) | null;
@@ -21,7 +22,7 @@ const createContainer = (): { el: FakeContainer; refs: Record<string, FakeElemen
     "#f-authority": { value: "" },
     "#f-risk": { value: "" },
     "#f-range": { value: "" },
-    "#f-query": { value: "" },
+    "#f-query": { value: "", isConnected: true },
     "#clear-region-btn": { value: "" },
   };
 

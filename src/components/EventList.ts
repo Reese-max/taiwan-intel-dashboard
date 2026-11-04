@@ -20,6 +20,7 @@ export const PAGE_SIZE = 50;
 const teardowns = new WeakMap<HTMLElement, () => void>();
 const expandedGroups = new WeakMap<HTMLElement, Set<string>>();
 const paging = new WeakMap<HTMLElement, { key?: string; shown: number }>();
+const rendered = new WeakMap<HTMLElement, { signature: string; firstChild: ChildNode | null }>();
 
 type EventListItem = IntelEvent | CollapsedGroup;
 
@@ -60,6 +61,12 @@ export function resetEventListScroll(container: HTMLElement): void {
 }
 
 export function renderEventList(container: HTMLElement, items: EventListItem[], opts: EventListOptions = {}): void {
+  // ponytail: 每次更新做 O(n) 內容比對；資料量成為瓶頸時改由呼叫端傳入可靠的快照版本。
+  const signature = JSON.stringify([items, opts.viewKey, opts.pageSize, opts.emptyMessage,
+    items.flatMap((item) => isCollapsedGroup(item) ? item.members : [item]).map((e) =>
+      [opts.relatedCount?.(e.id), opts.relationOf?.(e.id), opts.corroboration?.(e.id)])]);
+  const previousRender = rendered.get(container);
+  if (previousRender?.signature === signature && previousRender.firstChild === container.firstChild) return;
   // 拆掉上一輪的 observer（filter/search 改變會重新進來）。
   teardowns.get(container)?.();
   teardowns.delete(container);
@@ -68,6 +75,7 @@ export function renderEventList(container: HTMLElement, items: EventListItem[], 
     paging.set(container, { key: opts.viewKey, shown: 0 });
     const emptyMessage = opts.emptyMessage ?? "無符合條件的情報";
     container.innerHTML = `<p class="empty">${esc(emptyMessage)}</p>`;
+    rendered.set(container, { signature, firstChild: container.firstChild });
     return;
   }
 
@@ -127,6 +135,7 @@ export function renderEventList(container: HTMLElement, items: EventListItem[], 
 
   // 初次只渲染第一批，DOM 從 N 張降到最多 batchSize 張。
   container.innerHTML = items.slice(0, shown).map(cardHtml).join("");
+  rendered.set(container, { signature, firstChild: container.firstChild });
   container.addEventListener("click", onToggle);
   if (shown >= total) {
     teardowns.set(container, () => container.removeEventListener("click", onToggle));

@@ -9,6 +9,7 @@ import { renderRelationGraph, type RelationNode } from "./components/RelationGra
 import { createRelationGraphController } from "./components/RelationGraphController";
 import { esc } from "./utils/escape";
 import { debounce } from "./utils/debounce";
+import { safeStorage } from "./utils/storage";
 import { syncFilterBar, CATS } from "./components/FilterBar";
 import { renderTimeline } from "./components/TimelineView";
 import { renderSourcePanel } from "./components/SourcePanel";
@@ -236,7 +237,7 @@ function setMobileView(view: MobileView, options: { scroll?: boolean; reveal?: b
     btn.setAttribute("aria-pressed", String(active));
   });
   try {
-    localStorage.setItem(MOBILE_VIEW_KEY, view);
+    safeStorage.setItem(MOBILE_VIEW_KEY, view);
   } catch {
     // localStorage 不可用時略過保存
   }
@@ -276,7 +277,7 @@ function revealScopeChangeOnMobile(): void {
 function initMobileView(): void {
   let view: MobileView = "list";
   try {
-    const saved = localStorage.getItem(MOBILE_VIEW_KEY);
+    const saved = safeStorage.getItem(MOBILE_VIEW_KEY);
     if (isMobileView(saved)) view = saved;
   } catch {
     view = "list";
@@ -311,8 +312,8 @@ function setCompactLayout(enabled: boolean): void {
     compactToggle.setAttribute("aria-label", enabled ? "顯示右側欄" : "收合右側欄");
   }
   try {
-    if (enabled) localStorage.setItem(COMPACT_LAYOUT_KEY, "1");
-    else localStorage.removeItem(COMPACT_LAYOUT_KEY);
+    if (enabled) safeStorage.setItem(COMPACT_LAYOUT_KEY, "1");
+    else safeStorage.removeItem(COMPACT_LAYOUT_KEY);
   } catch {
     // localStorage 可能不可用時，僅保持目前畫面狀態，不中斷操作
   }
@@ -321,7 +322,7 @@ function setCompactLayout(enabled: boolean): void {
 
 let compactMode = false;
 try {
-  compactMode = localStorage.getItem(COMPACT_LAYOUT_KEY) === "1";
+  compactMode = safeStorage.getItem(COMPACT_LAYOUT_KEY) === "1";
 } catch {
   compactMode = false;
 }
@@ -335,7 +336,7 @@ if (compactToggle) {
 
 function loadSidePanelState(): Record<string, boolean> {
   try {
-    const raw = localStorage.getItem(SIDE_PANEL_STATE_KEY);
+    const raw = safeStorage.getItem(SIDE_PANEL_STATE_KEY);
     return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
   } catch {
     return {};
@@ -348,7 +349,7 @@ function saveSidePanelState(): void {
     if (detail.dataset.sideSection) state[detail.dataset.sideSection] = detail.open;
   });
   try {
-    localStorage.setItem(SIDE_PANEL_STATE_KEY, JSON.stringify(state));
+    safeStorage.setItem(SIDE_PANEL_STATE_KEY, JSON.stringify(state));
   } catch {
     // localStorage 不可用時略過保存，不影響互動
   }
@@ -470,7 +471,7 @@ function renderTopClustersIfChanged(net: NetworkIndex, scope: Scope): void {
   lastTopClustersNet = net;
   lastTopClustersScope = scope;
   lastTopClustersSummary = summary;
-  renderTopClusters(document.getElementById("topclusters")!, net.clusters(), clusterSummariesForScope(summary, scope), 3,
+  renderTopClusters(document.getElementById("topclusters")!, net.clusters(), clusterSummariesForScope(summary, scope, net.generatedAt ?? "", net.clusters()), 3,
     { netState: net.state, netError: net.error });
 }
 
@@ -822,6 +823,22 @@ async function refresh(): Promise<void> {
       if (!cache[s.scope]) {
         delete headCache[s.scope];
         delete isHeadActive[s.scope];
+        // 切換失敗時清除前一範圍的畫面與渲染快取；切回原範圍仍需完整重繪。
+        lastMapKey = lastMapViewKey = lastKpiKey = "";
+        lastTopClustersNet = null;
+        lastDisplayedEvents = [];
+        lastDisplayedScope = s.scope;
+        invalidateProvenanceCache();
+        relationGraph.clear();
+        void mapView.render([], s.scope, { closePopup: true });
+        for (const id of ["kpistrip", "topclusters", "aibrief", "timeline", "triageinbox"]) {
+          document.getElementById(id)!.innerHTML = '<p class="empty" role="status">情報載入失敗，請重試。</p>';
+        }
+        for (const id of ["focusbar", "map-focus-notice", "relation-notice"]) {
+          const el = document.getElementById(id)!;
+          el.hidden = true;
+          el.innerHTML = "";
+        }
         const countEl = document.getElementById("count");
         if (countEl) countEl.textContent = "";
         const filterSummaryEl = document.getElementById("filter-summary");
@@ -1040,7 +1057,7 @@ async function refresh(): Promise<void> {
           return ev ? { event: ev, rel: r } : null;
         })
         .filter((n): n is RelationNode => n !== null);
-      const clusterAi = clusterSummariesForScope(summary, s.scope)[focusCluster];
+      const clusterAi = clusterSummariesForScope(summary, s.scope, net.generatedAt ?? "", net.clusters())[focusCluster];
       const head = `🕸 情報群網絡　<b>${c.size ?? memberIds.length}</b> 則 · 圖示核心成員的群內關聯${
         clusterAi ? `<span class="rg-ai-summary">🤖 ${esc(clusterAi)}</span>` : ""
       }`;
@@ -1148,10 +1165,10 @@ function focusClusterById(id: string): void {
 
 function renderUsageTip(): void {
   const tip = document.getElementById("usage-tip")!;
-  if (localStorage.getItem(TIP_KEY)) return;
+  if (safeStorage.getItem(TIP_KEY)) return;
   tip.hidden = false;
   document.getElementById("close-tip")!.onclick = () => {
-    localStorage.setItem(TIP_KEY, "1");
+    safeStorage.setItem(TIP_KEY, "1");
     tip.hidden = true;
   };
 }

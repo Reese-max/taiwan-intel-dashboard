@@ -4,6 +4,7 @@ import { filterEvents } from "../data/loader";
 import type { NetworkIndex } from "../data/network";
 import { applySearchSubnet } from "../search";
 import type { AppState } from "../store";
+import { safeStorage } from "./storage";
 
 export const TRIAGE_ACKED_KEY = "taiwan-intel-triage-acked";
 
@@ -89,9 +90,9 @@ export function buildTriage(
   };
 }
 
-export function loadTriageAcked(storage: Storage = localStorage): Set<string> {
+export function loadTriageAcked(storage?: Storage): Set<string> {
   try {
-    const raw = storage.getItem(TRIAGE_ACKED_KEY);
+    const raw = (storage ?? safeStorage).getItem(TRIAGE_ACKED_KEY);
     if (!raw) return new Set();
     const ids = JSON.parse(raw);
     if (!Array.isArray(ids)) return new Set();
@@ -105,11 +106,12 @@ export function loadTriageAcked(storage: Storage = localStorage): Set<string> {
 
 export function saveTriageAcked(
   ackedIds: Set<string> | string[],
-  storage: Storage = localStorage,
+  storage?: Storage,
 ): SaveTriageResult {
   try {
     const list = [...(ackedIds instanceof Set ? ackedIds : new Set(ackedIds))];
-    storage.setItem(TRIAGE_ACKED_KEY, JSON.stringify(list));
+    const saved = (storage ?? safeStorage).setItem(TRIAGE_ACKED_KEY, JSON.stringify(list));
+    if (saved === false) return { ok: false, error: "無法儲存，已讀狀態僅保留於本頁" };
     return { ok: true };
   } catch (err) {
     // localStorage 可能因隱私模式、無痕、或容量限制被拒

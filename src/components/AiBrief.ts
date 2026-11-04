@@ -2,6 +2,7 @@ import { esc } from "../utils/escape";
 import type { IntelEvent, Scope } from "../types/event";
 import { RISK_ORDER } from "../types/event";
 import { getActionDecision } from "../utils/actionDecision";
+import type { NetCluster } from "../data/network";
 
 export interface LastSuccessfulSummary {
   domestic?: string;
@@ -23,6 +24,7 @@ export interface AiSummary {
   trend?: string;
   dailyCounts?: number[];
   clusterSummaries?: Record<string, string>;
+  clusterVersions?: Record<string, string>;
   degraded?: boolean | { domestic?: boolean; international?: boolean };
   degradedReason?: string | { domestic?: string; international?: string };
   reason?: string;
@@ -116,9 +118,15 @@ export function getRealSummaryForScope(
 // clusterSummaries 僅針對「國內」群生成（見 scripts/lib/nvidia.mjs：只 summarizeClusters(domesticClusters)）。
 // cluster id 是各 scope 網路內的流水號（c0/c1/c2…），跨 scope 會撞號，故國際 scope 若直接套用，
 // 國際群會誤掛同號的國內群摘要。此處依 scope 收斂：非國內一律回空，杜絕跨 scope 摘要污染。
-export function clusterSummariesForScope(summary: AiSummary | null, scope: Scope): Record<string, string> {
+export function clusterSummariesForScope(summary: AiSummary | null, scope: Scope, generatedAt?: string, clusters?: NetCluster[]): Record<string, string> {
   if (!summary || scope !== "domestic") return {};
-  // Sequential IDs are reused for different incidents in later snapshots.
+  // 成員版本不受建置時間影響；舊產物僅在生成時間完全相符時採用。
+  if (summary.clusterVersions) {
+    return Object.fromEntries((clusters ?? []).filter((c) => summary.clusterSummaries?.[c.id] &&
+      summary.clusterVersions![c.id] === JSON.stringify([...c.members].sort()))
+      .map((c) => [c.id, summary.clusterSummaries![c.id]]));
+  }
+  if (generatedAt !== undefined && (!generatedAt || Date.parse(summary.generatedAt) !== Date.parse(generatedAt))) return {};
   return summary.clusterSummaries ?? {};
 }
 
@@ -282,8 +290,7 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
 
     if (rest.length > 0) {
       const restRows = rest.map(([c, t]) => {
-        const preview = compactText(t, 42);
-        return `<div class="ai-cat-row" title="${esc(t)}"><b>${esc(c)}</b>${esc(preview)}</div>`;
+        return `<div class="ai-cat-row" title="${esc(t)}"><b>${esc(c)}</b>${esc(t)}</div>`;
       }).join("");
       parts.push(`<details class="ai-cats-more"><summary class="ai-cats-more-toggle">查看其餘 ${rest.length} 個分類摘要 ▾</summary><div class="ai-cats-more-list">${restRows}</div></details>`);
     }

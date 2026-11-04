@@ -37,7 +37,9 @@ function resolveCountyShortName(key, text, context = "", index = 0) {
   const after = new RegExp(`^${short}[^，。！？；\\n]{0,8}${town}`);
   const before = new RegExp(`${town}[^，。！？；\\n]{0,8}$`);
   return text.includes(rule.county) || String(context).includes(rule.county) ||
-    after.test(`${text.slice(index)} ${context}`) || before.test(text.slice(0, index))
+    [...text.matchAll(new RegExp(short, "g"))].some((m) =>
+      !rule.city.test(text.slice(m.index, m.index + 3)) &&
+      (after.test(`${text.slice(m.index)} ${context}`) || before.test(text.slice(0, m.index))))
     ? rule.county : key;
 }
 
@@ -58,6 +60,7 @@ const BRACKET_DATELINE_RE = /[〔【\[［（(][^〔【\[［（(〕】\]］）)\n
 // 中段「（中央社記者X台北1日電）」型署名：必須同時有「記者」與電訊字尾，避免剝掉一般括號。
 const BRACKET_WIRE_DATELINE_RE = /[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{0,40}?記者[^〔【\[［（(〕】\]］）)\n]{0,30}?(?:日電|專電|電訊)[〕】\]］）)]/g;
 const DATELINE_RES = [
+  /^\s*[^。！？；\n／/]{1,12}[／/](?:記者)?[\p{Script=Han}、\s]{2,40}?報導/u,
   /^\s*[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{0,80}?(?:記者|報導|日電|專電|電訊|本報訊)[^〔【\[［（(〕】\]］）)\n]{0,30}?[〕】\]］）)]/,
   /^\s*[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{1,10}?訊[〕】\]］）)]/,
   /^\s*[^\s，。、：:（(〔【\[［]{1,10}?訊(?=[\s，。、：:．.]|$)/,

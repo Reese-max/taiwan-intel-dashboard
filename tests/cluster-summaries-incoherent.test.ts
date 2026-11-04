@@ -8,7 +8,7 @@ vi.mock("../scripts/lib/llm-client.mjs", () => ({
 }));
 
 const llm = await import("../scripts/lib/llm-client.mjs");
-const { summarizeClusters } = await import("../scripts/lib/nvidia.mjs");
+const { summarizeClusters, summarize } = await import("../scripts/lib/nvidia.mjs");
 
 describe("summarizeClusters", () => {
   it("略過 incoherent 雜燴群，不送 LLM 摘要", async () => {
@@ -29,5 +29,11 @@ describe("summarizeClusters", () => {
 
     expect(result).toEqual({ story: "連貫群摘要" });
     expect(vi.mocked(llm.chat)).toHaveBeenCalledTimes(1);
+  });
+  it("U3：摘要同時輸出排序後的群集成員版本", async () => {
+    const domestic = ["乙", "甲"].map((id) => ({ id, title: `合成事件${id}`, summary: "合成事件摘要", category: "治安", riskLevel: "medium", timestamp: new Date().toISOString() }));
+    const result = await summarize({ domestic, clusters: [{ id: "c0", members: ["甲", "乙"], size: 2 }] });
+    expect(result.clusterSummaries.c0).toBe("連貫群摘要");
+    expect(result.clusterVersions).toEqual({ c0: JSON.stringify(["乙", "甲"]) });
   });
 });

@@ -29,6 +29,7 @@ class FakeDomElement {
   listeners: Record<string, ((ev: unknown) => void)[]> = {};
   insertedHtml: { position: string; html: string }[] = [];
   removed = false;
+  parentElement?: FakeDomElement;
 
   constructor(tagName: string) {
     this.tagName = tagName;
@@ -58,12 +59,14 @@ class FakeDomElement {
   }
 
   appendChild(node: FakeDomElement): FakeDomElement {
+    node.parentElement = this;
     this.children.push(node);
     return node;
   }
 
   insertAdjacentHTML(position: string, html: string): void {
     this.insertedHtml.push({ position, html });
+    if (position === "beforebegin" && this.parentElement) this.parentElement.innerHTML += html;
   }
 
   remove(): void {

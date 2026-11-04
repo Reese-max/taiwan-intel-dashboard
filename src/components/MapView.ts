@@ -489,7 +489,7 @@ export class MapView {
         ev.stopPropagation();
         this.popupOpen = false;
         marker.closePopup();
-        this.map.flyTo(centroid, Math.min(this.map.getZoom() + 2, 12));
+        this.map.flyTo(centroid, Math.min(this.map.getZoom() + 2, this.map.getMaxZoom()));
       };
     });
     const el = marker.getElement();
@@ -569,11 +569,12 @@ export class MapView {
         iconSize: [hitSize, hitSize],
         iconAnchor: [hitSize / 2, hitSize / 2],
       });
-      const marker = this.lib.marker(markerPoint, { icon, keyboard: false }).bindPopup(clusterPopupHtml(c.events), { maxWidth: 360 });
+      const marker = this.lib.marker(markerPoint, { icon, keyboard: true, title: `${n} 筆事件群集` }).bindPopup(clusterPopupHtml(c.events), { maxWidth: 360 });
       marker.on("dblclick", () => {
-        this.map.flyTo(centroid, Math.min(z + 2, 12));
+        this.map.flyTo(centroid, Math.min(this.map.getZoom() + 2, this.map.getMaxZoom()));
       });
       marker.addTo(this.layer);
+      marker.getElement()?.setAttribute("aria-label", `${n} 筆事件群集`);
       this.attachClusterPopupHandlers(marker, centroid);
     }
   }
