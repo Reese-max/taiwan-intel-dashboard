@@ -751,6 +751,8 @@ export async function run() {
     : dropIntlStale
       ? []
       : oldIntl;
+  // 時效語義標記與國內一致（寫檔前套用）：判決結果與超齡歷史事件不再只有國內會標。
+  intlEvents = applyTemporal(intlEvents, { now: nowMs, historicalDays: TEMPORAL_HISTORICAL_DAYS });
   if (intlOk) {
     const { valid, invalid } = validateEventContract(intlEvents);
     if (invalid.length) {

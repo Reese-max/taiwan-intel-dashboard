@@ -5,10 +5,10 @@
 // 例如 MiniMax：LLM_BASE_URL=https://api.minimax.io/v1、LLM_MODEL=MiniMax-M2。
 // 國際座標為 LLM 推估；國內新聞座標改用縣市中心查表（皆非原始精準座標）。
 
-import { countyCoordFromAddr } from "./coords.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
 import { selectDiverseByCategory } from "./intl-accumulate.mjs";
-import { categoryFromItem, riskFromTitle } from "./news-bulk.mjs";
+import { categoryFromItem, detectCounty, detectCountyInBody, riskFromTitle } from "./news-bulk.mjs";
+import { countyCoordFromAddr } from "./coords.mjs";
 import { titleKey } from "./title-key.mjs";
 import { eventIdFor, slug } from "./event-id.mjs";
 export { eventIdFor } from "./event-id.mjs";
@@ -591,12 +591,33 @@ export async function normalizeInternational(
 export const TW_CATEGORIES = ["治安", "社會", "交通", "災防", "反詐", "食安", "衛生", "環境", "資安", "協尋"];
 const clampTwCat = (c) => (TW_CATEGORIES.includes(c) ? c : "社會");
 
-function domesticCountyLocation(region) {
-  return countyCoordFromAddr(region) || { region: "全國", lat: null, lng: null };
+// region 只有「縣市全名」能直接決定；短名 region 降為標題／摘要皆未命中時的最後備援。
+// 順序：region 全名 → 標題 detectCounty（與 bulk 路徑一致）→ 摘要/原文逐段 detectCountyInBody → 短名 region。
+// bodyTexts 逐段傳入：發稿地署名只剝各段開頭，避免拼接字串中段的括號內文被誤剝。
+function domesticCountyLocation(region, title = "", bodyTexts = []) {
+  const byName = countyCoordFromAddr(region);
+  if (byName) return byName;
+  const titleLoc = detectCounty(title);
+  if (titleLoc.lat != null) return titleLoc;
+  for (const t of Array.isArray(bodyTexts) ? bodyTexts : [bodyTexts]) {
+    const bodyLoc = detectCountyInBody(t);
+    if (bodyLoc.lat != null) return bodyLoc;
+  }
+  const regionLoc = detectCounty(region);
+  return regionLoc.lat != null ? regionLoc : { region: "全國", lat: null, lng: null };
 }
 
-function applyDomesticCountyLocation(ev) {
-  const loc = domesticCountyLocation(ev?.region);
+// 已具較精確座標（測站/地址/幾何）的事件不被縣市中心覆蓋。
+const FINER_PRECISIONS = new Set(["exact", "address", "district"]);
+
+// export 供單元測試。extraText：原始 RSS item 的標題/描述（字串或字串陣列；LLM 改寫可能丟掉地名，原文仍含）。
+export function applyDomesticCountyLocation(ev, extraText = "") {
+  const extraTexts = (Array.isArray(extraText) ? extraText : [extraText]).filter(Boolean);
+  const loc = domesticCountyLocation(ev?.region, ev?.title, [ev?.summary, ...extraTexts]);
+  // 座標與精度保留，region 照常補（exact 座標事件不再連 region 都留白）。
+  if (ev?.lat != null && ev?.lng != null && FINER_PRECISIONS.has(ev?.locationPrecision)) {
+    return { ...ev, region: loc.region };
+  }
   return {
     ...ev,
     region: loc.region,
@@ -655,7 +676,7 @@ ${listing}
       },
       `${it.title || ""} ${it.summary || it.description || ""}`
     );
-    events.push(applyDomesticCountyLocation({
+    events.push({
       id: `twnews-${slug(it.link, o.idx)}`,
       title: o.title_zh || it.title,
       region: o.region || "全國",
@@ -672,7 +693,7 @@ ${listing}
       relations: enrichment.relations,
       groundedRatio: enrichment.groundedRatio,
       source: deriveNewsProvenance(it, { fetchedAt, model }),
-    }));
+    });
   }
   return events;
 }
@@ -759,11 +780,12 @@ export async function normalizeDomesticNews(
     const item = raw && currentItemById.get(raw.id);
     const ruledCategory = item && categoryFromItem(item.title, item.hint);
     const hasCategoryRule = ruledCategory?.basis.startsWith("rule:");
+    // 縣市定位統一在此套用一次（fresh＋reused 同路徑；normalizeNewsBatch 不再重複呼叫）。
     const ev = raw ? applyDomesticCountyLocation({
       ...raw,
       category: hasCategoryRule ? ruledCategory.category : raw.category,
       categoryBasis: hasCategoryRule ? ruledCategory.basis : raw.categoryBasis || "llm",
-    }) : raw;
+    }, [item?.title, item?.description]) : raw;
     if (!ev || seen.has(ev.id)) continue;
     seen.add(ev.id);
     merged.push(ev);

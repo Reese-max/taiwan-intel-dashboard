@@ -557,6 +557,35 @@ describe("fetch-live pipeline integration (CWA)", () => {
     expect.soft(summary.international).toContain(`共 ${international.length} 起`);
   }, 20_000);
 
+  it("國際事件寫檔前也套用 applyTemporal（判決/歷史標記不再只限國內）", async () => {
+    const dataDir = setupEnv();
+    process.env.SOURCES = "cwa,mofa";
+    process.env.LLM_API_KEY = "";
+    process.env.NVIDIA_API_KEY = "";
+    process.env.SUMMARY_API_KEY = "";
+    const intlJudicial = {
+      ...makeCarryOverTwnews(),
+      id: "intl-judicial",
+      title: "跨國詐騙案主嫌判決定讞",
+      scope: "international",
+      region: "全球",
+      timestamp: new Date().toISOString(),
+      source: {
+        ...makeCarryOverTwnews().source,
+        datasetId: "international-rss",
+        recordRef: "https://example.test/intl-judicial",
+      },
+    };
+    writeFileSync(join(dataDir, "international.json"), JSON.stringify([intlJudicial]));
+    makeMockFetch();
+    const run = await importRun();
+
+    await run();
+
+    const international = readJson(join(dataDir, "international.json"));
+    expect(international.find((e: any) => e.id === "intl-judicial")?.temporal).toBe("judicial");
+  }, 20_000);
+
   it(
     "writes domestic/provenance/daily-rollup for the happy CWA skeleton",
     async () => {

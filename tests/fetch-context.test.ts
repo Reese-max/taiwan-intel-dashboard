@@ -36,10 +36,49 @@ describe("補充領域官方資料 mapper", () => {
       region: "臺北市",
       lat: 25.047,
       lng: 121.532,
+      locationPrecision: "exact",
       timestamp: "2026-07-24T15:00:00.000Z",
       source: { datasetId: "28178", latestDataDate: "2026-07-24" },
     });
     expect(events[0].summary).toContain("PM2.5 55");
+  });
+
+  it("空品測站座標為空值/(0,0)/範圍外 → 不產 (0,0) exact，退回縣市中心", () => {
+    const payload = {
+      columns: ["siteid", "sitename", "itemengname", "monitordate", "monitorvalue22"],
+      rows: [["200", "前金", "PM2.5", "2026-07-24", "35"]],
+    };
+    for (const [lat, lon] of [[null, null], ["", ""], [" ", " "], [0, 0], [999, 999]]) {
+      const stations = [
+        { attributes: { Stcode: 200, SiteName: "前金", County: "高雄市", TWD97_Lat: lat, TWD97_Lon: lon } },
+      ];
+      const events = mapMoenvAirQualityEvents(payload, stations, { fetchedAt: "2026-07-25T00:00:00.000Z" });
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
+        region: "高雄市",
+        lat: 22.6273,
+        lng: 120.3014,
+        locationPrecision: "county-center",
+      });
+    }
+  });
+
+  it("空品測站缺原始經緯度 → 退回縣市中心並標 county-center", () => {
+    const payload = {
+      columns: ["siteid", "sitename", "itemengname", "monitordate", "monitorvalue22", "monitorvalue23"],
+      rows: [["200", "前金", "PM2.5", "2026-07-24", "30", "35"]],
+    };
+    const stations = [{ attributes: { Stcode: 200, SiteName: "前金", County: "高雄市" } }];
+
+    const events = mapMoenvAirQualityEvents(payload, stations, { fetchedAt: "2026-07-25T00:00:00.000Z" });
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      region: "高雄市",
+      lat: 22.6273,
+      lng: 120.3014,
+      locationPrecision: "county-center",
+    });
   });
 
   it("把停車剩餘量彙整成城市交通供給事件", () => {

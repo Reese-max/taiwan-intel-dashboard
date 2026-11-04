@@ -10,6 +10,7 @@ import {
   isRelevantNewsItem,
   buildNewsRelevanceAudit,
   riskFromTitle,
+  detectCountyInBody,
 } from "../scripts/lib/news-bulk.mjs";
 
 const FETCHED_AT = "2026-06-20T00:00:00.000Z";
@@ -183,6 +184,170 @@ describe("mapBulkNews", () => {
     );
     expect(ev[0].region).toBe("全國");
     expect(ev[0].lat).toBeNull();
+  });
+
+  it("標題無縣市時用摘要判斷（NCDR 台17線型事件）", () => {
+    const ev = mapBulkNews(
+      [{
+        title: "省道台17線 115K+0 道路封閉",
+        link: "https://x/t17",
+        description: "嘉義縣 東石鄉 台17線 115K+0 道路封閉，災害搶修中，請用路人改道。",
+        source: "s",
+        sourceUrl: "u",
+        hint: "災防",
+        pubDate: "x",
+      }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(ev).toHaveLength(1);
+    expect(ev[0].region).toBe("嘉義縣");
+    expect(ev[0].lat).toBeCloseTo(23.4518, 3);
+    expect(ev[0].locationPrecision).toBe("city");
+  });
+
+  it("標題命中的縣市優先於摘要提到的其他縣市", () => {
+    const ev = mapBulkNews(
+      [{
+        title: "高雄車禍 騎士送醫",
+        link: "https://x/pri",
+        description: "臺北市警局呼籲用路人注意行車安全",
+        source: "s",
+        sourceUrl: "u",
+        hint: "治安",
+        pubDate: "x",
+      }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(ev[0].region).toBe("高雄市");
+  });
+
+  it("標題維持短名清單規則（全名＋最早出現僅用於摘要 fallback，不改標題行為）", () => {
+    // 舊行為：標題命中短名「嘉義」→ 嘉義市；全名比對只適用摘要/描述。
+    const ev = mapBulkNews(
+      [{
+        title: "嘉義縣東石鄉車禍 騎士送醫",
+        link: "https://x/chiayi",
+        description: "車禍事故",
+        source: "s",
+        sourceUrl: "u",
+        hint: "治安",
+        pubDate: "x",
+      }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(ev[0].region).toBe("嘉義市");
+  });
+
+  it("標題短名清單順序優先：標題內全名不介入（新北車禍 臺北市警方支援 → 新北市）", () => {
+    const ev = mapBulkNews(
+      [{
+        title: "新北車禍 臺北市警方支援",
+        link: "https://x/title-order",
+        description: "",
+        source: "s",
+        sourceUrl: "u",
+        hint: "治安",
+        pubDate: "x",
+      }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(ev[0].region).toBe("新北市");
+  });
+
+  it("摘要剝發稿地後取最早出現縣市（宜蘭報導不被後文新北市蓋過）", () => {
+    const ev = mapBulkNews(
+      [{
+        title: "寺廟住持涉侵占信徒捐款 檢方偵結",
+        link: "https://x/yilan",
+        description: "〔記者江志雄／宜蘭報導〕宜蘭彌陀之家東林寺住持釋見寰，遭控侵占信徒捐款，檢方昨日偵結，並搜索其新北市住處。",
+        source: "s",
+        sourceUrl: "u",
+        hint: "治安",
+        pubDate: "x",
+      }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(ev).toHaveLength(1);
+    expect(ev[0].region).toBe("宜蘭縣");
+  });
+
+  it("摘要剝發稿地後取最早出現縣市（彰化報導不被後文台中地檢署蓋過）", () => {
+    const ev = mapBulkNews(
+      [{
+        title: "電競網紅涉販毒 檢方聲押",
+        link: "https://x/changhua",
+        description: "〔記者湯世名／彰化報導〕香港籍電競網紅涉嫌在彰化住處販毒，昨日遭警方移送台中地檢署偵辦。",
+        source: "s",
+        sourceUrl: "u",
+        hint: "治安",
+        pubDate: "x",
+      }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(ev).toHaveLength(1);
+    expect(ev[0].region).toBe("彰化縣");
+  });
+
+  it("中央社「台北4日電」署名後內文最早縣市勝出（高雄事件不判成台北）", () => {
+    const ev = mapBulkNews(
+      [{
+        title: "左營槍擊案 警逮3嫌",
+        link: "https://x/kaohsiung",
+        description: "（中央社記者陳朝福台北4日電）高雄市左營區今日凌晨發生槍擊案，警方逮捕3名嫌犯，全案依殺人未遂罪嫌移送。",
+        source: "s",
+        sourceUrl: "u",
+        hint: "治安",
+        pubDate: "x",
+      }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(ev).toHaveLength(1);
+    expect(ev[0].region).toBe("高雄市");
+  });
+
+  it("發稿地只剝開頭署名結構：括號內「通訊設備」不被「訊」誤剝", () => {
+    const ev = mapBulkNews(
+      [{
+        title: "通訊設備起火",
+        link: "https://x/dateline-strict",
+        description: "〔記者王明／台北報導〕（高雄市通訊設備起火）新北市警方協助調查。",
+        source: "s",
+        sourceUrl: "u",
+        hint: "治安",
+        pubDate: "x",
+      }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(ev).toHaveLength(1);
+    expect(ev[0].region).toBe("高雄市");
+  });
+
+  it.each([
+    ["〔", "〕"],
+    ["【", "】"],
+    ["［", "］"],
+    ["（", "）"],
+    ["[", "]"],
+    ["(", ")"],
+  ])("署名括號變體 %s%s 結果一致（［］全形方括號亦支援）", (open, close) => {
+    expect(detectCountyInBody(`${open}記者王明／台北報導${close}高雄市發生火警。`).region).toBe("高雄市");
+  });
+
+  it("剝發稿地後全文無縣市時，退回發稿地縣市", () => {
+    const ev = mapBulkNews(
+      [{
+        title: "廟宇負責人涉詐 檢方偵辦",
+        link: "https://x/dateline-only",
+        description: "〔記者江志雄／宜蘭報導〕彌陀之家住持釋見寰遭控侵占信徒捐款，檢方昨日偵結。",
+        source: "s",
+        sourceUrl: "u",
+        hint: "治安",
+        pubDate: "x",
+      }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(ev).toHaveLength(1);
+    expect(ev[0].region).toBe("宜蘭縣");
   });
 
   it("保留官方新聞來源的轄區 provenance", () => {

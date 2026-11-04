@@ -42,6 +42,15 @@ describe("temporalStateFor", () => {
   it("timestamp 無效不標", () => {
     expect(temporalStateFor(event({ timestamp: "not-a-date" }), { now: NOW })).toBeUndefined();
   });
+
+  it("國際事件超過 historical 天數同樣標 historical", () => {
+    expect(
+      temporalStateFor(
+        event({ scope: "international", region: "國際", timestamp: "2025-12-01T00:00:00.000Z" }),
+        { now: NOW },
+      ),
+    ).toBe("historical");
+  });
 });
 
 describe("applyTemporal", () => {

@@ -29,6 +29,22 @@ export const COUNTY_CENTER = {
   連江縣: [26.1608, 119.9512],
 };
 
+// 座標 → 最近的縣市中心（有幾何座標但文字偵測不到縣市時的 region 推估）。
+export function nearestCounty(lat, lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  let best = null;
+  let bestD = Infinity;
+  for (const name of Object.keys(COUNTY_CENTER)) {
+    const [clat, clng] = COUNTY_CENTER[name];
+    const d = (clat - lat) ** 2 + (clng - lng) ** 2;
+    if (d < bestD) {
+      bestD = d;
+      best = name;
+    }
+  }
+  return best ? best.replace(/^台/, "臺") : null;
+}
+
 // 從機關地址（如「270宜蘭縣蘇澳鎮蘇新路101號」）抽出縣市名並回傳中心座標。
 export function countyCoordFromAddr(addr) {
   if (!addr) return null;

@@ -181,4 +181,218 @@ describe("fetch-ncdr CAP mapper", () => {
     expect(events.find((e) => e.id === "ncdr-minor")?.title).toBe("道路封閉｜南投縣水里鄉");
     expect(validateEventContract(events).invalid).toHaveLength(0);
   });
+
+  it("串接所有 <area> 的 areaDesc，並對 areaDesc＋headline＋description 做縣市偵測", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>multi-area</identifier>
+  <sent>2026-07-06T23:23:47+08:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <info>
+    <event>道路封閉</event>
+    <severity>Moderate</severity>
+    <headline>省道台17線 115K+0 道路封閉</headline>
+    <description>嘉義縣 東石鄉 台17線 115K+0 道路封閉，請用路人改道。</description>
+    <area><areaDesc>嘉義縣東石鄉</areaDesc></area>
+    <area><areaDesc>雲林縣口湖鄉</areaDesc></area>
+  </info>
+</alert>`;
+    const parsed = parseCapAlert(xml);
+    expect(parsed.areaDesc).toBe("嘉義縣東石鄉、雲林縣口湖鄉");
+
+    const atomJson = { entry: [atomEntry({ id: "multi-area", category: "道路封閉" })] };
+    const { events } = buildNcdrEvents(atomJson, { [hrefFor("multi-area")]: xml }, { now: NOW, fetchedAt: FETCHED_AT });
+    expect(events).toHaveLength(1);
+    expect(events[0].region).toBe("嘉義縣");
+    expect(events[0].locationPrecision).toBe("county-center");
+    expect(events[0].lat).toBeCloseTo(23.4518, 3);
+  });
+
+  it("無 areaDesc 縣市時仍從 headline/description 偵測縣市（台17線案例）", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>t17</identifier>
+  <sent>2026-07-06T23:23:47+08:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <info>
+    <event>道路封閉</event>
+    <severity>Moderate</severity>
+    <headline>省道台17線 115K+0 道路封閉</headline>
+    <description>嘉義縣 東石鄉 台17線 115K+0 道路封閉，請用路人改道。</description>
+  </info>
+</alert>`;
+    const atomJson = { entry: [atomEntry({ id: "t17", category: "道路封閉" })] };
+    const { events } = buildNcdrEvents(atomJson, { [hrefFor("t17")]: xml }, { now: NOW, fetchedAt: FETCHED_AT });
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ region: "嘉義縣", locationPrecision: "county-center" });
+    expect(events[0].lat).toBeCloseTo(23.4518, 3);
+  });
+
+  it("解析 <polygon>（頂點平均）與 <circle>（圓心）為事件座標，precision=district", () => {
+    const polyXml = `<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>poly</identifier>
+  <sent>2026-07-06T23:23:47+08:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <info>
+    <event>淹水</event>
+    <severity>Severe</severity>
+    <headline>淹水示警</headline>
+    <description>低窪地區淹水。</description>
+    <area>
+      <areaDesc>某河段沿岸</areaDesc>
+      <polygon>23.40,120.20 23.50,120.30 23.60,120.40</polygon>
+    </area>
+  </info>
+</alert>`;
+    const circleXml = `<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>circle</identifier>
+  <sent>2026-07-06T23:23:47+08:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <info>
+    <event>火災</event>
+    <severity>Severe</severity>
+    <headline>火災示警</headline>
+    <description>工廠火災。</description>
+    <area>
+      <areaDesc>廠區周邊</areaDesc>
+      <circle>23.45,120.25 5.0</circle>
+    </area>
+  </info>
+</alert>`;
+
+    const polyParsed = parseCapAlert(polyXml);
+    expect(polyParsed.lat).toBeCloseTo(23.5, 4);
+    expect(polyParsed.lng).toBeCloseTo(120.3, 4);
+    const circleParsed = parseCapAlert(circleXml);
+    expect(circleParsed.lat).toBeCloseTo(23.45, 4);
+    expect(circleParsed.lng).toBeCloseTo(120.25, 4);
+
+    const atomJson = {
+      entry: [
+        atomEntry({ id: "poly", category: "淹水" }),
+        atomEntry({ id: "circle", category: "火災" }),
+      ],
+    };
+    const { events } = buildNcdrEvents(
+      atomJson,
+      { [hrefFor("poly")]: polyXml, [hrefFor("circle")]: circleXml },
+      { now: NOW, fetchedAt: FETCHED_AT },
+    );
+    const poly = events.find((e) => e.id === "ncdr-poly");
+    const circle = events.find((e) => e.id === "ncdr-circle");
+    expect(poly).toMatchObject({ lat: 23.5, lng: 120.3, locationPrecision: "district" });
+    expect(circle).toMatchObject({ lat: 23.45, lng: 120.25, locationPrecision: "district" });
+    expect(validateEventContract(events).invalid).toHaveLength(0);
+  });
+
+  const geomXml = (geometry: string) => `<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>geom</identifier>
+  <sent>2026-07-06T23:23:47+08:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <info>
+    <event>淹水</event>
+    <severity>Severe</severity>
+    <headline>淹水示警</headline>
+    <description>低窪地區淹水。</description>
+    <area>
+      <areaDesc>某河段沿岸</areaDesc>
+      ${geometry}
+    </area>
+  </info>
+</alert>`;
+
+  it("<circle> 逗號後有空白仍取到經度（'23.45, 120.25 5.0'）", () => {
+    const parsed = parseCapAlert(geomXml("<circle>23.45, 120.25 5.0</circle>"));
+    expect(parsed.lat).toBeCloseTo(23.45, 4);
+    expect(parsed.lng).toBeCloseTo(120.25, 4);
+  });
+
+  it("<polygon> 缺值頂點不借用下一個頂點的數字（跨頂點配對）", () => {
+    // "23.5," 缺經度 → 整個頂點丟棄；不可把 "23.60" 借來當它的經度。
+    const parsed = parseCapAlert(geomXml("<polygon>23.40,120.20 23.5, 23.60,120.40</polygon>"));
+    expect(parsed.lat).toBeCloseTo(23.5, 4);
+    expect(parsed.lng).toBeCloseTo(120.3, 4);
+  });
+
+  it("<circle> 與 polygon 同套正規化：經緯顛倒交換、範圍外丟棄退回文字定位", () => {
+    const swapped = parseCapAlert(geomXml("<circle>120.25,23.45 5.0</circle>"));
+    expect(swapped.lat).toBeCloseTo(23.45, 4);
+    expect(swapped.lng).toBeCloseTo(120.25, 4);
+
+    const oob = parseCapAlert(geomXml("<circle>999,999 5.0</circle>"));
+    expect(oob.lat).toBeNull();
+    expect(oob.lng).toBeNull();
+
+    // 範圍外圓心 → 無幾何 → 文字定位（此例全文無縣市 → 全國/country，不產 (999,999) district）。
+    const atomJson = { entry: [atomEntry({ id: "geom", category: "淹水" })] };
+    const { events } = buildNcdrEvents(
+      atomJson,
+      { [hrefFor("geom")]: geomXml("<circle>999,999 5.0</circle>") },
+      { now: NOW, fetchedAt: FETCHED_AT },
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ region: "全國", lat: null, lng: null, locationPrecision: "country" });
+  });
+
+  it("多個 <area> 時座標與 region 來自同一個有幾何的 area", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>geo-src</identifier>
+  <sent>2026-07-06T23:23:47+08:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <info>
+    <event>火災</event>
+    <severity>Severe</severity>
+    <headline>火災示警</headline>
+    <description>工廠火災。</description>
+    <area><areaDesc>嘉義縣東石鄉</areaDesc></area>
+    <area><areaDesc>高雄市左營區</areaDesc><circle>22.68,120.30 1.0</circle></area>
+  </info>
+</alert>`;
+    const atomJson = { entry: [atomEntry({ id: "geo-src", category: "火災" })] };
+    const { events } = buildNcdrEvents(
+      atomJson,
+      { [hrefFor("geo-src")]: xml },
+      { now: NOW, fetchedAt: FETCHED_AT },
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ region: "高雄市", lat: 22.68, lng: 120.3, locationPrecision: "district" });
+  });
+
+  it("<polygon> 丟棄畸形頂點、去首尾重複頂點、偵測經緯顛倒", () => {
+    // 畸形頂點（"bad"、"23.5,"）丟棄後取平均
+    const malformed = parseCapAlert(geomXml("<polygon>23.40,120.20 bad 23.60,120.40 23.5,</polygon>"));
+    expect(malformed.lat).toBeCloseTo(23.5, 4);
+    expect(malformed.lng).toBeCloseTo(120.3, 4);
+
+    // 閉合環首尾同點 → 去尾點再平均（4 頂點→3 頂點平均）
+    const closed = parseCapAlert(geomXml("<polygon>23.0,120.0 23.4,120.4 23.8,120.8 23.0,120.0</polygon>"));
+    expect(closed.lat).toBeCloseTo(23.4, 4);
+    expect(closed.lng).toBeCloseTo(120.4, 4);
+
+    // 經緯顛倒：平均在台灣範圍外、交換後在範圍內 → 交換
+    const swapped = parseCapAlert(geomXml("<polygon>120.20,23.40 120.30,23.50 120.40,23.60</polygon>"));
+    expect(swapped.lat).toBeCloseTo(23.5, 4);
+    expect(swapped.lng).toBeCloseTo(120.3, 4);
+  });
+
+  it("有幾何座標但文字無縣市 → region 取最近縣市中心（不判全國）", () => {
+    const xml = geomXml("<polygon>23.95,120.95 24.00,121.00 23.98,121.02</polygon>");
+    const atomJson = { entry: [atomEntry({ id: "geom", category: "淹水" })] };
+    const { events } = buildNcdrEvents(atomJson, { [hrefFor("geom")]: xml }, { now: NOW, fetchedAt: FETCHED_AT });
+    expect(events).toHaveLength(1);
+    expect(events[0].region).toBe("南投縣");
+    expect(events[0].locationPrecision).toBe("district");
+    expect(events[0].lat).toBeCloseTo(23.9767, 3);
+    expect(validateEventContract(events).invalid).toHaveLength(0);
+  });
 });
