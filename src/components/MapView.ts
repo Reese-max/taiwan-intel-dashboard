@@ -330,14 +330,16 @@ export class MapView {
   async resize(): Promise<void> {
     await this.ready;
     this.map.invalidateSize(true);
-    this.redraw();
+    if (!this.popupOpen) this.redraw();
   }
 
   async reveal(): Promise<void> {
     await this.ready;
     this.map.invalidateSize(true);
-    if (!this.popupOpen) this.fitToLocated(this.lastScope);
-    this.redraw();
+    if (!this.popupOpen) {
+      this.fitToLocated(this.lastScope);
+      this.redraw();
+    }
   }
 
   async closePopup(): Promise<void> {
@@ -357,6 +359,9 @@ export class MapView {
     await this.ready;
     this.lastScope = scope;
     this.updateEmptyHint(events.length);
+    // popup 開啟中只更新資料不補繪：redraw 的 clearLayers 會移除 popup 來源標記而強制關閉它；
+    // 延後到使用者關閉時由 popupclose handler 以新資料 redraw。
+    if (this.popupOpen) return;
     const shouldFit = options.fit !== false;
     if (shouldFit) this.fitToLocated(scope);
     this.redraw();
