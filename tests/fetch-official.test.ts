@@ -40,6 +40,13 @@ const FIXTURES = join("tests", "fixtures");
 const fixtureResponse = (name: string) =>
   async () => new Response(readFileSync(join(FIXTURES, name)), { status: 200 });
 
+describe("臺北市消防統計", () => {
+  it("排除行政區=總計列，不重複加總官方總數", async () => {
+    const [event] = await fetchFireStatistics({ fetchImpl: fixtureResponse("official-fire-134922.csv") });
+    expect(event.summary).toContain("共 99612 件受理案件，其中火災 690 件、救護 97669 件；涵蓋 13 個行政區");
+  });
+});
+
 describe("農產品價格有界查詢", () => {
   const now = new Date("2026-11-05T01:00:00Z");
   const row = { YEAR: "2026", MONTH: "11", PERIOD: "04", PRODUCTNAME: "柳橙", AVGPRICE: "23.3" };

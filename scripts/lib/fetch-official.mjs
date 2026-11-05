@@ -1394,7 +1394,8 @@ function firePeriodEnd(value) {
 export function mapFireStatisticsEvent(payload, { fetchedAt = new Date().toISOString() } = {}) {
   const rows = rowsAsObjects(payload)
     .map((row) => ({ row, period: String(row["統計期間"] || "").trim(), endDate: firePeriodEnd(row["統計期間"]) }))
-    .filter((item) => item.period && item.endDate);
+    // 官方 CSV 末列「行政區=總計」是各區加總，納入會重複計算。
+    .filter((item) => item.period && item.endDate && !/^(總計|合計)$/.test(String(item.row["行政區"] || "").trim()));
   if (!rows.length) throw new Error("臺北市消防統計沒有有效統計期間");
   const latestEndDate = rows.map((item) => item.endDate).sort().at(-1);
   const latest = rows.filter((item) => item.endDate === latestEndDate);
