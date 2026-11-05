@@ -42,6 +42,12 @@ describe("官方警察檢調新聞的行政與宣導雜訊", () => {
     "「警察好酷！」29名萌娃走進大溪分局 警察初體驗活潑熱鬧",
     "【競選小物免費送？留言＋1，小心遇上詐騙】 - 新北市政府警察局土城分局",
     "警察機關受理人與動物噪音檢舉案件法源依據及處理原則？ - 新北市政府警察局資訊服務網",
+    // GN 地檢署：統計表、附表、偵結清冊、緩起訴金表
+    "桃園地方檢察署執行裁判確定判決有罪者性別統 - 臺灣桃園地方檢察署",
+    "臺灣高等檢察署所屬各地檢署檢察官（含檢察事務官）準時開庭調查統計分析表（統計期間：115 - 臺灣桃園地方檢察署",
+    "附表二： 臺灣高等檢察署所屬各地檢署 - 臺灣桃園地方檢察署",
+    "股別年冠字案號案由移送機關或告訴人被告偵結要旨孝115 偵 006421 傷害礁溪分局李○芬 - 臺灣宜蘭地方檢察署",
+    "臺灣宜蘭地方檢察署緩起訴處分金被告履行支付情形 - 臺灣宜蘭地方檢察署",
   ])("排除：%s", title => {
     const item = official(title, "警察局辦理相關業務；防範詐騙、查獲犯罪。");
     expect(isRelevantNewsItem(item)).toBe(false);
@@ -64,6 +70,8 @@ describe("官方警察檢調新聞的行政與宣導雜訊", () => {
     "雄檢偵結高雄市動保處葉姓處長貪瀆案，依法提起公訴",
     "檢察官偵破大型吸金案",
     "檢方偵結假公益捐贈案提起公訴",
+    "1151104桃檢同日執行二件里長現金及搓湯圓賄選案新聞稿-最新消息 - 臺灣桃園地方檢察署",
+    "1151030桃檢偵辦北市沈姓市長候選人遭散布深偽音檔案新聞稿-最新消息 - 臺灣桃園地方檢察署",
     // 跨家族審查 S2：真實高雄 fixture 標題、宣導／施工字眼但有執法動作者
     "當志工有錢領」竟是吸金陷阱！高市警揭穿假公益龐氏騙局 籲民眾切勿落入投資圈套",
     "沒開店卻收扣款通知　高市警少年隊揭「假電商扣款」新騙局",
@@ -99,6 +107,10 @@ describe("官方警察檢調新聞的行政與宣導雜訊", () => {
   });
 });
 
+// 桃園警局擋境外 IP 已從 TW_NEWS_FEEDS 移除；解析器保留並以同一設定測試，待有境內出口時接回。
+const TAOYUAN_FEED = { label: "桃園市警局官網", url: "https://www.typd.gov.tw/index.php?catid=18&cid=1", parser: "police-taoyuan", hint: "治安" };
+const feedByLabel = (label: string) => label === TAOYUAN_FEED.label ? TAOYUAN_FEED : TW_NEWS_FEEDS.find(f => f.label === label);
+
 describe("高雄與桃園固定新聞列表解析", () => {
   afterEach(() => vi.unstubAllGlobals());
 
@@ -106,7 +118,7 @@ describe("高雄與桃園固定新聞列表解析", () => {
     ["高雄市警局官網", "police-kaohsiung-news.html", "代客現煮販毒耍猴戲，高市警聯手特勤突襲製毒、毒品交易據點", "2026-11-03T00:00:00+08:00", "高雄市"],
     ["桃園市警局官網", "police-taoyuan-news.html", "交通違規露餡！楊梅警接連查獲2毒駕", "2026-11-04T00:00:00+08:00", "桃園市"],
   ])("%s 使用實際列表 fixture 保留完整標題、日期與 provenance", async (label, fixture, title, pubDate, jurisdiction) => {
-    const feed = TW_NEWS_FEEDS.find(f => f.label === label);
+    const feed = feedByLabel(label);
     expect(feed).toBeDefined();
     vi.stubGlobal("fetch", vi.fn(async () => new Response(readFileSync(new URL(`./fixtures/${fixture}`, import.meta.url), "utf8"))));
     const result = await fetchRssItems({ feeds: [feed], perFeed: 100, retryDelayMs: 0 });
@@ -120,7 +132,7 @@ describe("高雄與桃園固定新聞列表解析", () => {
 
   it.each(["高雄市警局官網", "桃園市警局官網"])("%s 遇到 200 錯誤頁回報來源失敗", async label => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response("<html>系統維護中</html>")));
-    const result = await fetchRssItems({ feeds: [TW_NEWS_FEEDS.find(f => f.label === label)], retryDelayMs: 0 });
+    const result = await fetchRssItems({ feeds: [feedByLabel(label)], retryDelayMs: 0 });
     expect(result.feedStatus[0]).toMatchObject({ ok: false, count: 0 });
     expect(result.items).toEqual([]);
   });
@@ -129,7 +141,7 @@ describe("高雄與桃園固定新聞列表解析", () => {
     const body = readFileSync(new URL("./fixtures/police-taoyuan-news.html", import.meta.url), "utf8")
       .replaceAll('href="index.php?', 'href="https://evil.example/index.php?');
     vi.stubGlobal("fetch", vi.fn(async () => new Response(body)));
-    const feed = TW_NEWS_FEEDS.find(f => f.label === "桃園市警局官網");
+    const feed = TAOYUAN_FEED;
     expect((await fetchRssItems({ feeds: [feed], retryDelayMs: 0 })).items).toEqual([]);
     vi.stubGlobal("fetch", vi.fn(async () => new Response(body.replaceAll('https://evil.example/index.php?', 'javascript:alert(1)?'))));
     expect((await fetchRssItems({ feeds: [feed], retryDelayMs: 0 })).items).toEqual([]);
