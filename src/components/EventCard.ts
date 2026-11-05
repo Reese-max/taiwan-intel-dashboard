@@ -67,6 +67,8 @@ function eventContext(e: IntelEvent): string {
     verifyParts.push(`<span class="ctx-location-role"><b>地點角色</b>${esc(locationRoleLabel(e.locationRole))}</span>`);
   if (e.locationSourceBasis)
     verifyParts.push(`<span class="ctx-location-basis"><b>定位依據</b>${esc(e.locationSourceBasis)}</span>`);
+  if (e.riskBasis)
+    verifyParts.push(`<span class="ctx-risk-basis"><b>分級依據</b>${esc(e.riskBasis)}</span>`);
 
   const rawParts = [];
   if (e.source.datasetId) rawParts.push(`<span><b>資料集</b>${esc(e.source.datasetId)}</span>`);

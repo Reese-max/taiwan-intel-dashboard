@@ -148,7 +148,7 @@ const TYPE_LABEL: Record<EdgeType, string> = {
   "follow-up": "後續報導（人工更正）",
 };
 
-export const NETWORK_FETCH_TIMEOUT_MS = 5_000;
+export const NETWORK_FETCH_TIMEOUT_MS = 30_000;
 
 export function edgeTypeLabel(t: EdgeType): string {
   return TYPE_LABEL[t] ?? t;

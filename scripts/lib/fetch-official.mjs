@@ -1084,8 +1084,18 @@ export function mapMoenvAirQualityEvents(payload, stations = [], { fetchedAt = n
   return [...grouped.values()].map((group) => {
     const station = stationById.get(group.siteid) || {};
     const county = String(station.County || AIR_STATION_COUNTY_FALLBACK[group.sitename] || "").trim();
-    const coord = Number.isFinite(Number(station.TWD97_Lat)) && Number.isFinite(Number(station.TWD97_Lon))
-      ? { region: county || "全國", lat: Number(station.TWD97_Lat), lng: Number(station.TWD97_Lon) }
+    // null/空字串/空白 → Number()=0，須先排除；範圍外與 (0,0) 同樣無效，退回縣市中心。
+    const blank = (v) => v == null || String(v).trim() === "";
+    const stationLat = blank(station.TWD97_Lat) ? NaN : Number(station.TWD97_Lat);
+    const stationLng = blank(station.TWD97_Lon) ? NaN : Number(station.TWD97_Lon);
+    const hasStationCoord =
+      Number.isFinite(stationLat) &&
+      Number.isFinite(stationLng) &&
+      Math.abs(stationLat) <= 90 &&
+      Math.abs(stationLng) <= 180 &&
+      !(stationLat === 0 && stationLng === 0);
+    const coord = hasStationCoord
+      ? { region: county || "全國", lat: stationLat, lng: stationLng }
       : countyCoordFromAddr(county);
     const timestamp = [...group.timestamps].sort().at(-1) || fetchedAt;
     const metricText = Object.entries(group.metrics)
@@ -1103,7 +1113,7 @@ export function mapMoenvAirQualityEvents(payload, stations = [], { fetchedAt = n
       riskBasis: "依 PM2.5／O3 保守門檻分級；非環境部 AQI 官方燈號",
       summary: `最新小時觀測：${metricText || "無有效污染物數值"}；測站資料日 ${group.latestDataDate || "未提供"}。`,
       ...(coord?.lat != null && coord?.lng != null
-        ? { lat: coord.lat, lng: coord.lng, locationPrecision: "station" }
+        ? { lat: coord.lat, lng: coord.lng, locationPrecision: hasStationCoord ? "exact" : "county-center" }
         : { locationPrecision: "country" }),
       source: {
         ...OFFICIAL_SOURCE_META.moenvAir,

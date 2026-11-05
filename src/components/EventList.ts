@@ -10,6 +10,7 @@ export interface EventListOptions {
   corroboration?: (id: string) => CorroborationResult;
   emptyMessage?: string;
   pageSize?: number;
+  viewKey?: string;
 }
 
 // 增量渲染批量：初次只進 DOM 這麼多張，其餘捲到底再分批補上。
@@ -18,6 +19,7 @@ export const PAGE_SIZE = 50;
 // 每個容器對應上一輪的清理函式（重新渲染前先拆掉舊 observer，避免洩漏/重複觸發）。
 const teardowns = new WeakMap<HTMLElement, () => void>();
 const expandedGroups = new WeakMap<HTMLElement, Set<string>>();
+const paging = new WeakMap<HTMLElement, { key?: string; shown: number }>();
 
 type EventListItem = IntelEvent | CollapsedGroup;
 
@@ -63,8 +65,9 @@ export function renderEventList(container: HTMLElement, items: EventListItem[], 
   teardowns.delete(container);
 
   if (!items.length) {
+    paging.set(container, { key: opts.viewKey, shown: 0 });
     const emptyMessage = opts.emptyMessage ?? "無符合條件的情報";
-    container.innerHTML = `<p class="empty">${emptyMessage}</p>`;
+    container.innerHTML = `<p class="empty">${esc(emptyMessage)}</p>`;
     return;
   }
 
@@ -103,7 +106,10 @@ export function renderEventList(container: HTMLElement, items: EventListItem[], 
   };
   const batchSize = Math.max(1, opts.pageSize ?? PAGE_SIZE);
   const total = items.length;
-  let shown = Math.min(batchSize, total);
+  const previous = paging.get(container);
+  let shown = Math.min(total, opts.viewKey !== undefined && previous?.key === opts.viewKey ? Math.max(batchSize, previous.shown) : batchSize);
+  const page = { key: opts.viewKey, shown };
+  paging.set(container, page);
   let observer: IntersectionObserver | undefined;
 
   const onToggle = (ev: Event): void => {
@@ -150,6 +156,7 @@ export function renderEventList(container: HTMLElement, items: EventListItem[], 
     const next = items.slice(shown, shown + batchSize).map(cardHtml).join("");
     footer.insertAdjacentHTML("beforebegin", next);
     shown = Math.min(shown + batchSize, total);
+    page.shown = shown;
     if (shown >= total) {
       observer?.disconnect();
       footer.remove();

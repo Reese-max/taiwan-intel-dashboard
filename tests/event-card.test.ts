@@ -234,6 +234,32 @@ describe("eventCard", () => {
     expect(html).toContain("已有影響評估");
   });
 
+  it("有 riskBasis 時在查證依據區塊顯示分級依據，無值則不顯示", () => {
+    const base: IntelEvent = {
+      id: "risk-basis",
+      title: "空品測站事件",
+      region: "臺北市",
+      timestamp: "2026-06-27T00:00:00.000Z",
+      category: "環境",
+      scope: "domestic",
+      riskLevel: "medium",
+      summary: "摘要",
+      source: {
+        name: "環境部空品",
+        type: "gov-open-data",
+        fetchedAt: "2026-06-27T00:00:00.000Z",
+      },
+    };
+
+    const withBasis = eventCard({ ...base, riskBasis: "依 PM2.5／O3 保守門檻分級；<非>官方燈號" });
+    expect(withBasis).toContain("<b>分級依據</b>");
+    expect(withBasis).toContain("依 PM2.5／O3 保守門檻分級；&lt;非&gt;官方燈號");
+    expect(withBasis).not.toContain("<非>");
+
+    const withoutBasis = eventCard(base);
+    expect(withoutBasis).not.toContain("分級依據");
+  });
+
   it("renders temporal badges for historical and judicial events only", () => {
     const base: IntelEvent = {
       id: "temporal",

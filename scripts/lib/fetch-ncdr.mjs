@@ -4,7 +4,8 @@
 // - 高溫/降雨/雷雨/強風已有 cwaWarnings
 // - 停水/水庫放流多為例行維運公告
 // 因此保留：淹水、淹水感測、火災、道路封閉、鐵路事故、海洋污染。
-import { countyCoordFromAddr } from "./coords.mjs";
+import { detectCountyLoose } from "./news-bulk.mjs";
+import { nearestCounty } from "./coords.mjs";
 
 export const NCDR_ATOM_URL = "https://alerts.ncdr.nat.gov.tw/JSONAtomFeed.ashx";
 export const NCDR_DATASET_ID = "ncdr-cap-alert";
@@ -58,10 +59,71 @@ function firstBlock(xml, tag) {
   return m ? m[1] : "";
 }
 
+function allBlocks(xml, tag) {
+  const re = new RegExp(`<(?:[\\w.-]+:)?${tag}\\b[^>]*>([\\s\\S]*?)<\\/(?:[\\w.-]+:)?${tag}>`, "gi");
+  const out = [];
+  let m;
+  while ((m = re.exec(String(xml || ""))) !== null) out.push(m[1]);
+  return out;
+}
+
+// CAP 幾何：polygon 為「緯度,經度」空白分隔頂點（取平均），circle 為「緯度,經度 半徑km」（取圓心）。
+// 頂點在「正常」或「經緯顛倒」其中一種取向合法即保留（顛倒於平均後再判定交換）。
+const plausibleVertex = (a, b) =>
+  (a >= -90 && a <= 90 && b >= -180 && b <= 180) || (a >= -180 && a <= 180 && b >= -90 && b <= 90);
+const inTaiwan = (lat, lng) => lat >= 21 && lat <= 27 && lng >= 117 && lng <= 123;
+// 點位正規化（polygon 平均與 circle 圓心共用）：已在台灣框內直接採用；
+// 顛倒（經緯序反）且交換後在框內 → 交換；兩個取向都在框外 → 丟棄（呼叫端退回文字定位）。
+const normalizeTaiwanPoint = (lat, lng) => {
+  if (inTaiwan(lat, lng)) return { lat, lng };
+  if (inTaiwan(lng, lat)) return { lat: lng, lng: lat };
+  return null;
+};
+
+function capAreaGeometry(areaXml) {
+  const polygon = tagValue(areaXml, "polygon");
+  if (polygon) {
+    // 先以空白切出每個頂點、逐一驗證「恰好兩個數字」；缺值頂點（"23.5,"、"bad"）丟棄，
+    // 不可借用下一個頂點的數字（跨頂點配對會把下個頂點的緯度錯當本頂點經度）。
+    const pts = polygon
+      .trim()
+      .split(/\s+/)
+      .map((token) => {
+        const m = token.match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/);
+        return m ? [Number(m[1]), Number(m[2])] : null;
+      })
+      .filter((p) => p && plausibleVertex(p[0], p[1]));
+    // 閉合環首尾同點 → 去尾點再平均。
+    if (pts.length > 1 && pts[0][0] === pts.at(-1)[0] && pts[0][1] === pts.at(-1)[1]) pts.pop();
+    if (pts.length) {
+      const lat = pts.reduce((sum, p) => sum + p[0], 0) / pts.length;
+      const lng = pts.reduce((sum, p) => sum + p[1], 0) / pts.length;
+      const point = normalizeTaiwanPoint(lat, lng);
+      if (point) return point;
+    }
+  }
+  const circle = tagValue(areaXml, "circle");
+  if (circle) {
+    const m = circle.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+    if (m) {
+      const point = normalizeTaiwanPoint(Number(m[1]), Number(m[2]));
+      if (point) return point;
+    }
+  }
+  return null;
+}
+
 export function parseCapAlert(xml) {
   const body = String(xml || "");
   const info = firstBlock(body, "info");
-  const area = firstBlock(info, "area");
+  const areas = allBlocks(info, "area");
+  const areaDescs = areas.map((a) => tagValue(a, "areaDesc")).filter(Boolean);
+  const areaDesc = areaDescs.join("、") || tagValue(info, "areaDesc");
+  // 幾何與區域描述必須同源：記錄產生幾何的那個 <area> 的 areaDesc，供 region 判定用。
+  const geomArea =
+    areas.map((a) => ({ geometry: capAreaGeometry(a), areaDesc: tagValue(a, "areaDesc") })).find((g) => g.geometry) ||
+    null;
+  const area = areas[0] || "";
   return {
     identifier: tagValue(body, "identifier"),
     sent: tagValue(body, "sent"),
@@ -78,8 +140,12 @@ export function parseCapAlert(xml) {
     description: tagValue(info, "description"),
     instruction: tagValue(info, "instruction"),
     web: tagValue(info, "web"),
-    areaDesc: tagValue(area || info, "areaDesc"),
+    areaDesc,
+    areaDescs,
     geocode: tagValue(area || info, "value"),
+    geometryAreaDesc: geomArea ? text(geomArea.areaDesc) : "",
+    lat: geomArea?.geometry.lat ?? null,
+    lng: geomArea?.geometry.lng ?? null,
   };
 }
 
@@ -164,16 +230,44 @@ function selectEntries(atomJson, { now, maxDetail = 60 } = {}) {
 
 function mapCapToEvent(entry, category, href, cap, { fetchedAt }) {
   const areaDesc = text(cap.areaDesc);
-  const coord = countyCoordFromAddr(areaDesc) || { region: "全國", lat: null, lng: null };
+  const hasGeometry = Number.isFinite(cap?.lat) && Number.isFinite(cap?.lng);
+  // 座標與 region 必須同源：有幾何時用該 area 的 areaDesc 決定 region（找不到再取最近縣市），
+  // 不可拿別的 area 的文字偵測結果配這個 area 的座標。
+  let detected = { region: "全國", lat: null, lng: null };
+  let region;
+  if (hasGeometry) {
+    const geoArea = detectCountyLoose(text(cap.geometryAreaDesc));
+    region = geoArea.lat != null ? geoArea.region : nearestCounty(cap.lat, cap.lng) || "全國";
+  } else {
+    // 縣市偵測依序看各 areaDesc→headline→description（第一個 area 為主；
+    // NCDR 常把鄉鎮縣市寫在描述而非 areaDesc）。
+    const detectTexts = [
+      ...(Array.isArray(cap?.areaDescs) && cap.areaDescs.length ? cap.areaDescs : [areaDesc]),
+      cap.headline,
+      cap.description,
+    ].map(text).filter(Boolean);
+    for (const t of detectTexts) {
+      detected = detectCountyLoose(t);
+      if (detected.lat != null) break;
+    }
+    region = detected.region;
+  }
+  const coord = {
+    region,
+    lat: hasGeometry ? cap.lat : detected.lat,
+    lng: hasGeometry ? cap.lng : detected.lng,
+    locationPrecision: hasGeometry ? "district" : detected.lat != null ? "county-center" : "country",
+  };
   const identifier = text(cap.identifier || entry?.id);
   const title = text(cap.headline) || `${category}｜${areaDesc || coord.region || "全國"}`;
   const summary = compactText(cap.description || entry?.summary?.["#text"] || title);
   return {
     id: `ncdr-${identifier}`,
     title,
-    region: coord.region || "全國",
-    lat: coord.lat ?? null,
-    lng: coord.lng ?? null,
+    region: coord.region,
+    lat: coord.lat,
+    lng: coord.lng,
+    locationPrecision: coord.locationPrecision,
     timestamp: text(cap.sent) || text(entry?.updated) || fetchedAt,
     category: CATEGORY_MAP[category] || "災防",
     scope: "domestic",

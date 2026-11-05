@@ -1,7 +1,7 @@
 // 全量新聞輕量收錄（免 LLM）：把抓回來的 RSS 原文全部轉成 IntelEvent。
 // 分類用來源主題(hint)、風險用標題與摘要關鍵字、座標用標題短名縣市偵測。
 // 與 LLM 精修層(nvidia.normalizeDomesticNews)互補：LLM 精修最近一批，其餘走這裡，達成「全量下載」。
-import { COUNTY_CENTER } from "./coords.mjs";
+import { COUNTY_CENTER, countyCoordFromAddr } from "./coords.mjs";
 import { eventIdFor } from "./event-id.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
 import { titleKey } from "./title-key.mjs";
@@ -17,7 +17,8 @@ const COUNTY_MATCH = [
   [/台中|臺中|中市/, "臺中市"], [/台南|臺南|南市/, "臺南市"], [/高雄|高市/, "高雄市"],
   [/基隆/, "基隆市"], [/竹縣/, "新竹縣"], [/新竹|竹市/, "新竹市"], [/苗栗/, "苗栗縣"],
   [/彰化/, "彰化縣"], [/南投/, "南投縣"], [/雲林/, "雲林縣"],
-  [/嘉縣/, "嘉義縣"], [/嘉義|嘉市/, "嘉義市"], [/屏東/, "屏東縣"], [/宜蘭/, "宜蘭縣"],
+  // 「嘉義」單獨出現無法區分縣市；只接受完整名稱或明確縣市簡稱。
+  [/嘉義縣|嘉縣/, "嘉義縣"], [/嘉義市|嘉市/, "嘉義市"], [/屏東/, "屏東縣"], [/宜蘭/, "宜蘭縣"],
   [/花蓮/, "花蓮縣"], [/台東|臺東/, "臺東縣"], [/澎湖/, "澎湖縣"], [/金門/, "金門縣"],
   [/連江|馬祖/, "連江縣"],
 ];
@@ -29,6 +30,76 @@ export function detectCounty(text) {
       const [lat, lng] = COUNTY_CENTER[key];
       return { region: key, lat, lng };
     }
+  }
+  return { region: "全國", lat: null, lng: null };
+}
+
+// 全名（含「縣/市」）比對優先於短名規則：避免「嘉義縣」被短名「嘉義」誤判為嘉義市。
+export function detectCountyLoose(text) {
+  return countyCoordFromAddr(text) || detectCounty(text);
+}
+
+// 發稿地/記者署名區塊：摘要比對前先剝掉（署名地僅作最後 fallback，地方記者駐地多半是事發地）。
+// 只剝「開頭」（允許前置空白）且明確符合署名結構者：括號內含署名標記（記者/報導/日電/專電/電訊/本報訊）、
+// 或 ≤10 字以「訊」結尾的短署名（〔台北訊〕（高雄訊）本報訊）。括號內的一般詞（通訊、資訊…）不剝。
+const DATELINE_RES = [
+  /^\s*[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{0,80}?(?:記者|報導|日電|專電|電訊|本報訊)[^〔【\[［（(〕】\]］）)\n]{0,30}?[〕】\]］）)]/,
+  /^\s*[〔【\[［（(][^〔【\[［（(〕】\]］）)\n]{1,10}?訊[〕】\]］）)]/,
+  /^\s*[^\s，。、：:（(〔【\[［]{1,10}?訊(?=[\s，。、：:．.]|$)/,
+];
+
+// 文中「最早出現」的縣市：全名（COUNTY_CENTER 鍵，含台/臺異體）與短名規則一起取最小 index；
+// 同位置全名優先（「嘉義縣」不被短名「嘉義」誤判為嘉義市）。摘要/描述專用；標題維持 detectCounty。
+export function detectCountyEarliest(text) {
+  const s = String(text || "");
+  let best = null;
+  for (const name of Object.keys(COUNTY_CENTER)) {
+    const idx = s.indexOf(name);
+    if (idx < 0) continue;
+    if (!best || idx < best.idx || (idx === best.idx && !best.full)) {
+      best = { idx, full: true, key: name.replace(/^台/, "臺") };
+    }
+  }
+  for (const [re, key] of COUNTY_MATCH) {
+    const m = s.match(re);
+    if (!m) continue;
+    const idx = m.index;
+    if (!best || idx < best.idx || (idx === best.idx && !best.full)) {
+      best = { idx, full: false, key };
+    }
+  }
+  if (!best) return { region: "全國", lat: null, lng: null };
+  const [lat, lng] = COUNTY_CENTER[best.key];
+  return { region: best.key, lat, lng };
+}
+
+// 長文（摘要/描述）縣市偵測：剝發稿地→取最早縣市；剝完無命中才回退發稿地縣市。
+export function detectCountyInBody(text) {
+  const s = String(text || "");
+  const datelines = [];
+  let body = s;
+  // 署名區塊只剝開頭（各正則皆 ^ 錨定）；連續署名（〔記者…〕（中央社…））逐層剝，最多 4 層防呆。
+  for (let i = 0; i < 4; i++) {
+    let next = body;
+    for (const re of DATELINE_RES) {
+      next = next.replace(re, (m) => (datelines.push(m), " "));
+    }
+    if (next === body) break;
+    body = next;
+  }
+  const loc = detectCountyEarliest(body);
+  if (loc.lat != null) return loc;
+  return detectCountyEarliest(datelines.join(" "));
+}
+
+// 標題優先（維持清單順序行為），無命中才看摘要/描述（剝發稿地、取最早出現縣市）：
+// 避免摘要提及的他縣市蓋過標題（如標題無地名、摘要寫「嘉義縣 東石鄉」）。
+function countyFromItem(item) {
+  const titleLoc = detectCounty(item?.title);
+  if (titleLoc.lat != null) return titleLoc;
+  for (const text of [item?.description, item?.summary]) {
+    const loc = detectCountyInBody(text);
+    if (loc.lat != null) return loc;
   }
   return { region: "全國", lat: null, lng: null };
 }
@@ -298,7 +369,7 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
     const k = titleKey(it.title);
     if (!k || seen.has(k) || excludeKeys.has(k)) continue;
     seen.add(k);
-    const loc = detectCounty(it.title);
+    const loc = countyFromItem(it);
     const source = deriveNewsProvenance({ ...it, link: it.link || k }, { fetchedAt });
     const categoryResult = categoryFromItem(it.title, it.hint);
     events.push({

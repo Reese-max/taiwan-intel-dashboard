@@ -1,5 +1,7 @@
 import type { IntelEvent } from "../types/event";
 import { esc } from "../utils/escape";
+import { eventDay } from "../data/loader";
+import { getState, setState } from "../store";
 
 export function renderTimeline(container: HTMLElement, events: IntelEvent[]): void {
   const days: { label: string; count: number; y: number; m: number; d: number }[] = [];
@@ -40,7 +42,7 @@ export function renderTimeline(container: HTMLElement, events: IntelEvent[]): vo
   const bars = days
     .map(
       (d) =>
-        `<div class="tl-bar"><div class="tl-fill" style="height:${(d.count / max) * 100}%"></div><span>${d.label}</span><b>${d.count}</b></div>`,
+        `<button type="button" class="tl-bar" data-day="${eventDay(new Date(d.y, d.m, d.d).getTime())}" aria-label="篩選 ${d.y}/${d.label}" aria-pressed="${getState().day === eventDay(new Date(d.y, d.m, d.d).getTime())}"><span class="tl-fill" style="height:${(d.count / max) * 100}%"></span><span>${d.label}</span><b>${d.count}</b></button>`,
     )
     .join("");
 
@@ -51,4 +53,7 @@ export function renderTimeline(container: HTMLElement, events: IntelEvent[]): vo
   }
 
   container.innerHTML = `<div class="timeline">${bars}</div>${hint}`;
+  container.querySelectorAll<HTMLButtonElement>("[data-day]").forEach((button) => {
+    button.onclick = () => setState({ day: getState().day === button.dataset.day ? undefined : button.dataset.day });
+  });
 }

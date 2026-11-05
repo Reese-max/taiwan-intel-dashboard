@@ -79,8 +79,10 @@ test("XSS hash 回歸：惡意 focus 參數應安全清除", async ({ page }) =>
   await page.goto(`/#scope=domestic&focus=${encodeURIComponent(payload)}`);
   const focusbar = page.locator("#focusbar");
   await expect(page.locator("#eventlist > *").first()).toBeVisible({ timeout: 30_000 });
-  await expect(focusbar).toBeHidden();
+  // 失效 focus 改為顯示「找不到事件」提示（不再靜默清除）；payload 仍不得被當成 HTML 插入。
+  await expect(focusbar).toContainText("此事件不在目前快照或時間範圍內");
   await expect(page.locator("#focusbar img")).toHaveCount(0);
+  await expect(page).not.toHaveURL(/focus=/);
   const xssFlag = await page.evaluate(() => window.__xss);
   expect(xssFlag).toBeUndefined();
 });
