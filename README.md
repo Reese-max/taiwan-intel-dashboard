@@ -33,6 +33,8 @@
 
 管線分層：`source-plan.mjs` 管理來源選擇與 exclusive 規則；`direct-official-sources.mjs` 集中直連官方來源 registry 與 fail-soft 執行；各 `fetch-*.mjs` 只負責來源 adapter；`fetch-live.mjs` 僅組合事件、快照與 provenance。
 
+官方警察／檢調案件新聞亦由 `twnews` 收錄：新北、嘉義市採 Google News site 查詢；桃園、高雄直接解析官方新聞列表；士林、桃園、新竹、臺中、雲林、屏東、宜蘭、高雄、基隆地檢署採官方 RSS。行政公告、公益勸募、職缺與純宣導由共用相關性閘門排除。2026-11-05 候選清單見 [`docs/reports/2026-11-05-police-source-candidates.json`](docs/reports/2026-11-05-police-source-candidates.json)（可用 `node scripts/_audit-candidates.mjs <該檔>` 重跑稽核）；尚未全面涵蓋全國案件。
+
 完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」。移除第三方 MCP 後，採購、司法、空品、停車、經濟等原 MCP 來源不再刷新，待改成官方直連後再恢復。
 
 情報網人工更正：維護者確認過的錯誤關聯／地點角色／後續關係記於 [`docs/curation/correlation-overrides.jsonl`](docs/curation/correlation-overrides.jsonl)（JSONL、隨程式碼 review）；每次 rebuild 自動重放，來源內容或規則版本變動時記錄自動轉 `needs_review`（fail closed），矛盾記錄全部標 `conflict` 不套用。格式與流程見 [`docs/curation/README.md`](docs/curation/README.md)。

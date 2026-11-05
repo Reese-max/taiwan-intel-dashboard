@@ -92,7 +92,7 @@ export const TW_NEWS_FEEDS = [
   { label: "法務部 新聞發布", url: "https://www.moj.gov.tw/2204/2795/2796/rss", hint: "治安" },
   { label: "衛福部 焦點新聞", url: "https://www.mohw.gov.tw/rss-16-1.html", hint: "治安" },
   { label: "公路局 最新消息", url: "https://www.thb.gov.tw/OpenData.aspx?SN=14F103987102091C", hint: "交通" },
-  { label: "新北市警局 最新", url: "https://www.police.ntpc.gov.tw/rss-3344-1.html", hint: "治安" },
+  { label: "新北市警局官網", url: gq("site:police.ntpc.gov.tw"), hint: "治安" },
   // ── 重大刑案 ──
   { label: "GN 命案兇殺", url: gq("命案 OR 兇殺 OR 凶殺"), hint: "治安" },
   { label: "GN 殺人分屍", url: gq("殺人 OR 分屍 OR 棄屍"), hint: "治安" },
@@ -205,6 +205,22 @@ export const TW_NEWS_FEEDS = [
   // ── 補地方災防高回量來源 ──
   { label: "彰化縣消防局官網", url: gq("site:chfd.gov.tw 災害 OR 火警 OR 消防 OR 救護"), hint: "災防" },
   { label: "高雄市交通局災防", url: gq("site:tbkc.gov.tw 災害 OR 火警 OR 消防 OR 救護"), hint: "災防" },
+
+  // 2026-11-05 官方案件來源稽核：GN 近五天 >=3 且有案件；地檢署優先使用標題完整的官方 RSS。
+  { label: "嘉義市警局官網", url: gq("site:ccpb.gov.tw"), hint: "治安" },
+  // 地檢署名稱不含縣市全名（士林…），轄區明列於 jurisdiction（取署址縣市）。
+  { label: "桃園地檢署官網", url: "https://www.tyc.moj.gov.tw/294079/294166/294168/rss", jurisdiction: "桃園市", hint: "治安" },
+  { label: "新竹地檢署官網", url: "https://www.scc.moj.gov.tw/295217/295253/295254/rss", jurisdiction: "新竹市", hint: "治安" },
+  { label: "士林地檢署官網", url: "https://www.slc.moj.gov.tw/293537/293550/1446944/rss", jurisdiction: "臺北市", hint: "治安" },
+  { label: "臺中地檢署官網", url: "https://www.tcc.moj.gov.tw/295804/295830/657577/rss", jurisdiction: "臺中市", hint: "治安" },
+  { label: "雲林地檢署官網", url: "https://www.ulc.moj.gov.tw/10682/10702/10712/rss", jurisdiction: "雲林縣", hint: "治安" },
+  { label: "屏東地檢署官網", url: "https://www.ptc.moj.gov.tw/294926/295026/295028/rss", jurisdiction: "屏東縣", hint: "治安" },
+  { label: "宜蘭地檢署官網", url: "https://www.ilc.moj.gov.tw/294196/294434/294435/rss", jurisdiction: "宜蘭縣", hint: "治安" },
+  { label: "高雄地檢署官網", url: "https://www.ksc.moj.gov.tw/296454/296653/296654/rss", jurisdiction: "高雄市", hint: "治安" },
+  { label: "基隆地檢署官網", url: "https://www.klc.moj.gov.tw/293105/293191/293157/rss", jurisdiction: "基隆市", hint: "治安" },
+  // GN 低覆蓋的大縣市：直接解析官方新聞列表；不依賴沒有日期、使用相對連結的桃園 RSS。
+  { label: "高雄市警局官網", url: "https://kcpd.kcg.gov.tw/News.aspx?n=301858D950E8FB8E&sms=FC374298B757EFB3", parser: "police-kaohsiung", hint: "治安" },
+  { label: "桃園市警局官網", url: "https://www.typd.gov.tw/index.php?catid=18&cid=1", parser: "police-taoyuan", hint: "治安" },
 ];
 
 function decode(s) {
@@ -319,6 +335,35 @@ function parseFeed(xml) {
   return items;
 }
 
+function parsePoliceNewsList(html, feed) {
+  const kaohsiung = feed.parser === "police-kaohsiung";
+  const blocks = html.match(kaohsiung ? /<tr\b[^>]*>[\s\S]*?<\/tr>/gi : /<li\b[^>]*>[\s\S]*?<\/li>/gi) || [];
+  const items = [];
+  for (const block of blocks) {
+    if (!(kaohsiung ? /上版日期/.test(block) : /ul_newslist021/.test(block))) continue;
+    const tag = block.match(/<a\b[^>]*>/i)?.[0] || "";
+    const href = tag.match(/\shref=(["'])(.*?)\1/i)?.[2];
+    const anchorTitle = tag.match(/\stitle=(["'])(.*?)\1/i)?.[2];
+    const anchor = href && anchorTitle ? [tag, href, anchorTitle] : null;
+    const date = block.match(kaohsiung ? /<p>\s*(\d{3})-(\d{2})-(\d{2})\s*<\/p>/ : /更新日期：(\d{4})-(\d{2})-(\d{2})/);
+    if (!anchor || !date) continue;
+    const year = Number(date[1]) + (kaohsiung ? 1911 : 0);
+    const day = `${year}-${date[2]}-${date[3]}`;
+    const pubDate = `${day}T00:00:00+08:00`;
+    if (!Number.isFinite(Date.parse(pubDate)) || new Date(`${day}T00:00:00Z`).toISOString().slice(0, 10) !== day) continue;
+    let url;
+    try { url = new URL(decode(anchor[1]), feed.url); } catch { continue; }
+    if (url.origin !== new URL(feed.url).origin) continue;
+    if (kaohsiung ? !/^\/News_Content\.aspx$/i.test(url.pathname) || !url.searchParams.get("s")
+      : url.pathname !== "/index.php" || url.searchParams.get("action") !== "view" || !url.searchParams.get("id")) continue;
+    items.push({ title: decode(anchor[2]), link: url.href, pubDate,
+      description: decode(block.match(/<p\b[^>]*class="quote"[^>]*>([\s\S]*?)<\/p>/i)?.[1] || "") });
+  }
+  // 200 錯誤頁與改版皆回報來源失敗，避免將抓不到資料當成「近期沒有案件」。
+  if (!items.length) throw new Error("警察新聞列表沒有可解析的標題、原文連結與日期");
+  return items;
+}
+
 const RSS_RETRY_DELAY_MS = 750;
 const RSS_FETCH_ATTEMPTS = 2;
 
@@ -359,14 +404,14 @@ async function fetchOneAttempt(feed, perFeed, timeoutMs) {
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const official = isOfficialFeed(feed);
-    const jurisdiction = official ? countyCoordFromAddr(feed.label)?.region : undefined;
+    const jurisdiction = official ? feed.jurisdiction || countyCoordFromAddr(feed.label)?.region : undefined;
     const res = await fetch(feed.url, {
       signal: ctrl.signal,
       headers: { "User-Agent": "Mozilla/5.0 (taiwan-intel-dashboard pipeline)" },
     });
     if (!res.ok) throw httpError(res.status);
     const xml = await res.text();
-    const items = parseFeed(xml)
+    const items = (feed.parser ? parsePoliceNewsList(xml, feed) : parseFeed(xml))
       .filter((i) => i.title && i.link)
       .slice(0, perFeed)
       .map((i) => ({
@@ -374,6 +419,7 @@ async function fetchOneAttempt(feed, perFeed, timeoutMs) {
         pubDate: applyNaiveDateOffset(i.pubDate, feed.naiveDateOffset),
         source: feed.label,
         sourceUrl: feed.url,
+        ingestMethod: feed.parser ? "direct-html" : undefined,
         hint: feed.hint,
         official: official || undefined,
         jurisdiction,

@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { TW_NEWS_FEEDS } from "../scripts/lib/fetch-rss.mjs";
+import { fetchRssItems, TW_NEWS_FEEDS } from "../scripts/lib/fetch-rss.mjs";
 
 describe("TW_NEWS_FEEDS", () => {
   it("includes max-coverage audited Taiwan news sources", () => {
@@ -36,6 +36,40 @@ describe("TW_NEWS_FEEDS", () => {
   it("does not contain duplicate labels", () => {
     const labels = TW_NEWS_FEEDS.map((feed) => feed.label);
     expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it.each([
+    ["新北市警局官網", "police.ntpc.gov.tw"],
+    ["嘉義市警局官網", "ccpb.gov.tw"],
+    ["桃園地檢署官網", "tyc.moj.gov.tw"],
+    ["新竹地檢署官網", "scc.moj.gov.tw"],
+    ["士林地檢署官網", "slc.moj.gov.tw"],
+    ["臺中地檢署官網", "tcc.moj.gov.tw"],
+    ["雲林地檢署官網", "ulc.moj.gov.tw"],
+    ["屏東地檢署官網", "ptc.moj.gov.tw"],
+    ["宜蘭地檢署官網", "ilc.moj.gov.tw"],
+    ["高雄地檢署官網", "ksc.moj.gov.tw"],
+    ["基隆地檢署官網", "klc.moj.gov.tw"],
+  ])("稽核來源 %s 的 URL、分類與官方識別", async (label, domain) => {
+    const feed = TW_NEWS_FEEDS.find(f => f.label === label);
+    expect(feed?.hint).toBe("治安");
+    if (label.includes("警局")) {
+      expect(new URL(feed.url).searchParams.get("q")).toBe(`site:${domain} when:5d`);
+    } else {
+      expect(new URL(feed.url).hostname).toBe(`www.${domain}`);
+      expect(new URL(feed.url).pathname.endsWith("/rss")).toBe(true);
+    }
+    vi.stubGlobal("fetch", vi.fn(async () => new Response('<rss><channel><item><title>查獲詐騙車手</title><link>https://example.test/news/1</link><pubDate>Wed, 04 Nov 2026 08:00:00 GMT</pubDate></item></channel></rss>')));
+    const result = await fetchRssItems({ feeds: [feed], retryDelayMs: 0 });
+    expect(result.items[0]).toMatchObject({ official: true, source: label, hint: "治安" });
+    // 跨家族審查 S1：地檢署名稱不含縣市全名，也要有轄區
+    expect(result.items[0].jurisdiction).toMatch(/[市縣]$/);
+  });
+
+  it("移除沒有近期案件的新北舊 RSS", () => {
+    expect(TW_NEWS_FEEDS.some(f => f.label === "新北市警局 最新" || f.url.includes("rss-3344-1.html"))).toBe(false);
   });
 });
 

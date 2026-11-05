@@ -1,0 +1,198 @@
+{
+  "queries": [
+    "site:police.gov.taipei",
+    "site:police.ntpc.gov.tw",
+    "site:typd.gov.tw",
+    "site:police.taichung.gov.tw",
+    "site:tnpd.gov.tw",
+    "site:kcpd.kcg.gov.tw",
+    "site:klgpb.klcg.gov.tw",
+    "site:hchpb.gov.tw",
+    "site:hccp.gov.tw",
+    "site:mlpb.gov.tw",
+    "site:chpb.gov.tw",
+    "site:ntcpb.gov.tw",
+    "site:ylpolice.gov.tw",
+    "site:cypd.gov.tw",
+    "site:ccpb.gov.tw",
+    "site:ptpolice.gov.tw",
+    "site:ilcpb.gov.tw",
+    "site:hlpb.gov.tw",
+    "site:ttcpb.gov.tw",
+    "site:php.gov.tw",
+    "site:kmpd.gov.tw",
+    "site:lcpd.gov.tw",
+    "site:hpb.npa.gov.tw",
+    "site:apb.npa.gov.tw",
+    "site:rpb.npa.gov.tw",
+    "site:klhpb.npa.gov.tw",
+    "site:tkhpb.npa.gov.tw",
+    "site:khhpb.npa.gov.tw",
+    "site:hlhpb.npa.gov.tw",
+    "site:1spc.npa.gov.tw",
+    "site:2spc.npa.gov.tw",
+    "site:3spc.npa.gov.tw",
+    "site:4spc.npa.gov.tw",
+    "site:5spc.npa.gov.tw",
+    "site:6spc.npa.gov.tw",
+    "site:7spc.npa.gov.tw",
+    "site:tpc.moj.gov.tw",
+    "site:pcc.moj.gov.tw",
+    "site:slc.moj.gov.tw",
+    "site:tyc.moj.gov.tw",
+    "site:hcc.moj.gov.tw",
+    "site:mlc.moj.gov.tw",
+    "site:tcc.moj.gov.tw",
+    "site:ntc.moj.gov.tw",
+    "site:chc.moj.gov.tw",
+    "site:ulc.moj.gov.tw",
+    "site:cyc.moj.gov.tw",
+    "site:tnc.moj.gov.tw",
+    "site:ksc.moj.gov.tw",
+    "site:qtc.moj.gov.tw",
+    "site:ptc.moj.gov.tw",
+    "site:ttc.moj.gov.tw",
+    "site:hlc.moj.gov.tw",
+    "site:ilc.moj.gov.tw",
+    "site:klc.moj.gov.tw",
+    "site:phc.moj.gov.tw",
+    "site:kmc.moj.gov.tw",
+    "site:ljc.moj.gov.tw",
+    "site:klg.gov.tw",
+    "site:mpb.gov.tw",
+    "site:ncpb.gov.tw",
+    "site:ylhpb.yunlin.gov.tw",
+    "site:pthg.gov.tw/pcpb",
+    "site:phpb.gov.tw",
+    "site:kpb.kinmen.gov.tw",
+    "site:lchpd.gov.tw",
+    "site:scc.moj.gov.tw",
+    "site:klhpd.npa.gov.tw",
+    "site:tchpd.npa.gov.tw",
+    "site:khhpd.npa.gov.tw",
+    "site:hlhpd.npa.gov.tw",
+    "site:ncpd.gov.tw"
+  ],
+  "feeds": [
+    {
+      "label": "新北市警局 最新 RSS",
+      "url": "https://www.police.ntpc.gov.tw/rss-3344-1.html"
+    },
+    {
+      "label": "高雄市警局 RSS",
+      "url": "https://kcpd.kcg.gov.tw/RSS.aspx?n=9B4A5D1C43E9B6F2"
+    },
+    {
+      "label": "桃園市警局 RSS",
+      "url": "https://www.typd.gov.tw/rss.php"
+    },
+    {
+      "label": "桃園警政新聞 RSS",
+      "url": "https://www.typd.gov.tw/rss.php?cid=1&action=view"
+    },
+    {
+      "label": "臺灣新北地方檢察署",
+      "url": "https://www.pcc.moj.gov.tw/293833/293987/293989/rss"
+    },
+    {
+      "label": "臺灣桃園地方檢察署",
+      "url": "https://www.tyc.moj.gov.tw/294079/294166/294168/rss"
+    },
+    {
+      "label": "臺灣臺北地方檢察署",
+      "url": "https://www.tpc.moj.gov.tw/292885/293089/293092/rss"
+    },
+    {
+      "label": "臺灣士林地方檢察署",
+      "url": "https://www.slc.moj.gov.tw/293537/293550/1446944/rss"
+    },
+    {
+      "label": "臺灣新竹地方檢察署",
+      "url": "https://www.scc.moj.gov.tw/295217/295253/295254/rss"
+    },
+    {
+      "label": "臺灣苗栗地方檢察署",
+      "url": "https://www.mlc.moj.gov.tw/295524/295609/1262294/1262341/rss"
+    },
+    {
+      "label": "臺灣臺中地方檢察署",
+      "url": "https://www.tcc.moj.gov.tw/295804/295830/657577/rss"
+    },
+    {
+      "label": "臺灣彰化地方檢察署",
+      "url": "https://www.chc.moj.gov.tw/296309/296487/296489/rss"
+    },
+    {
+      "label": "臺灣南投地方檢察署",
+      "url": "https://www.ntc.moj.gov.tw/296976/297273/297275/rss"
+    },
+    {
+      "label": "臺灣嘉義地方檢察署",
+      "url": "https://www.cyc.moj.gov.tw/297563/297690/297702/rss"
+    },
+    {
+      "label": "臺灣臺南地方檢察署",
+      "url": "https://www.tnc.moj.gov.tw/297028/297162/297164/rss"
+    },
+    {
+      "label": "臺灣雲林地方檢察署",
+      "url": "https://www.ulc.moj.gov.tw/10682/10702/10712/rss"
+    },
+    {
+      "label": "臺灣橋頭地方檢察署",
+      "url": "https://www.qtc.moj.gov.tw/10181/10255/10257/rss"
+    },
+    {
+      "label": "臺灣屏東地方檢察署",
+      "url": "https://www.ptc.moj.gov.tw/294926/295026/295028/rss"
+    },
+    {
+      "label": "臺灣花蓮地方檢察署",
+      "url": "https://www.hlc.moj.gov.tw/53445/53474/53475/rss"
+    },
+    {
+      "label": "臺灣澎湖地方檢察署",
+      "url": "https://www.phc.moj.gov.tw/292419/292497/820131/rss"
+    },
+    {
+      "label": "福建金門地方檢察署",
+      "url": "https://www.kmc.moj.gov.tw/292092/1275499/1275503/rss"
+    },
+    {
+      "label": "臺灣宜蘭地方檢察署",
+      "url": "https://www.ilc.moj.gov.tw/294196/294434/294435/rss"
+    },
+    {
+      "label": "嘉義市警局新聞RSS",
+      "url": "https://www.ccpb.gov.tw/rss/news.php?type_id=10327&parent_id=10321"
+    },
+    {
+      "label": "嘉義縣警局新聞RSS",
+      "url": "https://www.cypd.gov.tw/RSS/Index/1"
+    },
+    {
+      "label": "嘉義縣警局新聞RSS18",
+      "url": "https://www.cypd.gov.tw/RSS/Index/18"
+    },
+    {
+      "label": "嘉義縣警局新聞RSS46",
+      "url": "https://www.cypd.gov.tw/RSS/Index/46"
+    },
+    {
+      "label": "高雄地檢署新聞RSS",
+      "url": "https://www.ksc.moj.gov.tw/296454/296653/296654/rss"
+    },
+    {
+      "label": "基隆地檢署新聞RSS",
+      "url": "https://www.klc.moj.gov.tw/293105/293191/293157/rss"
+    },
+    {
+      "label": "臺東地檢署新聞RSS",
+      "url": "https://www.ttc.moj.gov.tw/294601/294650/294676/294677/rss"
+    },
+    {
+      "label": "連江地檢署新聞RSS",
+      "url": "https://www.ljc.moj.gov.tw/291807/291982/rss"
+    }
+  ]
+}
