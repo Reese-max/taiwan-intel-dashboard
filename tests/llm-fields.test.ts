@@ -24,13 +24,13 @@ describe("嘉義縣標題的 LLM 地點 fallback", () => {
     expect(event.lng).toBeCloseTo(120.2555, 3);
   });
 
-  it("短名不足以區分縣市時不猜測", () => {
+  it("短名接縣轄鄉鎮時判嘉義縣", () => {
     const event = applyDomesticCountyLocation({
       region: "嘉義",
       title: "嘉義東石鄉車禍 騎士送醫",
       summary: "交通事故",
     });
-    expect(event).toMatchObject({ region: "全國", lat: null, lng: null, locationPrecision: "unknown" });
+    expect(event).toMatchObject({ region: "嘉義縣", locationPrecision: "city" });
   });
 });
 
@@ -174,14 +174,14 @@ describe("applyDomesticCountyLocation（國內縣市定位 fallback）", () => {
     expect(ev).toMatchObject({ region: "高雄市", lat: 22.63, lng: 120.3, locationPrecision: "exact" });
   });
 
-  it("LLM fallback 與 bulk 路徑對同一標題判定一致（高雄車禍 新北警協助 → 新北市）", () => {
+  it("LLM fallback 與 bulk 路徑對同一標題判定一致（高雄車禍 新北警協助 → 高雄市）", () => {
     const title = "高雄車禍 新北警協助";
     const llm = applyDomesticCountyLocation({ region: "全國", title, summary: "" });
     const [bulk] = mapBulkNews(
       [{ title, link: "https://x/consistent", description: "", source: "s", sourceUrl: "u", hint: "治安", pubDate: "x" }],
       { fetchedAt: "2026-07-25T00:00:00.000Z" },
     );
-    expect(bulk.region).toBe("新北市");
+    expect(bulk.region).toBe("高雄市");
     expect(llm.region).toBe(bulk.region);
   });
 

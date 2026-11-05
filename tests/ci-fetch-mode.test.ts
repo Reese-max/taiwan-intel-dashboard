@@ -20,7 +20,7 @@ describe("resolveFetchMode", () => {
   it("maps daily refresh cron to full exclusive refresh including CWA and international RSS", () => {
     const mode = resolveFetchMode({ schedule: "30 18 * * *" });
     expect(mode.label).toBe("refresh");
-    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver --exclusive");
+    expect(mode.args).toBe("--sources=cwa,police,missing,twnews,rss,gdelt,mofa,ncdr,mnd,cdc,tfda,cga,twcert,taipower,wra,wraRiver,parkingHsinchu,parkingTaoyuan,economy,agriPrices,healthFacilities,fireStats,socialPopulation,education,financeDerivatives,laborStats --exclusive");
     expect(mode.assertArgs).toBe("--require=cwa,cwaWarnings,international,police,missing,twnews --min-international-feeds=10 --min-international-raw=50");
   });
 

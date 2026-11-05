@@ -593,17 +593,19 @@ const clampTwCat = (c) => (TW_CATEGORIES.includes(c) ? c : "社會");
 
 // region 只有「縣市全名」能直接決定；短名 region 降為標題／摘要皆未命中時的最後備援。
 // 順序：region 全名 → 標題 detectCounty（與 bulk 路徑一致）→ 摘要/原文逐段 detectCountyInBody → 短名 region。
-// bodyTexts 逐段傳入：發稿地署名只剝各段開頭，避免拼接字串中段的括號內文被誤剝。
+// bodyTexts 逐段傳入；短名縣市可由原文中的縣全名或附近鄉鎮修正。
 function domesticCountyLocation(region, title = "", bodyTexts = []) {
   const byName = countyCoordFromAddr(region);
   if (byName) return byName;
-  const titleLoc = detectCounty(title);
+  if (/^(?:竹市|嘉市)$/.test(region)) return detectCounty(region);
+  const context = (Array.isArray(bodyTexts) ? bodyTexts : [bodyTexts]).filter(Boolean).join(" ");
+  const titleLoc = detectCounty(title, context);
   if (titleLoc.lat != null) return titleLoc;
   for (const t of Array.isArray(bodyTexts) ? bodyTexts : [bodyTexts]) {
     const bodyLoc = detectCountyInBody(t);
     if (bodyLoc.lat != null) return bodyLoc;
   }
-  const regionLoc = detectCounty(region);
+  const regionLoc = detectCounty(region, `${title} ${context}`);
   return regionLoc.lat != null ? regionLoc : { region: "全國", lat: null, lng: null };
 }
 
@@ -1067,6 +1069,7 @@ export async function summarize({ domestic = [], international = [], clusters = 
     trend: (trend || "").trim(),
     dailyCounts,
     clusterSummaries,
+    clusterVersions: Object.fromEntries(clusters.filter((c) => clusterSummaries[c.id]).map((c) => [c.id, JSON.stringify([...c.members].sort())])),
     degraded: {
       domestic: degradedDomestic,
       international: degradedInternational,

@@ -25,6 +25,26 @@ describe("international feed registry", () => {
     expect(new Set(urls).size).toBe(urls.length);
   });
 
+  it("uses the current Washington Post World RSS endpoint", () => {
+    expect(INTERNATIONAL_FEEDS.find((feed) => feed.label === "WaPo World")?.url)
+      .toBe("https://www.washingtonpost.com/arcio/rss/category/world/");
+  });
+
+  it.each(["Yahoo Finance", "PERE", "RailTech.com", "The Third Pole"])("removes unavailable or duplicate public feed %s", (label) => {
+    expect(labels(INTERNATIONAL_FEEDS)).not.toContain(label);
+    expect(labels(INTERNATIONAL_FEEDS)).toContain("Railway Gazette International");
+  });
+
+  it.each(["Berkeley Lab News Center", "CERN", "Sciences et Avenir", "eLife", "Bay Nature"])(
+    "keeps a site-scoped backup for %s when the direct feed is blocked",
+    (label) => {
+      const feed = INTERNATIONAL_FEEDS.find((feed) => feed.label === label)!;
+      expect(feed.fallbackUrl).toBeTruthy();
+      expect(new URL(feed.fallbackUrl).searchParams.get("q"))
+        .toBe(`site:${new URL(feed.url).hostname.replace(/^www\./, "")} when:7d`);
+    },
+  );
+
   it("keeps blocked direct feeds first and declares site-scoped fallback URLs", () => {
     const blocked = INTERNATIONAL_FEEDS.filter((feed) => feed.fallbackUrl);
     expect(blocked.length).toBeGreaterThanOrEqual(50);

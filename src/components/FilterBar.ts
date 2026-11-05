@@ -28,6 +28,9 @@ export function syncFilterBar(container: HTMLElement, state: AppState, events: I
   for (const [id, value] of Object.entries({ "f-cat": state.category, "f-risk": state.minRisk,
     "f-authority": state.newsAuthority, "f-range": state.sinceDays == null ? "" : String(state.sinceDays) })) {
     const el = container.querySelector<HTMLSelectElement>(`#${id}`);
+    if (el && id === "f-range" && value && !["3", "5"].includes(value) && !Array.from(el.options).some((option) => option.value === value)) {
+      el.insertAdjacentHTML("beforeend", `<option value="${esc(value)}">近 ${esc(value)} 天</option>`);
+    }
     if (el) el.value = value ?? "";
   }
   const region = container.querySelector<HTMLSelectElement>("#f-region");
@@ -104,6 +107,7 @@ export function renderFilterBar(container: HTMLElement, scope: Scope, events: In
   };
   container.querySelector<HTMLInputElement>("#f-query")!.oninput = debounce((ev: unknown) => {
     const input = (ev as Event).target as HTMLInputElement;
+    if (!input.isConnected) return;
     setState({ query: input.value.trim() || undefined });
   }, 200);
   const clearRegionBtn = container.querySelector<HTMLButtonElement>("#clear-region-btn");

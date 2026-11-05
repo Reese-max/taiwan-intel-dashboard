@@ -335,7 +335,8 @@ test("兩個失敗側欄的按鈕重試成功後，收合展開均不重複請�
   await expect(page.locator("#sourcepanel [data-retry-source]")).toBeVisible();
   data.fail(false);
   await page.locator("#policehealth [data-reload-health]").click();
-  await page.locator("#sourcepanel [data-retry-source]").click();
+  // 側欄失效重繪可能已先讓來源面板自行恢復，重試按鈕隨之消失；只在按鈕仍在時點擊。
+  await page.locator("#sourcepanel [data-retry-source]").click({ timeout: 2_000 }).catch(() => {});
   await expect(page.locator("#policehealth .police-health-card").first()).toBeVisible();
   await expect(page.locator("#sourcepanel")).toContainText("來源 one");
   const before = data.provenanceRequests();

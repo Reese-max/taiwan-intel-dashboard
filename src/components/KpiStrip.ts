@@ -29,6 +29,11 @@ interface ContainerWithRenderId extends HTMLElement {
   _kpiRenderId?: number;
 }
 
+export function cancelKpiRender(container: HTMLElement): void {
+  const c = container as ContainerWithRenderId;
+  c._kpiRenderId = (c._kpiRenderId ?? 0) + 1;
+}
+
 // undefined＝尚未抓取；null＝抓取失敗；物件＝已抓取（原始 manifest，module 內快取僅 fetch 一次；
 // 各 scope 的統計由 computeProvStat 即時依 scope 過濾後算出，避免全域數字誤套到單一 scope）
 let provCache: ProvManifest | null | undefined;

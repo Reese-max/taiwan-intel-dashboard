@@ -41,6 +41,8 @@ interface MapViewOptions {
 
 interface RenderOptions {
   fit?: boolean;
+  /** 使用者改變篩選或視圖：先關 popup 再重繪；只有背景同視圖更新才延後。 */
+  closePopup?: boolean;
 }
 
 export type MapDisplayable = IntelEvent & { lat: number; lng: number };
@@ -369,6 +371,10 @@ export class MapView {
     await this.ready;
     this.lastScope = scope;
     this.updateEmptyHint(events.length);
+    if (options.closePopup && this.popupOpen) {
+      this.popupOpen = false;
+      this.map.closePopup();
+    }
     // popup 開啟中只更新資料不補繪：redraw 的 clearLayers 會移除 popup 來源標記而強制關閉它；
     // 延後到使用者關閉時由 popupclose handler 以新資料 redraw。
     if (this.popupOpen) {
@@ -483,7 +489,7 @@ export class MapView {
         ev.stopPropagation();
         this.popupOpen = false;
         marker.closePopup();
-        this.map.flyTo(centroid, Math.min(this.map.getZoom() + 2, 12));
+        this.map.flyTo(centroid, Math.min(this.map.getZoom() + 2, this.map.getMaxZoom()));
       };
     });
     const el = marker.getElement();
@@ -525,6 +531,8 @@ export class MapView {
 
   // 依目前 zoom 將鄰近事件聚成網格群：單一→風險點；多個→計數泡泡（點擊放大去聚合）。
   private redraw(): void {
+    const active = document.activeElement as HTMLElement | null;
+    const focusedCluster = active && this.map.getContainer().contains(active) ? active.dataset.mapClusterPosition : undefined;
     this.layer.clearLayers();
     const z = this.map.getZoom();
     // 視口裁切：只聚合/渲染目前可見範圍（含 20% 邊距，讓小幅平移前邊緣標點已在）內的事件；
@@ -563,11 +571,17 @@ export class MapView {
         iconSize: [hitSize, hitSize],
         iconAnchor: [hitSize / 2, hitSize / 2],
       });
-      const marker = this.lib.marker(markerPoint, { icon, keyboard: false }).bindPopup(clusterPopupHtml(c.events), { maxWidth: 360 });
+      const marker = this.lib.marker(markerPoint, { icon, keyboard: true, title: `${n} 筆事件群集` }).bindPopup(clusterPopupHtml(c.events), { maxWidth: 360 });
       marker.on("dblclick", () => {
-        this.map.flyTo(centroid, Math.min(z + 2, 12));
+        this.map.flyTo(centroid, Math.min(this.map.getZoom() + 2, this.map.getMaxZoom()));
       });
       marker.addTo(this.layer);
+      const el = marker.getElement();
+      if (el) {
+        el.setAttribute("aria-label", `${n} 筆事件群集`);
+        el.dataset.mapClusterPosition = `${z}:${c.point.join(":")}`;
+        if (el.dataset.mapClusterPosition === focusedCluster) el.focus({ preventScroll: true });
+      }
       this.attachClusterPopupHandlers(marker, centroid);
     }
   }

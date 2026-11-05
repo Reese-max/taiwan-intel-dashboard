@@ -21,9 +21,9 @@ describe("嘉義縣市地點辨識", () => {
     ["嘉縣道路車禍 騎士送醫", "嘉義縣", "city"],
     ["嘉義市東區車禍 騎士送醫", "嘉義市", "city"],
     ["嘉市道路車禍 騎士送醫", "嘉義市", "city"],
-    ["嘉義東石鄉車禍 騎士送醫", "全國", "unknown"],
-    ["嘉義 東石鄉車禍 騎士送醫", "全國", "unknown"],
-    ["嘉義車禍 騎士送醫", "全國", "unknown"],
+    ["嘉義東石鄉車禍 騎士送醫", "嘉義縣", "city"],
+    ["嘉義 東石鄉車禍 騎士送醫", "嘉義縣", "city"],
+    ["嘉義車禍 騎士送醫", "嘉義市", "city"],
   ])("依標題辨識 %s", (title, expectedRegion, expectedPrecision) => {
     const events = mapBulkNews(
       [{ title, link: "https://example.test/chiayi", description: "交通事故", source: "s", sourceUrl: "u", hint: "治安", pubDate: "x" }],
@@ -36,8 +36,8 @@ describe("嘉義縣市地點辨識", () => {
     }
   });
 
-  it("摘要只有嘉義短名時不猜測縣市", () => {
-    expect(detectCountyInBody("嘉義東石鄉車禍造成道路中斷")).toMatchObject({ region: "全國", lat: null, lng: null });
+  it("摘要的嘉義短名接縣轄鄉鎮時判嘉義縣", () => {
+    expect(detectCountyInBody("嘉義東石鄉車禍造成道路中斷")).toMatchObject({ region: "嘉義縣" });
   });
 });
 
@@ -247,7 +247,7 @@ describe("mapBulkNews", () => {
     expect(ev[0].region).toBe("高雄市");
   });
 
-  it("標題的明確嘉義縣全名不被誤判為嘉義市", () => {
+  it("標題明確寫嘉義縣時不再誤判為嘉義市", () => {
     const ev = mapBulkNews(
       [{
         title: "嘉義縣東石鄉車禍 騎士送醫",

@@ -15,6 +15,16 @@ export const DEFAULT_SOURCE_KEYS = Object.freeze([
   "taipower",
   "wra",
   "wraRiver",
+  "parkingHsinchu",
+  "parkingTaoyuan",
+  "economy",
+  "agriPrices",
+  "healthFacilities",
+  "fireStats",
+  "socialPopulation",
+  "education",
+  "financeDerivatives",
+  "laborStats",
 ]);
 
 function parseSourceKeys(value) {
