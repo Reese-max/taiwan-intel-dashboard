@@ -206,21 +206,14 @@ export const TW_NEWS_FEEDS = [
   { label: "彰化縣消防局官網", url: gq("site:chfd.gov.tw 災害 OR 火警 OR 消防 OR 救護"), hint: "災防" },
   { label: "高雄市交通局災防", url: gq("site:tbkc.gov.tw 災害 OR 火警 OR 消防 OR 救護"), hint: "災防" },
 
-  // 2026-11-05 官方案件來源稽核：GN 近五天 >=3 且有案件；地檢署優先使用標題完整的官方 RSS。
+  // 2026-11-05 官方案件來源稽核：GN 近五天 >=3 且有案件。
   { label: "嘉義市警局官網", url: gq("site:ccpb.gov.tw"), hint: "治安" },
   // 地檢署名稱不含縣市全名（士林…），轄區明列於 jurisdiction（取署址縣市）。
-  { label: "桃園地檢署官網", url: "https://www.tyc.moj.gov.tw/294079/294166/294168/rss", jurisdiction: "桃園市", hint: "治安" },
-  { label: "新竹地檢署官網", url: "https://www.scc.moj.gov.tw/295217/295253/295254/rss", jurisdiction: "新竹市", hint: "治安" },
-  { label: "士林地檢署官網", url: "https://www.slc.moj.gov.tw/293537/293550/1446944/rss", jurisdiction: "臺北市", hint: "治安" },
-  { label: "臺中地檢署官網", url: "https://www.tcc.moj.gov.tw/295804/295830/657577/rss", jurisdiction: "臺中市", hint: "治安" },
-  { label: "雲林地檢署官網", url: "https://www.ulc.moj.gov.tw/10682/10702/10712/rss", jurisdiction: "雲林縣", hint: "治安" },
-  { label: "屏東地檢署官網", url: "https://www.ptc.moj.gov.tw/294926/295026/295028/rss", jurisdiction: "屏東縣", hint: "治安" },
-  { label: "宜蘭地檢署官網", url: "https://www.ilc.moj.gov.tw/294196/294434/294435/rss", jurisdiction: "宜蘭縣", hint: "治安" },
-  { label: "高雄地檢署官網", url: "https://www.ksc.moj.gov.tw/296454/296653/296654/rss", jurisdiction: "高雄市", hint: "治安" },
-  { label: "基隆地檢署官網", url: "https://www.klc.moj.gov.tw/293105/293191/293157/rss", jurisdiction: "基隆市", hint: "治安" },
-  // GN 低覆蓋的大縣市：直接解析官方新聞列表；不依賴沒有日期、使用相對連結的桃園 RSS。
+  // 地檢署子站與桃園警局擋境外 IP（2026-11-05 runner 診斷：TCP ETIMEDOUT／HTTP 無回應），改用 GN；
+  // 其餘地檢署 GN 標題多為頁名／清冊／公告（近五天抽樣 0 案件），新竹、屏東、臺中與桃園警局 <3 則，未加入。
+  { label: "桃園地檢署官網", url: gq("site:tyc.moj.gov.tw"), jurisdiction: "桃園市", hint: "治安" },
+  // GN 低覆蓋的大縣市：直接解析官方新聞列表（police-taoyuan 解析器保留，待有境內出口時可接回）。
   { label: "高雄市警局官網", url: "https://kcpd.kcg.gov.tw/News.aspx?n=301858D950E8FB8E&sms=FC374298B757EFB3", parser: "police-kaohsiung", hint: "治安" },
-  { label: "桃園市警局官網", url: "https://www.typd.gov.tw/index.php?catid=18&cid=1", parser: "police-taoyuan", hint: "治安" },
 ];
 
 function decode(s) {
