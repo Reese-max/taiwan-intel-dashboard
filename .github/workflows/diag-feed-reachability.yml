@@ -1,0 +1,53 @@
+name: diag feed reachability
+# 一次性唯讀診斷：查地檢署與桃園警局在 GitHub runner 上為何抓不到。不合併。
+on:
+  pull_request:
+    paths: [".github/workflows/diag-feed-reachability.yml"]
+permissions:
+  contents: read
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: egress
+        run: curl -s --max-time 10 https://ipinfo.io/json || true
+      - name: node fetch cause
+        run: |
+          cat > diag.mjs <<'EOF'
+          const urls = process.argv.slice(2);
+          for (const url of urls) {
+            const t = Date.now();
+            try {
+              const r = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { "user-agent": "Mozilla/5.0 taiwan-intel-dashboard diag" } });
+              const body = await r.text();
+              console.log(`OK   ${r.status} ${body.length}B ${Date.now() - t}ms ${url}`);
+            } catch (e) {
+              const c = e.cause || {};
+              console.log(`FAIL ${Date.now() - t}ms ${url} :: ${e.name}: ${e.message} | cause=${c.code || ""} ${c.message || ""}`);
+            }
+          }
+          EOF
+          node diag.mjs \
+            https://www.moj.gov.tw/2204/2795/2796/rss \
+            https://www.tyc.moj.gov.tw/294079/294166/294168/rss \
+            https://www.slc.moj.gov.tw/293537/293550/1446944/rss \
+            https://www.ksc.moj.gov.tw/296454/296653/296654/rss \
+            https://www.klc.moj.gov.tw/293105/293191/293157/rss \
+            "https://www.typd.gov.tw/index.php?catid=18&cid=1" \
+            "https://kcpd.kcg.gov.tw/News.aspx?n=301858D950E8FB8E&sms=FC374298B757EFB3"
+      - name: dns
+        run: |
+          for h in www.moj.gov.tw www.tyc.moj.gov.tw www.slc.moj.gov.tw www.typd.gov.tw; do
+            echo "== $h"; dig +short A "$h"; dig +short AAAA "$h"
+          done
+      - name: tls and tcp
+        run: |
+          for h in www.moj.gov.tw www.tyc.moj.gov.tw www.slc.moj.gov.tw www.typd.gov.tw; do
+            echo "== $h"
+            timeout 20 openssl s_client -connect "$h:443" -servername "$h" -verify_return_error </dev/null 2>&1 | grep -E "Verify return code|verify error|depth=|connect:|errno|Connection" | head -8 || echo "openssl timeout/fail"
+            curl -sS -o /dev/null --max-time 20 -w "curl http=%{http_code} connect=%{time_connect} tls=%{time_appconnect} ip=%{remote_ip}\n" "https://$h/" || true
+          done
