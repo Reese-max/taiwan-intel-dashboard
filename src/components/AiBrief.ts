@@ -193,20 +193,20 @@ function historicalTime(timestamp?: string): string {
 
 function renderBriefBody(summary: AiSummary, scope: Scope, degraded: boolean, hasEvidence: boolean): string {
   const currentText = scope === "domestic" ? summary.domestic : summary.international;
-  if (isBriefPlaceholder(currentText)) {
+  const realSummary = getRealSummaryForScope(summary, scope);
+  if (isBriefPlaceholder(currentText) && !realSummary) {
     if (hasEvidence) {
       return `<p class="ai-brief-body ai-brief-degraded" role="alert">⚠ AI 摘要生成失敗，請直接檢視下方事件列表</p>`;
     }
     return `<p class="ai-brief-body ai-brief-empty">暫無事件資料</p>`;
   }
 
-  const realSummary = getRealSummaryForScope(summary, scope);
   if (realSummary && realSummary.isStale) {
     const staleGen = historicalTime(realSummary.generatedAt);
     const modelTag = realSummary.model ? `由 ${esc(realSummary.model)} 生成` : "AI 生成";
-    const notice = `<div class="ai-brief-stale-notice" role="status"><span class="ai-fallback-badge ai-stale-badge">前期摘要</span> ${modelTag} · ${esc(staleGen)}（即時更新暫採統計備援）</div>`;
+    const notice = `<div class="ai-brief-stale-notice" role="status"><span class="ai-fallback-badge ai-stale-badge">前期摘要</span> ${modelTag} · ${esc(staleGen)}（${isBriefPlaceholder(currentText) ? "即時摘要暫時不可用" : "即時更新暫採統計備援"}）</div>`;
     const body = expandableParagraph("ai-brief-body", realSummary.text, 110);
-    const statBackup = `<details class="ai-brief-stat-backup"><summary class="ai-stat-toggle">檢視即時統計備援 ▾</summary><div class="ai-full-text">${esc(currentText)}</div></details>`;
+    const statBackup = isBriefPlaceholder(currentText) ? "" : `<details class="ai-brief-stat-backup"><summary class="ai-stat-toggle">檢視即時統計備援 ▾</summary><div class="ai-full-text">${esc(currentText)}</div></details>`;
     return `${notice}${body}${statBackup}`;
   }
 
@@ -231,7 +231,7 @@ export function renderAiBrief(container: HTMLElement, summary: AiSummary | null,
     <div class="ai-scope-hint">全域情報敘述 · 不隨目前篩選條件變動</div>`;
   const gen = new Date(summary.generatedAt).toLocaleString("zh-TW", { hour12: false });
 
-  const hasEvidence = events.length > 0 || Boolean(summary.dailyCounts?.some((c) => c > 0));
+  const hasEvidence = events.length > 0 || (scope === "domestic" && Boolean(summary.dailyCounts?.some((c) => c > 0)));
   const currentText = scope === "domestic" ? summary.domestic : summary.international;
   const degradedThisScope = isScopeDegraded(summary, scope) || isDeterministicFallback(currentText);
   const realSummary = getRealSummaryForScope(summary, scope);
