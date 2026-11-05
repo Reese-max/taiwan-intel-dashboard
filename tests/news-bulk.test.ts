@@ -15,6 +15,32 @@ import {
 
 const FETCHED_AT = "2026-06-20T00:00:00.000Z";
 
+describe("嘉義縣市地點辨識", () => {
+  it.each([
+    ["嘉義縣東石鄉車禍 騎士送醫", "嘉義縣", "city"],
+    ["嘉縣道路車禍 騎士送醫", "嘉義縣", "city"],
+    ["嘉義市東區車禍 騎士送醫", "嘉義市", "city"],
+    ["嘉市道路車禍 騎士送醫", "嘉義市", "city"],
+    ["嘉義東石鄉車禍 騎士送醫", "嘉義縣", "city"],
+    ["嘉義 東石鄉車禍 騎士送醫", "嘉義縣", "city"],
+    ["嘉義車禍 騎士送醫", "嘉義市", "city"],
+  ])("依標題辨識 %s", (title, expectedRegion, expectedPrecision) => {
+    const events = mapBulkNews(
+      [{ title, link: "https://example.test/chiayi", description: "交通事故", source: "s", sourceUrl: "u", hint: "治安", pubDate: "x" }],
+      { fetchedAt: FETCHED_AT },
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ region: expectedRegion, locationPrecision: expectedPrecision });
+    if (expectedPrecision === "unknown") {
+      expect(events[0]).toMatchObject({ lat: null, lng: null });
+    }
+  });
+
+  it("摘要的嘉義短名接縣轄鄉鎮時判嘉義縣", () => {
+    expect(detectCountyInBody("嘉義東石鄉車禍造成道路中斷")).toMatchObject({ region: "嘉義縣" });
+  });
+});
+
 const ITEMS = [
   { title: "高雄街頭砍人 男子背部受傷送醫 - 自由時報", link: "https://x/1", description: "街頭鬥毆", source: "自由時報 社會", sourceUrl: "u1", hint: "治安", pubDate: "Fri, 20 Jun 2026 01:00:00 +0800" },
   { title: "新北詐騙集團車手落網", link: "https://news.google.com/rss/articles/2?oc=5", description: "假檢警詐騙", source: "GN 詐騙逮捕", sourceUrl: "https://news.google.com/rss/search?q=詐騙逮捕", hint: "反詐", pubDate: "Fri, 20 Jun 2026 02:00:00 +0800" },
