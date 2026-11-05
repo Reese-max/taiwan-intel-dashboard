@@ -40,6 +40,61 @@ const FIXTURES = join("tests", "fixtures");
 const fixtureResponse = (name: string) =>
   async () => new Response(readFileSync(join(FIXTURES, name)), { status: 200 });
 
+describe("農產品價格有界查詢", () => {
+  const now = new Date("2026-11-05T01:00:00Z");
+  const row = { YEAR: "2026", MONTH: "11", PERIOD: "04", PRODUCTNAME: "柳橙", AVGPRICE: "23.3" };
+  const json = (rows: unknown) => new Response(JSON.stringify(rows), { status: 200 });
+
+  it("以臺灣當月查詢且不截斷筆數，保留每日與旬報的完整最新數字", async () => {
+    const rows = [row, { ...row, PERIOD: "上旬", PRODUCTNAME: "甘藍" }, { ...row, PERIOD: "10", PRODUCTNAME: "香蕉" }];
+    const fetchImpl = vi.fn(async (_url: string) => json(rows));
+    const events = await fetchAgriculturePrices({ fetchImpl, now: new Date("2026-11-10T01:00:00Z") });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    const url = new URL(String(fetchImpl.mock.calls[0][0]));
+    expect(url.searchParams.get("YEAR")).toBe("2026");
+    expect(url.searchParams.get("MONTH")).toBe("11");
+    expect(url.searchParams.has("$top")).toBe(false);
+    expect(events[0].summary).toContain("可用 2 筆");
+  });
+
+  it("跨年使用臺灣日期，當月空時退回全量而保留前月統計", async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(json([])).mockResolvedValueOnce(json([row, { ...row, PRODUCTNAME: "甘藍" }]));
+    const events = await fetchAgriculturePrices({ fetchImpl, now: new Date("2026-12-31T16:30:00Z") });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    const first = new URL(String(fetchImpl.mock.calls[0][0]));
+    expect(first.searchParams.get("YEAR")).toBe("2027");
+    expect(first.searchParams.get("MONTH")).toBe("01");
+    expect(new URL(String(fetchImpl.mock.calls[1][0])).searchParams.has("YEAR")).toBe(false);
+    expect(events[0].summary).toContain("可用 2 筆");
+  });
+
+  it.each([
+    ["過期", [{ ...row, PERIOD: "01" }], new Date("2026-11-20T01:00:00Z")],
+    ["月份不符", [{ ...row, MONTH: "10" }], now],
+    ["價格損壞", [{ ...row, AVGPRICE: "invalid" }], now],
+    ["非陣列", {}, now],
+    ["達到服務筆數上限", Array.from({ length: 9999 }, () => row), now],
+  ] as const)("%s 回應退回全量，不靜默縮小數字", async (_label, partial, at) => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(json(partial)).mockResolvedValueOnce(json([row, { ...row, PRODUCTNAME: "甘藍" }]));
+    const events = await fetchAgriculturePrices({ fetchImpl, now: at });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(events[0].summary).toContain("可用 2 筆");
+  });
+
+  it("當月夾雜休市無價格列時仍用當月結果，不退回全量", async () => {
+    const fetchImpl = vi.fn(async (_url: string) => json([row, { ...row, PRODUCTNAME: "甘藍" }, { ...row, PERIOD: "01", PRODUCTNAME: "休市", AVGPRICE: "-" }]));
+    const events = await fetchAgriculturePrices({ fetchImpl, now });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(events[0].summary).toContain("可用 2 筆");
+  });
+
+  it("範圍請求失敗可退回全量，全量也不足則必須失敗", async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(new Response("blocked", { status: 403 })).mockResolvedValueOnce(json([]));
+    await expect(fetchAgriculturePrices({ fetchImpl, now })).rejects.toThrow("有效資料列陣列");
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe("官方來源 mapper", () => {
   it("解析國防部空軍每日臺海動態並映射完整事件", () => {
     const links = parseMndActivityLinks(`

@@ -11,6 +11,27 @@ describe("fetch-rss retry", () => {
     vi.unstubAllGlobals();
   });
 
+  it("RSS link 先解開 CDATA 再驗證，避免有文章的 Sciences et Avenir 被解析成空來源", async () => {
+    const cdataXml = xml.replace("<link>https://example.com/news/1</link>",
+      "<link><![CDATA[https://example.com/news/1?a=1&amp;b=2]]></link>");
+    const fetchMock = vi.fn().mockResolvedValue(new Response(cdataXml, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await fetchRssItems({ feeds: [{ ...feed, fallbackUrl: "https://example.com/fallback" }], retryDelayMs: 0 });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].link).toBe("https://example.com/news/1?a=1&b=2");
+    expect(result.feedStatus[0]).toMatchObject({ ok: true, count: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["Atom href 的實體要解碼", `<feed><entry><title>測試新聞</title><updated>2026-07-05T00:00:00Z</updated><link href="https://example.com/news?a=1&amp;b=2"/></entry></feed>`, "https://example.com/news?a=1&b=2"],
+    ["RSS link 解碼後含空白時改用 Atom href", xml.replace("<link>https://example.com/news/1</link>", `<link>https://example.com/a<span>/b</span></link><link href="https://example.com/a/b"/>`), "https://example.com/a/b"],
+  ])("%s", async (_label, body, expected) => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(body, { status: 200 })));
+    const result = await fetchRssItems({ feeds: [feed], retryDelayMs: 0 });
+    expect(result.items[0]?.link).toBe(expected);
+  });
+
   it("isRetriableFetchError 只接受暫時性失敗", () => {
     expect(isRetriableFetchError(500)).toBe(true);
     expect(isRetriableFetchError(503)).toBe(true);

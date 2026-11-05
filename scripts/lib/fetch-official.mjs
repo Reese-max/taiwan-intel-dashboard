@@ -1712,15 +1712,35 @@ export async function fetchEconomicIndicators({ fetchImpl = fetch } = {}) {
   return [mapEconomicIndicatorEvent(objectsAsPayload(rows), { fetchedAt })];
 }
 
-export async function fetchAgriculturePrices({ fetchImpl = fetch } = {}) {
-  const fetchedAt = new Date().toISOString();
-  const rows = await fetchChecked(AGRICULTURE_SOURCE_URL, {
+export async function fetchAgriculturePrices({ fetchImpl = fetch, now = new Date() } = {}) {
+  const fetchedAt = now.toISOString();
+  const taiwanDay = new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const [year, month] = taiwanDay.split("-");
+  const recentUrl = new URL(AGRICULTURE_SOURCE_URL);
+  recentUrl.searchParams.set("YEAR", year);
+  recentUrl.searchParams.set("MONTH", month);
+  const load = (url) => fetchChecked(url, {
     fetchImpl,
     json: true,
     timeoutMs: 90000,
     attempts: 2,
     headers: OFFICIAL_USER_AGENT,
   });
+  try {
+    // 月範圍保留旬報與月報；按日或 $top 截斷會漏掉映射到同一日期的品項。
+    const rows = await load(recentUrl.href);
+    // 個別休市／缺價列交給 mapper 過濾（全無有效列時 mapper 會丟錯而退回全量）。
+    if (!Array.isArray(rows) || !rows.length || rows.length >= 9999 || rows.some((row) =>
+      Number(row?.YEAR) !== Number(year) || Number(row?.MONTH) !== Number(month)
+    )) throw new Error("當月回應不足、截斷或月份不符");
+    const event = mapAgriculturePriceEvent(objectsAsPayload(rows), { fetchedAt });
+    if (Date.parse(event.source.latestDataDate) < Date.parse(taiwanDay) - 7 * 86400000)
+      throw new Error("當月資料超過七天未更新");
+    return [event];
+  } catch (error) {
+    console.warn(`農產品價格範圍查詢不足，退回全量：${error.message}`);
+  }
+  const rows = await load(AGRICULTURE_SOURCE_URL);
   if (!Array.isArray(rows) || !rows.length) throw new Error("農產品產地價格回應不是有效資料列陣列");
   return [mapAgriculturePriceEvent(objectsAsPayload(rows), { fetchedAt })];
 }

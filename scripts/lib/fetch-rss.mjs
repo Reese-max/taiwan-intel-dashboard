@@ -235,9 +235,10 @@ function pick(block, tags) {
 function pickLink(block) {
   // RSS: <link>url</link> ; Atom: <link href="url"/>
   const rss = block.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
-  if (rss && rss[1].trim().startsWith("http")) return decode(rss[1]);
+  const rssUrl = decode(rss?.[1]);
+  if (/^https?:\/\/\S+$/i.test(rssUrl)) return rssUrl;
   const atom = block.match(/<link[^>]*href="([^"]+)"[^>]*\/?>/i);
-  return atom ? atom[1] : "";
+  return atom ? decode(atom[1]) : "";
 }
 
 function isGoogleNewsUrl(url = "") {
