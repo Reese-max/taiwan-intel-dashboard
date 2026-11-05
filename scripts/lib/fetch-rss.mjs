@@ -238,7 +238,11 @@ function pickLink(block) {
   const rssUrl = decode(rss?.[1]);
   if (/^https?:\/\/\S+$/i.test(rssUrl)) return rssUrl;
   const atom = block.match(/<link[^>]*href="([^"]+)"[^>]*\/?>/i);
-  return atom ? decode(atom[1]) : "";
+  if (atom) return decode(atom[1]);
+  // RSS 1.0 的 rdf:about 是原文 URI；部分來源的追蹤 link 含未編碼空白。
+  const rdf = block.match(/<item\s[^>]*\brdf:about="([^"]+)"/i);
+  const rdfUrl = decode(rdf?.[1]);
+  return /^https?:\/\/\S+$/i.test(rdfUrl) ? rdfUrl : "";
 }
 
 function isGoogleNewsUrl(url = "") {

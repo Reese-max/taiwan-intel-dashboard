@@ -11,6 +11,16 @@ describe("fetch-rss retry", () => {
     vi.unstubAllGlobals();
   });
 
+  it("自檢：Cisco RDF 的追蹤連結含空白時使用 rdf:about 原文連結", async () => {
+    const canonical = "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-test";
+    const body = `<rdf:RDF><item\n rdf:about="${canonical}"><title>Cisco advisory</title><link>${canonical}?vs_f=Cisco Security Advisory&amp;vs_type=RSS</link><dc:date>2026-11-04T16:00:00-08:00</dc:date></item></rdf:RDF>`;
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(body)));
+    const result = await fetchRssItems({ feeds: [feed], retryDelayMs: 0 });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].link).toBe(canonical);
+    expect(result.items[0].pubDate).toBe("2026-11-04T16:00:00-08:00");
+  });
+
   it("RSS link 先解開 CDATA 再驗證，避免有文章的 Sciences et Avenir 被解析成空來源", async () => {
     const cdataXml = xml.replace("<link>https://example.com/news/1</link>",
       "<link><![CDATA[https://example.com/news/1?a=1&amp;b=2]]></link>");

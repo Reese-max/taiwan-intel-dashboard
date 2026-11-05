@@ -23,6 +23,22 @@ afterEach(() => {
 });
 
 describe("前端使用回歸", () => {
+  it("自檢：本輪摘要空白時仍顯示上一輪可用摘要與歷史標示", () => {
+    const el = container();
+    renderAiBrief(el, { ...summary, domestic: "（暫無資料）", degraded: { domestic: true },
+      lastSuccessful: { domestic: "上一輪已查證的情勢摘要", generatedAt: "2026-11-03T00:00:00Z", scopeMetadata: { domestic: { generatedAt: "2026-11-03T00:00:00Z" } } } }, "domestic", [event()]);
+    expect(el.textContent).toContain("上一輪已查證的情勢摘要");
+    expect(el.textContent).toContain("前期摘要");
+    expect(el.textContent).not.toContain("AI 摘要生成失敗");
+    expect(el.querySelector(".ai-brief-stat-backup")).toBeNull();
+    expect(el.textContent).toContain("即時摘要暫時不可用");
+  });
+  it("自檢：國內有計數但國際無資料時，不誤報國際摘要生成失敗", () => {
+    const el = container();
+    renderAiBrief(el, { ...summary, international: "（暫無資料）", dailyCounts: [1, 2, 3, 4, 5] }, "international", []);
+    expect(el.textContent).toContain("暫無事件資料");
+    expect(el.textContent).not.toContain("AI 摘要生成失敗");
+  });
   it("U1：localStorage getter 拋 SecurityError 時可載入並保留記憶體已讀狀態", () => {
     vi.spyOn(window, "localStorage", "get").mockImplementation(() => { throw new DOMException("拒絕儲存", "SecurityError"); });
     expect(() => loadTriageAcked()).not.toThrow();
