@@ -635,8 +635,9 @@ function buildNetworkIndex(net) {
   NET_CLUSTER_BY_ID = new Map(NET_CLUSTERS.map((c) => [c.id, c]));
   if (Array.isArray(net?.edges)) {
     for (const e of net.edges) {
+      const reason = typeof e.why === 'number' ? (net?.whyTexts?.[e.why] ?? '') : e.why;
       const why = (id) => e.type === 'follow-up'
-        ? `${(e.from ?? e.a) === id ? '後續報導' : '前情報導'}：${e.why}` : e.why;
+        ? `${(e.from ?? e.a) === id ? '後續報導' : '前情報導'}：${reason}` : reason;
       const ab = { id: e.b, type: e.type, weight: e.weight, why: why(e.a) };
       const ba = { id: e.a, type: e.type, weight: e.weight, why: why(e.b) };
       if (!NET_ADJ.has(e.a)) NET_ADJ.set(e.a, []);
@@ -679,7 +680,7 @@ function buildNetworkArcs(net) {
       strongShown++;
     }
     arcs.push({
-      srcId: e.a, dstId: e.b, why: e.why,
+      srcId: e.a, dstId: e.b, why: typeof e.why === 'number' ? (net?.whyTexts?.[e.why] ?? '') : e.why,
       startLat: A.lat + hashJit(e.a + ':la', JIT), startLng: A.lng + hashJit(e.a + ':lo', JIT),
       endLat: B.lat + hashJit(e.b + ':la', JIT), endLng: B.lng + hashJit(e.b + ':lo', JIT),
       type: e.type, weight: e.weight,
