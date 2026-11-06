@@ -1,4 +1,4 @@
 {
-  "sha": "eb23bc6e21ea0485d9b948dcc1a1f6c0062c946d",
-  "note": "Owner authorized merge and release flow on 2026-11-05. PR #91 verified head (tree identical to main a9880ae); PR checks 42034902922 and Preview verification 42034902814 passed. Release requires separate manifest PR checks and production smoke."
+  "sha": "3348c5b951689944926e2286702546db62c718a4",
+  "note": "Owner authorized merge and release on 2026-11-06. PR #93 verified head (differs from main c4c6dbe only in ops/approved-code.json); PR checks 42144801962 and Preview verification 42144801687 passed. Release requires separate manifest PR checks and production smoke."
 }
