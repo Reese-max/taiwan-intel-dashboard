@@ -106,6 +106,16 @@ describe("GN 100 則上限的時間窗", () => {
     },
   );
 
+  it("TVBS 用 news 子網域，近 1 天＋近 3 小時", () => {
+    expect(q("GN TVBS 綜合治安")).toBe("site:news.tvbs.com.tw 警 OR 詐 OR 毒 OR 案 OR 起訴 when:1d");
+    expect(q("GN TVBS 綜合治安 3h")).toBe("site:news.tvbs.com.tw 警 OR 詐 OR 毒 OR 案 OR 起訴 when:3h");
+  });
+
+  it("修正長期 0 則的查詢（隱含 AND 過嚴）", () => {
+    expect(q("GN 毒品種類")).toBe("安非他命 OR 海洛因 OR 大麻 OR 愷他命 OR 喪屍煙彈 when:5d");
+    expect(q("GN 公共場所性騷")).toBe("偷拍 OR 性騷擾 捷運 OR 公共場所 when:5d");
+  });
+
   it("其他 GN 查詢維持近 5 天", () => {
     expect(q("GN 殺人分屍")).toMatch(/ when:5d$/);
     expect(q("新北市警局官網")).toBe("site:police.ntpc.gov.tw when:5d");
