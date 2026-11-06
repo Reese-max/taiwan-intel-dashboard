@@ -2,7 +2,7 @@
 // 動機：Cloudflare Pages 單檔上限 25MiB，超過整個部署直接失敗。domestic.json 等
 // 累積型資料檔若保留窗失效（實測本地 rss-only carry-over 曾養到 268MB），會無聲逼近上限。
 // 在 CI 提前告警（threshold 預設 20MB，留安全邊際）。
-import { readdirSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -15,6 +15,16 @@ function argValue(name, argv = process.argv.slice(2)) {
   return found ? found.slice(prefix.length) : "";
 }
 
+// 部署前 build-static 會把 JSON 壓成一行（network.json 另經 trimNetwork），25MiB 限制套在部署檔；
+// 量原始檔的縮排排版大小會誤報（2026-11-06 network.json 原始 24.1MB、部署 18.1MB）。解析失敗時照原始大小算。
+export function deployedJsonBytes(raw, fallbackBytes = Buffer.byteLength(raw)) {
+  try {
+    return Buffer.byteLength(JSON.stringify(JSON.parse(raw)));
+  } catch {
+    return fallbackBytes;
+  }
+}
+
 export function auditDataSize(entries, { maxBytes = 20 * 1024 * 1024 } = {}) {
   const offenders = entries.filter((e) => e.bytes > maxBytes);
   return { ok: offenders.length === 0, offenders, maxBytes };
@@ -24,7 +34,10 @@ if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const maxMb = Number(argValue("max-mb") || process.env.DATA_SIZE_MAX_MB || 20);
   const entries = readdirSync(DATA_DIR)
     .filter((f) => f.endsWith(".json"))
-    .map((f) => ({ file: f, bytes: statSync(join(DATA_DIR, f)).size }));
+    .map((f) => {
+      const path = join(DATA_DIR, f);
+      return { file: f, bytes: deployedJsonBytes(readFileSync(path, "utf8"), statSync(path).size) };
+    });
   for (const e of entries.sort((a, b) => b.bytes - a.bytes)) {
     console.log(`  ${(e.bytes / 1048576).toFixed(1).padStart(7)}MB  ${e.file}`);
   }
