@@ -34,6 +34,8 @@ interface Manifest {
       normalizeError?: string;
       normalizeSkippedBatches?: number;
       count?: number;
+      snapshotCount?: number;
+      refinedSnapshotCount?: number;
       enriched?: number;
       bulk?: number;
       rawUnique?: number;
@@ -52,6 +54,8 @@ interface Manifest {
       normalizeError?: string;
       rawCount?: number;
       count?: number;
+      snapshotCount?: number;
+      refinedSnapshotCount?: number;
       enriched?: number;
       bulk?: number;
       okFeeds?: number;
@@ -220,7 +224,9 @@ function internationalGapBlock(manifest: Manifest): string {
   const metrics = [
     typeof pipeline?.rawCount === "number" ? `原始 ${pipeline.rawCount}` : undefined,
     typeof pipeline?.count === "number"
-      ? `交付 ${pipeline.count}（精修 ${pipeline.enriched ?? 0}／輕量 ${pipeline.bulk ?? 0}）`
+      ? typeof pipeline.snapshotCount === "number"
+        ? `本輪映射候選 ${pipeline.count}（精修／快取／官方備援 ${pipeline.enriched ?? 0}／輕量 ${pipeline.bulk ?? 0}），快照新聞 ${pipeline.snapshotCount}`
+        : `交付 ${pipeline.count}（精修 ${pipeline.enriched ?? 0}／輕量 ${pipeline.bulk ?? 0}）`
       : undefined,
     typeof pipeline?.okFeeds === "number" && typeof pipeline?.totalFeeds === "number"
       ? `有資料來源 ${pipeline.okFeeds}/${pipeline.totalFeeds}`
@@ -243,20 +249,31 @@ function normalizationHealthBlock(manifest: Manifest): string {
   const intl = evaluateInternationalNormalization(p.international, p.gdelt);
 
   const renderCard = (h: ReturnType<typeof evaluateDomesticNormalization>): string => {
+    const scopePipeline = h.scope === "domestic" ? p.twnews : p.international;
+    const snapshotCount = scopePipeline?.snapshotCount;
+    const refinedCount = scopePipeline?.refinedSnapshotCount;
+    const stateLabel = refinedCount === 0 && scopePipeline?.ok === true
+      ? "本輪無 LLM 精修落地（沿用／規則備援）"
+      : h.stateLabel;
     const badgeClass = h.isDegraded ? "source-tag-warn" : h.state === "fully-enriched" ? "source-tag-ok" : "source-tag-plain";
-    const diag = h.diagnostics?.fallbackReason
-      ? `<p class="norm-diag-msg">處理說明：${esc(h.diagnostics.fallbackReason)}</p>`
+    const reason = refinedCount === 0 && scopePipeline?.ok === true
+      ? "本輪未有 LLM 精修結果落地；候選包含快取、官方備援或輕量規則結果。"
+      : h.diagnostics?.fallbackReason;
+    const diag = reason
+      ? `<p class="norm-diag-msg">處理說明：${esc(reason)}</p>`
       : "";
     const rawUniqueInfo = typeof h.counts.rawUnique === "number" ? ` · 去重後 ${h.counts.rawUnique}` : "";
     return `<div class="norm-card">
       <div class="norm-head">
         <strong>${esc(h.scopeLabel)}</strong>
-        <span class="norm-status-tag ${badgeClass}">${esc(h.stateLabel)}</span>
+        <span class="norm-status-tag ${badgeClass}">${esc(stateLabel)}</span>
       </div>
       <div class="norm-metrics">
-        <span><b>AI 精修</b> ${h.counts.enriched} 筆</span>
+        <span><b>${typeof snapshotCount === "number" ? "精修／快取／官方備援候選" : "AI 精修"}</b> ${h.counts.enriched} 筆</span>
         <span><b>輕量收錄</b> ${h.counts.bulk} 筆</span>
-        <span><b>交付事件</b> ${h.counts.delivered} 筆</span>
+        <span><b>${typeof snapshotCount === "number" ? "本輪映射候選" : "交付事件"}</b> ${h.counts.delivered} 筆</span>
+        ${typeof snapshotCount === "number" ? `<span><b>快照新聞（含沿用）</b> ${snapshotCount} 筆</span>` : ""}
+        ${typeof refinedCount === "number" ? `<span><b>本輪 LLM 精修落地</b> ${refinedCount} 筆</span>` : ""}
         ${typeof h.counts.raw === "number" ? `<span><b>原始進線</b> ${h.counts.raw} 筆${rawUniqueInfo}</span>` : ""}
       </div>
       ${diag}

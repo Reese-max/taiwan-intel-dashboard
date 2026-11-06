@@ -47,7 +47,7 @@ import {
   normalizeInternational,
   normalizeDomesticNews,
   summarize,
-  respondedModel,
+  llmModel,
   intlNormalizeFailed,
   domesticNormalizeFailed,
   lastIntlNormalizeSkippedBatches,
@@ -71,6 +71,7 @@ import { validateEventContract, clampImplausibleTimestamps, isReferenceEvent } f
 import { isPlaceholder } from "./lib/summary-quality.mjs";
 import { applyTemporal } from "./lib/temporal.mjs";
 import { buildCoverageMatrix } from "./audit-coverage.mjs";
+import { buildNewsProcessingNote, carriedInternationalSourceFlags, newsNormalizationDescription, snapshotEventsForSource } from "./lib/provenance.mjs";
 import { buildDomainCoverage } from "./domain-coverage.mjs";
 import { buildCohortManifest, writeCohortManifest, RULES_VERSION } from "./lib/manifest.mjs";
 
@@ -214,6 +215,8 @@ export async function run() {
   const nowMs = Date.now();
   const nowIso = new Date(nowMs).toISOString();
   const status = {};
+  const normalizedSources = new Set();
+  const onNormalized = (events) => events.forEach((event) => normalizedSources.add(event.source));
   const { sourceKeys, attachedSourceKeys, exclusive, wants: want, dropStale } = createSourcePlan();
   const RETENTION_DAYS = Number(process.env.NEWS_RETENTION_DAYS) || 5;
   const ADVISORY_RETENTION_DAYS = Number(process.env.NEWS_ADVISORY_RETENTION_DAYS) || 30;
@@ -391,6 +394,7 @@ export async function run() {
           max: intlCfg.maxEvents,
           priorById: priorIntl,
           priorityFeedLabels: generalFeedLabels,
+          onNormalized,
         });
       } catch (e) {
         normalizeError = e.message;
@@ -509,7 +513,7 @@ export async function run() {
             .filter((e) => e && (e.aiTopic || (Array.isArray(e.aiEntities) && e.aiEntities.length)))
             .map((e) => [e.id, e]),
         );
-        enriched = await normalizeDomesticNews(policeUniq.slice(0, ENRICH_N), { max: ENRICH_N, priorById: priorDom });
+        enriched = await normalizeDomesticNews(policeUniq.slice(0, ENRICH_N), { max: ENRICH_N, priorById: priorDom, onNormalized });
       } catch (e) {
         console.error(`新聞 LLM 精修失敗（改全走輕量）：${e.message}`);
       }
@@ -876,6 +880,10 @@ export async function run() {
   }
 
   // --- provenance（誠實標註；carry-over 來源標 stale 並用舊 fetchedAt）---
+  const snapshotNewsEvents = domesticEvents.filter((event) => event.source?.datasetId === "tw-news");
+  const snapshotNcdrEvents = domesticEvents.filter((event) => event.source?.datasetId === NCDR_DATASET_ID);
+  const snapshotWarningEvents = domesticEvents.filter((event) => event.source?.datasetId === "W-C0033-001");
+  const snapshotQuakeEvents = domesticEvents.filter((event) => event.source?.datasetId === "E-A0015-001");
   const sources = [];
   const previousProvenance = readJson("provenance.json", { sources: [] });
   const previousSources = Array.isArray(previousProvenance?.sources) ? previousProvenance.sources : [];
@@ -927,50 +935,50 @@ export async function run() {
       ...(sourceStatus?.error ? { error: sourceStatus.error } : {}),
     };
   };
-  if (quakeEvents.length || want("cwa"))
+  if (snapshotQuakeEvents.length || want("cwa"))
     sources.push({
       name: "中央氣象署 顯著有感地震報告",
       type: "cwa",
       datasetId: "E-A0015-001",
       scope: "domestic",
       category: "災防",
-      count: quakeEvents.length,
-      ...sourceHealthFields({ sourceStatus: status.cwa, events: quakeEvents, datasetId: "E-A0015-001" }),
+      count: snapshotQuakeEvents.length,
+      ...sourceHealthFields({ sourceStatus: status.cwa, events: snapshotQuakeEvents, datasetId: "E-A0015-001" }),
       query: "CWA opendata API E-A0015-001 (顯著有感地震報告)",
       license: "政府資料開放授權條款-第1版 — 交通部中央氣象署",
     });
-  if (warningEvents.length || want("cwa"))
+  if (snapshotWarningEvents.length || want("cwa"))
     sources.push({
       name: "中央氣象署 天氣警特報",
       type: "cwa",
       datasetId: "W-C0033-001",
       scope: "domestic",
       category: "災防",
-      count: warningEvents.length,
-      ...sourceHealthFields({ sourceStatus: status.cwaWarnings, events: warningEvents, datasetId: "W-C0033-001" }),
+      count: snapshotWarningEvents.length,
+      ...sourceHealthFields({ sourceStatus: status.cwaWarnings, events: snapshotWarningEvents, datasetId: "W-C0033-001" }),
       query: "CWA opendata API W-C0033-001 (天氣特報-各縣市目前天氣警特報情形)",
       license: "政府資料開放授權條款-第1版 — 交通部中央氣象署",
     });
-  if (ncdrEvents.length || want("ncdr") || previousSourceFor({ datasetId: NCDR_DATASET_ID }))
+  if (snapshotNcdrEvents.length || want("ncdr") || previousSourceFor({ datasetId: NCDR_DATASET_ID }))
     sources.push({
       name: "NCDR 災防示警 CAP",
       type: "gov-open-data",
       datasetId: NCDR_DATASET_ID,
       scope: "domestic",
       category: "災防",
-      count: ncdrEvents.length,
+      count: snapshotNcdrEvents.length,
       maxAgeHours: 6,
-      ...sourceHealthFields({ sourceStatus: status.ncdr, events: ncdrEvents, datasetId: NCDR_DATASET_ID }),
+      ...sourceHealthFields({ sourceStatus: status.ncdr, events: snapshotNcdrEvents, datasetId: NCDR_DATASET_ID }),
       query: "NCDR JSON Atom Feed + CAP 1.2 明細（突發地理示警白名單）",
       license: "政府資料開放授權條款-第1版 — 國家災害防救科技中心／發布機關",
     });
-  if (policeEvents.length || want("police")) {
+  if (domesticEvents.some((event) => ["13166", "14420"].includes(event.source?.datasetId)) || want("police")) {
     const policeSourceDefs = [
       { key: "crimeWeekly", name: "警政署 犯罪資料統計週報", datasetId: "13166", category: "治安" },
       { key: "missing", name: "警政署 失蹤人口查尋", datasetId: "14420", category: "協尋" },
     ];
     for (const def of policeSourceDefs) {
-      const currentEvents = policeEvents.filter((event) => event.source?.datasetId === def.datasetId);
+      const currentEvents = domesticEvents.filter((event) => event.source?.datasetId === def.datasetId);
       const count = currentEvents.length;
       const sub = status.police?.[def.key];
       const previousEvents = oldDomestic.filter((event) => event.source?.datasetId === def.datasetId);
@@ -1000,9 +1008,9 @@ export async function run() {
       });
     }
   }
-  if (newsEvents.length) {
+  if (snapshotNewsEvents.length) {
     const newsByFeed = new Map();
-    for (const e of newsEvents) {
+    for (const e of snapshotNewsEvents) {
       const name = e.source.feedLabel || e.source.name;
       const key = `${name}\u0000${e.category || "治安"}`;
       if (!newsByFeed.has(key)) newsByFeed.set(key, { name, category: e.category || "治安", count: 0, source: e.source });
@@ -1020,10 +1028,10 @@ export async function run() {
         authority: source?.authority,
         jurisdiction: source?.jurisdiction,
         stale: !status.twnews?.ok || undefined,
-        query: `台灣社會新聞 RSS → LLM(${respondedModel()}) 正規化`,
+        query: `台灣社會新聞 RSS → ${newsNormalizationDescription(snapshotNewsEvents.filter((event) => (event.source.feedLabel || event.source.name) === name && event.category === category))}`,
         license: source?.authority === "official"
           ? "政府網站資料開放宣告；實際授權條款以原始來源網站為準"
-          : "各新聞媒體著作權所有；本平台僅彙整標題/摘要與原文連結，分類與座標為 LLM 衍生",
+          : "各新聞媒體著作權所有；本平台僅彙整標題/摘要與原文連結，分類與座標為 LLM 或規則衍生（依各事件處理方式）",
       });
     }
   }
@@ -1043,8 +1051,8 @@ export async function run() {
     });
   for (const key of DIRECT_OFFICIAL_SOURCE_KEYS) {
     const meta = OFFICIAL_SOURCE_META[key];
-    const events = officialEventsByKey[key] || [];
     const datasetIds = OFFICIAL_SOURCE_DATASET_IDS[key] || [meta.datasetId];
+    const events = domesticEvents.filter((event) => datasetIds.includes(event.source?.datasetId));
     const previous = datasetIds.map((datasetId) => previousSourceFor({ datasetId })).find(Boolean);
     if (!events.length && !want(key) && !previous) continue;
     const eventSource = events[0]?.source;
@@ -1075,11 +1083,7 @@ export async function run() {
     internationalFeedLabels.add(name);
     const events = intlEvents.filter((e) => e.source?.feedLabel === f.label || e.source?.name === f.label);
     const sourceStatus = f.ok === true ? { ok: true } : { ok: false, error: f.error || "來源抓取失敗" };
-    const hasBulk = events.some((event) => event.source?.normalizationMethod === "bulk");
-    const hasEnriched = events.some((event) => event.source?.normalizationMethod !== "bulk");
-    const normalization = hasBulk
-      ? `${hasEnriched ? `LLM(${respondedModel()}) 精修＋` : ""}輕量收錄`
-      : `LLM(${respondedModel()}) 正規化`;
+    const normalization = newsNormalizationDescription(events);
     sources.push({
       name,
       type: "news-rss",
@@ -1094,8 +1098,8 @@ export async function run() {
       ...sourceHealthFields({ sourceStatus, events, name }),
     });
   }
-  if (!status.international?.ok) {
-    // carry-over：由舊國際快照還原未出現在本輪 feedStatus 的來源（標 stale）。
+  {
+    // 累積快照也可能保留本輪未選的 feed，來源清單仍須完整呈現。
     const byName = {};
     for (const e of intlEvents) {
       if (e.source?.datasetId === "mofa-travel-warning") continue;
@@ -1114,10 +1118,17 @@ export async function run() {
         fetchedAt: event?.source?.fetchedAt || nowIso,
         lastSuccessAt: event?.source?.fetchedAt || nowIso,
         stale: true,
-        query: `RSS ${name.slice("國際新聞：".length)} → ${event?.source?.normalizationMethod === "bulk" ? "輕量收錄" : `LLM(${respondedModel()}) 正規化`}`,
+        ...carriedInternationalSourceFlags(status.international),
+        query: `RSS ${name.slice("國際新聞：".length)} → ${newsNormalizationDescription(intlEvents.filter((item) => `國際新聞：${item.source?.feedLabel || item.source?.name}` === name))}`,
       });
     }
   }
+  const snapshotEvents = [...domesticEvents, ...intlEvents];
+  for (const source of sources) source.count = snapshotEventsForSource(source, snapshotEvents).length;
+  status.twnews.snapshotCount = snapshotNewsEvents.length;
+  status.international.snapshotCount = intlEvents.filter((event) => event.source?.datasetId !== "mofa-travel-warning").length;
+  status.twnews.refinedSnapshotCount = snapshotNewsEvents.filter((event) => normalizedSources.has(event.source)).length;
+  status.international.refinedSnapshotCount = intlEvents.filter((event) => normalizedSources.has(event.source)).length;
 
   writeJson("coverage.json", buildCoverageMatrix({
     generatedAt: nowIso,
@@ -1129,9 +1140,9 @@ export async function run() {
   writeJson("provenance.json", {
     generatedAt: nowIso,
     note:
-      "Live 抓取。座標：採購為依機關所在縣市/區中心推估、新聞精修事件由 LLM 依事件地點推估，輕量事件不填座標；地震為真實震央。風險等級為衍生指標（採購依決標金額、地震依規模、新聞由 LLM 或規則判定），非原始欄位。新聞摘要與分類由 LLM " +
-      respondedModel() +
-      " 精修，未精修長尾則由來源主題與關鍵字輕量映射；原始連結保留可回溯。MND、CDC、TFDA、海巡署、TWCERT/CC、台電、水利署與 MOFA/NCDR 皆為官方資料的規則映射，不經 LLM。",
+      "Live 抓取。座標：採購依機關所在縣市/區中心推估、國內新聞依縣市中心定位；國際精修事件由 LLM 推估，國際輕量事件不填座標；地震為真實震央。風險等級為衍生指標，非原始欄位。" +
+      buildNewsProcessingNote([...domesticEvents, ...intlEvents], normalizedSources, llmModel()) +
+      "MND、CDC、TFDA、海巡署、TWCERT/CC、台電、水利署與 MOFA/NCDR 皆為官方資料的規則映射，不經 LLM。新聞 pipeline.count 為本輪映射候選量（含快取與官方備援，未經累積、保留窗、上限與契約篩選）；新聞 pipeline.snapshotCount 與 sources.count 為最終快照量（含沿用事件）。",
     pipeline: status,
     sources,
   });

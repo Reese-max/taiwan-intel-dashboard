@@ -471,6 +471,7 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
       locationNote: loc.lat != null && loc.lng != null ? "依新聞地區推論，非精準事發地址" : undefined,
       source: {
         ...source,
+        normalizationMethod: "bulk",
         query: `${source.query}（全量收錄）`,
       },
     });

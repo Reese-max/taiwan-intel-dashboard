@@ -352,16 +352,16 @@ ${listing}
 
 只輸出 JSON 陣列，不要任何說明文字。`;
 
+  let model = llmModel();
   const out = await chat(
     [
       { role: "system", content: sys },
       { role: "user", content: user },
     ],
-    { maxTokens: 16384, temperature: 0.2 }
+    { maxTokens: 16384, temperature: 0.2, onResponseModel: (value) => { model = value || model; } }
   );
   const arr = extractJson(out);
   const fetchedAt = new Date().toISOString();
-  const model = llmModel();
 
   const events = [];
   for (const o of Array.isArray(arr) ? arr : []) {
@@ -484,6 +484,7 @@ export async function normalizeInternational(
     priorById = null,
     budgetMs = Math.max(60e3, Number(process.env.INTL_NORMALIZE_BUDGET_MS) || 15 * 60e3),
     priorityFeedLabels = null,
+    onNormalized,
   } = {}
 ) {
   lastIntlNormalizeFailed = false;
@@ -580,11 +581,14 @@ export async function normalizeInternational(
     merged.push(ev);
   }
   // 高風險事件二次深度分析（補 implications；env INTL_DEEP_ANALYSIS=0 可關，失敗 graceful）。
-  return await deepAnalyzeHighRisk(
+  const selected = await deepAnalyzeHighRisk(
     selectInternationalWithOfficialPoliceFloor(merged, officialPoliceItems, max, {
       generalFeedLabels: priorityFeedLabels,
     }),
   );
+  const freshIds = new Set(llmEvents.map((event) => event.id));
+  onNormalized?.(selected.filter((event) => freshIds.has(event.id)));
+  return selected;
 }
 
 // 台灣社會/犯罪新聞分類（domestic）
@@ -655,16 +659,16 @@ ${listing}
 
 只輸出 JSON 陣列，不要任何說明文字。`;
 
+  let model = llmModel();
   const out = await chat(
     [
       { role: "system", content: sys },
       { role: "user", content: user },
     ],
-    { maxTokens: 16384, temperature: 0.2 }
+    { maxTokens: 16384, temperature: 0.2, onResponseModel: (value) => { model = value || model; } }
   );
   const arr = extractJson(out);
   const fetchedAt = new Date().toISOString();
-  const model = llmModel();
 
   const events = [];
   for (const o of Array.isArray(arr) ? arr : []) {
@@ -725,6 +729,7 @@ export async function normalizeDomesticNews(
     concurrency = 4,
     priorById = null,
     budgetMs = Math.max(60e3, Number(process.env.DOMESTIC_NORMALIZE_BUDGET_MS) || 15 * 60e3),
+    onNormalized,
   } = {},
 ) {
   lastDomesticNormalizeFailed = false;
@@ -792,7 +797,10 @@ export async function normalizeDomesticNews(
     seen.add(ev.id);
     merged.push(ev);
   }
-  return merged.slice(0, max);
+  const selected = merged.slice(0, max);
+  const freshIds = new Set(results.flat().map((event) => event.id));
+  onNormalized?.(selected.filter((event) => freshIds.has(event.id)));
+  return selected;
 }
 
 // 情勢摘要：每日國內/國際 + 近24h即時 + 分類別 + 趨勢（單一函式集中產生，全部 graceful）。
