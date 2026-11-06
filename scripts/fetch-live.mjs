@@ -71,7 +71,7 @@ import { validateEventContract, clampImplausibleTimestamps, isReferenceEvent } f
 import { isPlaceholder } from "./lib/summary-quality.mjs";
 import { applyTemporal } from "./lib/temporal.mjs";
 import { buildCoverageMatrix } from "./audit-coverage.mjs";
-import { buildNewsProcessingNote, newsNormalizationDescription, snapshotEventsForSource } from "./lib/provenance.mjs";
+import { buildNewsProcessingNote, carriedInternationalSourceFlags, newsNormalizationDescription, snapshotEventsForSource } from "./lib/provenance.mjs";
 import { buildDomainCoverage } from "./domain-coverage.mjs";
 import { buildCohortManifest, writeCohortManifest, RULES_VERSION } from "./lib/manifest.mjs";
 
@@ -1118,8 +1118,7 @@ export async function run() {
         fetchedAt: event?.source?.fetchedAt || nowIso,
         lastSuccessAt: event?.source?.fetchedAt || nowIso,
         stale: true,
-        // 本輪未輪到、沿用累積池事件；不是請求失敗（source-health 依此區分）。
-        skippedThisRun: true,
+        ...carriedInternationalSourceFlags(status.international),
         query: `RSS ${name.slice("國際新聞：".length)} → ${newsNormalizationDescription(intlEvents.filter((item) => `國際新聞：${item.source?.feedLabel || item.source?.name}` === name))}`,
       });
     }

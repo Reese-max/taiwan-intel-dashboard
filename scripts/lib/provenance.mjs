@@ -34,3 +34,10 @@ export function newsNormalizationDescription(events) {
   }
   return [...methods].sort().join("＋") || "無落地事件";
 }
+
+// 國際累積池中本輪未出現在 feedStatus 的沿用來源：本輪抓取成功或未排國際 → 只是沒輪到；
+// 整輪失敗（feedStatus 尚未建立）→ 保留失敗原因，讓 source-health 照常報 request-failed。
+export function carriedInternationalSourceFlags(internationalStatus) {
+  if (internationalStatus?.ok === true || internationalStatus?.skipped === true) return { skippedThisRun: true };
+  return { error: internationalStatus?.error || "國際新聞本輪刷新失敗，沿用累積快照" };
+}

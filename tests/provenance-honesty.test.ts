@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 // @ts-expect-error — JS ESM module without types
-import { snapshotEventsForSource, buildNewsProcessingNote, newsNormalizationDescription } from "../scripts/lib/provenance.mjs";
+import { snapshotEventsForSource, buildNewsProcessingNote, newsNormalizationDescription, carriedInternationalSourceFlags } from "../scripts/lib/provenance.mjs";
+// @ts-expect-error — JS ESM module without types
+import { auditSourceHealth } from "../scripts/lib/source-health.mjs";
 // @ts-expect-error — JS ESM module without types
 import { validateEventContract } from "../scripts/lib/event-contract.mjs";
 // @ts-expect-error — JS ESM module without types
@@ -74,5 +76,23 @@ describe("provenance 計數與處理宣告", () => {
     expect(container.innerHTML).toContain("本輪無 LLM 精修落地");
     expect(container.innerHTML).not.toContain("交付 4325");
     expect(container.innerHTML).not.toContain("<b>AI 精修</b> 92 筆");
+  });
+});
+
+describe("國際累積池沿用來源的健康標記", () => {
+  const carried = (status: unknown) => ({ name: "國際新聞：Example", type: "news-rss", datasetId: "international-news", scope: "international", count: 3, stale: true, ...carriedInternationalSourceFlags(status) });
+  const findings = (status: unknown) => auditSourceHealth({ provenance: { sources: [carried(status)] }, requiredSources: ["國際新聞：Example"] });
+  const requestFailures = (status: unknown) => { const r = findings(status); return [...r.failures, ...r.warnings].filter((f: { code: string }) => f.code === "request-failed"); };
+
+  it("本輪抓取成功或未排國際：只是沒輪到，不報請求失敗", () => {
+    expect(carriedInternationalSourceFlags({ ok: true })).toEqual({ skippedThisRun: true });
+    expect(carriedInternationalSourceFlags({ skipped: true })).toEqual({ skippedThisRun: true });
+    expect(requestFailures({ ok: true })).toEqual([]);
+  });
+
+  it("整輪失敗：保留失敗原因，必要來源照常判 fail（codex bot P2）", () => {
+    expect(carriedInternationalSourceFlags({ ok: false, error: "全部國際 RSS 失敗" })).toEqual({ error: "全部國際 RSS 失敗" });
+    expect(carriedInternationalSourceFlags(undefined)).toHaveProperty("error");
+    expect(requestFailures({ ok: false, error: "全部國際 RSS 失敗" })).toEqual([expect.objectContaining({ severity: "fail" })]);
   });
 });
