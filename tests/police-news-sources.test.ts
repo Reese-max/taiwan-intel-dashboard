@@ -149,3 +149,28 @@ describe("高雄與桃園固定新聞列表解析", () => {
     expect((await fetchRssItems({ feeds: [feed], retryDelayMs: 0 })).items).toEqual([]);
   });
 });
+
+describe("涵蓋率量測補洞（2026-11-06 三立 sitemap 對照）", () => {
+  const media = (title: string, description = "") => ({
+    title, description, source: "GN 三立綜合治安", hint: "治安", official: false,
+    link: "https://news.google.com/x", sourceUrl: "https://news.google.com/rss/search?q=x", pubDate: "2026-11-06T00:00:00+08:00",
+  });
+
+  it.each([
+    "共諜案外的風暴／張俊傑潛逃扯出竹聯幫主之爭　檢調私下透露：中資介入 - 鏡週刊",
+    "台64計程車丟包案今宣判！司機認「筆錄說謊」 家屬怒：應判無期徒刑",
+    "誆送內衣誘少女自拍裸照！噁男一審遭重判…靠30萬「鈔能力」換自由 - 三立新聞網SETN.com",
+    "國中女遭父體罰還受「薑罰」！母親急上網求助",
+  ])("保留原本漏收的案件：%s", title => {
+    expect(isRelevantNewsItem(media(title))).toBe(true);
+  });
+
+  it("不因「重判斷」「都更審」等詞誤收", () => {
+    expect(isRelevantNewsItem(media("北市辯論爆要求給「穿鞋後身高」", "范立達表示，選民應慎重判斷候選人政見"))).toBe(false);
+    expect(isRelevantNewsItem(media("老屋太多、都更審不完 專家喊話「處升格局」解塞車"))).toBe(false);
+  });
+
+  it("官方人事調整公告即使摘要提到一審、二審檢察署也排除", () => {
+    expect(isRelevantNewsItem(official("法務部115年檢察官人事調整案，業經本部檢察官人事審議", "調動一審、二審檢察署主任檢察官"))).toBe(false);
+  });
+});
