@@ -8,23 +8,28 @@ import type { NetworkIndex } from "../src/data/network";
 const h = vi.hoisted(() => ({
   events: [] as IntelEvent[], net: null as NetworkIndex | null, manifest: null as CohortManifest | null,
   summary: null as Record<string, unknown> | null,
-  failInternational: false, renders: [] as { events: IntelEvent[]; scope: string }[],
+  failInternational: false, renders: [] as { events: IntelEvent[]; scope: string; closePopup?: boolean }[],
+  firstPaint: false, eventsGate: null as Promise<void> | null,
 }));
 const removeListeners: (() => void)[] = [];
 vi.mock("../src/components/MapView", () => ({
   isMapDisplayable: (e: IntelEvent) => e.lat != null && e.lng != null,
   MapView: class {
-    async render(events: IntelEvent[], scope: string) { h.renders.push({ events, scope }); }
+    async render(events: IntelEvent[], scope: string, options?: { closePopup?: boolean }) {
+      h.renders.push({ events, scope, ...(options?.closePopup === undefined ? {} : { closePopup: options.closePopup }) });
+    }
     async closePopup() {} async resize() {} async reveal() {} async locateEvent() { return true; }
   },
 }));
 vi.mock("../src/data/loader", async (original) => ({
   ...await original<typeof import("../src/data/loader")>(),
   loadEvents: vi.fn(async (scope: string) => {
+    await h.eventsGate;
     if (scope === "international" && h.failInternational) throw Error("測試國際載入失敗");
     return scope === "domestic" ? h.events : [];
   }),
-  loadFirstPaintHeadEvents: async () => null, loadFirstPaintMapEvents: async () => null,
+  loadFirstPaintHeadEvents: async () => null,
+  loadFirstPaintMapEvents: async () => h.firstPaint ? { events: h.events, manifest: h.manifest } : null,
 }));
 vi.mock("../src/data/network", async (original) => ({
   ...await original<typeof import("../src/data/network")>(), loadNetwork: async () => h.net,
@@ -57,7 +62,7 @@ beforeEach(async () => {
   }
   vi.spyOn(window, "localStorage", "get").mockReturnValue(new Window().localStorage as Storage);
   document.body.innerHTML = '<div id="app"></div>'; window.location.hash = ""; window.localStorage.clear();
-  h.failInternational = false; h.renders = [];
+  h.failInternational = false; h.renders = []; h.firstPaint = false; h.eventsGate = null;
   await snapshot("甲", "2026-11-04T00:00:00Z");
   h.summary = { domestic: "國內摘要", international: "國際摘要", generatedAt: "2026-11-04T00:00:00Z", clusterSummaries: { c0: "甲事件的舊群摘要" }, clusterVersions: { c0: JSON.stringify(["甲", "甲2"]) } };
   vi.stubGlobal("fetch", vi.fn(async (url: unknown) => String(url).includes("summary.json") && h.summary
@@ -138,7 +143,7 @@ describe("主程式整合回歸", () => {
       expect(document.getElementById(id)?.textContent).not.toContain("甲");
     }
     expect(document.querySelector("#kpistrip")?.textContent).toContain("載入失敗");
-    expect(h.renders.at(-1)).toEqual({ scope: "international", events: [] });
+    expect(h.renders.at(-1)).toEqual({ scope: "international", events: [], closePopup: true });
     document.querySelector<HTMLButtonElement>('[data-scope="domestic"]')!.click();
     await vi.waitFor(() => expect(document.querySelector("#topclusters")?.textContent).toContain("甲情報群"));
     expect(h.renders.at(-1)?.events[0].id).toBe("甲");
@@ -171,5 +176,21 @@ describe("主程式整合回歸", () => {
     await vi.waitFor(() => expect(document.querySelector("#eventlist")?.textContent).toContain("甲事件"));
     const select = document.querySelector<HTMLSelectElement>("#f-range")!;
     expect(select.value).toBe("14"); expect(select.selectedOptions[0].textContent).toBe("近 14 天");
+  });
+});
+
+describe("map first-paint handoff", () => {
+  it.each([false, true])("closes popup only for a changed view while full data is pending (changed=%s)", async (changed) => {
+    let release!: () => void;
+    h.firstPaint = true;
+    h.eventsGate = new Promise<void>((resolve) => { release = resolve; });
+    try {
+      await import("../src/main");
+      await vi.waitFor(() => expect(h.renders).toHaveLength(1));
+      expect(h.renders[0].events).toEqual(h.events);
+      if (changed) (await import("../src/store")).setState({ region: h.events[0].region });
+    } finally { release(); }
+    await vi.waitFor(() => expect(h.renders).toHaveLength(2));
+    expect(h.renders.at(-1)?.closePopup).toBe(changed);
   });
 });
