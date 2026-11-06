@@ -89,7 +89,7 @@ describe("GN 100 則上限的時間窗", () => {
     return new URL(feed!.url).searchParams.get("q");
   };
 
-  it.each(["GN 傷害鬥毆", "GN 收押通緝", "GN 妨害自由恐嚇", "司法院官網", "GN CTWANT 綜合治安", "GN 今周刊詐騙資安"])(
+  it.each(["GN 傷害鬥毆", "GN 收押通緝", "GN 妨害自由恐嚇", "GN CTWANT 綜合治安", "GN 今周刊詐騙資安", "GN 個資駭客", "GN iThome 資安", "警政署官網"])(
     "近 5 天會撞上限的 %s 改抓近 1 天",
     (label) => {
       expect(q(label)).toMatch(/ when:1d$/);
@@ -97,12 +97,21 @@ describe("GN 100 則上限的時間窗", () => {
     },
   );
 
-  it.each(["GN 家暴兒虐", "央廣 RTI 治安", "GN UDN 綜合治安", "GN ETtoday 綜合治安", "GN 三立綜合治安", "GN 風傳媒綜合治安", "GN 上報綜合治安", "GN 經濟日報詐騙金融"])(
+  it.each(["GN 家暴兒虐", "央廣 RTI 治安", "GN 風傳媒綜合治安", "GN 上報綜合治安", "司法院官網"])(
     "近 1 天仍撞上限的 %s 另有近 6 小時查詢",
     (label) => {
       expect(q(label)).toMatch(/ when:1d$/);
       expect(q(`${label} 6h`)).toBe(q(label)!.replace(/when:1d$/, "when:6h"));
       expect(TW_NEWS_FEEDS.find((f) => f.label === `${label} 6h`)?.hint).toBe(TW_NEWS_FEEDS.find((f) => f.label === label)?.hint);
+    },
+  );
+
+  it.each(["GN UDN 綜合治安", "GN ETtoday 綜合治安", "GN 三立綜合治安", "GN 經濟日報詐騙金融", "GN TechNews 資安"])(
+    "近 6 小時仍撞上限的 %s 改配近 3 小時",
+    (label) => {
+      expect(q(label)).toMatch(/ when:1d$/);
+      expect(q(`${label} 3h`)).toBe(q(label)!.replace(/when:1d$/, "when:3h"));
+      expect(TW_NEWS_FEEDS.some((f) => f.label === `${label} 6h`)).toBe(false);
     },
   );
 

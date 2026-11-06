@@ -19,10 +19,10 @@ const gnews = (q) =>
 const gq = (q, when = "5d") => gnews(`${q} when:${when}`);
 // GN 每查詢最多回 100 則（依相關度非時間）。近 5 天會撞上限的查詢改抓近 1 天，靠跨輪累積（fetch-live 保留窗）補足 5 天；
 // 近 1 天仍撞上限者另加近 6 小時查詢（每小時排程，可容忍連續漏跑 5 輪）。2026-11-06 實測各窗則數見 PR。
-const GN_1D = new Set(["GN 傷害鬥毆", "GN 收押通緝", "GN 妨害自由恐嚇", "司法院官網", "GN CTWANT 綜合治安", "GN 今周刊詐騙資安"]);
-const GN_1D_6H = new Set(["GN 家暴兒虐", "央廣 RTI 治安", "GN UDN 綜合治安", "GN ETtoday 綜合治安", "GN 三立綜合治安", "GN 風傳媒綜合治安", "GN 上報綜合治安", "GN 經濟日報詐騙金融"]);
-// TVBS 治安量大：近 6 小時仍 100 則、近 3 小時 78 則（2026-11-06），改配近 3 小時（可容忍連續漏跑 2 輪）。
-const GN_1D_3H = new Set(["GN TVBS 綜合治安"]);
+const GN_1D = new Set(["GN 傷害鬥毆", "GN 收押通緝", "GN 妨害自由恐嚇", "GN CTWANT 綜合治安", "GN 今周刊詐騙資安", "GN 個資駭客", "GN iThome 資安", "警政署官網"]);
+const GN_1D_6H = new Set(["GN 家暴兒虐", "央廣 RTI 治安", "GN 風傳媒綜合治安", "GN 上報綜合治安", "司法院官網"]);
+// 近 6 小時仍 100 則者改配近 3 小時（可容忍連續漏跑 2 輪）：TVBS 78、UDN 91、ETtoday 70、三立 47、經濟日報 58、TechNews 62（2026-11-06 平日下午實測）。
+const GN_1D_3H = new Set(["GN TVBS 綜合治安", "GN UDN 綜合治安", "GN ETtoday 綜合治安", "GN 三立綜合治安", "GN 經濟日報詐騙金融", "GN TechNews 資安"]);
 const TW_NEWS_FEEDS_BASE = [
   // ── 直連媒體 RSS（穩定）──
   { label: "中央社 社會", url: "https://feeds.feedburner.com/rsscna/social", hint: "治安" },
