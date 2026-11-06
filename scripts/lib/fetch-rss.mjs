@@ -16,8 +16,12 @@ const gnews = (q) =>
 // 主力＝Google News RSS（聚合全台媒體、含個別被擋的 ETtoday/三立/TVBS/聯合），OR 串同義詞、when:5d 限近 5 日。
 // 重複新聞由 nvidia.normalizeDomesticNews 依標題去重。剔除：命案/兒少/應召等查詢回 0、ETtoday-feedburner、
 // 警政署/交通部 RSS（回 0）、Focus Taiwan（404）、聯合報 UDN（被擋）。新增來源前先用 _audit-candidates.mjs 稽核。
-const gq = (q) => gnews(q + " when:5d");
-export const TW_NEWS_FEEDS = [
+const gq = (q, when = "5d") => gnews(`${q} when:${when}`);
+// GN 每查詢最多回 100 則（依相關度非時間）。近 5 天會撞上限的查詢改抓近 1 天，靠跨輪累積（fetch-live 保留窗）補足 5 天；
+// 近 1 天仍撞上限者另加近 6 小時查詢（每小時排程，可容忍連續漏跑 5 輪）。2026-11-06 實測各窗則數見 PR。
+const GN_1D = new Set(["GN 傷害鬥毆", "GN 收押通緝", "GN 妨害自由恐嚇", "司法院官網", "GN CTWANT 綜合治安", "GN 今周刊詐騙資安"]);
+const GN_1D_6H = new Set(["GN 家暴兒虐", "央廣 RTI 治安", "GN UDN 綜合治安", "GN ETtoday 綜合治安", "GN 三立綜合治安", "GN 風傳媒綜合治安", "GN 上報綜合治安", "GN 經濟日報詐騙金融"]);
+const TW_NEWS_FEEDS_BASE = [
   // ── 直連媒體 RSS（穩定）──
   { label: "中央社 社會", url: "https://feeds.feedburner.com/rsscna/social", hint: "治安" },
   { label: "中央社 即時", url: "https://feeds.feedburner.com/cnaFirstNews", hint: "治安" },
@@ -215,6 +219,13 @@ export const TW_NEWS_FEEDS = [
   // GN 低覆蓋的大縣市：直接解析官方新聞列表（police-taoyuan 解析器保留，待有境內出口時可接回）。
   { label: "高雄市警局官網", url: "https://kcpd.kcg.gov.tw/News.aspx?n=301858D950E8FB8E&sms=FC374298B757EFB3", parser: "police-kaohsiung", hint: "治安" },
 ];
+
+const withWindow = (feed, when) => ({ ...feed, url: feed.url.replace(/when%3A5d/, `when%3A${when}`) });
+export const TW_NEWS_FEEDS = TW_NEWS_FEEDS_BASE.flatMap((feed) => {
+  if (GN_1D.has(feed.label)) return [withWindow(feed, "1d")];
+  if (GN_1D_6H.has(feed.label)) return [withWindow(feed, "1d"), { ...withWindow(feed, "6h"), label: `${feed.label} 6h` }];
+  return [feed];
+});
 
 function decode(s) {
   if (!s) return "";
