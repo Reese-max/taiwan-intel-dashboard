@@ -21,6 +21,7 @@ import { CURATED_LEDGER_REL_PATH, loadCurationLedger, resolveCurationLedger } fr
 import { isNewsLikeEvent } from "./lib/correlate.mjs";
 import { previewSnapshotContext } from "./prepare-preview-data.mjs";
 import { trimPoliceHourlyRecent } from "./lib/police-hourly-history.mjs";
+import { trimNetwork } from "./lib/trim-network.mjs";
 
 const OUT = "dist";
 if (process.env.BUILD_STATIC_OUT && resolve(process.env.BUILD_STATIC_OUT) !== resolve(OUT)) {
@@ -106,11 +107,6 @@ function mapTrim(e) {
       sourceConfidence: s.sourceConfidence,
     },
   };
-}
-// network.json 的 nodes 現在承載儀表板事件摘要與直接佐證來源，保留既有節點欄位，
-// 讓 build-time 關聯結果可直接供資料消費端使用；edges/clusters 仍維持原有結構。
-function trimNetwork(net) {
-  return net;
 }
 const TRIM_FIELDS = new Set(["domestic.json", "international.json"]);
 const curation = loadCurationLedger(CURATED_LEDGER_REL_PATH);

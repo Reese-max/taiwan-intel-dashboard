@@ -12,7 +12,8 @@ export interface NetEdge {
   b: string;
   type: EdgeType;
   weight: number;
-  why: string;
+  /** Deployment files use a scope-local whyTexts index; source files keep text. */
+  why: string | number;
   /** auto = 自動候選；manual = 人工更正 ledger 覆寫（附 curationId 對回記錄）。 */
   origin?: "auto" | "manual";
   decision?: string;
@@ -114,9 +115,10 @@ export interface CurationAudit {
 }
 
 export interface ScopeNetwork {
-  // 舊產物可省略；新產物保留事件摘要與直接佐證來源。
-  nodes?: NetNode[];
+  // 舊產物可省略；部署投影保留全部 id，詳情由事件檔提供。
+  nodes?: (NetNode | Pick<NetNode, "id">)[];
   edges: NetEdge[];
+  whyTexts?: string[];
   clusters: NetCluster[];
   stats: Record<string, unknown>;
   curation?: CurationAudit;
@@ -201,8 +203,9 @@ export class NetworkIndex {
       for (const id of c.members) this.clusterByMember.set(id, c);
     }
     for (const e of net.edges ?? []) {
+      const reason = typeof e.why === "number" ? net.whyTexts![e.why] : e.why;
       const why = (id: string) => e.type === "follow-up"
-        ? `${(e.from ?? e.a) === id ? "後續報導" : "前情報導"}：${e.why}` : e.why;
+        ? `${(e.from ?? e.a) === id ? "後續報導" : "前情報導"}：${reason}` : reason;
       this.push(e.a, { id: e.b, type: e.type, weight: e.weight, why: why(e.a) });
       this.push(e.b, { id: e.a, type: e.type, weight: e.weight, why: why(e.b) });
     }
@@ -288,10 +291,15 @@ function scopeShapeError(value: unknown): string | null {
   if (value.nodes !== undefined && (!Array.isArray(value.nodes) || value.nodes.some((node) => !isRecord(node) || !isNonEmptyString(node.id)))) {
     return "領域 nodes 必須是具有字串 id 的物件陣列";
   }
+  if (value.whyTexts !== undefined && (!Array.isArray(value.whyTexts) || value.whyTexts.some((why) => typeof why !== "string"))) {
+    return "領域 whyTexts 必須是字串陣列";
+  }
   for (const edge of value.edges) {
+    const reason = isRecord(edge) && typeof edge.why === "number" && Number.isSafeInteger(edge.why) && edge.why >= 0 && Array.isArray(value.whyTexts)
+      ? value.whyTexts[edge.why] : isRecord(edge) ? edge.why : undefined;
     if (!isRecord(edge) || !isNonEmptyString(edge.a) || !isNonEmptyString(edge.b) ||
       typeof edge.type !== "string" || !["same-incident", "same-entity", "same-topic", "follow-up"].includes(edge.type) ||
-      typeof edge.weight !== "number" || !Number.isFinite(edge.weight) || typeof edge.why !== "string") {
+      typeof edge.weight !== "number" || !Number.isFinite(edge.weight) || typeof reason !== "string") {
       return "領域 edge 的端點、類型、權重或原因格式錯誤";
     }
   }
