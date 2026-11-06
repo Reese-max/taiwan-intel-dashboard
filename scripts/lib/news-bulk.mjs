@@ -245,6 +245,21 @@ export function riskFromTitle(title, hint, description = "") {
 // 警政相關性關鍵字（標題＋摘要任一命中才收）。濾掉政府/綜合 feed 的非犯罪內容（政策、活動、排名、衛教…）。
 const POLICE_RE = /詐|車手|毒品|緝毒|販毒|製毒|安非他命|海洛因|大麻|愷他命|竊|偷|扒|搶|強盜|劫|侵占|命案|兇殺|凶殺|殺人|砍|刺|鬥毆|毆|傷害|施暴|槍|彈藥|爆裂|爆炸|氣爆|性侵|性騷|猥褻|偷拍|性影像|妨害|家暴|虐|跟蹤|跟騷|騷擾|恐嚇|脅迫|擄|勒贖|綁架|賭|博弈|簽賭|假球|娼|應召|嫖|幫派|黑道|圍事|角頭|竹聯|四海幫|天道盟|潛逃|逃亡|走私|偷渡|人口販運|人蛇|洗錢|吸金|騙局|行騙|賄選|查賄|買票|貪污|貪瀆|收賄|圖利|掏空|背信|內線|偽造|偽鈔|變造|假冒|冒用|盜刷|盜用|個資|駭客|勒索病毒|起訴|公訴|偵辦|偵查|偵結|偵破|搜索|約談|羈押|聲押|收押|交保|通緝|落網|到案|逮捕|查獲|破獲|查緝|查扣|移送|判刑|判決|定讞|求刑|宣判|一審|二審|體罰|犯|嫌|警方|員警|警察|捷警|鐵警|刑事|刑警|檢方|檢警|檢調|地檢|調查局|海巡|移民署|消防|救護|搜救|溺|墜|罹難|傷亡|死傷|身亡|致死|喪命|奪命|縱火|火警|火災|肇事|肇逃|酒駕|毒駕|車禍|碰撞|擦撞|追撞|自撞|撞死|撞傷|撞進|翻車|事故|失蹤|協尋|尋回|走失|迷航|迷途|失聯|襲警|拒檢|拒捕|臨檪|臨檢|攔查|路檢|掃蕩|掃黑|肅竊|取締|落水|中毒|外洩|不法|違法|非法|犯罪|刑案|治安|報案|110|165/;
 
+const CASE_TITLE_RE = /(?<!\p{Script=Han})\p{Script=Han}{2,6}案/gu;
+// 行政／商業與泛稱國安案不足以推定一般刑案，尤其不能擴收港澳政治審判。
+const EXCLUDED_CASE_NAME_RE = /(?:提|法|方|預算|草|議|專|檔|答|個|教|圖|文|備|定|建|推|併購|投資|上市|修正|開|結|國安(?:法)?)案$/;
+const CASE_TITLE_CONTEXT_RE = /受害(?:者|人)|被害(?:者|人)|餘悸|開庭|求判|辯論終結/;
+const CONDITIONAL_SENTENCE_RE = /(?:最重判|可判|恐判)\s*[0-9０-９一二三四五六七八九十百兩]+\s*年/;
+const DOMESTIC_JUSTICE_RE = /衛福部|衛生福利部|法務部|司法院/;
+
+function hasPoliceTitleEvidence(title) {
+  const text = String(title || "");
+  if (CONDITIONAL_SENTENCE_RE.test(text) && DOMESTIC_JUSTICE_RE.test(text)) return true;
+  // ponytail: 案名只認獨立的 2–6 個漢字且須有受害／庭訊脈絡；更長或省略脈絡的標題需另做語意判讀。
+  return CASE_TITLE_CONTEXT_RE.test(text) &&
+    [...text.matchAll(CASE_TITLE_RE)].some(([name]) => !EXCLUDED_CASE_NAME_RE.test(name));
+}
+
 const NON_EVENT_LANDING_RE = /查詢系統|管理資訊系統|資訊系統|資訊網站|全球資訊網|清冊|資料查詢/;
 const SPECIFIC_NON_EVENT_TITLE_RE = /環保稽查處分管制系統/;
 const EVENT_ACTION_RE = /駭客|(?:個資|資料)?外洩|攻擊|破獲|查獲|逮捕|落網|起訴|下架|回收|裁罰|偷排|食物中毒|群聚|確診|火警|車禍|命案|殺人|砍人|詐騙|盜用|盜刷|釣魚|冒用|毒品/;
@@ -345,7 +360,7 @@ export function isPoliceRelevant(title, description) {
   // 英文警政關鍵字（EN 來源靠此通過；POLICE_RE 為中文導向，對英文內容全 miss）。
   const POLICE_EN_RE =
     /\b(police|arrest\w*|fraud|scam|drug|narcotic|smuggl\w*|murder|homicide|kidnap\w*|robbery|theft|burglar\w*|assault|prosecut\w*|indict\w*|convict\w*|sentenc\w*|detain\w*|custody|wanted|gang|trafficking|launder\w*|bribe\w*|corruption|counterfeit|hack\w*|ransomware|phishing|crash|collision|drunk driving|DUI|blaze|explosion|rescue|drown\w*|manhunt|shooting|stabbing|crime|criminal|missing)\b/i;
-  return POLICE_RE.test(text) || POLICE_EN_RE.test(text);
+  return POLICE_RE.test(text) || POLICE_EN_RE.test(text) || hasPoliceTitleEvidence(title);
 }
 
 // 主題來源專用相關性關鍵字（hint 命中此表 → 以主題正則取代警政漏斗；未列者照舊走 POLICE_RE）。
@@ -368,7 +383,8 @@ export function isRelevantNewsItem(item) {
   if (isForeignNonTaiwan(item)) return false;
   if (isPoliceNewsNoise(item)) return false;
   const topicRe = TOPIC_RE[item?.hint];
-  if (topicRe) return topicRe.test(String(item?.title || "") + " " + String(item?.description || ""));
+  if (topicRe) return topicRe.test(String(item?.title || "") + " " + String(item?.description || "")) ||
+    (item?.hint === "災防" && hasPoliceTitleEvidence(item?.title));
   if (item?.official === true && /https:\/\/news\.google\.com\//.test(item?.sourceUrl || "")) {
     // GN description 是同一標題加發行者，機關署名不構成案件證據。
     return isPoliceRelevant(String(item?.title || "").replace(/\s+-\s+[^-]+$/, ""), "");

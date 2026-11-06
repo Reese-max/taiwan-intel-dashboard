@@ -7,6 +7,7 @@ import {
   categoryFromItem,
   isForeignNonTaiwan,
   isNonEventNoise,
+  isPoliceRelevant,
   isRelevantNewsItem,
   buildNewsRelevanceAudit,
   riskFromTitle,
@@ -490,6 +491,53 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(mk("颱風暴雨狂轟北台 多處道路淹水", "災防"))).toBe(true);
     expect(isRelevantNewsItem(mk("北市爆集體虐童 家長怒轟市府擺爛", "治安"))).toBe(true);
     expect(isRelevantNewsItem(mk("白營走讀變調 爬拒馬襲警遭批根本造勢", "治安"))).toBe(true);
+  });
+});
+
+describe("案件代稱與國內條件刑度的窄規則", () => {
+  it.each([
+    "獨∕河口湖案全台恐有「24個小藍」？女助理餘悸：那已死了多少人？",
+    "國中女疑遭父施「薑罰」！網怒炸通報　衛福部開轟說重話：最重判7年",
+    "心內話／狼師案吹哨者：我們36個受害者，不要賠償只要正義",
+    "閃兵案開庭！藝人「王子」當庭自爆另找閃兵集團 法官傻眼",
+    "網傳鬼父「薑罰」女兒！衛福部：恐涉加重強制性交，可判7年以上",
+    "衛生福利部：若屬實恐判７年",
+    "法務部：若屬實可判七年",
+  ])("保留 %s，且災防聯集與 bulk 入口一致", (title) => {
+    expect(isPoliceRelevant(title, "")).toBe(true);
+    for (const hint of ["治安", "反詐", "災防"]) {
+      const item = { title, hint, description: "", link: "https://example.test/case" };
+      expect(isRelevantNewsItem(item), hint).toBe(true);
+      expect(mapBulkNews([item], { fetchedAt: FETCHED_AT }), hint).toHaveLength(1);
+    }
+  });
+
+  it.each([
+    "立法院三讀通過預算案", "市府提案", "專案管理",
+    "黃之鋒再遭重判10年", "都更審不完",
+    "黃之鋒國安案開庭", "香港民主派恐判10年", "台灣關切香港民主派可判10年",
+    "某人最重判7年", "河口湖案最新進度", "甲案開庭", "甲乙丙丁戊己庚案開庭",
+  ])("不因案字或普通刑度擴收 %s", (title) => {
+    expect(isPoliceRelevant(title, "")).toBe(false);
+    expect(isRelevantNewsItem({ title, hint: "治安" })).toBe(false);
+  });
+
+  it.each([
+    "提案", "法案", "方案", "預算案", "草案", "議案", "專案", "檔案", "答案",
+    "個案", "教案", "圖案", "文案", "備案", "定案", "建案", "推案", "併購案",
+    "投資案", "上市案", "修正案", "開案", "結案",
+  ])("行政／商業詞 %s 不因受害與庭訊詞誤收", (term) => {
+    expect(isPoliceRelevant(`年度${term}開庭 受害人說明`, "")).toBe(false);
+  });
+
+  it("補充規則只認標題脈絡，並保留主題與雜訊閘門", () => {
+    const title = "河口湖案女助理餘悸未消";
+    expect(isPoliceRelevant("年度方案公布", title)).toBe(false);
+    expect(isPoliceRelevant("某人可判7年", "衛福部說明")).toBe(false);
+    expect(isRelevantNewsItem({ title, hint: "食安" })).toBe(false);
+    expect(isRelevantNewsItem({ title: `${title} 懶人包`, hint: "治安" })).toBe(false);
+    expect(isRelevantNewsItem({ title: `新劇拍攝現場 ${title}`, hint: "治安" })).toBe(false);
+    expect(isRelevantNewsItem({ title: `市府互嗆 ${title}`, hint: "治安" })).toBe(false);
   });
 });
 
