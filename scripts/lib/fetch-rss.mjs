@@ -22,7 +22,10 @@ const gq = (q, when = "5d") => gnews(`${q} when:${when}`);
 const GN_1D = new Set(["GN 傷害鬥毆", "GN 收押通緝", "GN 妨害自由恐嚇", "GN CTWANT 綜合治安", "GN 今周刊詐騙資安", "GN 個資駭客", "GN iThome 資安", "警政署官網"]);
 const GN_1D_6H = new Set(["GN 家暴兒虐", "央廣 RTI 治安", "GN 風傳媒綜合治安", "GN 上報綜合治安", "司法院官網"]);
 // 近 6 小時仍 100 則者改配近 3 小時（可容忍連續漏跑 2 輪）：TVBS 78、UDN 91、ETtoday 70、三立 47、經濟日報 58、TechNews 62（2026-11-06 平日下午實測）。
-const GN_1D_3H = new Set(["GN TVBS 綜合治安", "GN UDN 綜合治安", "GN ETtoday 綜合治安", "GN 三立綜合治安", "GN 經濟日報詐騙金融", "GN TechNews 資安"]);
+const GN_1D_3H = new Set(["GN ETtoday 綜合治安", "GN 三立綜合治安", "GN TechNews 資安"]);
+// 3 小時仍偶爾 100 則者改配近 2 小時（排程約每 30 分鐘，可容忍連續漏跑約 3 輪）：
+// 2026-11-06 正式 run UDN 3h 曾 100、經濟日報 3h 兩輪 100、TVBS 3h 最高 94；實測 2h 為 44／73／45。
+const GN_1D_2H = new Set(["GN TVBS 綜合治安", "GN UDN 綜合治安", "GN 經濟日報詐騙金融"]);
 const TW_NEWS_FEEDS_BASE = [
   // ── 直連媒體 RSS（穩定）──
   { label: "中央社 社會", url: "https://feeds.feedburner.com/rsscna/social", hint: "治安" },
@@ -227,6 +230,7 @@ export const TW_NEWS_FEEDS = TW_NEWS_FEEDS_BASE.flatMap((feed) => {
   if (GN_1D.has(feed.label)) return [withWindow(feed, "1d")];
   if (GN_1D_6H.has(feed.label)) return [withWindow(feed, "1d"), { ...withWindow(feed, "6h"), label: `${feed.label} 6h` }];
   if (GN_1D_3H.has(feed.label)) return [withWindow(feed, "1d"), { ...withWindow(feed, "3h"), label: `${feed.label} 3h` }];
+  if (GN_1D_2H.has(feed.label)) return [withWindow(feed, "1d"), { ...withWindow(feed, "2h"), label: `${feed.label} 2h` }];
   return [feed];
 });
 

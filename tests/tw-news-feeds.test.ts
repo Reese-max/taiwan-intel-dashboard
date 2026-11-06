@@ -106,7 +106,7 @@ describe("GN 100 則上限的時間窗", () => {
     },
   );
 
-  it.each(["GN UDN 綜合治安", "GN ETtoday 綜合治安", "GN 三立綜合治安", "GN 經濟日報詐騙金融", "GN TechNews 資安"])(
+  it.each(["GN ETtoday 綜合治安", "GN 三立綜合治安", "GN TechNews 資安"])(
     "近 6 小時仍撞上限的 %s 改配近 3 小時",
     (label) => {
       expect(q(label)).toMatch(/ when:1d$/);
@@ -115,9 +115,17 @@ describe("GN 100 則上限的時間窗", () => {
     },
   );
 
-  it("TVBS 用 news 子網域，近 1 天＋近 3 小時", () => {
+  it.each(["GN TVBS 綜合治安", "GN UDN 綜合治安", "GN 經濟日報詐騙金融"])(
+    "近 3 小時仍偶爾撞上限的 %s 改配近 2 小時",
+    (label) => {
+      expect(q(label)).toMatch(/ when:1d$/);
+      expect(q(`${label} 2h`)).toBe(q(label)!.replace(/when:1d$/, "when:2h"));
+      expect(TW_NEWS_FEEDS.some((f) => f.label === `${label} 3h` || f.label === `${label} 6h`)).toBe(false);
+    },
+  );
+
+  it("TVBS 用 news 子網域", () => {
     expect(q("GN TVBS 綜合治安")).toBe("site:news.tvbs.com.tw 警 OR 詐 OR 毒 OR 案 OR 起訴 when:1d");
-    expect(q("GN TVBS 綜合治安 3h")).toBe("site:news.tvbs.com.tw 警 OR 詐 OR 毒 OR 案 OR 起訴 when:3h");
   });
 
   it("修正長期 0 則的查詢（隱含 AND 過嚴）", () => {
