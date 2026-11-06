@@ -1350,6 +1350,9 @@ applyHash();
     if (!res || getState().scope !== firstPaintScope || cache[firstPaintScope]) return;
     if (!cohortManifest) cohortManifest = res.manifest;
     if (cohortManifest.snapshotId !== res.manifest.snapshotId) return;
+    // Record the view already shown by first-paint: full data arriving for this
+    // same list is a background update and must preserve an open popup.
+    lastMapViewKey = JSON.stringify(getState()) + "list";
     void mapView.render(filterEvents(res.events, getState()), firstPaintScope);
   });
   // 清單與指標 first-paint：先鎖定 cohort manifest，精簡 head 事件通過 SHA-256 驗證才早繪；
