@@ -308,6 +308,7 @@ export function deriveNewsProvenance(item, { fetchedAt, model } = {}) {
     recordRef: item.link,
     url: item.link,
     fetchedAt,
+    ...(model ? { model, normalizationMethod: "llm" } : {}),
     publisherName,
     publisherUrl: item.publisherUrl,
     aggregatorName,
