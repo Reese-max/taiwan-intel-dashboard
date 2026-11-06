@@ -1422,7 +1422,8 @@ function renderDataFreshness(s: AiSummary | null): void {
     minute: "2-digit",
     hour12: false,
   });
-  const model = s.model ? ` · ${esc(s.model)}` : "";
+  // s.model 是 AI 情勢摘要的模型，不代表新聞都經 LLM 處理（新聞處理見來源面板）。
+  const model = s.model ? ` · AI 摘要：${esc(s.model)}` : "";
   el.innerHTML = `<span class="df-dot" aria-hidden="true"></span>資料更新於 ${esc(when)}${model}`;
   el.title = `資料管線最後生成時間：${d.toLocaleString("zh-TW", { hour12: false })}`;
 }
