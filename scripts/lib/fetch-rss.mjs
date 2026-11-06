@@ -21,6 +21,8 @@ const gq = (q, when = "5d") => gnews(`${q} when:${when}`);
 // 近 1 天仍撞上限者另加近 6 小時查詢（每小時排程，可容忍連續漏跑 5 輪）。2026-11-06 實測各窗則數見 PR。
 const GN_1D = new Set(["GN 傷害鬥毆", "GN 收押通緝", "GN 妨害自由恐嚇", "司法院官網", "GN CTWANT 綜合治安", "GN 今周刊詐騙資安"]);
 const GN_1D_6H = new Set(["GN 家暴兒虐", "央廣 RTI 治安", "GN UDN 綜合治安", "GN ETtoday 綜合治安", "GN 三立綜合治安", "GN 風傳媒綜合治安", "GN 上報綜合治安", "GN 經濟日報詐騙金融"]);
+// TVBS 治安量大：近 6 小時仍 100 則、近 3 小時 78 則（2026-11-06），改配近 3 小時（可容忍連續漏跑 2 輪）。
+const GN_1D_3H = new Set(["GN TVBS 綜合治安"]);
 const TW_NEWS_FEEDS_BASE = [
   // ── 直連媒體 RSS（穩定）──
   { label: "中央社 社會", url: "https://feeds.feedburner.com/rsscna/social", hint: "治安" },
@@ -39,7 +41,7 @@ const TW_NEWS_FEEDS_BASE = [
   { label: "GN 個資駭客", url: gq("個資外洩 OR 駭客 OR 勒索病毒"), hint: "資安" },
   // ── 毒品 ──
   { label: "GN 毒品查獲", url: gq("毒品 OR 緝毒 OR 販毒 查獲 OR 起訴"), hint: "治安" },
-  { label: "GN 毒品種類", url: gq("安非他命 OR 海洛因 OR 大麻 OR 愷他命 緝獲"), hint: "治安" },
+  { label: "GN 毒品種類", url: gq("安非他命 OR 海洛因 OR 大麻 OR 愷他命 OR 喪屍煙彈"), hint: "治安" },
   { label: "GN 新興毒品", url: gq("毒咖啡包 OR 喪屍煙彈 OR 依托咪酯 OR 笑氣"), hint: "治安" },
   // ── 竊盜／暴力／槍械 ──
   { label: "GN 竊盜搶奪", url: gq("竊盜 OR 失竊 OR 搶奪 OR 強盜 破案 OR 落網"), hint: "治安" },
@@ -135,7 +137,7 @@ const TW_NEWS_FEEDS_BASE = [
   { label: "GN 車手取款面交", url: gq("詐欺 提領 OR 面交 OR 取款 車手"), hint: "反詐" },
   { label: "GN 密醫違法醫美", url: gq("密醫 OR 違法醫美 OR 號販"), hint: "治安" },
   { label: "GN 金屬竊盜", url: gq("電纜 OR 水溝蓋 OR 人孔蓋 竊"), hint: "治安" },
-  { label: "GN 公共場所性騷", url: gq("偷拍 捷運 OR 公共場所 性騷"), hint: "治安" },
+  { label: "GN 公共場所性騷", url: gq("偷拍 OR 性騷擾 捷運 OR 公共場所"), hint: "治安" },
   { label: "GN 網軍假訊息", url: gq("網軍 OR 假訊息 OR 假帳號 起訴"), hint: "治安" },
   { label: "GN 八大臨檢", url: gq("酒店 OR 8大行業 臨檢 OR 查緝"), hint: "治安" },
 
@@ -196,7 +198,7 @@ const TW_NEWS_FEEDS_BASE = [
   // ── 主流／專題媒體 site-scoped Google News（直連 RSS 多為 403/404/410，故用聚合補覆蓋）──
   { label: "GN UDN 綜合治安", url: gq("site:udn.com/news 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
   { label: "GN ETtoday 綜合治安", url: gq("site:ettoday.net/news 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
-  { label: "GN TVBS 綜合治安", url: gq("site:tvbs.com.tw/news 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
+  { label: "GN TVBS 綜合治安", url: gq("site:news.tvbs.com.tw 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
   { label: "GN 三立綜合治安", url: gq("site:setn.com 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
   { label: "GN CTWANT 綜合治安", url: gq("site:ctwant.com 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
   { label: "GN 風傳媒綜合治安", url: gq("site:storm.mg 警 OR 詐 OR 毒 OR 案 OR 起訴"), hint: "治安" },
@@ -224,6 +226,7 @@ const withWindow = (feed, when) => ({ ...feed, url: feed.url.replace(/when%3A5d/
 export const TW_NEWS_FEEDS = TW_NEWS_FEEDS_BASE.flatMap((feed) => {
   if (GN_1D.has(feed.label)) return [withWindow(feed, "1d")];
   if (GN_1D_6H.has(feed.label)) return [withWindow(feed, "1d"), { ...withWindow(feed, "6h"), label: `${feed.label} 6h` }];
+  if (GN_1D_3H.has(feed.label)) return [withWindow(feed, "1d"), { ...withWindow(feed, "3h"), label: `${feed.label} 3h` }];
   return [feed];
 });
 
