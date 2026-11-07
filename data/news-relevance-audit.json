@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-11-07T16:26:59.916Z",
+  "windowHours": 24,
+  "windowStart": "2026-11-06T16:26:59.916Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 1682,
+    "accepted": 579,
+    "rejected": 1103
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "讓海洋更乾淨 SEA YOU海洋巡迴展高雄駁二登場",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5633013",
+        "pubDate": "Sun, 08 Nov 2026 00:22:51 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "海洋委員會海洋保育署推出「SEA YOU海洋的星願與守護」海洋廢棄物治理巡迴展，昨（7）日在高雄駁二藝術特區蓬萊倉庫群B6登場，邀請大小朋友跟著海洋生物解任務，透過光影、互動遊...…"
+      },
+      {
+        "title": "陳珮騏為動保燒5000萬「完全沒存款」 靠愛國情操買股賺30％ - 太報 TaiSounds",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1nc0lHSWhGZFUtRUdIWHp5RDRpdC0xcVpQdUxaSUJTRkRjSzhEX2R2TEs3Yk9IQXBfMjNNZi1zRWZzZ2U0eE5WMFdQcXlWZTFnamdRcjB0S0x6bWR6SHc?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:20:29 GMT",
+        "source": "GN 虐待動物",
+        "hint": "治安",
+        "authority": "media",
+        "description": "陳珮騏為動保燒5000萬「完全沒存款」 靠愛國情操買股賺30％ 太報 TaiSounds"
+      },
+      {
+        "title": "南寮子弟拚進議會！曾國維造勢湧1500人柯建銘、李妍慧力挺| 縣市長議員選戰| 要聞 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1DNkdyQzN3VVJKVTVVNzg3cW5pMWotbTBtaW5DOFN4Z1VmRElRUnpCT2d3Rk1ualBNd2Qxd29GWEk4ckVSVUJWandaQmZEVUVxdGdB?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:18:07 GMT",
+        "source": "GN UDN 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "南寮子弟拚進議會！曾國維造勢湧1500人柯建銘、李妍慧力挺| 縣市長議員選戰| 要聞 UDN"
+      },
+      {
+        "title": "日男癌症得知餘命當天撿到鉅款 揮霍近372萬元遭判6個月 - 三立新聞網SETN.com",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE1lQ3RPR1d2ZVBsQ3ExX3RKcmJxMFBJVy0wOWNiRnlpU1VrMmkyWTNaQVB0QlpFam1TWGZvdC11bzhXZ3dhNW54NdIBTEFVX3lxTFBGQlRXemREaVlLUjRJa1pwQUFHZVoyTTJOMkRHTXRJNWFFNkNvWDJxdHBBdmV4Um1zWVNwMmhKSGlqbWtjcEZLenUtUTQ?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:18:00 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "日男癌症得知餘命當天撿到鉅款 揮霍近372萬元遭判6個月 三立新聞網SETN.com"
+      },
+      {
+        "title": "第二批F-16V戰機要來了！ 空軍預告明飛抵台東志航基地| 政治 - 三立新聞網SETN.com",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE1QVkJ0REtBQjMzaEplNjhpTXdwMmE3bXRqM3FsTjRuOWF0dTItNE5qZDNOQ3hMOTdwQ3Z1YkpJMkJ3QXI5S2ZDMA?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:17:00 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "第二批F-16V戰機要來了！ 空軍預告明飛抵台東志航基地| 政治 三立新聞網SETN.com"
+      },
+      {
+        "title": "快訊／日本靜岡規模5.7地震！最大震度5強 名古屋劇烈搖晃 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE42bU1RSTZxTHFnbTRwZzdQYkdCb0w3NjRvMVpzTTB6V01Fdjh2U1ZEelhMTGtQb21MdG1JWkRtcWRTbnhUb1RWaFdnV0lkNEk?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:16:00 GMT",
+        "source": "GN TVBS 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "快訊／日本靜岡規模5.7地震！最大震度5強 名古屋劇烈搖晃 TVBS新聞網"
+      },
+      {
+        "title": "「特戰英豪」總決賽吸5千人次進場 台北海大狂獵鯊3：0奪冠",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5633133",
+        "pubDate": "Sun, 08 Nov 2026 00:15:58 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "第六屆全國電競青年錦標賽昨舉辦「特戰英豪」總決賽，吸引超過5千人次觀戰，最終由「台北海大狂獵鯊」以精湛團隊默契奪得總冠軍，強勢抱回20萬元獎金。 高市青...…"
+      },
+      {
+        "title": "超大咖金曲原民歌后消失五年！現蹤台東近況曝光 自嘲中年婦女愛吃鮮肉 - 三立新聞網SETN.com",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE0yZjJuaDNBcjZNZlFWeDNfQk1zcFJqd2dGRE5RVXF6OFpRZG1Udk5teG10RFRDeG5Pc3QwMExEUVZ5LVZTbTNWWdIBTEFVX3lxTE92Z2sxbzdNVV9hdWZiSUx5WGlEVldoTzhjZVFNa0FOZDdwamx1azc0MGE3SDR2bllvWU5EWU1zZk5aSFhpQlN6YnE4VlY?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:10:00 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "超大咖金曲原民歌后消失五年！現蹤台東近況曝光 自嘲中年婦女愛吃鮮肉 三立新聞網SETN.com"
+      },
+      {
+        "title": "棒球迷福利來了！參加台中線上許願有機會收集大聯盟球星李灝宇簽名球",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5633080",
+        "pubDate": "Sun, 08 Nov 2026 00:09:15 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台中市打造可容納4.5萬球迷的「台灣超巨蛋」，日前台灣超巨蛋BOT案正式完成簽約，運動局特別推出線上許願抽獎活動，即日起至11月15日止，民眾只要分享對未來場館的期待與想像，就...…"
+      },
+      {
+        "title": "台北直播現場玩得熱鬧，海外聽友隔著螢幕來捧場！ - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE0xTUJ3MDRSQVM5NzRTMjJmMVEzNVRydjJFMG9hcnRvUW1COEU3amZ5Z3M5RVBTRnQ5bk00TWxQdXdxQ0VQbzZnQ3ZhZm9DZnpqNTNZVzczRk1hVjlxTldrWQ?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:05:54 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北直播現場玩得熱鬧，海外聽友隔著螢幕來捧場！ Rti 中央廣播電臺"
+      },
+      {
+        "title": "「立冬補冬，補嘴空」，你補冬了嗎? - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1od1hORl9EVTFRZ0x2R3RrTElBTlQ3aEVHSWZ6Y21uWXNfQ3c5ZlNoM1ZFczl4WU5fNmo4aXh5NUdoOE1SNFZsWEhVUUVvd2xSZXlSdEtrN3lJM21XTmRGcw?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:05:54 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「立冬補冬，補嘴空」，你補冬了嗎? Rti 中央廣播電臺"
+      },
+      {
+        "title": "本週節目表 - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMibEFVX3lxTE5EYUNma3hsVk5CZ3lWRmRLV3ctaXRSX1lENHpRRTdoLTJNbllkWUFmcmpFYXZ6eE1MOC1aVERseEN6V3ZTeVREdHRicFNPSVIzZC1CLWtNV3FJaXdfalN0SXk0UVZWQ01Jb1pUbw?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:04:12 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "本週節目表 Rti 中央廣播電臺"
+      },
+      {
+        "title": "睪固酮低下加上高果糖飲食超傷肝，研究揭腸道菌是惡化幫兇",
+        "link": "https://technews.tw/2026/11/08/low-testosterone-exacerbates-sugar-induced-fatty-liver-disease/",
+        "pubDate": "Sat, 07 Nov 2026 16:00:56 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "日本大阪公立大學研究團隊發現，低睪固酮與高果糖飲食並非各自獨立影響肝臟，而是會產生強烈的相互作用，進一步惡化脂 [&#8230;]"
+      },
+      {
+        "title": "台壽祖孫三代健走 15年累積44萬公里 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE91MjBVUW1YeTRhbjBoZWc0MEZ6Mkp4eXMwbTZyYnZLaHVUT19WV1MzOFhROURYNEtGVUpyaFdaTVczRmRNYmV0ZU9kT0J6bmd20gFWQVVfeXFMTWR1YkJ0eFdpLVUtN0pDUEktRVVDclN5QUY3MzFJMUhqeFg3cmNKOHNBaHBMV1lmWjk1cXlxTkUtQ0wwaU4zbGpjM0l0aVRlcWlZMHRwNFE?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:00:02 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台壽祖孫三代健走 15年累積44萬公里 UDN"
+      },
+      {
+        "title": "星系風吹走生命元素，GLOW 計畫證實超新星爆發加速矮星系氧氣流失",
+        "link": "https://technews.tw/2026/11/08/nasas-hubble-uncovers-case-of-missing-oxygen-in-nearby-dwarf-galaxies/",
+        "pubDate": "Sat, 07 Nov 2026 16:00:01 +0000",
+        "source": "TechNews 科技新報 RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "美國太空總署（NASA）的哈伯太空望遠鏡近期在我們的宇宙鄰近區域發現了一項神祕現象。根據週一發表於《天文物理學 [&#8230;]"
+      },
+      {
+        "title": "集體淪陷？高雄動保處護航業者通過許可 前處長葉坤松遭免職 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1HVmlYaGVTWEdGeDVZbXVzZGZnYXNyNXZ5NXp2MGtMZmVSNEVqbUM1LVl5d1BPU2M2bGZGYldrUllQNW16V1RzM3VtNTdVZjItNFhvTG9n0gFWQVVfeXFMT0ZxLWY1ZzFDWjByeG80RmhyN2IyNnRTTDZ4QkRJcFhNVU1KNkhKN0laMlZVaUhQci05RVRpaEtybmt3N0J1N2lwUy1qWTg1Y3F4Y082R3c?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:00:00 GMT",
+        "source": "GN 虐待動物",
+        "hint": "治安",
+        "authority": "media",
+        "description": "集體淪陷？高雄動保處護航業者通過許可 前處長葉坤松遭免職 UDN"
+      },
+      {
+        "title": "我們的老祖宗曾經是邊緣人！ - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5WeXJ2TzBla2JWVDdDank4aUx5VGpIa0RiTkZKRDhZRDVBVEQxSzFuQ1g3Z25oS3hEc1JXM1VReUI4c3JucDI3bVprZEpWRU1VTDFYQ1VJcjk4R0NZemlWUQ?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:00:00 GMT",
+        "source": "中央廣播電臺 RSS",
+        "hint": "治安",
+        "authority": "media",
+        "description": "我們的老祖宗曾經是邊緣人！ Rti 中央廣播電臺"
+      },
+      {
+        "title": "過失釀男童腦病變 保母判賠千萬 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE55WEx5eHpyNTBvZVJqbGhmLVpxOFlLMWw3MC1ucFpqc2lYOU10bzI1YmJCNy0tTHQ3TnFqQnhXM1BuX1l3ZXJsVUZNQ04zcWVr0gFWQVVfeXFMUDVVRG1PTDRScjQ1TnBEYUxETHZjNDJNbW80cXdBRzRIcHlNSHR5Z2trSEY5bjJnOENDQkpURXRvZEtESHNlbVpqTk50R1Jjdk1fNjlyQlE?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:00:00 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "過失釀男童腦病變 保母判賠千萬 UDN"
+      },
+      {
+        "title": "串聯基隆東西岸 人行廊道將完工 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE0yVENqLXdFYUFxS1k3elRQaVN5LVczaDI4LTRDQWZFX0JaTGM3ZFExUW1PbU1BYVcxQjRpQ1ktRHdYRkVnRHYwOGJRbGJtck5w0gFWQVVfeXFMTkRYajBVODNrS29TeGtTNUQtXzVDbTBLVWJTWjZweU8wTW1WSm5aelllSmJoTHFiWDFhVW1GclFkSDZwdlVnanptcWhveFlfdG5qcXczWEE?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:00:00 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "串聯基隆東西岸 人行廊道將完工 UDN"
+      },
+      {
+        "title": "老福修法 批立院打亂施政 卓揆又喊協商 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9sQ1dHcXFkWE1Mb01HTlQ4Q1N5Y2FVZkNoOVpSWElPaGRXY2JQT2ZFNlNwTXAtUDFka2dKOVdqZF96VktJYUp2V3VzUEFSVEdt0gFWQVVfeXFMTzd2eVdjeHR5RnZQT3pPUEp0SnBHaEpSX3VGMXZsdl9xNGxEeDQwUlcySnBybFVnaVZka0ZQVWx2dlp1UlU1aFdsaUx1MzZZYWtWb09BZ0E?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:00:00 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "老福修法 批立院打亂施政 卓揆又喊協商 UDN"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "29歲模特兒病逝！Lena大腸癌奪命「最初僅排便不乾淨」 醫揭7大警訊 - 三立新聞網SETN.com",
+        "link": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFBHMjQ3SHEzVXJZVU5KODFJelgxeUZzVG4tV1F1V1A1MXlhM05QQ3dkb1VJZmd1NTduUHlwMnA5WFRkVjY3WXVKY2xNb24?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:24:52 GMT",
+        "source": "GN 三立綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "29歲模特兒病逝！Lena大腸癌奪命「最初僅排便不乾淨」 醫揭7大警訊 三立新聞網SETN.com"
+      },
+      {
+        "title": "機捷A18火警張善政感謝現場應變得宜| 桃竹苗| 地方 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9mdzRTM1V5cmE2ZVdGZ2R6RkVCWEJyUkEzQV9ydUZmX0U1VE9rNmtjUG5HNEVaMVpCWk9PN09jci10eFlwaDUza0JIcWF5d2p3?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:21:23 GMT",
+        "source": "GN UDN 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "機捷A18火警張善政感謝現場應變得宜| 桃竹苗| 地方 UDN"
+      },
+      {
+        "title": "29歲模特兒病逝！Lena大腸癌奪命「最初僅排便不乾淨」 醫揭7大警訊| 健康 - 三立新聞網SETN.com",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE05LTN5Z0c4b0kxT3pRUmFkM28wY3BNSjF1SU9LdmhSUFVXM1d1c0V3X1c5d0c5bFQ3TEs1VHo3WlJBRDA2Qk1ubg?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:21:00 GMT",
+        "source": "GN 三立綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "29歲模特兒病逝！Lena大腸癌奪命「最初僅排便不乾淨」 醫揭7大警訊| 健康 三立新聞網SETN.com"
+      },
+      {
+        "title": "退休鐵工兼職改槍 刑事局南打中心查獲改造槍械工廠 - 澎湖e傳媒",
+        "link": "https://news.google.com/rss/articles/CBMiwwJBVV95cUxQVkVSSFp5MDVtOUs1RG1VVGMzNUwzQ3JPNExabjlJb3ozYmt5azR1Mnh0VnRLWHRpRnh2WVN0Wnk3LWpWeW1fcE1ZZWVweTJHQ29sVTV3MEVxYWpXMWhRZE5EOEx5V2Rxc1p5WEZBU0NOZ3YwM0trQW5rSXlTRWtReEFDZzgwRHI5Smp6cU4zSVhnQTd3dERJMnJYMnFZWGpYY1doUFR0ZFVnWmo5M0hLZDFkb21PZTY0d3VTeWhPR0tPOEpuOFBNekVfbHNkUzJFdzhIUkx2SVdCaE5NNGpUaEZVX2xyTlE1ZWhLR2MwXzdUM2s4eDJ4ZXNINEEtMk1XMHBNNllNZHFHdGs5cVc5UGhocEpIN3BHNTdZYTlvUmhXYktzS2JORnM2TXZEbjJ1a29BQnFkbmhZcWk0d0cyazlGZw?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:03:22 GMT",
+        "source": "GN 槍械",
+        "hint": "治安",
+        "authority": "media",
+        "description": "退休鐵工兼職改槍 刑事局南打中心查獲改造槍械工廠 澎湖e傳媒"
+      },
+      {
+        "title": "車輛如過戶、報廢、失竊等，請記得辦理車輛eTag終止及退費喔！ - 嘉義市政府警察局",
+        "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPYkZEUGdCLXBkXzNyU1BxT21pb2Fhc1VHUXFDaFlNeUZnajdnRnVFNk1NYXU5LW9XMDNwWS11QWpFa0VmTGhKbkZnbjNYeGZFSVpZc29FandZakx6UmdvT291Qld3RS0xZWlpbmJNV01MM0U1djV6bHNVYWFtWmNPNUk2NHU?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:02:19 GMT",
+        "source": "嘉義市警局官網",
+        "hint": "治安",
+        "authority": "official",
+        "description": "車輛如過戶、報廢、失竊等，請記得辦理車輛eTag終止及退費喔！ 嘉義市政府警察局"
+      },
+      {
+        "title": "歐洲數十架客機收假炸彈恐嚇 法檢方追查外國勢力關聯 - 民視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9OVTNVNDFrZWdDRFJiQXQ1VGdCNnl2a1FBVmRyVlZVNVBlZmpHQmVzR29oMlQyV24zLVJ1VnhTRzlNdnFxdDB3MXB0SGpTYlY4Z18tbU9WVUNNRmt4SS1ITw?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:01:37 GMT",
+        "source": "GN 妨害自由恐嚇",
+        "hint": "治安",
+        "authority": "media",
+        "description": "歐洲數十架客機收假炸彈恐嚇 法檢方追查外國勢力關聯 民視新聞網"
+      },
+      {
+        "title": "菲籍女公車上大暴走！失控攻擊員警釀2傷 連酒測器都打壞 - 壹蘋新聞網",
+        "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9uUmxEX3hWa1Q0WWlTWkt2Vy1NVWlVeUE2MXlhOEFYbm9tOTdkQmJfRkxCUFQwdUYyalRpX2U2NktUQ0R1dzBUY3Y1VFBFeGxFVGpOMDBSMEZ2TlpsUUprN1h1eGRkSVFhRmwtdmRZR1FmUl84dmJCMElGQjRxSlk?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:01:00 GMT",
+        "source": "GN 襲警妨害公務",
+        "hint": "治安",
+        "authority": "media",
+        "description": "菲籍女公車上大暴走！失控攻擊員警釀2傷 連酒測器都打壞 壹蘋新聞網"
+      },
+      {
+        "title": "高雄2個月13起死亡車禍…良醫憾事照出道安缺口 市府亡羊補牢 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5fZDIyZ2I2SXBPQnRvUWxId1RkWnJHU3R6RGtyMF9vMnA4aGc4Y3ktYXRWWDRzWGFmclJmVUFXa2pTWnZNM0I1cW5EdjdUQUp30gFWQVVfeXFMTTVCeGVYcjQ4Nzk5aFZGb1B6S2hVUWgxOHd4dGsxZE92VXVMamdIRWlzMGhkelFYWmZvR2ExLWlmMmJ1VlpDUWRWS2NfcUlNMFZ2OGJzNlE?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:00:00 GMT",
+        "source": "GN 車禍肇逃",
+        "hint": "交通",
+        "authority": "media",
+        "description": "高雄2個月13起死亡車禍…良醫憾事照出道安缺口 市府亡羊補牢 UDN"
+      },
+      {
+        "title": "廣角鏡／酒客滋事警開4槍 扯出刑警喬事 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9BanhELUNKYjdJRjQxSjZXekowcUF1WWZ0VnJ0R0h6WlRLU3BpS1A1N1VJOWpiZ2Z0M1BTUVJ4cjhqQTFkSlVuSjZIYXV6Nnhv0gFWQVVfeXFMUEtOUjZNU3gxVVNqU0hZbXg5TE5lajZJdklSbmptbVBTam9EQXVPVzlzaEVQZWN0VFVGS1VDV3cwQXp2cXJzdm9oUDlCNHQxcmR1NWwwaEE?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 16:00:00 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "廣角鏡／酒客滋事警開4槍 扯出刑警喬事 UDN"
+      },
+      {
+        "title": "柬埔寨打擊電詐 過去16個月羈押5千嫌疑人 - TDM",
+        "link": "https://news.google.com/rss/articles/CBMigwFBVV95cUxPSUtpOWREcDI0SjZXSkZEMndEMGdaUlpkRjJVcDRLTm5ZeXFPNXlKcUdLTlgzU0hleXB5bXBzMU1ydnZpQnNKR0NhOU0yR1NrUUVTOWp2QXJKU21ZejhlMmFuSkZLLTRCaEVQbk9zYnlYY2lkM3ZzZmhxTmZTcTZGSHA3OA?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 15:54:04 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "柬埔寨打擊電詐 過去16個月羈押5千嫌疑人 TDM"
+      },
+      {
+        "title": "科技神兵！金門消防機器人勇闖地下火演練 - 蕃新聞",
+        "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE9Tbi03OFdUcFZOMTJWc1VaamwxdDcyMVJUdmU3TU5oQTl3NmRfY0twSE1pMmJBSWlqYUNyTXR1emNrc2l4VTlqNUZNQk1EdGdiTEE?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 15:53:00 GMT",
+        "source": "GN 火警氣爆",
+        "hint": "災防",
+        "authority": "media",
+        "description": "科技神兵！金門消防機器人勇闖地下火演練 蕃新聞"
+      },
+      {
+        "title": "選前驚爆私生活爭議！曾聖凱遭影射不雅影像 本人有最新回應",
+        "link": "https://newtalk.tw/news/view/2026-11-07/1069888",
+        "pubDate": "Sat, 07 Nov 2026 23:44:40 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 年底九合一選舉進入倒數，社群平台「Dcard」近日出現一篇影射民進黨竹北市長候選人曾聖凱的匿名貼文，內容涉及私人生活及性影像，甚至牽扯某新聞台主播，引發網友討論。對此，曾聖凱今（7）日發出嚴正聲明，強調網路及通訊群組流傳、冒用其身分的性影像「百分之百是假的」，全是深度偽造（Deepfake）影像，並 延伸閱讀： 蕭美琴送沈伯洋航海王「草帽」、台灣航海圖：與夥伴迎風浪、航向夢想 "
+      },
+      {
+        "title": "雙11最狂虛擬幣拍賣！29.6萬顆泰達幣 台中分署公開競標",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5633192",
+        "pubDate": "Sat, 07 Nov 2026 23:31:48 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "法務部行政執行署台中分署將於11月11日舉辦「五打七安」全國聯合拍賣會，最大亮點是台中地檢署囑託變價的29萬6902顆以上泰達幣（USDT），另有美元幣、波場幣同步釋出，還有賓...…"
+      },
+      {
+        "title": "虐童、連環殺人犯都在內 加州州長紐森548名死囚減刑計畫遭檢察官批「太可怕」 - VOCO News",
+        "link": "https://news.google.com/rss/articles/CBMid0FVX3lxTE02U3VTTmtzZDJsdUJZeUNXNlpCWXhaMy1TSkJjMnZYZF9GbWhkN3VBY1ROT3VyR0JpcEYwUjVTWDhGTnctSU45bTVqNElWQUJjNUt0aFdxcmFqYzhzaUpXeldsaU8wZlQ5NUZIWkxxTlhMWi1MS1g0?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 15:14:00 GMT",
+        "source": "GN 家暴兒虐",
+        "hint": "治安",
+        "authority": "media",
+        "description": "虐童、連環殺人犯都在內 加州州長紐森548名死囚減刑計畫遭檢察官批「太可怕」 VOCO News"
+      },
+      {
+        "title": "69歲男獨爬柴山跌倒身亡！身分曝光 曾5度奪「台電版奧運」冠軍",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5633175",
+        "pubDate": "Sat, 07 Nov 2026 23:06:37 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄柴山登山步道今（7）日發生69歲黃姓男子摔落步道失去生命跡象，送醫搶救不治的憾事。死者身分曝光，是台電退休員工，曾擔任鳳山區營業處配電外線領班，資歷超過40年，曾參加有「台...…"
+      },
+      {
+        "title": "挺烏克蘭遭鎖定 義大利外長個資遭親俄駭客外洩暗網 - 民視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9NMWZvNU5Gc3VmNUxiOW01aHR5T2FZLW9lR21GNE84bmxNSEZobmNPTWZWZUVyLVQ5VF91dVNIS1ZuYTdQYmE3RUhHRndMbEtBVHdNYmItUmZwb3RpcGNwUg?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 15:06:31 GMT",
+        "source": "GN 個資駭客",
+        "hint": "資安",
+        "authority": "media",
+        "description": "挺烏克蘭遭鎖定 義大利外長個資遭親俄駭客外洩暗網 民視新聞網"
+      },
+      {
+        "title": "退將臧幼俠涉替中共介選「不挺黑熊」 裁定交保禁出境 民主黨奪回國會兩院 議員嗆：永久封殺超級AI 臺灣採購天然氣史上最大規模 阿拉斯加拚2030年供氣 - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE93RFFsbmZSd2M4Sm16T0dlV19QN1AySmYyN1VlbzNlenkzZlhTR3JYVTM5QTNiYmN4ZVBxSHJfRVF2UllocFJiMXRlWDRhZXZWX3NNd3h0dEJ1M201UmlMMA?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 15:04:33 GMT",
+        "source": "央廣 RTI 治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "退將臧幼俠涉替中共介選「不挺黑熊」 裁定交保禁出境 民主黨奪回國會兩院 議員嗆：永久封殺超級AI 臺灣採購天然氣史上最大規模 阿拉斯加拚2030年供氣 Rti 中央廣播電臺"
+      },
+      {
+        "title": "蘇巧慧衝刺選戰 連趕烏來布落．馬信、土城彭一書聯合競總成立",
+        "link": "https://news.ltn.com.tw/news/NewTaipei/breakingnews/5633147",
+        "pubDate": "Sat, 07 Nov 2026 23:01:02 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨新北市長候選人蘇巧慧今天（7日）接連出席山地原住民議員候選人布落．馬信及土城區議員彭一書聯合競總成立大會，支持者大喊「蘇巧慧凍蒜」、「新時代新市長」，許多人更綁上「慧聚」...…"
+      },
+      {
+        "title": "【獨／遭騙2千萬！ 美食天王陳鴻怒嗆 「郭xx六條人命通緝犯有種回來告我！】 真的很生氣！ （#起啵） - Facebook",
+        "link": "https://news.google.com/rss/articles/CBMiiARBVV95cUxONk1zeFNCYnhqV0VHT0t2X1ZERTlkVGRraWtaNldQRi03NjFMU25VNm12ejh1d05DVmpyRzQzTENEREFacXhIQWU4Smo1cGhOWnlPbm5SLXNNVFp0d2FLUDFlb2lsc0pEcG1MOGk5YnBCQ2ljM1NsaGtUVU43anVod3d0Z3JsSmtKVk1hMFJSUndmRFdUZDQ1SzRHNHRFd2tEbHU1OGp5d09xWjg3MU9XNTVGM3dUY3Aza2ZkbUpSYm02NzJmbkRwX2ZaUU9iMHgtckF2UWMtMHVFR1NwdkZ3STNON0pBdDI4dWJZbUdVUlJ0cUR1dTNLYnZqSjhFT1ZUQjZta0RqQ3BMMGtWREh4eFlITm9EUVZuVjY2WEFkb3BPM3dDWVA1STdVbTJySnVqc1l6Qm1vMnlwb1AwTUdhZU5QTFBPWWZLbFE3MmFBZDY2dmpUU1o4OFRLSk14VDZZakQ4WGh3SUxRdkNqdUg5QlBiTFVhZ0o5LWVFZE9GQ1BId3pFcEFkaUhuUUJ0WDhRMWhBdGF1cmNZLUpJOE1HTzVIX3pnRnJEZVEtb29wcjBnak5DSld3TjRZWnJ5V3RaOUdJOUl3eVZwQ0NKUTNTQWs2ampLMHYxUVNkUFphYkt0RUFhOW05Z1hDd25uQkNpNUNjbFJIdktGZGJBVzdRaGJPdVJpZTFo?oc=5",
+        "pubDate": "Sat, 07 Nov 2026 15:00:14 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "【獨／遭騙2千萬！ 美食天王陳鴻怒嗆 「郭xx六條人命通緝犯有種回來告我！】 真的很生氣！ （#起啵） Facebook"
+      },
+      {
+        "title": "機捷A18高鐵桃園站警鈴大作！2樓炸雞店油鍋起火虛驚",
+        "link": "https://news.ltn.com.tw/news/society/breakingnews/5633169",
+        "pubDate": "Sat, 07 Nov 2026 22:58:11 +0800",
+        "source": "自由時報 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "機場捷運A18高鐵桃園站2樓炸雞店今晚突然冒出濃煙，消防人員到場搶救，發現是油鍋起火，員工蓋鍋蓋撲滅火勢，無人受傷。消防人員協助確認油鍋及周邊設備安全狀況，詳細起火原因仍待調查...…"
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "days": {
+    "2027-06-22": {
+      "total": 1,
+      "byScope": {
+        "domestic": 0,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 0,
+        "medium": 1,
+        "high": 0,
+        "critical": 0
+      },
+      "byCategory": {
+        "災害": 1
+      }
+    }
+  }
+}
