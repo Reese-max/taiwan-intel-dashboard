@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-11-10T15:22:15.880Z",
+  "windowHours": 24,
+  "windowStart": "2026-11-09T15:22:15.880Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 2364,
+    "accepted": 906,
+    "rejected": 1458
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "美媒：黃仁勳婚外情關係 助75億美元輝達晶片銷往中國 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTE10OHZmM1dTMnJvaWM5X2ZONGI0TVU2dDF4bE91a1lmTU1JdlZlOG1ZdS1TWmZNX1libm5kRUFKZF9FSE5kSFVtdXZLUmRYM01FLWl4bUNvMlVuVnpVSEhXaDYweHBVcUI4NWQ4SUZFRlRvUVJCRGc?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:21:08 GMT",
+        "source": "GN UDN 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "美媒：黃仁勳婚外情關係 助75億美元輝達晶片銷往中國 UDN"
+      },
+      {
+        "title": "馬來西亞前首相納吉返家服刑 期滿須返監服刑15年 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1IUGYzTW5nS0tkZWNYX2dOQkN0NGd4OTFtWFFfTXBHY0hadENYOFVhMVBab0VQTWlLUWNhSkZKTDVWbXltZGZPY25CczcxbjQy?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:20:33 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "馬來西亞前首相納吉返家服刑 期滿須返監服刑15年 UDN"
+      },
+      {
+        "title": "金門最後戲院剛熄燈 井迎瑞捐文物打造特色電影博物館",
+        "link": "https://news.ltn.com.tw/news/Kinmen/breakingnews/5636354",
+        "pubDate": "Tue, 10 Nov 2026 23:20:25 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台灣電影文化資產保存協會理事長井迎瑞今天將包括「報告班長」在內的大批電影、電視文物捐給金門縣政府；他說，規劃恢復電影膠片放映設備，並持續整理、修復曾於金門戲院放映的軍方新聞片及...…"
+      },
+      {
+        "title": "前「美秀集團」修齊持毒遭逮首發聲！喊夾鏈袋不是他的：尿檢曾呈陰性 - 鏡報",
+        "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE51amE3Z2xCLWxlNjF2SUQ3WnM0eV9FdzhfZkJkNm44aUR0Q3ZxMmstdlZSUDN5T2xyZW5leHZWN0hKMDZGU0dxTXI3SXlFb21vWVE?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:20:00 GMT",
+        "source": "GN 臨檢攔查",
+        "hint": "治安",
+        "authority": "media",
+        "description": "前「美秀集團」修齊持毒遭逮首發聲！喊夾鏈袋不是他的：尿檢曾呈陰性 鏡報"
+      },
+      {
+        "title": "Anthropic將在美IPO 估值上看1.4兆美元 - 三立新聞網SETN.com",
+        "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTFBTMDVHZnNHT25SOUs1cVA0N0FYalRWbEY2akZCNFhGaGRXWGExcE1GNjBYS0RmbUc0Z0pNZlJTR2tPVUV0d2FJdTBRbw?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:18:42 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Anthropic將在美IPO 估值上看1.4兆美元 三立新聞網SETN.com"
+      },
+      {
+        "title": "台積電盤中重挫9%以上是買點嗎？ 統計近10年4次 台股後來怎麼走 | 個人理財 | 理財 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMieEFVX3lxTE5aLVNLbXl2SlAwZVd2czB6RE9hcmppbXNGbmtPbXhmVjAyeFNpRXBLWFZMYlQ4RlF2N0I1eEpsRkNDczhydkRlZnVXMDB1QURkbTBRSU1FbF92YTlBUFVPN2FIM29JdUlGaFRCaVM5S0wxTmpxRkEzcg?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:18:09 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "台積電盤中重挫9%以上是買點嗎？ 統計近10年4次 台股後來怎麼走 | 個人理財 | 理財 經濟日報"
+      },
+      {
+        "title": "好市多雙11優惠連7天！滿6600元折600元，黑鑽會員多一次折扣…Costco必收清單、折抵省荷包攻略 - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQaGpQZFp3cW9pUk8zQ1VaRWtqMTJwX1lId3d2b1RsS1lnYmRQSnEtVVJXRlBlVllOUkdXOWNwZGE0OU9LRVpmanpHX0JGRDRhTzBoNUtCdTNqVmRDWktaYkJHRGFOT2dudkV4N0xCcXUza3BHMkZGazlidDl1bFpYbQ?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:18:05 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "好市多雙11優惠連7天！滿6600元折600元，黑鑽會員多一次折扣…Costco必收清單、折抵省荷包攻略 今周刊"
+      },
+      {
+        "title": "秦慧珠「同框比3」惹議 鄭麗文嘆博版面：怎能面帶微笑看著沈伯洋？ - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1CT0JWQ0pKMUliRlYtczhNdG1IR3pGVWMyak9NSHJndUFfbmVnR1NLYjROMDVYUlpWQUdBX1JMNkJra25PZEJtZlBQUktKZ2c1ZF9Z?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:17:00 GMT",
+        "source": "GN TVBS 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "秦慧珠「同框比3」惹議 鄭麗文嘆博版面：怎能面帶微笑看著沈伯洋？ TVBS新聞網"
+      },
+      {
+        "title": "麥當勞買一送一！薯餅、奶昔、勁辣香雞翅買一送一…酪梨醬滿福堡、奶昔大哥雲朵包開賣，優惠一次看 - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNeEVYdWFSZ3hmQ2c3b29EOUhPZENOWUJmSDd2SHpycU5TZFd3VU9CUnJZZFgzMDJ1cTBpczR0emp4TVV5TWdfa3ROSG52UUF5LXBkeEV0S0t6bUFwRDZLamVtR3FvTkVXZ292QmV1MXp0UGxlZU9hRG1NcER4Sl9USg?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:14:04 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "麥當勞買一送一！薯餅、奶昔、勁辣香雞翅買一送一…酪梨醬滿福堡、奶昔大哥雲朵包開賣，優惠一次看 今周刊"
+      },
+      {
+        "title": "美秀集團前吉他手修齊涉毒 開車恍惚遭攔｜TVBS新聞 @TVBSNEWS01 │ TVBS新聞網 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE16QjFWNWdRNS1SRk1BYkZqRFU0SXc1SHNSTUdudzBib1NpdFNzV3h5Q1VZSnlBd1dEVGRDQWpZS0RZelJ4dXdPNG5kMEphSDlfa3UydnF3?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:13:09 GMT",
+        "source": "GN TVBS 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "美秀集團前吉他手修齊涉毒 開車恍惚遭攔｜TVBS新聞 @TVBSNEWS01 │ TVBS新聞網 TVBS新聞網"
+      },
+      {
+        "title": "可容納500公噸黃金 星國推外國央行存金服務 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5JYmdybnVvZUV1czhPVWF5X2hvUE92c3BiZkVnLVA3bXRkb3JwZ3lIc0JFN2VOeDZtTXdmeFhJckZkaTlMckstMTN5OXlLeXMxbG5wOHR0bHVfd9IBX0FVX3lxTE1WM1M0UXY2Nkpkb2E4T0txNnNoN3RCT3JmS2FjcGhJYUUtRG9Eb25RLW9XNlZoeVFudkRtUHhkTjNXTFBETGF3X2UydjBiTXA4SU9CNDhxamhtOTFUNkN3?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:11:41 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "可容納500公噸黃金 星國推外國央行存金服務 經濟日報"
+      },
+      {
+        "title": "價差上看百倍！大陸稀土境外價格狂飆 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFByMGtqdmppZ2lEdHAtaUhtOWxEOVNzVmNKRlAzWHFNVkhWMjI1M2d6R1I0T2FHRExMdDR1ZUdmWTM5MV9La0pnd3VDeV9MX1Z4aWdJQXZWbk1rd9IBX0FVX3lxTE9kUEl1emgtRDdUODVfU2huWXRZN2FQRFhHdXFEbko4TzlkNFQwNDlaYVBoTXBSb1FGTHZpbFdVMHVwbHpHM0YzaWsxX1ZpaDczSGdrQjhjVW1PUXNvbTJr?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:10:59 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "價差上看百倍！大陸稀土境外價格狂飆 經濟日報"
+      },
+      {
+        "title": "勇鷹高教機輪煞故障 降落滑出跑道飛官平安｜TVBS新聞 @TVBSNEWS01 │ TVBS新聞網 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5ZcEhpSHlHaTRQT3hlcnBvRTFYby1KLUs1cDFkZXdsSWZUSHgwc2pZRWVOS0V0d3J2STBHbkRLczVOQk11Wjg0RE5ueGxORFBBVzRBQ1hn?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:10:50 GMT",
+        "source": "GN TVBS 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "勇鷹高教機輪煞故障 降落滑出跑道飛官平安｜TVBS新聞 @TVBSNEWS01 │ TVBS新聞網 TVBS新聞網"
+      },
+      {
+        "title": "財經要聞 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFBKNko4ZlZOQW1KRUdQSmt4Wk1VYXZMcXRaczFkMWJnRlBVXzJaT08wQ2xLVGl1Sk5xWEIyVlZNU0tMV2xkal9sOFRGNU1mbGVwaHhB?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:10:44 GMT",
+        "source": "GN TVBS 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "財經要聞 TVBS新聞網"
+      },
+      {
+        "title": "布蘭特驚現8字頭 美伊情勢緩和 油價續跌 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQbVBXakF0SHppR3V1TXY5V3FUaDlIRGw3RXZFUFdMeWRDWjF1eTNTUUYwb2NJLWpfMWhjSzFNMGxEbUNnZ0l4ZE9IYkk1SUxrVVhMbmJheFpqQ2M4dlJfSlVuUHFReC1ScDlOY2dkUzBYX3lyR3JzOFhnWGgwQnRpWm9yNmPSAV9BVV95cUxNNWZqQk8zcnhlMmZ2RzlsLXBuQXdyOUd4TERjMS1yUlVNUG0zQ3MzOGJaVUx1dzRGN0NnRnVqNUNKQlRsdlpjR3pvbU43NmRkenV3LUhnZlZ0WGFWeUNrYw?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:10:22 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "布蘭特驚現8字頭 美伊情勢緩和 油價續跌 經濟日報"
+      },
+      {
+        "title": "市場評估黃仁勳婚外情衝擊 輝達早盤股價再跌4% - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE5FUWpyUEIxYzJmbTJReHdsY1BjMkVDYW42STR5ZFp1bGVLVjVtWmNGbFhVNUV1S3dHbVpMTnlnMlhhU3FDclJsUWRybG9KcjUwT3MySnVwaDNyZzc20gFiQVVfeXFMTmowVGFubEZHTG5TOEpkdGFEc2JEZy0xeVdRTURQcVVWRDFiTThiTGtQVlFsR3NZaHk3VUY0VHl5eDVLM2NkZnJGdFRNdWs0dW5PRjJsVmc4UFg2UVZhZE1jVnc?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:08:23 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "市場評估黃仁勳婚外情衝擊 輝達早盤股價再跌4% 經濟日報"
+      },
+      {
+        "title": "鄭麗文點名秦慧珠「博版面」 認選情緊繃：怎可以微笑看沈伯洋？ - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE8wZDhWeFZELWx3eHdKUjh1QmpYemlKTEJlX1RjZHVrRlZsRGVZY3Nta0s3UUsyUmNvTXkyYW9DVHFUcmlPa1hLdEpiak9nNC1PWXNXWkFaZEFNTXB5ZFHSAUtBVV95cUxPX040Q0w5TzlZR181SGZpX3NaRDRBMDJueTdqX3BsUG55VXBrVC1TOS1qYXVpaU1oNmpfUlFKUEN5Nm4wSEJhbVMxVEU?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:03:00 GMT",
+        "source": "GN ETtoday 綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "鄭麗文點名秦慧珠「博版面」 認選情緊繃：怎可以微笑看沈伯洋？ ETtoday新聞雲"
+      },
+      {
+        "title": "屏科大5學生檳城廚藝賽大放異彩 12國激戰抱回15面獎牌 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1oMWx0bENoYi1VUjVXR2pkNHlPV2VTc1Zac1RlbTRYNy1jTnVFV0tfT2h3TWlac1BnTWFnX2F2UHZhZldrdnAwNGMzN1VuQjZQS3ppNmxGZVNJQmVFUWfSAUtBVV95cUxObWlUbmFTYUp3dU1aT0M0aW90bHFuYmJJaDQxTlRoWmRkSE16Sk5QbVo0NHozYjhuSUxvTE91RmhyMEhSYW1VSjVvaTQ?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:02:00 GMT",
+        "source": "GN ETtoday 綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "屏科大5學生檳城廚藝賽大放異彩 12國激戰抱回15面獎牌 ETtoday新聞雲"
+      },
+      {
+        "title": "2026公費流感疫苗、新冠疫苗第二階段開打！全聯萬家福…接種地點、對象、疫苗地圖一次看，健康幣能領多少？ - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOUG5iME1IbVNsUjk3R1B5QkxXLTR1bkF4SW9PT3BBeVROWmhUbTJIZUlTRERYa2JtT2REeVE3Zkw0X3NzV3JMbDZMMXJrVENCUlNwaXlnd1NzM0lCWlo2Y2p4bjZrNTgyVmlvSWFaNXVQU0wzVjZ6WmdORXE1UEMxcQ?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:02:00 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "2026公費流感疫苗、新冠疫苗第二階段開打！全聯萬家福…接種地點、對象、疫苗地圖一次看，健康幣能領多少？ 今周刊"
+      },
+      {
+        "title": "美英菲連爆中共間諜案 女代理人滲透政商 - 澳洲看新闻",
+        "link": "https://news.google.com/rss/articles/CBMikwJBVV95cUxQamFERFpkQmtDazV2WjktLWZfVWU4TlExUjRvSGdnZEM0LUlOS2p4ZWI1dnZuc0F3bW1WWU5vdU5TSlc2NzlkdlU2eU9nekF2MVRiTkcwc1hXYWs1MVAwcllpT196aUI5bE85bTFlUllOeHhwelBNdzgxWWR0R1l5X0JldmRBQUpZZmtWUmc2UU1WOUVxZnh6ODFQZ0I2OWwwd2gzNzMweWZzbDdBcjM1TXJSTV9sN0V6ZGtaX1FxRzBFZ3F3Q0hKWnFmek5CdlpCVTNXMk44bEo5WHpjRERCbUE5aThsYmdmYWhoT1FGZ0tmaTUwZF9Yd3ZwVjNaMnJnQmlXZVVZNmZNY1o4Y3lpSWp1RQ?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:01:36 GMT",
+        "source": "GN 認知作戰統戰",
+        "hint": "治安",
+        "authority": "media",
+        "description": "美英菲連爆中共間諜案 女代理人滲透政商 澳洲看新闻"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "美秀集團前吉他手又傳毒品風波！發聲還原拒測始末：4年前已受傷 - 壹蘋新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxNajBkMHdxbURQYUMtNS1WcXo3ZUthemlpOVBjbWMwcGNDWE5rVjNfNkJmWXl3eUdhVG9jbUNtSVM3TnN6UkxfQXgtRVdaLUR0bDgxVHJyUDNmLVB2SmtCTFo0SDBiVkpDZlI3TWRnY0dzUVZFZUtVTXBtcnF0Z3JuZ2kySGhOWUk5TGc?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:18:00 GMT",
+        "source": "GN 臨檢攔查",
+        "hint": "治安",
+        "authority": "media",
+        "description": "美秀集團前吉他手又傳毒品風波！發聲還原拒測始末：4年前已受傷 壹蘋新聞網"
+      },
+      {
+        "title": "蔣不滿兒虐「用猜的」再嗆道歉 沈：怎會是我？ - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMipAJBVV95cUxQNEZReXQ5N0g5b01UN3ByX1NfNGFFVDJfU0pJNUVQd2U4LW5kUVlIYVNpU243YmNwSjBwT25VbFFpS0s0Rlpidk5Mclk5MlJrSE5VUzhjdmduSHp0WFp5eVp5YmQ0cGhHMWxMN2g2aXU2Qm1vUFgwSDVWMzFWXzJrSVQ1eHpnNWFQaTFHd0M0YmpVbEZkcXRvaGJkc0w3STRBWFdkT203SnFReVhsY09NdzNydmRPWlpoUXlXS0N2Vk9FczdXZWtwN0ZDVVpxenQxeEFTX0tzWWw3T1FVbmNuNUJURmJsdklDc3FaV21BWEN1cHlfZ3FCS1lXaW9ZMFVsSnN5amVOSmp6U29sVHNzQ3NwbTY3aERJZGpGbjNTY3A1NmJB?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:13:00 GMT",
+        "source": "GN 家暴兒虐",
+        "hint": "治安",
+        "authority": "media",
+        "description": "蔣不滿兒虐「用猜的」再嗆道歉 沈：怎會是我？ Yahoo新聞"
+      },
+      {
+        "title": "暗示用割地換和平?俄烏阿布達比重啟談判川普:「烏克蘭版圖會不一樣」美擬解除對俄制裁歐洲安全防線告急20261110｜2100TVBS看世界完整版｜TVBS新聞 @TVBSNEWS02 │ TVBS新聞網 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE4yTF9jR2tQS0lCYlBXcmoyWUhrM0dYbGdscTNOZXFmQi1TWjVyMjhkN1ZrY2FHMXJ5X1FkNmpwNkFmR0l0VVBCVmlBUzN4OVlSbmFCdzln?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:10:58 GMT",
+        "source": "GN TVBS 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "暗示用割地換和平?俄烏阿布達比重啟談判川普:「烏克蘭版圖會不一樣」美擬解除對俄制裁歐洲安全防線告急20261110｜2100TVBS看世界完整版｜TVBS新聞 @TVBSNEWS02 │ TVBS新聞網 TVBS新聞網"
+      },
+      {
+        "title": "蔣萬安要沈伯洋為兒虐道歉！律師喊「1原因」是應該道歉 - 三立新聞網SETN.com",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTFBjZlhCQkc1QnVfUVF1MFFPU2Uxd3VTNThhS1JSclJTbVJEckhJY204MHF2UDJ5a083NVB2SmZfWU9jTFRlaFNfS9IBTEFVX3lxTE5scElyZmthVDVpclhkVGFLNlpkcFJFS3dUZEFPNW1qR3N6WUF0UGVsZDc4dERyd0pnMU03TjBXcUEzLVZDWktETzlncHo?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:09:00 GMT",
+        "source": "GN 家暴兒虐",
+        "hint": "治安",
+        "authority": "media",
+        "description": "蔣萬安要沈伯洋為兒虐道歉！律師喊「1原因」是應該道歉 三立新聞網SETN.com"
+      },
+      {
+        "title": "呂文婉曝「有人表面喊姐轉身挖坑丟冷箭」 遭背刺吐心聲 - ETtoday星光雲| ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFB5NUpBUjRjQmdkNUd2d3ZQVUhTMTBrVm9NRzhzbjIwOGJ3V0lqa3E0d3lweGxHRXRoM2N6WnBlT2NYaVpYRjVLcUtGT2VJZ9IBTEFVX3lxTFA1MHA3dFJfWlEtZFJVOEpiRkhXMExyY0hKVWNxVzdrdTFDSDdWLWhEc05wSlF1S09jc2V4Mk9DRVRGYXlWamdaM09VTkM?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:09:00 GMT",
+        "source": "GN ETtoday 綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "呂文婉曝「有人表面喊姐轉身挖坑丟冷箭」 遭背刺吐心聲 ETtoday星光雲| ETtoday新聞雲"
+      },
+      {
+        "title": "東山掩埋案環團質疑電子廢棄物偽裝傾倒 環保局：嚴查釐清究責到底",
+        "link": "https://news.ltn.com.tw/news/Tainan/breakingnews/5636346",
+        "pubDate": "Tue, 10 Nov 2026 23:05:38 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "距烏山頭水庫自來水水源區僅約200公尺處遭非法掩埋廢棄物，環保團體今（10）日公布自行採集土壤及黑泥的XRF檢測結果，指檢出多種重金屬及稀有金屬，質疑廢棄物具有電子廢棄物特徵；...…"
+      },
+      {
+        "title": "涉嫌違反選罷法和貪污，彰化縣議長謝典霖延押2個月。（檔案照） - 台灣華報",
+        "link": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1RM3ZCRlFOV2IwRVI1V1htQjhmQnVna29YMl80S3Y1V1ZfUURGYzN1MHkya04wdy1UVGZOSm5IUXV4bE1sem9MelN1eVVBUnpCbzRmNkd6VTd4WElDY1h5T2ViMnN1X0lrR1BZ?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:02:54 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "涉嫌違反選罷法和貪污，彰化縣議長謝典霖延押2個月。（檔案照） 台灣華報"
+      },
+      {
+        "title": "認藍營4縣市陷危機！鄭麗文避談敗選去留：不必失敗主義提前找戰犯 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5zNDFiSWp6VXJMTkJCZlZIYU1pTGMzbjVWcGJRajVjcE52TTZvUmRKVnE3TWcxdk0xVzBidFZqdVhVanhUZkMybnlfZ1R0d0RSTDZR?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:01:00 GMT",
+        "source": "GN TVBS 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "認藍營4縣市陷危機！鄭麗文避談敗選去留：不必失敗主義提前找戰犯 TVBS新聞網"
+      },
+      {
+        "title": "張凌赫爆紅地位大升級！盛典座位安排藏玄機 井柏然露背鏤空造型太搶鏡 - 娛樂星聞",
+        "link": "https://news.google.com/rss/articles/CBMiSkFVX3lxTE8xQi1nVlo4OFp3QW5qTFduQVdOLVZzRTducXplSGRaRGo3RXRVX09icjJTZXJESDhOX3luSTBLdlNqajJmOG5yNDVn0gFfQVVfeXFMT1RNQmlISGQ4T094SE1ZTFdHaW1QWTFSZjFfTkRuZUwxbFFFN1V2bWc4UllUSDhPX3pqOWdaS2RmRjh1VlQ4b0hoWDBHRFVKVFhieVFidjJxdzVuZ3JYOU0?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 15:00:00 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "張凌赫爆紅地位大升級！盛典座位安排藏玄機 井柏然露背鏤空造型太搶鏡 娛樂星聞"
+      },
+      {
+        "title": "高雄名醫「牛伯伯」自撞亡 11/13複驗斷層掃描釐清死因",
+        "link": "https://news.ltn.com.tw/news/Kaohsiung/breakingnews/5636343",
+        "pubDate": "Tue, 10 Nov 2026 22:59:50 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄知名兒科診所牛姓院長（68歲）駕車外出，行經三民區九如二路上，不明原因失控闖紅燈，直接衝撞對向路側號誌燈，險些彈飛擦撞停等紅燈的2輛機車，牛院長傷重不治，檢警今（10）日相...…"
+      },
+      {
+        "title": "快訊／漢來美食晚間發重訊：委外線上商城訂單資料外洩 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9XTXhZeVhXLTA0bV9wdjdScUdCaGZzUjZOZTlMeU54Y1VBQ21rZ0xKZjZjLUxSQVB5ZkJhb09CV2NsZkMta0NjQlExeEEwdlJaOWhyZm83RC1GOTd3dmfSAUtBVV95cUxPZ0Y4TXJhbnFxMzRkcHNrT3F2RG1adFVicUdMdnFUNl9WZ0tfTkVweG1wXzU1ZlRwUGIxZmFKOWE4T1RKM1czbzUyQUU?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 14:57:00 GMT",
+        "source": "GN ETtoday 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "快訊／漢來美食晚間發重訊：委外線上商城訂單資料外洩 ETtoday新聞雲"
+      },
+      {
+        "title": "敬老消費券疑涉賄選！北市議員徐立信訊後請回限制住居 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5xajRMbmJ4bG1PcUJOM3NtZEFXZW9Zd2NoYUhpakJ1OTRjV1RfaGNtam5uOU1uVk1hd1YyUTNnSzNSNjVWN3pKbTdWWmx5aXM?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 14:51:00 GMT",
+        "source": "GN 檢調起訴",
+        "hint": "治安",
+        "authority": "media",
+        "description": "敬老消費券疑涉賄選！北市議員徐立信訊後請回限制住居 TVBS新聞網"
+      },
+      {
+        "title": "發18萬元敬老券疑涉賄！徐立信北檢複訊請回 限制住居、出境出海",
+        "link": "https://news.ltn.com.tw/news/Taipei/breakingnews/5636042",
+        "pubDate": "Tue, 10 Nov 2026 22:48:26 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "首次上稿17:58 更新時間22:48 台北市議員徐立信今年3、4月間透過里長發放900份、總面額18萬元的敬老消費券，並與辦公室主任李茂基在場喊「懇請支持」，涉嫌...…"
+      },
+      {
+        "title": "黃仁勳婚外情 陸媒：黃樂丈夫涉操縱股票遭刑事扣查 - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFBVYkU5aHN1em83Um41Sm1GdHVHVjBxYlBxUWF0MTY2NllENnp3SkZhSl96WXhiWGRpRmRGWEVyQkMzQzBuOF80WWlmZ1UyR1dVQWM1V3BJTkc?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 14:46:37 GMT",
+        "source": "央廣 RTI 治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "黃仁勳婚外情 陸媒：黃樂丈夫涉操縱股票遭刑事扣查 Rti 中央廣播電臺"
+      },
+      {
+        "title": "前美秀集團成員爆持毒！深夜開車恍惚拒檢 駕駛座下搜出「毒品殘渣袋」遭逮",
+        "link": "https://www.mirrormedia.mg/story/20261110edi055",
+        "pubDate": "Tue, 10 Nov 2026 22:46:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "跑者安全再升級！田中馬拉松導入AI救護與定位調度 | 楊艾喬 | 地方新聞 - 風傳媒",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE1Fd3BrdGhENEF5ZWswckcxbVlnTXZ2b29RZ3JQZmFRcGhPb0ZSVkN4MGdmSWJxNjZFWlZLN2ZJMTE5WjI0U3dBVndtN2JQQQ?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 14:42:00 GMT",
+        "source": "GN 風傳媒綜合治安 6h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "跑者安全再升級！田中馬拉松導入AI救護與定位調度 | 楊艾喬 | 地方新聞 風傳媒"
+      },
+      {
+        "title": "謝新隆一千萬交保 謝典霖選前能否獲釋受矚目 - 蕃新聞",
+        "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBPZUsxZk9jeHUzcl9fYkdRSF92Nnh2Znd2MmhyR21aclNzWmJRUENWRzBUazN0dUxWVEtCWjV5Nkt3R1JBNnhCWDRDMVozZk12eXc?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 14:39:49 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "謝新隆一千萬交保 謝典霖選前能否獲釋受矚目 蕃新聞"
+      },
+      {
+        "title": "台股強彈1050點！外資連9日賣超 台積電遭連砍23天 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE4tdkcyT2hLTFQweVBQZEh4TjBuZ09YWG9UQ0tCVEo0RlNwNlFqSzZpblU1QWxZOFpfSFFrVFFmTmJ1Y1BDMXlmOWUyUjNlY3c?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 14:37:00 GMT",
+        "source": "GN TVBS 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台股強彈1050點！外資連9日賣超 台積電遭連砍23天 TVBS新聞網"
+      },
+      {
+        "title": "境外勢力勾結在地黑道衝撞演員：黑幫暴力滲透引發國安震撼 - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFByczQ3RmFTWkRrOVVCd0RmZ3kxck82SEU1RWJtYmE4cHhzUHozREcwQUZ3enhFdnJ3UUFBN3M0MkJvbTNnNy1GaG9udTVGSTVXNjhPVXJ6eXROSGNBd1E4cg?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 14:34:01 GMT",
+        "source": "央廣 RTI 治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "境外勢力勾結在地黑道衝撞演員：黑幫暴力滲透引發國安震撼 Rti 中央廣播電臺"
+      },
+      {
+        "title": "易遊網69萬會員個資外洩！證實姓名、電子郵件全被駭…信用卡號、帳密有外流？公司道歉最新回應 - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPNVN0VHBzOVRTQmxZV2EyUTcyclczdms4UUpLaWJ5eDlrYWtqc2JkWHIwVlpMWEZGQS1OTl9jQlhlNlNaU0lPMkNkTnVnXzFMSkx0WVB4b1lwdl83dV9DTk4xTWdVU240YU1LRGRleFRTcWVZc3d1Ty1HakRvdUpvUg?oc=5",
+        "pubDate": "Tue, 10 Nov 2026 14:32:47 GMT",
+        "source": "GN 個資駭客",
+        "hint": "資安",
+        "authority": "media",
+        "description": "易遊網69萬會員個資外洩！證實姓名、電子郵件全被駭…信用卡號、帳密有外流？公司道歉最新回應 今周刊"
+      }
+    ]
+  }
+}
