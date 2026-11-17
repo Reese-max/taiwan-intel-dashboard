@@ -7,7 +7,7 @@
 
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
 import { selectDiverseByCategory } from "./intl-accumulate.mjs";
-import { categoryFromItem, detectCounty, detectCountyInBody, riskFromTitle } from "./news-bulk.mjs";
+import { categoryFromItem, detectCounty, detectCountyInBody, refreshDomesticNewsCategory, riskFromTitle } from "./news-bulk.mjs";
 import { countyCoordFromAddr } from "./coords.mjs";
 import { titleKey } from "./title-key.mjs";
 import { eventIdFor, slug } from "./event-id.mjs";
@@ -427,7 +427,7 @@ export function partitionByCache(items, scope, priorById, { maxAgeMs = null, now
   for (const it of items) {
     const key = eventIdFor(scope, it.link);
     const hit = key && priorById.get(key);
-    if (hit && !isStale(hit)) reused.push(hit);
+    if (hit && !isStale(hit)) reused.push(scope === "domestic" ? refreshDomesticNewsCategory(hit, it) : hit);
     else fresh.push(it);
   }
   return { reused, fresh };

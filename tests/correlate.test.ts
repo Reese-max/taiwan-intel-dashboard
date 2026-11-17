@@ -18,6 +18,14 @@ function ev(over: Record<string, unknown> = {}): any {
 }
 
 describe("extractSignals", () => {
+  it("財經翻車不提供交通同案證據，實際翻車仍提供", () => {
+    const finance = ev({ id: "finance", title: "台中股神翻車 違約交割千萬元", source: { name: "財經報" } });
+    const crash = ev({ id: "crash", title: "台中母子翻車 撞山壁受困", source: { name: "地方報" } });
+    expect(extractSignals(finance).keywords.has("交通")).toBe(false);
+    expect(extractSignals(crash).keywords.has("交通")).toBe(true);
+    expect(correlateEvents([finance, crash]).edges.filter((edge: any) => edge.type === "same-incident")).toEqual([]);
+  });
+
   it("從標題+摘要抽出案類關鍵詞標籤", () => {
     const s = extractSignals(ev({ title: "信義區查獲安非他命毒品案", summary: "警方緝毒" }));
     expect(s.keywords.has("毒品")).toBe(true);

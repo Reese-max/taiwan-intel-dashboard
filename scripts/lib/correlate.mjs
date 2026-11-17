@@ -2,6 +2,7 @@
 // 輸入：已正規化的 IntelEvent[]（警政/判決/新聞/天氣/採購/國際…）。
 import { clusterSignals } from "./cluster-signals.mjs";
 import { resolveCurationLedger } from "./curation-ledger.mjs";
+import { TRAFFIC_INCIDENT_RE } from "./news-bulk.mjs";
 // 輸出：事件之間的「關聯圖」——把散落各源的孤立事件串成情報網。
 //   · same-incident：同縣市 + 案類關鍵詞/實體重疊 + 時間相近 + 不同來源（跨源佐證，情報網骨幹）
 //   · same-entity ：具名實體線索；地名須同區域且不單獨成群
@@ -54,7 +55,7 @@ const LEXICON = [
   [/命案|兇殺|凶殺|殺人|分屍|棄屍|陳屍|浮屍|遺體/, "命案"],
   [/性侵|性騷|猥褻|偷拍|性影像|性剝削/, "性犯罪"],
   [/家暴|家庭暴力|兒虐|虐童|虐待|跟蹤|跟騷/, "家暴虐待"],
-  [/酒駕|毒駕|車禍|肇事|肇逃|追撞|翻車/, "交通"],
+  [TRAFFIC_INCIDENT_RE, "交通"],
   [/火警|火災|氣爆|爆炸|爆裂|縱火/, "火災"],
   [/地震|規模.{0,3}地震|震度/, "地震"],
   [/颱風|豪雨|水災|淹水|土石|山崩/, "天災"],
