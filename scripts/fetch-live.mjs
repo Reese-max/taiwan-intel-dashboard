@@ -40,6 +40,7 @@ import {
   buildNewsRelevanceAudit,
   mapBulkInternationalNews,
   mapBulkNews,
+  refreshDomesticNewsCategory,
   titleKey as bulkTitleKey,
 } from "./lib/news-bulk.mjs";
 import { buildNewsSourceContribution, eventFeedLabel, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
@@ -167,7 +168,7 @@ export function buildTwNewsEvents({
     if (k && seen.has(k)) continue;
     if (!keep(e)) continue; // 超過保留窗丟棄
     if (k) seen.add(k);
-    newsEvents.push(e);
+    newsEvents.push(refreshDomesticNewsCategory(e));
   }
   return newsEvents;
 }

@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import { buildCategoryBasisDistribution, buildTwNewsEvents } from "../scripts/fetch-live.mjs";
 // @ts-expect-error — JS ESM module without types
 import { isPoliceDomesticEvent } from "../scripts/lib/fetch-police.mjs";
+// @ts-expect-error — JS ESM module without types
+import { eventIdFor, normalizeDomesticNews, partitionByCache } from "../scripts/lib/nvidia.mjs";
 
 const news = (id: string, timestamp: string, source: Record<string, unknown> = {}) => ({
   id,
@@ -13,6 +15,43 @@ const news = (id: string, timestamp: string, source: Record<string, unknown> = {
 });
 
 describe("twnews carry-over retention", () => {
+  it.each([{ ok: false }, { skipped: true }, { ok: true }])("重用新聞重算規則分類，保留官方、LLM 與人工來源：%j", (twnewsStatus) => {
+    const timestamp = "2026-07-09T00:00:00.000Z";
+    const oldNews = ["rule:交通", "hint:交通", "default", "official-feed-hint", "llm", "curation:reviewed"].map((basis) => ({
+      ...news(basis, timestamp), scope: "domestic", title: "騎士車內藏安非他命 遭逮起訴",
+      category: "交通", categoryBasis: basis,
+    }));
+    const curated = { ...oldNews[0], ...news("curated", timestamp), title: oldNews[0].title, curated: { id: "review-1" } };
+    const result = buildTwNewsEvents({
+      oldNews: [...oldNews, curated],
+      twnews: "ok" in twnewsStatus && twnewsStatus.ok ? [oldNews[0]] : [],
+      twnewsStatus, now: Date.parse("2026-07-10T00:00:00.000Z"),
+    });
+    expect(result).toHaveLength(7);
+    for (const event of result.slice(0, 3)) {
+      expect(event).toMatchObject({ category: "治安", categoryBasis: "rule:治安" });
+    }
+    for (const event of result.slice(3)) expect(event.category).toBe("交通");
+    expect(oldNews[0].category).toBe("交通"); // 不修改輸入快照
+  });
+
+  it("快取與正規化重用路徑重算已失效規則，保留受保護的分類來源", async () => {
+    const bases = ["rule:交通", "hint:交通", "default", "official-feed-hint", "llm", "curation:reviewed"];
+    const items = bases.map((_, i) => ({ title: i < 3 ? `韭菜翻車 違約交割${i}千萬元` : `騎士車內藏安非他命${i}百顆`, link: `https://example.com/cache-${i}`, hint: "治安" }));
+    const prior = new Map(items.map((item, i) => {
+      const id = eventIdFor("domestic", item.link);
+      return [id, { ...news(id, "2026-07-09T00:00:00.000Z"), title: item.title, scope: "domestic", category: "交通", categoryBasis: bases[i] }];
+    }));
+    const cached = partitionByCache(items, "domestic", prior);
+    expect(cached.fresh).toEqual([]);
+    const normalized = await normalizeDomesticNews(items, { priorById: prior }); // 全部命中，不呼叫 LLM
+    for (const event of cached.reused.slice(0, 3)) expect(event).toMatchObject({ category: "治安", categoryBasis: "hint:治安" });
+    for (const event of cached.reused.slice(3)) expect(event).toMatchObject({ category: "交通", categoryBasis: bases[cached.reused.indexOf(event)] });
+    // 正規化路徑沿用既有設計：高信心規則命中時覆寫任何重用分類（見 normalize-cache.test.ts）。
+    for (const event of normalized.slice(0, 3)) expect(event).toMatchObject({ category: "治安", categoryBasis: "hint:治安" });
+    for (const event of normalized.slice(3)) expect(event).toMatchObject({ category: "治安", categoryBasis: "rule:治安" });
+  });
+
   it("twnews 失敗沿用 oldNews 時也會套 NEWS_RETENTION_DAYS 保留窗", () => {
     const now = Date.parse("2026-07-10T00:00:00.000Z");
     const oldNews = [

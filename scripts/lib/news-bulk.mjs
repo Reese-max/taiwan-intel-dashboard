@@ -159,14 +159,19 @@ function countyFromItem(item) {
 }
 
 const HINT_TO_CAT = { 治安: "治安", 交通: "交通", 反詐: "反詐", 災防: "災防", 資安: "資安", 食安: "食安", 衛生: "衛生", 環境: "環境" };
+// 翻車單獨出現在財經語境時不是事故；明確事故詞仍優先（例如股東駕車撞亡）。
+export const TRAFFIC_INCIDENT_RE = /車禍|酒駕|毒駕|肇事|肇逃|超速|闖紅燈|追撞|連環撞|撞死|撞傷|撞亡|撞山壁|輾(?:過|壓|斃|機車)|^(?!.*(?:台股|美股|股市|股價|股神|千金股|韭菜|違約交割|輝達|財報|股票|投資|台廠)).*翻車/s;
 // 先依標題關鍵字判類，無命中再回退來源主題(hint)，預設治安（來源本就警政取向）。
 const CAT_RULES = [
   [/詐騙|詐欺|車手|假投資|人頭帳戶|釣魚|解除分期|盜刷|博弈|洗錢|假交友|假檢警/, "反詐"],
-  [/車禍|酒駕|毒駕|肇事|肇逃|超速|闖紅燈|追撞|翻車|撞死|撞傷|國道|機車|貨車|騎士/, "交通"],
+  [TRAFFIC_INCIDENT_RE, "交通"],
   [/火警|火災|氣爆|爆炸|地震|颱風|豪雨|水災|淹水|山難|溺|搜救|消防|坍|土石|救護|受困/, "災防"],
   // 協尋置於災防後：溺水/搜救型失蹤維持災防；不含「尋獲」單獨詞（失竊物尋獲非協尋）。
   // 負向排除：失聯移工=查緝、命案/棄屍/通緝=刑案、騙=詐團話術，皆非尋人。
   [/^(?!.*(?:失聯移工|命案|兇殺|凶殺|殺人|棄屍|通緝|騙)).*(?:失蹤|協尋|走失|尋人|失聯|迷航|迷途)/s, "協尋"],
+  // 車種與道路僅是弱訊號，不蓋過災防、協尋或刑案；酒駕等明確交通行為已在前面命中。
+  [/^(?=.*(?:國道|機車|貨車|騎士)).*(?:毒品|安非他命|海洛因|愷他命|販毒|緝毒|掃黑|賄|起訴|遭逮|逮捕|查獲|通緝|命案|殺人|棄屍|竊|搶(?!救)|失聯移工|失物|尋回)/s, "治安"],
+  [/國道|機車|貨車|騎士/, "交通"],
 ];
 export function categoryFromItem(title, hint) {
   const s = String(title || "");
@@ -175,6 +180,16 @@ export function categoryFromItem(title, hint) {
   }
   if (HINT_TO_CAT[hint]) return { category: HINT_TO_CAT[hint], basis: `hint:${hint}` };
   return { category: "治安", basis: "default" };
+}
+
+export function refreshDomesticNewsCategory(event, item) {
+  const basis = event?.categoryBasis || "";
+  if (event?.scope === "international" || event?.source?.datasetId !== "tw-news" ||
+      event.curated || event.curation || !/^(?:rule:|hint:|default)/.test(basis)) return event;
+  // 舊 rule 不含原始 hint，不能把錯誤的 category 當回退值；hint 來源則可還原。
+  const hint = item?.hint ?? (basis.startsWith("hint:") ? basis.slice(5) : undefined);
+  const result = categoryFromItem(item?.title ?? event.title, hint);
+  return { ...event, category: result.category, categoryBasis: result.basis };
 }
 
 const HIGH = /命案|兇殺|凶殺|殺人|殺害|砍人|砍殺|砍傷|持刀|刺死|刺傷|分屍|棄屍|槍擊|開槍|中彈|性侵|擄人|勒贖|劫|致死|身亡|死亡|喪命|溺斃|縱火|爆炸|氣爆|滅門/;
