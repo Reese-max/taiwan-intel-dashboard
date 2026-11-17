@@ -1,4 +1,4 @@
 {
-  "sha": "6484991bca60be7866e806ac040fd868d4d212ff",
-  "note": "Owner authorized merge and release on 2026-11-06 for PRs #102-#106. main 6484991 combines them; each PR head passed checks and Preview individually, and this release PR's own checks/Preview verify the combined tree (differs only in ops/approved-code.json). Release requires separate manifest PR checks and production smoke."
+  "sha": "4c3645f78048ba23b917b71eb3cc54a6f70f95a3",
+  "note": "Owner instructed on 2026-11-17 to fix everything so scheduled updates deploy again. main 4c3645f = #108 (owner-authorized 2026-11-07, previously pending as PR #109) + #110 (test-only clock fix; approved build at 6484991 failed npm run check on the date-dependent agri test since 2026-11-10). #110 head a21a05d has the identical tree and passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
 }
