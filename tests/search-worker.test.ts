@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import worker from "../static/_worker.js";
 
 const rss = `<rss><channel>
-  <item><title><![CDATA[<b>電信</b> &amp; &#x35;G &quot;修復&quot;]]></title><link>https://example.com/news?a=1&amp;b=2</link><pubDate>Tue, 17 Nov 2026 00:00:00 GMT</pubDate><source url="https://example.com">中央社 &amp; 地方</source></item>
+  <item><title><![CDATA[<b>電信</b> &amp; &#x35;G &quot;修復&quot; - 中央社 & 地方]]></title><link>https://example.com/news?a=1&amp;b=2</link><pubDate>Tue, 17 Nov 2026 00:00:00 GMT</pubDate><source url="https://example.com">中央社 &amp; 地方</source></item>
   <item><title>惡意連結</title><link>javascript:alert(1)</link><pubDate>Tue, 17 Nov 2026 00:00:00 GMT</pubDate></item>
   <item><title>其他協定</title><link>ftp://example.com/news</link></item>
 </channel></rss>`;
@@ -24,7 +24,7 @@ describe("Google News 站外搜尋端點", () => {
   it("進階模式只攔截搜尋路由", () => {
     expect(JSON.parse(readFileSync("static/_routes.json", "utf8"))).toEqual({ version: 1, include: ["/api/search"], exclude: [] });
   });
-  it("解析 RSS、解碼字元與 HTML，排除非 HTTP 連結", async () => {
+  it("解析 RSS、解碼字元與 HTML、去掉標題尾的來源名，排除非 HTTP 連結", async () => {
     const response = await worker.fetch(request(), env);
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ query: "電信", days: 7, upstream: "ok", items: [{

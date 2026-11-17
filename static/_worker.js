@@ -15,7 +15,10 @@ function parseRss(xml) {
   const items = [];
   for (const [, body] of xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)) {
     const tag = name => plainText(body.match(new RegExp(`<${name}\\b[^>]*>([\\s\\S]*?)<\\/${name}>`, "i"))?.[1] ?? "");
-    const title = tag("title");
+    const source = tag("source");
+    // Google News 會在標題尾加「 - 來源」；去掉才能和站內標題比對重複。
+    const fullTitle = tag("title");
+    const title = source && fullTitle.endsWith(` - ${source}`) ? fullTitle.slice(0, -(source.length + 3)).trim() : fullTitle;
     let link;
     try {
       link = new URL(tag("link"));
@@ -23,7 +26,7 @@ function parseRss(xml) {
     } catch { continue; }
     if (!title) continue;
     const date = Date.parse(tag("pubDate"));
-    items.push({ title, link: link.href, pubDate: Number.isFinite(date) ? new Date(date).toISOString() : null, source: tag("source") });
+    items.push({ title, link: link.href, pubDate: Number.isFinite(date) ? new Date(date).toISOString() : null, source });
     if (items.length === 30) break;
   }
   return items;
