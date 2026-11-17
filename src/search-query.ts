@@ -32,18 +32,13 @@ export function parseSearchQuery(text: string): SearchQuery {
     .replace(/(^|[\s\p{P}])(?:查(?!獲|緝|扣)|找)/gu, "$1");
   const terms = [...new Set(cleaned.split(/[\s\p{P}\p{S}]+/u).filter(Boolean)
     .map(term => term.replace(/(\d+)/gu, (_, i) => literals[Number(i)])))];
-  const groups = terms.map(term => {
-    const group = new Set([term]);
-    for (const [topic, synonyms] of Object.entries(SEARCH_TOPICS)) {
-      if ([topic, ...synonyms].some(word => word.toLocaleLowerCase("zh-TW") === term.toLocaleLowerCase("zh-TW"))) {
-        group.add(topic);
-        for (const word of synonyms) group.add(word);
-      }
-    }
-    return [...group];
-  });
+  // 只有主題名（如「交通」）才擴大成同義詞；具體詞（如「車禍」）照字面搜，避免被放大成整個主題。
+  const groups = terms.map(term => [term, ...(Object.hasOwn(SEARCH_TOPICS, term) ? SEARCH_TOPICS[term] : [])]);
   return { raw: text, terms, expanded: [...new Set(groups.flat())], groups, windowDays: windows.length ? Math.min(...windows) : null };
 }
+
+// 「臺北」與「台北」視為同字。
+export const fold = (text: string) => text.toLocaleLowerCase("zh-TW").replaceAll("臺", "台");
 
 /** 事件是否符合解析後的搜尋：時間窗內，且每個詞（含同義詞）都命中。回傳不符原因，符合回 null。 */
 export function searchMismatch(e: IntelEvent, parsed: SearchQuery, now = Date.now()): "time" | "terms" | null {
@@ -51,7 +46,7 @@ export function searchMismatch(e: IntelEvent, parsed: SearchQuery, now = Date.no
     const timestamp = Date.parse(e.timestamp);
     if (!(timestamp >= now - parsed.windowDays * 86_400_000 && timestamp <= now)) return "time";
   }
-  const hay = `${e.title} ${e.summary} ${e.region} ${e.category} ${e.source.name}`.toLocaleLowerCase("zh-TW");
-  const hit = parsed.groups.every(group => group.some(term => hay.includes(term.toLocaleLowerCase("zh-TW"))));
+  const hay = fold(`${e.title} ${e.summary} ${e.region} ${e.category} ${e.source.name}`);
+  const hit = parsed.groups.every(group => group.some(term => hay.includes(fold(term))));
   return hit ? null : "terms";
 }
