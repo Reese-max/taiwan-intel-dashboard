@@ -31,7 +31,7 @@ describe("operating-state contract & gates (Issue #17)", () => {
   it("驗證目前專案契約檔 ops/operating-state.json 結構合法且與 README 一致", () => {
     const { doc, errors } = loadContract();
     expect(errors).toHaveLength(0);
-    expect(doc?.state).toBe("DEGRADED");
+    expect(doc?.state).toBe("ACTIVE");
 
     const docErrors = verifyDocs();
     expect(docErrors).toHaveLength(0);

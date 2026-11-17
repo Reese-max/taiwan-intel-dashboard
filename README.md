@@ -2,7 +2,7 @@
 
 聚合台灣國內外多源公開資料，以 LLM 正規化、風險評級、關聯分析，呈現為互動式情報視覺化網站。
 
-- 狀態：**降級運作中**（依 [ops/operating-state.json](ops/operating-state.json) 標記；資料新鮮度與來源健康須以線上 provenance 和最近排程紀錄確認）
+- 狀態：**運作中**（依 [ops/operating-state.json](ops/operating-state.json) 標記，復原收據見 [docs/operations/receipts/restore-2026-11-17.md](docs/operations/receipts/restore-2026-11-17.md)；AI 摘要仍為統計備援；資料新鮮度與來源健康須以線上 provenance 和最近排程紀錄確認）
 - 網址：<https://taiwan-intel-dashboard.pages.dev>
 - 營運狀態契約：[`ops/operating-state.json`](ops/operating-state.json)｜[`docs/operations/operating-state.md`](docs/operations/operating-state.md)
 - 復原程序：[`docs/operations/pause-and-restore.md`](docs/operations/pause-and-restore.md)
@@ -41,7 +41,7 @@
 
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
-> 目前 workflow 依 [ops/operating-state.json](ops/operating-state.json) 規範運作；正式轉為完全運作（ACTIVE）前須補齊受控復原收據。
+> 目前 workflow 依 [ops/operating-state.json](ops/operating-state.json) 規範運作；2026-11-17 已補齊受控復原收據並轉為 ACTIVE。
 
 - 每 30 分（:17/:47）：cwa+police+missing+twnews+rss+gdelt+mofa+ncdr+mnd+cga+twcert+taipower+wra+wraRiver 增量；另有獨立備援檢查在正式資料逾 75 分鐘且無近期執行時補觸發
 - 每日 18:30 UTC（台北 02:30）：上述來源加上 cdc、tfda 的 exclusive 重建
