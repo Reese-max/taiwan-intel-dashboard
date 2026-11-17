@@ -48,6 +48,8 @@ describe("ground-truth schema", () => {
     expect(validatePairRow(pair())).toBeNull();
     expect(validatePairRow(pair({ label: "uncertain" }))).toBeNull();
     expect(validatePairRow(pair({ labeledBy: "agent-draft" }))).toBeNull();
+    expect(validatePairRow(pair({ labeledBy: "ai" }))).toBeNull();
+    expect(validateLocationRow(location({ labeledBy: "ai" }))).toBeNull();
     expect(validatePairRow(pair({ labeledBy: "model" }))).toBe("invalid-labeledBy");
     expect(validatePairRow(pair({ evidence: "" }))).toBe("missing-evidence");
     expect(validatePairRow(pair({ label: "not-a-label" }))).toBe("unknown-label");
@@ -114,6 +116,24 @@ describe("ground-truth location metrics", () => {
     expect(result.precision).toEqual({ correct: 0, total: 1, accuracy: 0 });
     expect(result.unknownRate).toBe(0.5);
     expect(result.excludedNonHuman).toBe(1);
+  });
+
+  it("scores finalized ai labels like human labels but still excludes agent-draft", () => {
+    const events = [{ id: "a", locationRole: "incident", locationPrecision: "city", region: "高雄市" }];
+    const loc = computeLocationMetrics(
+      [location({ event: "a", labeledBy: "ai", locationPrecision: "city" }), location({ event: "a", labeledBy: "agent-draft" })],
+      events,
+    );
+    expect(loc.labeled).toBe(1);
+    expect(loc.precision).toEqual({ correct: 1, total: 1, accuracy: 1 });
+    expect(loc.excludedNonHuman).toBe(1);
+
+    const rel = computeRelationMetrics(
+      [pair({ labeledBy: "ai" }), pair({ a: "a", b: "c", labeledBy: "agent-draft" })],
+      { edges: [{ a: "a", b: "b", type: "same-incident" }], clusters: [{ id: "cluster-1", members: ["a", "b"] }] },
+    );
+    expect(rel.evaluated).toBe(1);
+    expect(rel.excludedNonHuman).toBe(1);
   });
 });
 

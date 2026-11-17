@@ -17,7 +17,9 @@ import { titleKey } from "./title-key.mjs";
 export const PAIR_SCHEMA = "relation-pairs/1";
 export const LOCATION_SCHEMA = "location-labels/1";
 export const RELATION_LABELS = new Set(["same_event", "different_event", "follow_up", "same_original_report", "uncertain"]);
-export const LABEL_SOURCES = new Set(["human", "agent-draft"]);
+export const LABEL_SOURCES = new Set(["human", "ai", "agent-draft"]);
+// 計分來源：人工與定稿 AI 標註（負責人 2026-11-17 核准 AI 可代替人工）；agent-draft 仍是未定稿草稿、不計分。
+export const SCORED_LABEL_SOURCES = new Set(["human", "ai"]);
 // 與 geo-policy.mjs 列舉對齊
 export const LOCATION_ROLES = new Set([...INCIDENT_ROLES, ...NON_INCIDENT_ROLES]);
 export const LOCATION_PRECISIONS = new Set([...EXACT_PRECISIONS, ...LOW_PRECISIONS]);
@@ -422,7 +424,7 @@ function relationMetricsFor(rows, net) {
 // 每筆 row 需帶 family；split 由 family hash 決定（同 family 永遠同側）。
 export function computeRelationMetrics(rows, net) {
   const candidates = (rows || []).filter((r) => r && r.label);
-  const labeled = candidates.filter((r) => r.labeledBy === "human");
+  const labeled = candidates.filter((r) => SCORED_LABEL_SOURCES.has(r.labeledBy));
   const tuning = labeled.filter((r) => splitOf(r) === "tuning");
   const holdout = labeled.filter((r) => splitOf(r) === "holdout");
   return {
@@ -442,8 +444,9 @@ function locationMetricsFor(rows, events) {
   let missing = 0;
   let labeled = 0;
   const examples = { roleErrors: [], precisionErrors: [], regionErrors: [] };
-  const humanRows = (rows || []).filter((row) => row && row.labeledBy === "human");
-  const excludedNonHuman = (rows || []).filter((row) => row && row.labeledBy && row.labeledBy !== "human").length;
+  const humanRows = (rows || []).filter((row) => row && SCORED_LABEL_SOURCES.has(row.labeledBy));
+  // 欄位名沿用以免破壞既有報告；實際計的是不計分來源（agent-draft）。
+  const excludedNonHuman = (rows || []).filter((row) => row && row.labeledBy && !SCORED_LABEL_SOURCES.has(row.labeledBy)).length;
   for (const row of humanRows) {
     const event = byId.get(row.event);
     if (!event) {
