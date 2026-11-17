@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { auditSummary } from "./lib/summary-quality.mjs";
 import { isReferenceEvent, validateEventContract } from "./lib/event-contract.mjs";
+import { validateRemovedRouteResponse, validateSearchResponse } from "./smoke-deployed.mjs";
 
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
@@ -37,8 +38,9 @@ export async function verifyPreviewArtifact({ url, dist, fetcher = fetch, allowL
   const origin = previewOrigin(url, allowLocal), root = resolve(dist);
   if (!lstatSync(root).isDirectory()) throw new Error("Preview artifact must be a directory");
   const allFiles = filesIn(root).sort(), verified = {}, configurationFiles = {};
-  const controls = new Set(["_headers", "_redirects", "_routes.json"]);
-  if (allFiles.some((file) => file === "_worker.js" || file.startsWith("_worker.js/"))) throw new Error("Dynamic Preview artifacts need separate runtime verification");
+  const controls = new Set(["_headers", "_redirects", "_routes.json", "_worker.js"]);
+  // 單檔 _worker.js 由下方執行期檢查驗證；目錄形式的 Worker 尚無對應驗證。
+  if (allFiles.some((file) => file.startsWith("_worker.js/"))) throw new Error("Dynamic Preview artifacts need separate runtime verification");
   const files = allFiles.filter((file) => !controls.has(file));
   for (const file of allFiles.filter((file) => controls.has(file))) configurationFiles[file] = hash(readFileSync(join(root, file)));
   for (const required of ["index.html", "data/manifest.json", "data/provenance.json", "data/summary.json", "data/domestic.json", "data/international.json"]) {
@@ -62,7 +64,20 @@ export async function verifyPreviewArtifact({ url, dist, fetcher = fetch, allowL
   }
   const audit = auditSummary({ summary, domesticCount: counts.domestic, internationalCount: counts.international });
   if (!audit.ok) throw new Error(`Preview summary audit: ${audit.failures.map((x) => x.code).join(",")}`);
-  return { kind: "IMMUTABLE_PREVIEW_BYTE_VERIFICATION", url: origin, files: verified, configurationFiles, counts, snapshotId: read("manifest.json").snapshotId };
+  const runtime = allFiles.includes("_worker.js") ? await verifyWorkerRuntime(origin, fetcher) : undefined;
+  return { kind: "IMMUTABLE_PREVIEW_BYTE_VERIFICATION", url: origin, files: verified, configurationFiles, counts, snapshotId: read("manifest.json").snapshotId, ...(runtime ? { runtime } : {}) };
+}
+
+// Worker 不是公開靜態檔，改驗執行期：搜尋端點回合約 JSON，已移除的舊 API 仍是 404。
+async function verifyWorkerRuntime(origin, fetcher) {
+  const options = () => ({ signal: AbortSignal.timeout(20_000), headers: { "cache-control": "no-cache" } });
+  const search = await fetcher(`${origin}/api/search?q=${encodeURIComponent("電信")}&days=7`, { ...options(), redirect: "error" });
+  let payload = null;
+  try { payload = JSON.parse((await boundedBody(search, 1_000_000)).toString("utf8")); } catch { /* 下方統一回報 */ }
+  if (!validateSearchResponse(search.status, payload)) throw new Error(`Preview /api/search runtime check failed: HTTP ${search.status}`);
+  const health = await fetcher(`${origin}/api/health`, options());
+  if (!validateRemovedRouteResponse(health.status)) throw new Error(`Preview api/health: expected 404, got HTTP ${health.status}`);
+  return { search: { upstream: payload.upstream, items: payload.items.length }, removedApiHealth: health.status };
 }
 
 export async function browserCheck(origin, dist) {

@@ -33,10 +33,31 @@ describe("exact Preview acceptance", () => {
   it("rejects HTTP success with an oversized body and rejects missing files", async () => {
     const f = fixture(); try { await expect(verifyPreviewArtifact({ url, dist: f.dir, fetcher: async () => new Response("x".repeat(10000)) })).rejects.toThrow(/exceeds/); rmSync(join(f.dir, "data/summary.json")); await expect(verifyPreviewArtifact({ url, dist: f.dir, fetcher: f.fetcher })).rejects.toThrow(/Missing preview artifact/); } finally { f.close(); }
   });
+  it("verifies an advanced-mode Worker at runtime: search contract and removed api/health", async () => {
+    const f = fixture(); try {
+      writeFileSync(join(f.dir, "_worker.js"), "export default {}");
+      let health = 404;
+      const fetcher = async (u: string, o: { redirect?: string }) => {
+        const path = new URL(u).pathname;
+        if (path === "/api/search") return Response.json({ query: "電信", days: 7, items: [], upstream: "error" });
+        if (path === "/api/health") return new Response("not found", { status: health });
+        return f.fetcher(u, o as { redirect: string });
+      };
+      const receipt = await verifyPreviewArtifact({ url, dist: f.dir, fetcher });
+      expect(receipt.configurationFiles["_worker.js"]).toMatch(/^[a-f0-9]{64}$/);
+      expect(receipt.files["_worker.js"]).toBeUndefined();
+      expect(receipt.runtime).toEqual({ search: { upstream: "error", items: 0 }, removedApiHealth: 404 });
+      health = 200;
+      await expect(verifyPreviewArtifact({ url, dist: f.dir, fetcher })).rejects.toThrow(/api\/health: expected 404/);
+      rmSync(join(f.dir, "_worker.js"));
+      mkdirSync(join(f.dir, "_worker.js", "x"), { recursive: true }); writeFileSync(join(f.dir, "_worker.js", "x", "i.js"), "");
+      await expect(verifyPreviewArtifact({ url, dist: f.dir, fetcher })).rejects.toThrow(/Dynamic Preview/);
+    } finally { f.close(); }
+  });
   it("rejects artifact symlinks before any network request", async () => {
     const f = fixture(); try { symlinkSync(join(f.dir, "index.html"), join(f.dir, "outside")); await expect(verifyPreviewArtifact({ url, dist: f.dir, fetcher: f.fetcher })).rejects.toThrow(/Symlink/); expect(f.calls).toBe(0); } finally { f.close(); }
   });
   it("records Pages control-file hashes without pretending they are public HTTP files", async () => {
-    const f = fixture(); try { writeFileSync(join(f.dir, "_headers"), "/*\n  X-Content-Type-Options: nosniff\n"); const receipt = await verifyPreviewArtifact({ url, dist: f.dir, fetcher: f.fetcher }); expect(receipt.configurationFiles._headers).toMatch(/^[a-f0-9]{64}$/); expect(receipt.files._headers).toBeUndefined(); expect(f.calls).toBe(6); writeFileSync(join(f.dir, "_worker.js"), "export default {}"); await expect(verifyPreviewArtifact({ url, dist: f.dir, fetcher: f.fetcher })).rejects.toThrow(/Dynamic Preview/); } finally { f.close(); }
+    const f = fixture(); try { writeFileSync(join(f.dir, "_headers"), "/*\n  X-Content-Type-Options: nosniff\n"); const receipt = await verifyPreviewArtifact({ url, dist: f.dir, fetcher: f.fetcher }); expect(receipt.configurationFiles._headers).toMatch(/^[a-f0-9]{64}$/); expect(receipt.files._headers).toBeUndefined(); expect(f.calls).toBe(6); writeFileSync(join(f.dir, "_worker.js"), "export default {}"); await expect(verifyPreviewArtifact({ url, dist: f.dir, fetcher: f.fetcher })).rejects.toThrow(/api\/search runtime check failed/); } finally { f.close(); }
   });
 });
