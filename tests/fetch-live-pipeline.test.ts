@@ -25,6 +25,7 @@ const ENV_KEYS = [
   "SUMMARY_MODEL",
   "SUMMARY_MAX_RETRIES",
   "INTL_ACCUM_CAP",
+  "NEWS_NORMALIZE_MODE",
 ] as const;
 
 const originalEnv = new Map<string, string | undefined>();
@@ -58,6 +59,7 @@ function setupEnv() {
 
   process.env.FETCH_LIVE_DATA_DIR = dir;
   process.env.SOURCES = "cwa";
+  process.env.NEWS_NORMALIZE_MODE = "llm";
   process.env.EXCLUSIVE = "";
   process.env.CWA_API_KEY = "test-cwa-key";
   process.env.LLM_API_KEY = "test-llm-key";

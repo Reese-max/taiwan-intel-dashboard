@@ -364,8 +364,13 @@ function officialDateIso(value, fallback) {
   return Number.isFinite(parsed) ? new Date(parsed).toISOString() : taiwanDateIso(text, fallback);
 }
 
-function isRetriableFetchError(error) {
+function isRetriableFetchError(error, networkOnly = false) {
   const status = Number(error?.status);
+  if (networkOnly) {
+    if (Number.isFinite(status)) return false;
+    return ["AbortError", "TimeoutError"].includes(error?.name)
+      || [error?.code, error?.cause?.code].some((code) => ["ECONNRESET", "UND_ERR_CONNECT_TIMEOUT"].includes(code));
+  }
   return error?.name === "TypeError"
     || error?.name === "TimeoutError"
     || error?.name === "AbortError"
@@ -382,7 +387,7 @@ function fetchErrorDetail(error) {
     .join(": ");
 }
 
-async function fetchChecked(url, {
+export async function fetchChecked(url, {
   fetchImpl = fetch,
   timeoutMs = 30000,
   json = false,
@@ -390,20 +395,27 @@ async function fetchChecked(url, {
   retryDelayMs = 1000,
   headers,
   buffer = false,
+  networkRetry = false,
 } = {}) {
+  // 指定官方來源僅重試一次；兩秒等待與讀取本文都計入兩倍逾時預算。
+  if (networkRetry) { attempts = 2; retryDelayMs = 2000; }
+  const deadline = networkRetry ? Date.now() + timeoutMs * 2 : Infinity;
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const response = await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs), headers });
+      const remainingMs = Math.min(timeoutMs, deadline - Date.now());
+      if (remainingMs <= 0) break;
+      const response = await fetchImpl(url, { signal: AbortSignal.timeout(remainingMs), headers });
       if (!response.ok) {
         const error = new Error(`${new URL(url).hostname} HTTP ${response.status}`);
         error.status = response.status;
         throw error;
       }
-      return json ? response.json() : buffer ? response.arrayBuffer() : response.text();
+      return await (json ? response.json() : buffer ? response.arrayBuffer() : response.text());
     } catch (error) {
       lastError = error;
-      if (attempt >= attempts || !isRetriableFetchError(error)) break;
+      if (attempt >= attempts || !isRetriableFetchError(error, networkRetry)) break;
+      if (Date.now() + retryDelayMs * attempt >= deadline) break;
       if (retryDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt));
     }
   }
@@ -739,7 +751,7 @@ export function mapCgaEvents(items, {
 
 export async function fetchCgaMaritime({ fetchImpl = fetch, limit = 30 } = {}) {
   const fetchedAt = new Date().toISOString();
-  const html = await fetchChecked(CGA_URL, { fetchImpl, headers: OFFICIAL_USER_AGENT, attempts: 2 });
+  const html = await fetchChecked(CGA_URL, { fetchImpl, headers: OFFICIAL_USER_AGENT, networkRetry: true });
   const items = parseCgaNewsLinks(html);
   if (!items.length) throw new Error("海巡署新聞清單解析為 0 筆");
   return mapCgaEvents(items, { fetchedAt, limit });
@@ -851,7 +863,7 @@ export async function fetchTaipowerSupply({ fetchImpl = fetch } = {}) {
     fetchImpl,
     json: true,
     headers: OFFICIAL_USER_AGENT,
-    attempts: 2,
+    networkRetry: true,
   });
   if (!Array.isArray(payload?.records) || !payload.records.length) throw new Error("台電供需回應缺少 records");
   return [mapTaipowerSupplyEvent(payload, { fetchedAt })];

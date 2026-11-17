@@ -123,7 +123,7 @@ export function warnOnNormalizeFailure(pipeline) {
   const failed = [];
   for (const scope of ["international", "twnews"]) {
     const status = pipeline?.[scope];
-    if (status?.normalizeFailed === true) {
+    if (status?.normalizeMode !== "rules" && status?.normalizeFailed === true) {
       failed.push(scope);
       const detail = Number(status.bulk || 0) > 0
         ? `本輪仍以輕量收錄更新 ${status.bulk} 筆`

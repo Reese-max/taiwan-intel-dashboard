@@ -1,6 +1,7 @@
 // 外交部領事事務局「國外旅遊警示」RSS → 結構化 IntelEvent[]。
 // 來源已是官方結構化燈號，僅做 RSS 解析與欄位映射，不送 LLM 正規化。
-import { fetchRssItems } from "./fetch-rss.mjs";
+import { parseFeed } from "./fetch-rss.mjs";
+import { fetchChecked } from "./fetch-official.mjs";
 import { eventIdFor } from "./event-id.mjs";
 
 export const MOFA_TRAVEL_WARNING_FEED = {
@@ -72,12 +73,12 @@ export function mapMofaTravelWarningEvents(items, { fetchedAt = new Date().toISO
 
 export async function fetchMofaTravelWarnings({ perFeed = 200 } = {}) {
   const fetchedAt = new Date().toISOString();
-  const rss = await fetchRssItems({
-    feeds: [MOFA_TRAVEL_WARNING_FEED],
-    perFeed,
-    concurrency: 1,
+  // 沿用官方共用重試，避免再疊一層 RSS 重試。
+  const xml = await fetchChecked(MOFA_TRAVEL_WARNING_FEED.url, {
+    timeoutMs: 12000,
+    networkRetry: true,
+    headers: { "User-Agent": "Mozilla/5.0 (taiwan-intel-dashboard pipeline)" },
   });
-  const feed = rss.feedStatus[0];
-  if (!feed?.ok) throw new Error(`MOFA RSS ${feed?.error || "failed"}`);
-  return mapMofaTravelWarningEvents(rss.items, { fetchedAt });
+  const items = parseFeed(xml).filter((item) => item.title && item.link).slice(0, perFeed);
+  return mapMofaTravelWarningEvents(items, { fetchedAt });
 }

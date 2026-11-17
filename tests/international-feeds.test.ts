@@ -30,12 +30,12 @@ describe("international feed registry", () => {
       .toBe("https://www.washingtonpost.com/arcio/rss/category/world/");
   });
 
-  it.each(["Yahoo Finance", "PERE", "RailTech.com", "The Third Pole"])("removes unavailable or duplicate public feed %s", (label) => {
+  it.each(["Yahoo Finance", "PERE", "RailTech.com", "The Third Pole", "CNX Software", "Sciences et Avenir", "Oceanographic Magazine", "LifeGate"])("removes unavailable or duplicate public feed %s", (label) => {
     expect(labels(INTERNATIONAL_FEEDS)).not.toContain(label);
     expect(labels(INTERNATIONAL_FEEDS)).toContain("Railway Gazette International");
   });
 
-  it.each(["Berkeley Lab News Center", "CERN", "Sciences et Avenir", "eLife", "Bay Nature"])(
+  it.each(["Berkeley Lab News Center", "CERN", "eLife", "Bay Nature"])(
     "keeps a site-scoped backup for %s when the direct feed is blocked",
     (label) => {
       const feed = INTERNATIONAL_FEEDS.find((feed) => feed.label === label)!;

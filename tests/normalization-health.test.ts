@@ -6,6 +6,24 @@ import {
 } from "../src/utils/normalizationHealth";
 import { renderSourcePanel } from "../src/components/SourcePanel";
 
+it("規則模式不會被判定為正規化故障", () => {
+  const health = evaluateDomesticNormalization({
+    ok: true,
+    normalizeMode: "rules",
+    normalizeFailed: false,
+    count: 12,
+    enriched: 0,
+    bulk: 12,
+  });
+  expect(health.state).toBe("rules-only");
+  expect(health.stateLabel).toBe("規則正規化");
+  expect(health.isDegraded).toBe(false);
+  // 國際：沿用少量舊精修快取＋其餘規則收錄，也不應判成部分降級。
+  const intl = evaluateInternationalNormalization({ ok: true, normalizeMode: "rules", normalizeFailed: false, count: 60, rawCount: 60, enriched: 5, bulk: 55 });
+  expect(intl.state).toBe("rules-only");
+  expect(intl.isDegraded).toBe(false);
+});
+
 describe("Issue #30 — 新聞 AI 正規化分層健康評估", () => {
   it("固定快照情境（國內精修 0、輕量 2687、normalizeFailed=true）判定為精修降級，不標為全數完成", () => {
     const twnewsSnapshot = {
