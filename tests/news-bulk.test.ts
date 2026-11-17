@@ -5,6 +5,7 @@ import {
   titleKey,
   cleanTitle,
   categoryFromItem,
+  refreshDomesticNewsCategory,
   isForeignNonTaiwan,
   isNonEventNoise,
   isPoliceRelevant,
@@ -134,7 +135,11 @@ const categoryCases = [
   ["快訊／台南大貨車右轉輾機車 女騎士「頭顱破裂」當場身亡", "交通"],
   ["台中母子登山遇雨折返竟翻車 疑煞車失靈撞山壁受困驚險獲救", "交通"],
   ["交通新制11月上路！機車停車制度改了「停錯小心被罰1200元」， 最新取締標準一次看", "交通"],
-  ["酒駕自撞掉輪仍狂飆！通緝犯拖行4.6公里狂冒火星 酒測值高達0.99", "交通"]
+  ["酒駕自撞掉輪仍狂飆！通緝犯拖行4.6公里狂冒火星 酒測值高達0.99", "交通"],
+  ["貨車自撞電桿 駕駛受困", "交通"],
+  ["機車擦撞行人 騎士遭起訴", "交通"],
+  ["兩車對撞 消防救出受困駕駛", "交通"],
+  ["跨海訪問／《碰撞搜查線2》弄壞46輛車！ 李民基「隨身帶棉被」笑翻全場", "非交通"]
 ];
 
 describe("國內新聞交通分類回歸", () => {
@@ -144,6 +149,14 @@ describe("國內新聞交通分類回歸", () => {
       if (expected === "非交通") expect(result.category).not.toBe("交通");
       else expect(result.category).toBe(expected);
     }
+  });
+});
+
+describe("refreshDomesticNewsCategory", () => {
+  it("LLM 正規化過的事件（標題可能被改寫）沒有原始項目時不重算", () => {
+    const event = { id: "twnews-x", title: "老婦外出迷路 警助返家", category: "協尋", categoryBasis: "rule:協尋",
+      aiTopic: "協尋", scope: "domestic", source: { datasetId: "tw-news" } };
+    expect(refreshDomesticNewsCategory(event)).toBe(event);
   });
 });
 

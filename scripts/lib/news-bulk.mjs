@@ -160,7 +160,7 @@ function countyFromItem(item) {
 
 const HINT_TO_CAT = { 治安: "治安", 交通: "交通", 反詐: "反詐", 災防: "災防", 資安: "資安", 食安: "食安", 衛生: "衛生", 環境: "環境" };
 // 翻車單獨出現在財經語境時不是事故；明確事故詞仍優先（例如股東駕車撞亡）。
-export const TRAFFIC_INCIDENT_RE = /車禍|酒駕|毒駕|肇事|肇逃|超速|闖紅燈|追撞|連環撞|撞死|撞傷|撞亡|撞山壁|輾(?:過|壓|斃|機車)|^(?!.*(?:台股|美股|股市|股價|股神|千金股|韭菜|違約交割|輝達|財報|股票|投資|台廠)).*翻車/s;
+export const TRAFFIC_INCIDENT_RE = /車禍|酒駕|毒駕|肇事|肇逃|超速|闖紅燈|追撞|連環撞|自撞|擦撞|對撞|相撞|撞死|撞傷|撞亡|撞山壁|輾(?:過|壓|斃|機車)|^(?!.*(?:台股|美股|股市|股價|股神|千金股|韭菜|違約交割|輝達|財報|股票|投資|台廠)).*翻車/s;
 // 先依標題關鍵字判類，無命中再回退來源主題(hint)，預設治安（來源本就警政取向）。
 const CAT_RULES = [
   [/詐騙|詐欺|車手|假投資|人頭帳戶|釣魚|解除分期|盜刷|博弈|洗錢|假交友|假檢警/, "反詐"],
@@ -186,6 +186,8 @@ export function refreshDomesticNewsCategory(event, item) {
   const basis = event?.categoryBasis || "";
   if (event?.scope === "international" || event?.source?.datasetId !== "tw-news" ||
       event.curated || event.curation || !/^(?:rule:|hint:|default)/.test(basis)) return event;
+  // LLM 正規化過的事件標題可能已改寫，沒有原始項目時不能拿改寫後標題重算。
+  if (!item && "aiTopic" in event) return event;
   // 舊 rule 不含原始 hint，不能把錯誤的 category 當回退值；hint 來源則可還原。
   const hint = item?.hint ?? (basis.startsWith("hint:") ? basis.slice(5) : undefined);
   const result = categoryFromItem(item?.title ?? event.title, hint);
