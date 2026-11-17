@@ -27,13 +27,34 @@ function betterRepresentative(a: IntelEvent, b: IntelEvent, originalIndex: Map<s
   return (originalIndex.get(a.id) ?? 0) <= (originalIndex.get(b.id) ?? 0) ? a : b;
 }
 
+const DUPLICATE_TITLE_JACCARD = 0.8;
+
+// 只有新聞才用標題判重複：官方資料（如地震報告）以模板產生標題，相同標題可能是不同事件。與 correlate.mjs isNewsLikeEvent 同義。
+const isNewsLike = (e: IntelEvent): boolean => e.source.type === "news-rss" || e.source.datasetId === "tw-news";
+
+// 大小過濾：Jaccard ≥ t 必須 min(|a|,|b|) ≥ t·max(|a|,|b|)，先排除再算交集。
+function isDuplicateTitle(a: Set<string>, b: Set<string>): boolean {
+  if (Math.min(a.size, b.size) < DUPLICATE_TITLE_JACCARD * Math.max(a.size, b.size)) return false;
+  return titleSimilarity(a, b) >= DUPLICATE_TITLE_JACCARD;
+}
+
+// 事件物件在快照內不變，標題特徵跨次 refresh 重用（每次輸入都會重算收合）。
+const titleSignatures = new WeakMap<IntelEvent, Set<string>>();
 function duplicateTitle(e: IntelEvent): Set<string> {
+  let signature = titleSignatures.get(e);
+  if (!signature) titleSignatures.set(e, signature = computeDuplicateTitle(e));
+  return signature;
+}
+
+function computeDuplicateTitle(e: IntelEvent): Set<string> {
+  if (!isNewsLike(e)) return new Set();
   const publishers = [e.source.publisherName ?? "", e.source.name.replace(/^GN\s+/u, "")].map(name => fold(name.trim()));
   const title = fold(e.title)
     .replace(/\s*[|｜][^|｜]+[|｜][^|｜]+$/u, "")
     .replace(/\s*[-–—]\s*([^-–—]+)$/u, (suffix, publisher: string) =>
       publishers.includes(publisher.trim()) || /^(?:ctwant|中央社|自由時報|聯合新聞網|聯合報|中時新聞網|中國時報|公視新聞網|華視新聞網|民視新聞網|三立新聞網|ettoday新聞雲|tvbs新聞網|nownews今日新聞|yahoo奇摩新聞)$/u.test(publisher.trim()) ? "" : suffix);
-  return titleBigrams(title);
+  // 英文標題用單字比對：字母雙字組（th、he…）人人共有，會讓候選數與比對量爆增。
+  return /\p{Script=Han}/u.test(title) ? titleBigrams(title) : new Set(title.match(/[\p{L}\p{N}]+/gu) ?? []);
 }
 
 function areVerifiableDuplicates(a: IntelEvent, b: IntelEvent, rawKey: (e: IntelEvent) => string, titles: Map<IntelEvent, Set<string>>): boolean {
@@ -45,7 +66,7 @@ function areVerifiableDuplicates(a: IntelEvent, b: IntelEvent, rawKey: (e: Intel
   if (a.source.recordRef && b.source.recordRef && a.source.recordRef === b.source.recordRef) {
     return true;
   }
-  return titleSimilarity(titles.get(a)!, titles.get(b)!) >= 0.8;
+  return isDuplicateTitle(titles.get(a)!, titles.get(b)!);
 }
 
 function hasDirectSameIncident(aId: string, bId: string, net: NetworkIndex): boolean {
@@ -86,9 +107,19 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
     const key = rawKeys.get(e)!;
     if (key && !key.startsWith("event:")) addPosition(rawKeyPositions, key, position);
     if (e.source.recordRef) addPosition(recordRefPositions, e.source.recordRef, position);
-    const pairs = duplicateTitle(e);
-    titles.set(e, pairs);
-    for (const pair of pairs) addPosition(titlePositions, pair, position);
+    titles.set(e, duplicateTitle(e));
+  });
+  // 前綴過濾：每個標題只索引最少見的 |x|-ceil(t|x|)+1 個 bigram；Jaccard ≥ t 的兩標題必共享其中之一，
+  // 避免英文常見字母組（th、he…）讓候選數爆量。
+  const pairFrequency = new Map<string, number>();
+  for (const pairs of titles.values()) for (const pair of pairs) pairFrequency.set(pair, (pairFrequency.get(pair) ?? 0) + 1);
+  const titlePrefix = (pairs: Set<string>): string[] => [...pairs]
+    .sort((a, b) => pairFrequency.get(a)! - pairFrequency.get(b)! || (a < b ? -1 : a > b ? 1 : 0))
+    .slice(0, pairs.size - Math.ceil(DUPLICATE_TITLE_JACCARD * pairs.size) + 1);
+  const prefixes = new Map<IntelEvent, string[]>();
+  events.forEach((e, position) => {
+    prefixes.set(e, titlePrefix(titles.get(e)!));
+    for (const pair of prefixes.get(e)!) addPosition(titlePositions, pair, position);
   });
   const rawKey = (e: IntelEvent): string => rawKeys.get(e)!;
 
@@ -120,12 +151,12 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
 
     // 標題候選只需查共有 bigram 的事件；仍逐對驗證，不做傳遞閉包。
     const titleCandidates = new Set<number>();
-    for (const pair of titles.get(seed)!) {
+    for (const pair of prefixes.get(seed)!) {
       for (const position of titlePositions.get(pair) ?? []) titleCandidates.add(position);
     }
     for (const position of [...titleCandidates].sort((a, b) => a - b)) {
       const other = events[position];
-      if (!visited.has(other.id) && titleSimilarity(titles.get(seed)!, titles.get(other)!) >= 0.8 && !candidateIds.includes(other.id)) {
+      if (!visited.has(other.id) && isDuplicateTitle(titles.get(seed)!, titles.get(other)!) && !candidateIds.includes(other.id)) {
         candidateIds.push(other.id);
       }
     }

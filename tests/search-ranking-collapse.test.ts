@@ -61,8 +61,21 @@ describe("搜尋排序與標題重複收合", () => {
     expect(collapseSameIncident(events, net())).toHaveLength(events.length);
   });
 
-  it.each([["abcdef", 1], ["abcdefg", 2]] as const)("Jaccard 0.8 含邊界、低於門檻不收合：%s", (title, count) => {
-    expect(collapseSameIncident([event("a", "abcde"), event("b", title)], net())).toHaveLength(count);
+  it.each([["一二三四五六", 1], ["一二三四五六七", 2]] as const)("Jaccard 0.8 含邊界、低於門檻不收合：%s", (title, count) => {
+    expect(collapseSameIncident([event("a", "一二三四五"), event("b", title)], net())).toHaveLength(count);
+  });
+
+  it("官方資料的模板標題相同也不收合（不同地震可能同標題）", () => {
+    const quake = (id: string, time: string): IntelEvent => ({ ...event(id, "花蓮縣規模 4.5 地震"), timestamp: time,
+      source: { name: "中央氣象署", type: "cwa", datasetId: "E-A0015-001", recordRef: `quake:${id}`, fetchedAt: time } });
+    expect(collapseSameIncident([quake("q1", "2026-11-17T01:00:00Z"), quake("q2", "2026-11-17T09:00:00Z")], net())).toHaveLength(2);
+  });
+
+  it("英文新聞以單字比對：同篇轉載收合，不同新聞不收", () => {
+    const events = [event("a", "Trump meets Quad leaders, says alliance stronger than ever"),
+      event("b", "Trump meets Quad leaders, says alliance stronger than ever - CTWANT"),
+      event("c", "Quad leaders meet Trump amid trade tensions")];
+    expect(collapseSameIncident(events, net()).map(g => ids(g.members))).toEqual([["a", "b"], ["c"]]);
   });
 
   it("破折號後不是媒體名稱時保留標題內容", () => {
@@ -71,7 +84,7 @@ describe("搜尋排序與標題重複收合", () => {
   });
 
   it("標題相似也需全連接，不能透過第三者傳遞", () => {
-    const events = [event("b", "abcdefghijk"), event("a", "abcdefghij"), event("c", "bcdefghijkl")];
+    const events = [event("b", "一二三四五六七八九十甲"), event("a", "一二三四五六七八九十"), event("c", "二三四五六七八九十甲乙")];
     expect(collapseSameIncident(events, net()).map(g => ids(g.members))).toEqual([["b", "a"], ["c"]]);
   });
 
