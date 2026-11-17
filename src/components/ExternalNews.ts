@@ -67,6 +67,9 @@ export function createExternalNews(container: HTMLElement, onFocus: (id: string)
       })();
       cached = { expires: now + 600_000, result };
       requests.set(key, cached);
+      // 只共用進行中的請求；失敗結果不快取，下次搜尋重新查。
+      const entry = cached;
+      void result.then(r => { if (r.upstream === "error" && requests.get(key) === entry) requests.delete(key); });
     }
     render('<p class="empty" role="status">站外新聞載入中…</p>');
     const result = await cached.result;

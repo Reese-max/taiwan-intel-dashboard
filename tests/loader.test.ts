@@ -22,6 +22,17 @@ const evs: IntelEvent[] = [
   { ...base, id: "3", scope: "international", category: "資安", riskLevel: "critical" },
 ];
 
+describe("explainOutOfFilter 與解析後搜尋一致", () => {
+  it("同義詞命中不算篩選外，搜尋時間窗外會說明原因", () => {
+    const now = Date.parse("2026-11-17T12:00:00Z");
+    const base = { id: "e", title: "遠傳基地台修復", summary: "", category: "", riskLevel: "low" as const, region: "",
+      scope: "domestic" as const, source: { name: "測試", type: "manual", fetchedAt: "2026-11-16T00:00:00Z" } };
+    expect(explainOutOfFilter({ ...base, timestamp: "2026-11-16T00:00:00Z" } as never, { query: "最近的電信新聞", now })).toEqual([]);
+    expect(explainOutOfFilter({ ...base, timestamp: "2026-10-01T00:00:00Z" } as never, { query: "最近的電信新聞", now })).toEqual(["時間超出搜尋範圍（近 7 天）"]);
+    expect(explainOutOfFilter({ ...base, timestamp: "2026-11-16T00:00:00Z", title: "颱風" } as never, { query: "電信", now })).toEqual(["未含關鍵字「電信」"]);
+  });
+});
+
 describe("filterEvents", () => {
   it("filters by scope", () => {
     expect(filterEvents(evs, { scope: "domestic" }).map((e) => e.id)).toEqual(["1", "2"]);

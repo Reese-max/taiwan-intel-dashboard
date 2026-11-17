@@ -25,4 +25,10 @@ describe("自然語句搜尋解析", () => {
     expect(parseSearchQuery("查獲毒品").terms).toEqual(["查獲毒品"]);
     expect(parseSearchQuery(" ").expanded).toEqual([]);
   });
+
+  it("媒體名稱裡的時間詞與填充詞不被拆掉", () => {
+    expect(parseSearchQuery("今日新聞")).toMatchObject({ terms: ["今日新聞"], windowDays: null });
+    expect(parseSearchQuery("NOWnews今日新聞 毒品")).toMatchObject({ terms: ["NOWnews今日新聞", "毒品"], windowDays: null });
+    expect(parseSearchQuery("今日 毒品").windowDays).toBe(1);
+  });
 });

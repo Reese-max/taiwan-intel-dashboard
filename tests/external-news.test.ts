@@ -17,6 +17,20 @@ const setup = () => {
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); document.body.innerHTML = ""; });
 
 describe("站外即時新聞", () => {
+  it("失敗結果不快取，同一查詢下次會重新請求", async () => {
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce(Response.json({ upstream: "error", items: [] }))
+      .mockResolvedValueOnce(Response.json({ upstream: "ok", items: [item("颱風來襲停班停課")] }));
+    vi.stubGlobal("fetch", fetcher);
+    const { container, update } = setup();
+    await update("颱風", []);
+    expect(container.textContent).toContain("暫時無法使用");
+    await Promise.resolve();
+    await update("颱風", []);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(container.textContent).toContain("颱風來襲停班停課");
+  });
+
   it("顯示載入狀態、跳脫文字與連結，並沿用事件聚焦回呼", async () => {
     let resolve!: (response: Response) => void;
     vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(done => { resolve = done; })));

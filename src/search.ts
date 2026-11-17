@@ -1,22 +1,17 @@
 import type { IntelEvent } from "./types/event";
 import type { NetworkIndex } from "./data/network";
-import { parseSearchQuery } from "./search-query";
+import { parseSearchQuery, searchMismatch } from "./search-query";
 
 export function applySearchSubnet(events: IntelEvent[], net: NetworkIndex, query?: string): IntelEvent[] {
   if (!query?.trim()) return events;
-  const { groups: rawGroups, windowDays } = parseSearchQuery(query);
-  const groups = rawGroups.map(group => group.map(term => term.toLocaleLowerCase("zh-TW")));
+  const parsed = parseSearchQuery(query);
   const now = Date.now();
-  const eligible = windowDays === null ? events : events.filter(e => {
-    const timestamp = Date.parse(e.timestamp);
-    return timestamp >= now - windowDays * 86_400_000 && timestamp <= now;
-  });
-  if (!groups.length) return eligible;
+  const eligible = events.filter(e => searchMismatch(e, parsed, now) !== "time");
+  if (!parsed.groups.length) return eligible;
   const available = new Set(eligible.map((e) => e.id));
   const ids = new Set<string>();
   for (const e of eligible) {
-    const hay = `${e.title} ${e.summary} ${e.region} ${e.category} ${e.source.name}`.toLocaleLowerCase("zh-TW");
-    if (!groups.every(group => group.some(term => hay.includes(term)))) continue;
+    if (searchMismatch(e, parsed, now)) continue;
     ids.add(e.id);
     for (const r of net.related(e.id)) if (available.has(r.id)) ids.add(r.id);
   }
