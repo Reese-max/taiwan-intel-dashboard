@@ -35,7 +35,7 @@ describe("Google News 站外搜尋端點", () => {
     expect(url.origin).toBe("https://news.google.com");
     expect(url.searchParams.get("q")).toBe("電信 when:7d");
     expect(url.searchParams.get("ceid")).toBe("TW:zh-Hant");
-    expect(upstream.mock.calls[0][1].redirect).toBe("error");
+    expect(upstream.mock.calls[0][1].redirect).toBe("manual");
     expect(response.headers.get("cache-control")).toBe("public, max-age=300");
     expect(cache.put).toHaveBeenCalledOnce();
     expect(cache.put.mock.calls[0][1].headers.get("cache-control")).toBe("public, max-age=600");
@@ -56,11 +56,17 @@ describe("Google News 站外搜尋端點", () => {
   });
 
   it("上游 429、連線錯誤或非 RSS 仍回傳可降級的 200", async () => {
-    for (const failure of [() => new Response("限流", { status: 429 }), () => { throw new Error("連線中斷"); }, () => new Response("<html>錯誤頁</html>")]) {
+    const cases: [() => Response, string][] = [
+      [() => new Response("限流", { status: 429 }), "HTTP 429"],
+      [() => { throw new Error("連線中斷"); }, "連線中斷"],
+      [() => new Response("<html>錯誤頁</html>"), "上游不是 RSS"],
+      [() => new Response(null, { status: 302, headers: { location: "https://consent.google.com/ml?x=1" } }), "redirect 302 consent.google.com"],
+    ];
+    for (const [failure, detail] of cases) {
       upstream.mockImplementationOnce(failure);
       const response = await worker.fetch(request(), env);
       expect(response.status).toBe(200);
-      expect(await response.json()).toMatchObject({ upstream: "error", items: [] });
+      expect(await response.json()).toMatchObject({ upstream: "error", items: [], upstreamDetail: detail });
     }
     expect(cache.put).not.toHaveBeenCalled();
   });

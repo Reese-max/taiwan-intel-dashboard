@@ -60,17 +60,25 @@ export default {
     const timer = setTimeout(() => controller.abort(), 8000);
     let items = [];
     let upstream = "ok";
+    let upstreamDetail;
     try {
       const params = new URLSearchParams({ q: `${query} when:${days}d`, hl: "zh-TW", gl: "TW", ceid: "TW:zh-Hant" });
-      const response = await fetch(`https://news.google.com/rss/search?${params}`, { signal: controller.signal, redirect: "error" });
-      if (!response.ok) throw new Error("上游暫時無法使用");
+      const response = await fetch(`https://news.google.com/rss/search?${params}`, { signal: controller.signal, redirect: "manual" });
+      // 不跟隨轉址（上游寫死防 SSRF）；只回報狀態碼與轉址主機供診斷。
+      if (response.status >= 300 && response.status < 400) {
+        let host = "";
+        try { host = new URL(response.headers.get("location") || "").hostname; } catch { /* 無效 location */ }
+        throw new Error(`redirect ${response.status}${host ? ` ${host}` : ""}`);
+      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       items = parseRss(await response.text());
-    } catch {
+    } catch (error) {
       upstream = "error";
+      upstreamDetail = error?.name === "AbortError" ? "timeout" : String(error?.message || "error").slice(0, 80);
     } finally {
       clearTimeout(timer);
     }
-    const response = json({ query, days, fetchedAt: new Date().toISOString(), items, upstream }, 200, { "Cache-Control": "public, max-age=300" });
+    const response = json({ query, days, fetchedAt: new Date().toISOString(), items, upstream, ...(upstreamDetail ? { upstreamDetail } : {}) }, 200, { "Cache-Control": "public, max-age=300" });
     if (upstream === "ok" && cache) {
       const cached = response.clone();
       cached.headers.set("Cache-Control", "public, max-age=600");
