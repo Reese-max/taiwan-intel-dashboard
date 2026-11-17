@@ -1,4 +1,4 @@
 {
-  "sha": "45ab6970f75c255c1be69a0a13f285dd509eb21a",
-  "note": "Owner instructed on 2026-11-17 to plan and fix all source issues in order and chose in-site + live external search. main 45ab697 = #114 (rules normalization by default since the LLM model returns HTTP 410, retire 4 dead international feeds, one retry for transient official-source network errors) + #115 (natural-language search, topic synonyms, Pages advanced-mode Worker /api/search for live Google News; api/health and query.html stay 404). Both PRs passed test/build-preview/check/verify-preview; #115 preview runtime-verified /api/search. Release requires separate manifest PR checks and production smoke."
+  "sha": "aef47fe27b00c05285cf63239f78de0c9de2acfe",
+  "note": "Owner asked on 2026-11-18 to improve search precision and chose to expand only strong relations. main aef47fe = #117 (search expands only same-incident weight>=1.5 and manual follow-up edges; 台/臺 folded in matching and external dedupe; synonyms expand only for topic names; 電信 drops 通訊). Measured on the 2026-11-17 production snapshot: 毒品 related-expansion 128->36, 詐騙 49->4, telecom 12->4 hits. PR passed test/build-preview/check/verify-preview plus an independent Codex review. Release requires separate manifest PR checks and production smoke."
 }
