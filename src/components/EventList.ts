@@ -94,17 +94,14 @@ export function renderEventList(container: HTMLElement, items: EventListItem[], 
       ? item
       : { representative: item, members: [item], sourceCount: 1 };
     const e = group.representative;
-    const canExpand = group.members.length > 1 && group.sourceCount >= 2;
+    const canExpand = group.members.length > 1;
     const groupId = e.id;
     const isExpanded = expanded.has(groupId);
     const toggle = canExpand
-      ? `<button type="button" class="collapse-toggle" data-collapse="${esc(groupId)}" aria-expanded="${isExpanded}" title="展開同事件的其餘來源">🗂 收合 ${group.sourceCount} 源</button>`
+      ? `<button type="button" class="collapse-toggle" data-collapse="${esc(groupId)}" aria-expanded="${isExpanded}" title="展開同事件的其餘報導">🗂 收合 ${group.sourceCount >= 2 ? `${group.sourceCount} 源` : `${group.members.length} 則`}</button>`
       : "";
     const card = renderCard(e, toggle);
-    if (!canExpand) {
-      if (isCollapsedGroup(item) && group.members.length > 1) return group.members.map((member) => renderCard(member)).join("");
-      return card;
-    }
+    if (!canExpand) return card;
     return `<div class="collapsed-group" data-collapse-group="${esc(groupId)}">
       ${card}
       <ul class="collapse-members" ${isExpanded ? "" : "hidden"} aria-label="同事件其餘來源">
