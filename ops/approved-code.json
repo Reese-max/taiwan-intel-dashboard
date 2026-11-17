@@ -1,4 +1,4 @@
 {
-  "sha": "4c3645f78048ba23b917b71eb3cc54a6f70f95a3",
-  "note": "Owner instructed on 2026-11-17 to fix everything so scheduled updates deploy again. main 4c3645f = #108 (owner-authorized 2026-11-07, previously pending as PR #109) + #110 (test-only clock fix; approved build at 6484991 failed npm run check on the date-dependent agri test since 2026-11-10). #110 head a21a05d has the identical tree and passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
+  "sha": "45ab6970f75c255c1be69a0a13f285dd509eb21a",
+  "note": "Owner instructed on 2026-11-17 to plan and fix all source issues in order and chose in-site + live external search. main 45ab697 = #114 (rules normalization by default since the LLM model returns HTTP 410, retire 4 dead international feeds, one retry for transient official-source network errors) + #115 (natural-language search, topic synonyms, Pages advanced-mode Worker /api/search for live Google News; api/health and query.html stay 404). Both PRs passed test/build-preview/check/verify-preview; #115 preview runtime-verified /api/search. Release requires separate manifest PR checks and production smoke."
 }
