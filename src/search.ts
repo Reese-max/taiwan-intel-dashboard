@@ -1,6 +1,6 @@
 import type { IntelEvent } from "./types/event";
 import type { NetworkIndex } from "./data/network";
-import { parseSearchQuery, searchMismatch } from "./search-query";
+import { fold, parseSearchQuery, searchMismatch } from "./search-query";
 
 // 資料量測：同事件強度 1.5 多為同一案的不同報導，1.2–1.4 多為同城同類的別案，只帶前者與人工後續報導。
 const STRONG_INCIDENT_WEIGHT = 1.5;
@@ -24,7 +24,7 @@ export function applySearchSubnet(events: IntelEvent[], net: NetworkIndex, query
 }
 
 function titleBigrams(title: string): Set<string> {
-  const chars = [...title.toLocaleLowerCase("zh-TW").replace(/[\s\p{P}\p{S}]/gu, "")];
+  const chars = [...fold(title).replace(/[\s\p{P}\p{S}]/gu, "")];
   return new Set(chars.slice(1).map((char, index) => chars[index] + char));
 }
 

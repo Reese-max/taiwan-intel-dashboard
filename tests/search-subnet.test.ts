@@ -61,6 +61,10 @@ describe("解析後的站內搜尋", () => {
 });
 
 describe("站外標題與站內事件配對", () => {
+  it("台與臺視為同字判斷重複", () => {
+    expect(relateExternal({ title: "臺北工廠火災" }, [event("a", "台北工廠火災")]).duplicate).toBe(true);
+  });
+
   it("相似標題依相似度排序、最多三筆且標記重複", () => {
     const events = [event("a", "台北工廠火災消防搶救"), event("b", "台北工廠火災傷者送醫"),
       event("c", "台北工廠火災持續延燒"), event("d", "台北工廠火災交通管制"), event("x", "颱風接近東部海域")];

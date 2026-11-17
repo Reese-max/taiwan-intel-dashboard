@@ -38,7 +38,7 @@ export function parseSearchQuery(text: string): SearchQuery {
 }
 
 // 「臺北」與「台北」視為同字。
-const fold = (text: string) => text.toLocaleLowerCase("zh-TW").replaceAll("臺", "台");
+export const fold = (text: string) => text.toLocaleLowerCase("zh-TW").replaceAll("臺", "台");
 
 /** 事件是否符合解析後的搜尋：時間窗內，且每個詞（含同義詞）都命中。回傳不符原因，符合回 null。 */
 export function searchMismatch(e: IntelEvent, parsed: SearchQuery, now = Date.now()): "time" | "terms" | null {
