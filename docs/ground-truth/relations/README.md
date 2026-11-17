@@ -1,6 +1,6 @@
 # 關聯／地點 benchmark（#43）
 
-狀態：**`needs_review`，尚未建立人工 baseline**。已入庫 150 組真實新聞 pair 候選、40 筆地點草稿與 276 筆 metadata；`pairs-v1.jsonl`、`locations-v1.jsonl` 目前為空。AI 草稿與空白標註不會被當成人工 ground truth，不設 95% gate，也不宣告 CLEAN。
+狀態：**`needs_review`，尚未建立人工 baseline**。已入庫 150 組真實新聞 pair 候選、40 筆地點草稿與 276 筆 metadata；`pairs-v1.jsonl`、`locations-v1.jsonl` 目前為空。空白標註與 `agent-draft` 草稿不計分；`labeledBy=ai` 的定稿 AI 標註可代替人工計分（負責人 2026-11-17 核准），報告的 `counts.labelSources` 會列出標註來源組成，AI 標的 baseline 不得稱為人工 baseline。不設 95% gate，也不宣告 CLEAN。
 
 ## 資料與版本
 
@@ -63,7 +63,7 @@ pair label 保留 `same_event | different_event | follow_up | same_original_repo
 {"schema":"location-labels/1","event":"<eventId>","family":"<故事族群>","locationRole":"agency","locationPrecision":"city","region":"臺北市","evidence":"<來源 URL 與機關所在地／案發地判斷依據>","labeledAt":"2026-10-14T00:00:00Z","labeledBy":"human"}
 ```
 
-角色／精度值域重用 `geo-policy.mjs`。人工逐筆核對來源後，才可將候選移入標註集並填 `labeledBy=human`；AI 協助整理須保留 `agent-draft`。地點草稿的時間是草稿來源時間，不是人工覆核時間，提升時須重填。
+角色／精度值域重用 `geo-policy.mjs`。人工逐筆核對來源後，才可將候選移入標註集並填 `labeledBy=human`；AI 逐筆依來源判定後可移入標註集並填 `labeledBy=ai`（`notes` 記模型），只是整理、未逐筆判定的仍保留 `agent-draft`。地點草稿的時間是草稿來源時間，不是人工覆核時間，提升時須重填。
 
 同 family 固定 hash 到 `tuning/holdout`。可選 `benchmark:"tuning"|"holdout"` 使用已核准的指定 split；同 family、事件或完全相同來源 URL 不得跨 split，pair 與 location 也一起檢查。人工必須補足不同 URL 的同稿／同案隔離，runner 不會猜它們是同一故事。
 

@@ -26,6 +26,7 @@ import {
   LOCATION_SCHEMA,
   LOCATION_ROLES,
   LOCATION_PRECISIONS,
+  SCORED_LABEL_SOURCES,
   validateLocationRow,
   validatePairRow,
 } from "./lib/ground-truth-relations.mjs";
@@ -128,7 +129,10 @@ export function runBenchmark(argv = process.argv.slice(2)) {
   for (const { row, line, error } of leaks) report.errors[row.schema === LOCATION_SCHEMA ? "locations" : "pairs"].push({ line, error });
 
   const totalErrors = report.errors.pairs.length + report.errors.locations.length;
-  const hasHumanAnnotations = pairRows.some((row) => row.labeledBy === "human") || locationRows.some((row) => row.labeledBy === "human");
+  // 報告寫明標註來源組成，AI 標的 baseline 不會被誤讀成人工 baseline。
+  report.counts.labelSources = {};
+  for (const row of [...pairRows, ...locationRows]) report.counts.labelSources[row.labeledBy] = (report.counts.labelSources[row.labeledBy] || 0) + 1;
+  const hasHumanAnnotations = [...pairRows, ...locationRows].some((row) => SCORED_LABEL_SOURCES.has(row.labeledBy));
   report.status = totalErrors ? "invalid" : report.relation.evaluated || report.location?.role.total || report.location?.precision.total || hasHumanAnnotations ? "baseline" : "needs_review";
   if (totalErrors) process.exitCode = 1;
   const r = report.relation;
