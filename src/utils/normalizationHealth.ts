@@ -1,5 +1,6 @@
 export type NormalizationState =
   | "fully-enriched"      // 全數 AI 精修
+  | "rules-only"          // 全數規則正規化
   | "partial-degraded"     // 部分精修（部分輕量降級）
   | "failed-bulk-fallback" // 精修降級（全量輕量收錄）
   | "skipped-deliberate"   // 略過精修（刻意輕量模式）
@@ -86,6 +87,9 @@ export function evaluateDomesticNormalization(pipelineTwnews: any): ScopeNormali
   if (delivered === 0 && (rawUnique === 0 || raw === 0)) {
     state = "no-input";
     stateLabel = "無新聞進線";
+  } else if (p.normalizeMode === "rules") {
+    state = "rules-only";
+    stateLabel = "規則正規化";
   } else if (normalizeFailed && enriched === 0 && bulk > 0) {
     state = "failed-bulk-fallback";
     stateLabel = "AI 精修降級（全量輕量收錄）";
@@ -175,6 +179,9 @@ export function evaluateInternationalNormalization(
   if (delivered === 0 && raw === 0) {
     state = "no-input";
     stateLabel = "無國際新聞進線";
+  } else if (p.normalizeMode === "rules") {
+    state = "rules-only";
+    stateLabel = "規則正規化";
   } else if (normalizeFailed && enriched === 0 && bulk > 0) {
     state = "failed-bulk-fallback";
     stateLabel = "AI 精修降級（全量輕量收錄）";

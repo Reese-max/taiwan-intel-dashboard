@@ -330,7 +330,7 @@ export function deriveNewsProvenance(item, { fetchedAt, model } = {}) {
   };
 }
 
-function parseFeed(xml) {
+export function parseFeed(xml) {
   const items = [];
   const blocks = xml.match(/<(item|entry)[\s>][\s\S]*?<\/(item|entry)>/gi) || [];
   for (const b of blocks) {
