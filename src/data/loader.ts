@@ -1,5 +1,6 @@
 import type { IntelEvent, Scope, RiskLevel, NewsAuthority } from "../types/event";
 import { RISK_ORDER } from "../types/event";
+import { parseSearchQuery, searchMismatch } from "../search-query";
 
 export interface FilterOptions {
   scope?: Scope;
@@ -62,14 +63,12 @@ export function explainOutOfFilter(e: IntelEvent, opts: FilterOptions): string[]
       reasons.push(`時間超出近 ${opts.sinceDays} 天`);
     }
   }
-  if (opts.query) {
-    const q = opts.query.toLowerCase();
-    const title = (e.title || "").toLowerCase();
-    const summary = (e.summary || "").toLowerCase();
-    const region = (e.region || "").toLowerCase();
-    if (!title.includes(q) && !summary.includes(q) && !region.includes(q)) {
-      reasons.push(`未含關鍵字「${opts.query}」`);
-    }
+  if (opts.query?.trim()) {
+    // 與搜尋列表同一套解析（時間詞、同義詞），避免聚焦時把命中事件判成篩選外。
+    const parsed = parseSearchQuery(opts.query);
+    const mismatch = searchMismatch(e, parsed, now);
+    if (mismatch === "time") reasons.push(`時間超出搜尋範圍（近 ${parsed.windowDays} 天）`);
+    else if (mismatch === "terms") reasons.push(`未含關鍵字「${opts.query}」`);
   }
 
   return reasons;

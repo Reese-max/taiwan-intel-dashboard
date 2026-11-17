@@ -43,6 +43,17 @@ export function validateRemovedRouteResponse(status) {
   return status === 404;
 }
 
+export function validateSearchResponse(status, payload) {
+  return status === 200 && Array.isArray(payload?.items) && ["ok", "error"].includes(payload?.upstream);
+}
+
+async function fetchSearch(url) {
+  const response = await fetch(url, { headers: { "cache-control": "no-cache" } });
+  const payload = await response.json();
+  if (!validateSearchResponse(response.status, payload)) throw new Error("站外搜尋端點未回傳預期的 200 JSON");
+  return true;
+}
+
 async function fetchJson(url, attempts = 6) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -79,9 +90,10 @@ export async function smokeDeployed({
 } = {}) {
   const base = String(baseUrl).replace(/\/$/, "");
   const suffix = `?smoke=${encodeURIComponent(runId)}`;
-  const [provenance, domainCoverage] = await Promise.all([
+  const [provenance, domainCoverage, searchOk] = await Promise.all([
     fetchJson(`${base}/data/provenance.json${suffix}`),
     fetchJson(`${base}/data/domain-coverage.json${suffix}`),
+    fetchSearch(`${base}/api/search?q=${encodeURIComponent("電信")}&days=7`),
   ]);
   const removedRouteCount = (await Promise.all(REMOVED_ROUTES.map((route) =>
     fetchRemovedRoute(`${base}/${route}?smoke=${encodeURIComponent(runId)}`, route),
@@ -91,7 +103,7 @@ export async function smokeDeployed({
     domainCoverage,
   });
   if (!result.ok) throw new Error(result.errors.join("；"));
-  return { ...result, removedRouteCount };
+  return { ...result, removedRouteCount, searchOk };
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {

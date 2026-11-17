@@ -21,6 +21,7 @@ import { MapView, isMapDisplayable } from "./components/MapView";
 import type { IntelEvent, NewsAuthority, RiskLevel, Scope } from "./types/event";
 import { emptyListHint } from "./utils/emptyHint";
 import { applySearchSubnet } from "./search";
+import { createExternalNews } from "./components/ExternalNews";
 import { filterTriageEvents, loadTriageAcked, saveTriageAcked, type TriageSortMode } from "./utils/triage";
 import { corroborationOf } from "./utils/corroboration";
 import { collapseSameIncident } from "./utils/collapse";
@@ -115,6 +116,7 @@ app.innerHTML = `
       <div id="relation-notice" class="relation-notice" role="status" aria-live="polite" hidden></div>
       <div id="relationgraph" class="relation-graph" hidden></div>
       <div id="eventlist"></div>
+      <section id="external-news" aria-label="站外即時新聞" aria-live="polite" hidden></section>
     </section>
     <aside class="col-side">
       <details class="side-section" data-side-section="topclusters" open>
@@ -155,6 +157,7 @@ app.innerHTML = `
   </nav>`;
 
 const mobileMedia = window.matchMedia(MOBILE_LAYOUT_QUERY);
+const updateExternalNews = createExternalNews(document.getElementById("external-news")!, focusEvent);
 
 function revealListFromMapHint(): void {
   if (mobileMedia.matches) {
@@ -729,6 +732,7 @@ async function refresh(): Promise<void> {
   const requestId = ++refreshRequestId;
   const s = getState();
   const eventList = document.getElementById("eventlist")!;
+  void updateExternalNews(s.query, cache[s.scope] ?? []);
   const relationNoticeEl = document.getElementById("relation-notice");
 
   // 同步載入小型靜態 manifest（僅首載或重新整理時），鎖定同版快照；
@@ -882,6 +886,7 @@ async function refresh(): Promise<void> {
   if (requestId !== refreshRequestId) return;
   const all = cache[s.scope]!;
   const net = netCache[s.scope]!;
+  void updateExternalNews(s.query, all);
   snapshotLoaded(cohortByScope[s.scope] ?? null);
   syncFilterBar(document.getElementById("filterbar")!, s, all);
   const byId = new Map(all.map((e) => [e.id, e] as const));
