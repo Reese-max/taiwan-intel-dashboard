@@ -355,6 +355,9 @@ describe("官方直連來源（原 Twinkle 批次）", () => {
 
   it("fetchDirectOfficialSources 透過 wants 開關呼叫新註冊來源", async () => {
     const calls: string[] = [];
+    // 農產品 fixture 是 2026-11-03 資料；超過 7 天會退回全量多打一次 fetch，故固定時鐘。
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-10T01:00:00Z"));
     vi.stubGlobal("fetch", async (url: string) => {
       calls.push(url);
       if (url.includes("hispark.hccg.gov.tw")) return fixtureResponse("official-parking-129136.json")();
@@ -378,6 +381,7 @@ describe("官方直連來源（原 Twinkle 批次）", () => {
       expect(calls).toHaveLength(2);
     } finally {
       vi.unstubAllGlobals();
+      vi.useRealTimers();
     }
   });
 });
