@@ -208,6 +208,8 @@ writeFileSync(
 // 全球情報中心（globe.gl）移到 globe.html；intel.html 保留為別名。
 copyFileSync("static/intel.html", `${OUT}/globe.html`);
 copyFileSync("static/intel.html", `${OUT}/intel.html`);
+// Pages 進階模式沿用既有靜態檔複製流程，僅攔截搜尋端點。
+for (const name of ["_worker.js", "_routes.json"]) copyFileSync(`static/${name}`, `${OUT}/${name}`);
 
 // Cloudflare Pages 安全標頭（_headers）。單一寬鬆但有意義的 CSP：全頁適用（含用 unpkg
 // globe.gl + inline script 的 globe.html），仍鎖 frame-ancestors/object-src/base-uri/default-src。

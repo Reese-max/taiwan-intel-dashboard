@@ -1,8 +1,8 @@
 # 台灣情報儀表板（Taiwan Intel Dashboard）
 
-聚合台灣國內外多源公開資料，以 LLM 正規化、風險評級、關聯分析，呈現為互動式情報視覺化網站。
+聚合台灣國內外多源公開資料，以規則正規化、風險評級、關聯分析，呈現為互動式情報視覺化網站；搜尋可解析自然語句並即時補上站外 Google News。
 
-- 狀態：**運作中**（依 [ops/operating-state.json](ops/operating-state.json) 標記，復原收據見 [docs/operations/receipts/restore-2026-11-17.md](docs/operations/receipts/restore-2026-11-17.md)；AI 摘要仍為統計備援；資料新鮮度與來源健康須以線上 provenance 和最近排程紀錄確認）
+- 狀態：**運作中**（依 [ops/operating-state.json](ops/operating-state.json) 標記，復原收據見 [docs/operations/receipts/restore-2026-11-17.md](docs/operations/receipts/restore-2026-11-17.md)；新聞事件以規則正規化，AI 只用於摘要；資料新鮮度與來源健康須以線上 provenance 和最近排程紀錄確認）
 - 網址：<https://taiwan-intel-dashboard.pages.dev>
 - 營運狀態契約：[`ops/operating-state.json`](ops/operating-state.json)｜[`docs/operations/operating-state.md`](docs/operations/operating-state.md)
 - 復原程序：[`docs/operations/pause-and-restore.md`](docs/operations/pause-and-restore.md)
@@ -12,9 +12,9 @@
 
 | 來源 | 內容 | 說明 |
 |---|---|---|
-| `rss` | 國際新聞 | 443 feeds → LLM 正規化＋風險評級 → 滾動窗口累積（5 天/250 筆）|
+| `rss` | 國際新聞 | 每 30 分鐘抓 expanded 層約 456 feeds（另有 1027 個 bulk 層未排程）→ 規則映射＋風險評級 → 滾動窗口累積（5 天）|
 | `gdelt` | GDELT 全球新聞索引 | GDELT DOC 近 24 小時補充訊號；失敗只告警，不覆蓋 RSS 主線|
-| `twnews` | 台灣社會新聞 | 警政關鍵字預篩（食安/衛生/環境/資安來源走各自主題關鍵字）→ LLM 精修＋輕量收錄，保留窗 5 天 |
+| `twnews` | 台灣社會新聞 | 警政關鍵字預篩（食安/衛生/環境/資安來源走各自主題關鍵字）→ 規則收錄，保留窗 5 天 |
 | `police` | 警政/治安 | 直連警政署犯罪資料統計週報；含 hourly 歷史、來源樹 |
 | `missing` | 失蹤人口 | 直連警政署公開協尋名單 |
 | `cwa` | 氣象（地震/警特報）| 需 `CWA_API_KEY` |
@@ -28,16 +28,24 @@
 | `taipower` | 台電系統供需 | 每 10 分鐘更新 |
 | `wra` | 水利署水庫水情 | 收錄蓄水率低於或等於 70% 的水庫 |
 | `wraRiver` | 水利署即時河川水位 | 測站警戒值彙整至縣市 |
+| `parkingHsinchu` `parkingTaoyuan` `economy` `agriPrices` `healthFacilities` `fireStats` `socialPopulation` `education` `financeDerivatives` `laborStats` | 停車、經濟指標、農產價格、健保院所、消防、人口、教育、期交所、失業率 | 官方開放資料直連；每日重建時刷新，屬參考層、不進事件統計 |
 
-失敗容錯：單源失敗沿用上一版快照（carry-over），不以空資料覆蓋。
+失敗容錯：單源失敗沿用上一版快照（carry-over），不以空資料覆蓋；台電、海巡、外交部遇連線重設／逾時會等 2 秒重試一次。
+
+新聞正規化：預設 `NEWS_NORMALIZE_MODE=rules`（規則映射，不呼叫 LLM；provenance 標 `normalizeMode: "rules"`）。設 `llm` 才啟用舊的批次 LLM 精修。AI 摘要不受影響。
 
 管線分層：`source-plan.mjs` 管理來源選擇與 exclusive 規則；`direct-official-sources.mjs` 集中直連官方來源 registry 與 fail-soft 執行；各 `fetch-*.mjs` 只負責來源 adapter；`fetch-live.mjs` 僅組合事件、快照與 provenance。
 
 官方警察／檢調案件新聞亦由 `twnews` 收錄：新北、嘉義市警局與桃園地檢署採 Google News site 查詢（地檢署子站與桃園警局擋境外 IP，GitHub runner 連不上；其他地檢署 GN 標題多為頁名或清冊，未加入）；高雄警局直接解析官方新聞列表。行政公告、公益勸募、職缺與純宣導由共用相關性閘門排除。2026-11-05 候選清單見 [`docs/reports/2026-11-05-police-source-candidates.json`](docs/reports/2026-11-05-police-source-candidates.json)（可用 `node scripts/_audit-candidates.mjs <該檔>` 重跑稽核）；尚未全面涵蓋全國案件。
 
-完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」。移除第三方 MCP 後，採購、司法、空品、停車、經濟等原 MCP 來源不再刷新，待改成官方直連後再恢復。
+完整性界線：主畫面是「可驗證、可排序的新鮮事件層」，不是把所有政府資料集灌成事件。每輪另產生 `public/data/domain-coverage.json`，將領域分成「已整合、參考層、僅查詢、缺口」。移除第三方 MCP 後，停車、經濟、農業、消防等已改為官方直連（見上表）；採購、司法、空品仍是缺口。
 
 情報網人工更正：維護者確認過的錯誤關聯／地點角色／後續關係記於 [`docs/curation/correlation-overrides.jsonl`](docs/curation/correlation-overrides.jsonl)（JSONL、隨程式碼 review）；每次 rebuild 自動重放，來源內容或規則版本變動時記錄自動轉 `needs_review`（fail closed），矛盾記錄全部標 `conflict` 不套用。格式與流程見 [`docs/curation/README.md`](docs/curation/README.md)。
+
+## 搜尋
+
+- 搜尋框可輸入一句話，例如「最近的電信新聞」：自動拆出時間（今天＝1 天、最近／本週＝7 天、本月＝30 天、近 N 天）並去掉填充詞，再依 `src/search-topics.ts` 擴充主題同義詞（電信→中華電信、5G、基地台…）。多個詞時每個詞都要命中，命中後帶出關聯新聞網。
+- 同時呼叫 `/api/search`（`static/_worker.js`，Cloudflare Pages 進階模式，`_routes.json` 只攔這一條路徑）即時查 Google News，列在「站外即時新聞」區，與站內重複的報導會隱藏，相似的站內事件以按鈕連回關聯網。上游失敗或限流時只顯示提示，站內結果照常。
 
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
@@ -81,11 +89,12 @@ npm run report:news-sources    # 新聞來源漏斗貢獻報表
 
 | 變數 | 用途 |
 |---|---|
-| `LLM_API_KEY/BASE_URL/MODEL` | 主 LLM（正規化＋摘要）|
+| `LLM_API_KEY/BASE_URL/MODEL` | 主 LLM（摘要；`NEWS_NORMALIZE_MODE=llm` 時也用於正規化）|
 | `LLM_FALLBACK_*` | primary 失敗時備援端點（可選）|
 | `SUMMARY_*` | 摘要獨立端點（可選）|
 | `INTL_RECALIBRATE_DAYS` | 國際快取評級生命週期（預設 3 天，0 停用）|
 | `GDELT_QUERY/TIMESPAN/MAX_RECORDS/TIMEOUT_MS` | GDELT DOC 補充查詢、時間窗、筆數上限與逾時（可選）|
+| `NEWS_NORMALIZE_MODE` | 新聞正規化模式：`rules`（預設）或 `llm` |
 | `NEWS_RETENTION_DAYS` | 台灣新聞保留窗（預設 5 天）|
 | `CWA_API_KEY` | 中央氣象署 API key |
 
