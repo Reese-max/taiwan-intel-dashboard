@@ -58,7 +58,7 @@ describe("applySearchSubnet", () => {
       related(id: string) {
         if (id === "a")
           return [
-            { id: "b", type: "same-incident", weight: 1, why: "b 是關聯" },
+            { id: "b", type: "same-incident", weight: 1.5, why: "b 是關聯" },
             { id: "c", type: "same-topic", weight: 1, why: "c 不在 events 中" },
           ];
         return [];
