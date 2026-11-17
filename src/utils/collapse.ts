@@ -2,6 +2,8 @@ import type { NetworkIndex } from "../data/network";
 import type { IntelEvent } from "../types/event";
 import { RISK_ORDER } from "../types/event";
 import { extractPublisherKey, extractChannelKey, extractRawReportKey } from "./corroboration";
+import { fold } from "../search-query";
+import { titleBigrams, titleSimilarity } from "./title";
 
 export interface CollapsedGroup {
   representative: IntelEvent;
@@ -25,7 +27,16 @@ function betterRepresentative(a: IntelEvent, b: IntelEvent, originalIndex: Map<s
   return (originalIndex.get(a.id) ?? 0) <= (originalIndex.get(b.id) ?? 0) ? a : b;
 }
 
-function areVerifiableDuplicates(a: IntelEvent, b: IntelEvent, rawKey: (e: IntelEvent) => string): boolean {
+function duplicateTitle(e: IntelEvent): Set<string> {
+  const publishers = [e.source.publisherName ?? "", e.source.name.replace(/^GN\s+/u, "")].map(name => fold(name.trim()));
+  const title = fold(e.title)
+    .replace(/\s*[|｜][^|｜]+[|｜][^|｜]+$/u, "")
+    .replace(/\s*[-–—]\s*([^-–—]+)$/u, (suffix, publisher: string) =>
+      publishers.includes(publisher.trim()) || /^(?:ctwant|中央社|自由時報|聯合新聞網|聯合報|中時新聞網|中國時報|公視新聞網|華視新聞網|民視新聞網|三立新聞網|ettoday新聞雲|tvbs新聞網|nownews今日新聞|yahoo奇摩新聞)$/u.test(publisher.trim()) ? "" : suffix);
+  return titleBigrams(title);
+}
+
+function areVerifiableDuplicates(a: IntelEvent, b: IntelEvent, rawKey: (e: IntelEvent) => string, titles: Map<IntelEvent, Set<string>>): boolean {
   const keyA = rawKey(a);
   const keyB = rawKey(b);
   if (keyA && keyB && keyA === keyB && !keyA.startsWith("event:")) {
@@ -34,7 +45,7 @@ function areVerifiableDuplicates(a: IntelEvent, b: IntelEvent, rawKey: (e: Intel
   if (a.source.recordRef && b.source.recordRef && a.source.recordRef === b.source.recordRef) {
     return true;
   }
-  return false;
+  return titleSimilarity(titles.get(a)!, titles.get(b)!) >= 0.8;
 }
 
 function hasDirectSameIncident(aId: string, bId: string, net: NetworkIndex): boolean {
@@ -45,9 +56,9 @@ function hasDirectSameIncident(aId: string, bId: string, net: NetworkIndex): boo
   return false;
 }
 
-function canJoinGroup(candidate: IntelEvent, currentMembers: IntelEvent[], net: NetworkIndex, rawKey: (e: IntelEvent) => string): boolean {
+function canJoinGroup(candidate: IntelEvent, currentMembers: IntelEvent[], net: NetworkIndex, rawKey: (e: IntelEvent) => string, titles: Map<IntelEvent, Set<string>>): boolean {
   for (const member of currentMembers) {
-    if (areVerifiableDuplicates(candidate, member, rawKey)) continue;
+    if (areVerifiableDuplicates(candidate, member, rawKey, titles)) continue;
     if (hasDirectSameIncident(candidate.id, member.id, net)) continue;
     // 只要與組內任一成員無直接佐證且非可驗證重複紀錄，即不得藉由第三者傳遞收合
     return false;
@@ -63,6 +74,8 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
   const rawKeys = new Map<IntelEvent, string>();
   const rawKeyPositions = new Map<string, number[]>();
   const recordRefPositions = new Map<string, number[]>();
+  const titles = new Map<IntelEvent, Set<string>>();
+  const titlePositions = new Map<string, number[]>();
   const addPosition = (index: Map<string, number[]>, key: string, position: number): void => {
     const positions = index.get(key);
     if (positions) positions.push(position);
@@ -73,6 +86,9 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
     const key = rawKeys.get(e)!;
     if (key && !key.startsWith("event:")) addPosition(rawKeyPositions, key, position);
     if (e.source.recordRef) addPosition(recordRefPositions, e.source.recordRef, position);
+    const pairs = duplicateTitle(e);
+    titles.set(e, pairs);
+    for (const pair of pairs) addPosition(titlePositions, pair, position);
   });
   const rawKey = (e: IntelEvent): string => rawKeys.get(e)!;
 
@@ -102,6 +118,18 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
       }
     }
 
+    // 標題候選只需查共有 bigram 的事件；仍逐對驗證，不做傳遞閉包。
+    const titleCandidates = new Set<number>();
+    for (const pair of titles.get(seed)!) {
+      for (const position of titlePositions.get(pair) ?? []) titleCandidates.add(position);
+    }
+    for (const position of [...titleCandidates].sort((a, b) => a - b)) {
+      const other = events[position];
+      if (!visited.has(other.id) && titleSimilarity(titles.get(seed)!, titles.get(other)!) >= 0.8 && !candidateIds.includes(other.id)) {
+        candidateIds.push(other.id);
+      }
+    }
+
     // 再依權重取得 same-incident 候選鄰居
     const relatedIncident = net.related(seed.id)
       .filter((r) => r.type === "same-incident" && byId.has(r.id) && !visited.has(r.id))
@@ -119,7 +147,7 @@ export function collapseSameIncident(events: IntelEvent[], net: NetworkIndex): C
       const cand = byId.get(cid);
       if (!cand) continue;
 
-      if (canJoinGroup(cand, groupMembers, net, rawKey)) {
+      if (canJoinGroup(cand, groupMembers, net, rawKey, titles)) {
         groupMembers.push(cand);
         visited.add(cid);
       }

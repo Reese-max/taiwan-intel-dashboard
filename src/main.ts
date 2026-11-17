@@ -1001,7 +1001,7 @@ async function refresh(): Promise<void> {
     showOutOfFilterRelated = false;
     display = applySearchSubnet(filterEvents(all, s), net, s.query);
     listGroups = collapseSameIncident(display, net);
-    collapsedGroupCount = listGroups.filter((g) => g.members.length > 1 && g.sourceCount >= 2).length;
+    collapsedGroupCount = listGroups.filter((g) => g.members.length > 1).length;
   }
 
   const emptyMessage =

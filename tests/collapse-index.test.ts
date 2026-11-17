@@ -24,6 +24,8 @@ describe("collapse indexes preserve grouping semantics without pairwise URL work
   it("bounds URL reads linearly for distinct normalized URLs and no relations", () => {
     let reads = 0;
     const events = Array.from({ length: 200 }, (_, i) => event(`unique-${i}`));
+    // 使用互不相似的標題，讓此測試繼續只驗證 URL 索引的讀取成本。
+    events.forEach((e, i) => { e.title = String.fromCodePoint(0x4e00 + i).repeat(8); });
     for (const e of events) {
       const value = e.source.url;
       Object.defineProperty(e.source, "url", { enumerable: true, configurable: true, get: () => { reads++; return value; } });
