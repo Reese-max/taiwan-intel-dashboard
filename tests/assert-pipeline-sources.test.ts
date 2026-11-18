@@ -132,9 +132,32 @@ describe("assertRequiredPipelineSources", () => {
     expect(() => assertRequiredPipelineSources({ ...pipeline, [name]: { ...failed, carryOver: { ...failed.carryOver, count: 0 } } }, [name, "international"], { now })).toThrow();
   });
 
-  it.each(["twnews", "international"])("never relaxes %s even with carry-over", (name) => {
+  it.each(["twnews"])("never relaxes %s even with carry-over", (name) => {
     const failed = { ok: false, carryOver: { count: 7, lastSuccessAt: new Date().toISOString() } };
     expect(() => assertRequiredPipelineSources({ [name]: failed, cwa: { ok: true } }, [name, "cwa"])).toThrow(`Required pipeline source ${name} failed`);
+  });
+
+  it("allows international carry-over only within 24 hours and emits an Actions warning", () => {
+    const now = Date.parse("2026-09-29T03:00:00Z");
+    const lastSuccessAt = "2026-09-28T03:00:00Z";
+    const international = { ok: false, error: "RSS offline", carryOver: { count: 7, lastSuccessAt } };
+    const pipeline = { international, twnews: { ok: true } };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.stubEnv("GITHUB_ACTIONS", "true");
+    try {
+      expect(() => assertRequiredPipelineSources(pipeline, ["international", "twnews"], { now })).not.toThrow();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("international"));
+      expect(log).toHaveBeenCalledWith(expect.stringContaining("::warning title=來源沿用舊資料::international"));
+      expect(() => assertRequiredPipelineSources(pipeline, ["international", "twnews"], { now: now + 1 })).toThrow("Required pipeline source international failed");
+      expect(() => assertRequiredPipelineSources({
+        ...pipeline, international: { ...international, carryOver: { count: 0, lastSuccessAt } },
+      }, ["international", "twnews"], { now })).toThrow("Required pipeline source international failed");
+      expect(() => assertRequiredPipelineSources(pipeline, ["international"], { now })).toThrow("All required pipeline sources failed");
+    } finally {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+    }
   });
 
   it("rejects an entirely failed required set even with recent carry-over", () => {
@@ -181,6 +204,11 @@ describe("assertRequiredPipelineSources", () => {
 });
 
 describe("assertInternationalFeedCoverage", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
   it("accepts international status with enough live feeds and raw items", () => {
     expect(() =>
       assertInternationalFeedCoverage(
@@ -190,22 +218,44 @@ describe("assertInternationalFeedCoverage", () => {
     ).not.toThrow();
   });
 
-  it("rejects international status with too few live feeds", () => {
+  it("warns on too few live feeds without blocking a successful accumulated snapshot", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.stubEnv("GITHUB_ACTIONS", "true");
     expect(() =>
       assertInternationalFeedCoverage(
         { ok: true, count: 20, okFeeds: 4, rawCount: 120 },
         { minFeeds: 10, minRawItems: 50 },
       ),
-    ).toThrow("International feed coverage too low: 4/10 live feeds");
+    ).not.toThrow();
+    expect(warn).toHaveBeenCalledWith("International feed coverage too low: 4/10 live feeds");
+    expect(log).toHaveBeenCalledWith("::warning title=國際來源覆蓋不足::International feed coverage too low: 4/10 live feeds");
   });
 
-  it("rejects international status with too few raw items", () => {
+  it("warns on too few raw items without blocking a successful accumulated snapshot", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.stubEnv("GITHUB_ACTIONS", "true");
     expect(() =>
       assertInternationalFeedCoverage(
         { ok: true, count: 3, okFeeds: 15, rawCount: 12 },
         { minFeeds: 10, minRawItems: 50 },
       ),
-    ).toThrow("International raw item count too low: 12/50");
+    ).not.toThrow();
+    expect(warn).toHaveBeenCalledWith("International raw item count too low: 12/50");
+    expect(log).toHaveBeenCalledWith("::warning title=國際來源覆蓋不足::International raw item count too low: 12/50");
+  });
+
+  it("only annotates Actions runs and leaves failed sources to the required-source gate", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.stubEnv("GITHUB_ACTIONS", "false");
+    assertInternationalFeedCoverage({ ok: true, okFeeds: 0, rawCount: 0 }, { minFeeds: 10, minRawItems: 50 });
+    expect(warn).toHaveBeenCalled();
+    expect(log).not.toHaveBeenCalled();
+    warn.mockClear();
+    assertInternationalFeedCoverage({ ok: false }, { minFeeds: 10, minRawItems: 50 });
+    expect(warn).not.toHaveBeenCalled();
   });
 });
 

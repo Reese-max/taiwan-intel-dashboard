@@ -578,11 +578,12 @@ export async function run() {
 
   // --- 國內快照（last-good carry-over：單源失敗則沿用舊快照中該源事件，保留舊 fetchedAt）---
   const oldDomestic = readOld("domestic.json");
+  const oldIntl = readOld("international.json");
   const previousProvenance = readJson("provenance.json", { sources: [] });
   for (const [name, policy] of Object.entries(SOURCE_CARRYOVER_POLICIES)) {
     if (status[name]?.ok !== false) continue;
     const evidence = sourceCarryoverEvidence({
-      events: oldDomestic, provenance: previousProvenance, now: nowMs, ...policy,
+      events: policy.evidenceFromEvents ? oldIntl : oldDomestic, provenance: previousProvenance, now: nowMs, ...policy,
     });
     if (evidence) status[name].carryOver = evidence;
   }
@@ -754,7 +755,6 @@ export async function run() {
   }
 
   // --- 國際快照（carry-over：失敗或未抓則沿用舊快照；EXCLUSIVE 且未選則清空）---
-  const oldIntl = readOld("international.json");
   const freshIntlEvents = [...(status.international?.ok ? intl : []), ...(status.mofa?.ok ? mofa : [])];
   const intlOk = freshIntlEvents.length > 0;
   const dropIntlStale = dropStale(status.international) && dropStale(status.mofa);

@@ -5,13 +5,21 @@ export const SOURCE_CARRYOVER_POLICIES = Object.freeze({
   missing: { datasetId: "14420", maxHours: 72 },
   cwa: { datasetId: "E-A0015-001", maxHours: 24 },
   cwaWarnings: { datasetId: "W-C0033-001", maxHours: 24 },
+  // 旅遊警示每輪重抓且同檔輸出，不能拿它的時間冒充國際新聞上次成功。
+  international: { evidenceFromEvents: true, excludeDatasetId: "mofa-travel-warning", maxHours: 24 },
 });
 
-export function sourceCarryoverEvidence({ events = [], provenance = {}, datasetId, maxHours, now = Date.now() } = {}) {
-  const count = events.filter((event) => event?.source?.datasetId === datasetId).length;
+export function sourceCarryoverEvidence({ events = [], provenance = {}, datasetId, evidenceFromEvents = false, excludeDatasetId, maxHours, now = Date.now() } = {}) {
+  if (evidenceFromEvents) events = events.filter((event) => event?.source?.datasetId !== excludeDatasetId);
+  const count = evidenceFromEvents ? events.length : events.filter((event) => event?.source?.datasetId === datasetId).length;
   const sources = Array.isArray(provenance?.sources) ? provenance.sources : [];
   const source = sources.find((item) => item?.datasetId === datasetId);
-  const lastSuccessAt = source?.lastSuccessAt || (source?.stale === true ? "" : source?.fetchedAt);
+  const lastSuccessAt = evidenceFromEvents
+    ? events.reduce((latest, event) => {
+      const fetchedAt = event?.source?.fetchedAt;
+      return Date.parse(fetchedAt) > (latest ? Date.parse(latest) : -Infinity) ? fetchedAt : latest;
+    }, undefined)
+    : source?.lastSuccessAt || (source?.stale === true ? "" : source?.fetchedAt);
   const carryOver = { count, lastSuccessAt };
   return canCarryOverSource({ ok: false, carryOver }, { now, maxHours }) ? carryOver : null;
 }

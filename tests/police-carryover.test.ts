@@ -11,6 +11,39 @@ const lastSuccessAt = "2026-09-28T03:00:00Z";
 // A stale snapshot can still have a bounded, genuine last success; its newer
 // fetchedAt alone must never renew the carry-over window.
 describe("bounded source carry-over", () => {
+  it("uses the latest international event fetchedAt across feeds, not provenance or event order", () => {
+    const policy = SOURCE_CARRYOVER_POLICIES.international;
+    expect(policy?.maxHours).toBe(24);
+    const events = [
+      { source: { datasetId: "international-news", fetchedAt: lastSuccessAt } },
+      { source: { datasetId: "gdelt-doc", fetchedAt: "2026-09-28T10:00:00+08:00" } },
+      { source: { fetchedAt: "invalid" } },
+    ];
+    const provenance = { sources: [{ lastSuccessAt: new Date(now).toISOString() }] };
+    expect(sourceCarryoverEvidence({ events, provenance, ...policy, now })).toEqual({ count: 3, lastSuccessAt });
+    expect(sourceCarryoverEvidence({ events, provenance, ...policy, now: now + 1 })).toBeNull();
+  });
+
+  it("ignores per-run MOFA travel warnings when dating international news", () => {
+    const events = [
+      { source: { datasetId: "international-news", fetchedAt: lastSuccessAt } },
+      { source: { datasetId: "mofa-travel-warning", fetchedAt: new Date(now).toISOString() } },
+    ];
+    const policy = SOURCE_CARRYOVER_POLICIES.international;
+    expect(sourceCarryoverEvidence({ events, ...policy, now })).toEqual({ count: 1, lastSuccessAt });
+    expect(sourceCarryoverEvidence({ events: [events[1]], ...policy, now })).toBeNull();
+  });
+
+  it.each([
+    [],
+    [{}],
+    [{ source: { fetchedAt: "invalid" } }],
+    [{ source: { fetchedAt: new Date(now + 1).toISOString() } }],
+    [{ source: { fetchedAt: lastSuccessAt } }, { source: { fetchedAt: new Date(now + 1).toISOString() } }],
+  ].map((events) => ({ events })))("rejects international evidence without a valid, non-future latest timestamp: %j", ({ events }) => {
+    expect(sourceCarryoverEvidence({ events, ...SOURCE_CARRYOVER_POLICIES.international, now })).toBeNull();
+  });
+
   it.each([
     ["police", "13166", 336],
     ["missing", "14420", 72],

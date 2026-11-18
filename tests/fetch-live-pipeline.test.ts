@@ -694,6 +694,43 @@ describe("fetch-live pipeline integration (CWA)", () => {
 });
 
 describe("fetch-live bounded carry-over provenance", () => {
+  it("records international evidence and preserves the old file across fetch failures", async () => {
+    const dataDir = setupEnv();
+    process.env.SOURCES = "rss,cwa";
+    process.env.EXCLUSIVE = "1";
+    process.env.LLM_API_KEY = "";
+    process.env.NVIDIA_API_KEY = "";
+    process.env.SUMMARY_API_KEY = "";
+    const lastSuccessAt = new Date(Date.now() - 3_600_000).toISOString();
+    const old = makeCarryOverTwnews();
+    const events = [0, 1].map((i) => ({
+      ...old, id: `intl-carry-${i}`, scope: "international",
+      source: { ...old.source, datasetId: "international-news", fetchedAt: i === 0 ? lastSuccessAt : new Date(Date.now() - 7_200_000).toISOString() },
+    }));
+    const original = JSON.stringify(events, null, 2);
+    writeFileSync(join(dataDir, "international.json"), original);
+    vi.doMock("../scripts/lib/fetch-rss.mjs", async (importOriginal) => ({
+      ...await importOriginal<typeof import("../scripts/lib/fetch-rss.mjs")>(),
+      fetchRssItems: async () => { throw new Error("international RSS offline"); },
+    }));
+    const { unexpected } = makeMockFetch();
+    try {
+      const run = await importRun();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        await run();
+        const provenance = readJson(join(dataDir, "provenance.json"));
+        expect(provenance.pipeline.international).toMatchObject({
+          ok: false, error: "international RSS offline", carryOver: { count: 2, lastSuccessAt },
+        });
+        expect(provenance.pipeline.cwa.ok).toBe(true);
+        expect(readFileSync(join(dataDir, "international.json"), "utf8")).toBe(original);
+      }
+      expect(unexpected).toEqual([]);
+    } finally {
+      vi.doUnmock("../scripts/lib/fetch-rss.mjs");
+    }
+  }, 60_000);
+
   it("preserves lastSuccessAt and stale for all four sources across repeated failures", async () => {
     const dataDir = setupEnv();
     process.env.SOURCES = "cwa,police,missing";
