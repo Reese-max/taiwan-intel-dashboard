@@ -151,7 +151,8 @@ export function buildTwNewsEvents({
     const item = {
       ...event,
       description: event?.description || event?.summary,
-      hint: event?.categoryBasis?.startsWith("hint:") ? event.categoryBasis.slice(5) : undefined,
+      // 非 hint 來源（rule、llm）以類別還原主題漏斗，避免食安等事件改走警政漏斗被誤刪。
+      hint: event?.categoryBasis?.startsWith("hint:") ? event.categoryBasis.slice(5) : event?.category,
     };
     return (
       !isNonEventNoise(item) &&

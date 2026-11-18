@@ -25,13 +25,14 @@ describe("twnews carry-over retention", () => {
       { ...news("taiwan", timestamp, { name: "香港01" }), title: "歌手遭槍擊恐嚇", summary: "台灣歌手急報警" },
       { ...news("food", timestamp, { name: "Singtaousa" }), title: "高雄校園午餐食安連環爆 三杯雞驚見完整青蛙", categoryBasis: "hint:食安" },
       { ...news("crime", timestamp), title: "外資大砍持股 公司涉詐遭搜索" },
+      { ...news("llm-food", timestamp), title: "搶購潮後爆食安疑慮 業者宣布回收雞蛋", summary: "搶購潮後爆食安疑慮 業者宣布回收雞蛋", category: "食安", categoryBasis: "llm" },
       { ...news("tvbs", timestamp, { name: "TVBS新聞網" }), title: "超市偷竊案" },
       { ...news("official", timestamp, { authority: "official" }), title: "搶先體驗新設施" },
       { ...news("other-dataset", timestamp, { datasetId: "13166", name: "香港01" }), title: "搶攻新市場" },
       { ...news("international", timestamp, { name: "香港01" }), title: "超市偷竊案", scope: "international" },
     ];
     const result = buildTwNewsEvents({ oldNews, twnews: "ok" in twnewsStatus && twnewsStatus.ok ? oldNews : [], twnewsStatus, now: Date.parse("2026-11-18T00:00:00.000Z") });
-    expect(result.map((e: { id: string }) => e.id)).toEqual(["taiwan", "food", "crime", "tvbs", "official", "other-dataset", "international"]);
+    expect(result.map((e: { id: string }) => e.id)).toEqual(["taiwan", "food", "crime", "llm-food", "tvbs", "official", "other-dataset", "international"]);
   });
   // figurative-overseas regression end
 

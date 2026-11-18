@@ -320,7 +320,8 @@ const STRONG_TAIWAN_MARKER_RE = /[台臺]灣|中華民國|[台臺]北|新北|桃
 
 export function isOverseasLocalNews(item) {
   if (!isDomesticMediaNews(item)) return false;
-  const publisher = sourceText(item?.source?.name ?? item?.source?.publisherName ?? item?.source).trim();
+  // RSS 原始項目把發行者放在頂層 publisherName，source 只是 feed 標籤。
+  const publisher = sourceText(item?.publisherName ?? item?.source?.name ?? item?.source?.publisherName ?? item?.source).trim();
   const text = `${item?.title || ""} ${item?.description || ""} ${item?.summary || ""}`;
   return OVERSEAS_PUBLISHER_RE.test(publisher) &&
     !STRONG_TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""));
@@ -328,7 +329,7 @@ export function isOverseasLocalNews(item) {
 
 // ponytail: 有限詞表只遮掉明確比喻片段；未涵蓋的歧義留待人工稽核，不封鎖整篇財經新聞。
 const FIGURATIVE_NEWS_RE = new RegExp([
-  "搶攻|搶進|搶搭|搶食|搶客|搶票|搶才|搶先|搶購|搶眼|搶反彈|搶(?:航太)?商機|搶席次|高薪搶人|搶人大戰|開搶|快搶|瘋搶",
+  "搶攻|搶進|搶搭|搶食|搶客(?!人)|搶票|搶才|搶先|搶購|搶眼|搶反彈|搶(?:航太)?商機|搶席次|高薪搶人|搶人大戰|開搶|快搶|瘋搶",
   "衝刺|刺激|諷刺|被打槍|投顧第一槍|外資殺人不眨眼|殺最兇|殺價",
   "(?:狠|大)?砍(?:單|價|評等|持股|預算|成零元)",
   "(?:狠|大)砍(?=(?:「[^」]{1,12}」|[0-9]{4,6})?(?:近|逾)?[0-9.]+(?:萬)?(?:張|股|億)|AI支出|英特爾持股)",
