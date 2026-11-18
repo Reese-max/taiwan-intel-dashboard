@@ -46,7 +46,13 @@ export function searchMismatch(e: IntelEvent, parsed: SearchQuery, now = Date.no
     const timestamp = Date.parse(e.timestamp);
     if (!(timestamp >= now - parsed.windowDays * 86_400_000 && timestamp <= now)) return "time";
   }
-  const hay = fold(`${e.title} ${e.summary} ${e.region} ${e.category} ${e.source.name}`);
-  const hit = parsed.groups.every(group => group.some(term => hay.includes(fold(term))));
+  // 機關新聞稿摘要常附機關署名（如「…交通警察大隊」），主題比對時一併去掉。
+  const content = fold(`${e.title} ${(e.summary ?? "").replaceAll(e.source.name, "")} ${e.region} ${e.category}`);
+  const withSource = `${content} ${fold(e.source.name)}`;
+  // 每組首詞就是使用者輸入的詞；主題組只搜內容，具體詞仍可搜尋媒體或機關名。
+  const hit = parsed.groups.every(group => {
+    const hay = Object.hasOwn(SEARCH_TOPICS, group[0]) ? content : withSource;
+    return group.some(term => hay.includes(fold(term)));
+  });
   return hit ? null : "terms";
 }
