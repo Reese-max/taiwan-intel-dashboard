@@ -171,6 +171,9 @@ describe("國內新聞比喻與境外發行者", () => {
     ["台中生意糾紛 兄弟互砍", "治安"],
     ["台中男生意失敗搶銀樓", "治安"],
     ["搶劫銀行 搶走客戶存款", "治安"],
+    ["台中投資人遭砍十多刀送醫", "治安"],
+    ["台中男子遭砍倒在門市前", "治安"],
+    ["台中男子搶銀行客戶現金", "治安"],
   ])("財經語境的真案件保留：%s", (title, hint) => {
     const item = { title, description: title, hint, source: "經濟日報" };
     expect(isRelevantNewsItem(item)).toBe(true);
@@ -207,6 +210,8 @@ describe("國內新聞比喻與境外發行者", () => {
     "美籍男子持日本刀砍人",
     "刑事局破獲跨境運毒集團 查扣泰國大麻",
     "北檢偵辦日本進口大麻案 起訴3人",
+    "高市破獲日本大麻走私案",
+    "雄檢偵辦日本大麻走私案",
   ])("大紀元總站地點不明或在台灣就保留：%s", (title) => {
     expect(isRelevantNewsItem({ title, description: `${title} 大紀元`, source: "大紀元", hint: "治安" })).toBe(true);
   });
