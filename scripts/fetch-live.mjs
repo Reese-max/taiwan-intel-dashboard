@@ -224,6 +224,8 @@ function readJson(name, fallback) {
 export async function run() {
   loadDotEnv();
   const useLlmNormalization = process.env.NEWS_NORMALIZE_MODE === "llm";
+  // 國際可單獨開 LLM（INTL_NORMALIZE_MODE），國內新聞維持規則正規化。
+  const useLlmIntl = (process.env.INTL_NORMALIZE_MODE || process.env.NEWS_NORMALIZE_MODE) === "llm";
   const nowMs = Date.now();
   const nowIso = new Date(nowMs).toISOString();
   const status = {};
@@ -389,10 +391,10 @@ export async function run() {
       // LLM 僅精修有界候選池；全量原文由輕量 mapper 收錄，避免來源擴充後批次數線性爆增。
       const enrichItems = rawItems.slice(0, intlCfg.maxEvents * 2);
       // 規則模式只重用既有精修快取，不呼叫 LLM；其餘全量走輕量映射。
-      let enriched = useLlmNormalization ? [] : [...new Set(partitionByCache(enrichItems, "international", priorIntl).reused)];
+      let enriched = useLlmIntl ? [] : [...new Set(partitionByCache(enrichItems, "international", priorIntl).reused)];
       let normalizeError;
       try {
-        if (useLlmNormalization) enriched = await normalizeInternational(enrichItems, {
+        if (useLlmIntl) enriched = await normalizeInternational(enrichItems, {
           max: intlCfg.maxEvents,
           priorById: priorIntl,
           priorityFeedLabels: generalFeedLabels,
@@ -413,14 +415,14 @@ export async function run() {
       status.international = {
         ok: true,
         // LLM 故障仍誠實標記；bulk 可讓本輪資料繼續更新，不把供應端成功誤判成來源失敗。
-        ...(!useLlmNormalization ? { normalizeMode: "rules" } : {}),
-        normalizeFailed: useLlmNormalization && (Boolean(normalizeError) || intlNormalizeFailed()),
+        ...(!useLlmIntl ? { normalizeMode: "rules" } : {}),
+        normalizeFailed: useLlmIntl && (Boolean(normalizeError) || intlNormalizeFailed()),
         ...(normalizeError ? { normalizeError } : {}),
-        ...(useLlmNormalization && lastIntlNormalizeSkippedBatches > 0 ? { normalizeSkippedBatches: lastIntlNormalizeSkippedBatches } : {}),
+        ...(useLlmIntl && lastIntlNormalizeSkippedBatches > 0 ? { normalizeSkippedBatches: lastIntlNormalizeSkippedBatches } : {}),
         count: intl.length,
         enriched: enriched.length,
         bulk: bulk.length,
-        enrichInputCount: useLlmNormalization ? enrichItems.length : 0,
+        enrichInputCount: useLlmIntl ? enrichItems.length : 0,
         rawCount: rawItems.length,
         rssRawCount: rss.items.length,
         gdeltRawCount: gdelt.ok ? gdelt.items.length : 0,
@@ -436,7 +438,7 @@ export async function run() {
       console.log(`國際新聞：${intl.length} 筆（LLM 精修／快取 ${enriched.length}＋輕量 ${bulk.length}；LLM 輸入 ${status.international.enrichInputCount}／原文 ${rawItems.length}）`);
     } catch (e) {
       status.international = { ok: false, error: e.message, feeds: feedStatus,
-        ...(!useLlmNormalization ? { normalizeMode: "rules", normalizeFailed: false } : {}) };
+        ...(!useLlmIntl ? { normalizeMode: "rules", normalizeFailed: false } : {}) };
       console.error(`國際失敗：${e.message}`);
     }
   } else status.international = { skipped: true };

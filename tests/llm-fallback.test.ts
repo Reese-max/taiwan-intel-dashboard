@@ -166,6 +166,20 @@ describe("primary→fallback LLM 備援（C1）", () => {
     });
   });
 
+  it("MiniMax 主端點關閉推理，避免整批正規化逾時", async () => {
+    process.env.LLM_API_KEY = "minimax-key";
+    process.env.LLM_BASE_URL = "https://api.minimax.io/v1";
+    process.env.LLM_MODEL = "MiniMax-M3";
+    const fetchMock = vi.fn(async () => okCompletion("{}"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await chat([{ role: "user", content: "正規化測試" }]);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({
+      model: "MiniMax-M3",
+      thinking: { type: "disabled" },
+    });
+  });
+
   it("同一供應商被配置為 primary、summary、fallback 時不重複打失敗端點", async () => {
     const base = "https://single-provider-20260929.test/v1";
     process.env.LLM_API_KEY = "same-key";

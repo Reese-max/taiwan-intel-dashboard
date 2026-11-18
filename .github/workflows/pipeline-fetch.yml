@@ -77,14 +77,16 @@ jobs:
 
       - name: 抓取即時資料
         env:
-          # The legacy primary key now returns HTTP 401 in live runs. Use the
-          # already verified hosted model directly, with the same concurrency
-          # as the former fallback so normalization does not increase load.
-          LLM_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          LLM_BASE_URL: https://integrate.api.nvidia.com/v1
-          LLM_MODEL: nvidia/nemotron-3-super-120b-a12b
+          # NVIDIA Nemotron returned HTTP 410 (retired). International news is
+          # normalized by MiniMax-M3 (thinking disabled, ~15s per 10-item batch);
+          # domestic news stays rule-based (NEWS_NORMALIZE_MODE unset).
+          LLM_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          LLM_BASE_URL: https://api.minimax.io/v1
+          LLM_MODEL: MiniMax-M3
+          INTL_NORMALIZE_MODE: "llm"
+          INTL_NORMALIZE_BATCH: "10"
           LLM_MAX_CONCURRENCY: "2"
-          LLM_TIMEOUT_MS: "45000"
+          LLM_TIMEOUT_MS: "60000"
           LLM_MAX_RETRIES: "1"
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           # Match the reviewed model to NVIDIA's public hosted API. The old
