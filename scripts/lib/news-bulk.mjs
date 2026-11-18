@@ -319,7 +319,7 @@ const OVERSEAS_PUBLISHER_RE = /^(?:香港01|Sing Tao Daily 星島日報加拿大
 const STRONG_TAIWAN_MARKER_RE = /[台臺]灣|中華民國|[台臺]北|新北|桃園|[台臺]中|[台臺]南|高雄|基隆|新竹|苗栗|彰化|南投|雲林|嘉義|屏東|宜蘭|花蓮|[台臺]東|澎湖|金門|馬祖|連江縣|林口|二林|淡水|板橋|新莊|中壢|八里|內埔|國人|兩岸|(?:來|在|赴|返|入|駐|全)[台臺]|[台臺](?:男|女|商|海)/;
 
 // 大紀元總站兼報台灣與海外：只在標題有海外地名時剔除，地點不明者保留（不用國籍、「中共」，台灣共諜／外籍嫌犯案也會用）。
-const OVERSEAS_PLACE_HINT_RE = /美(?:國|機場|警)|聯邦調查局|FBI|加國|亞省|卑詩|安省|魁省|多倫多|溫哥華|堪培拉|雪梨|悉尼|墨爾本|紐約|洛杉磯|舊金山|三藩市|夏威夷|檀香山|HPD|中國(?:男子|女子|留學生)|西藏|新疆|香港|澳門/;
+const OVERSEAS_PLACE_HINT_RE = /(?<!和)美(?:國|機場|警)|聯邦調查局|FBI|加國|亞省|卑詩|安省|魁省|多倫多|溫哥華|堪培拉|雪梨|悉尼|墨爾本|紐約|洛杉磯|舊金山|三藩市|夏威夷|檀香山|HPD|中國(?:男子|女子|留學生)|西藏|新疆|香港|澳門/;
 
 export function isOverseasLocalNews(item) {
   if (!isDomesticMediaNews(item)) return false;
@@ -328,8 +328,11 @@ export function isOverseasLocalNews(item) {
   const text = `${item?.title || ""} ${item?.description || ""} ${item?.summary || ""}`;
   if (STRONG_TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""))) return false;
   if (OVERSEAS_PUBLISHER_RE.test(publisher)) return true;
-  const title = String(item?.title || "");
-  return publisher === "大紀元" && (FOREIGN_PLACE_RE.test(title) || OVERSEAS_PLACE_HINT_RE.test(title));
+  if (publisher !== "大紀元") return false;
+  // 國籍（日本籍、美籍）只說明人，不代表事件在海外；台灣市級簡稱（北市、中市）視為台灣。
+  const title = String(item?.title || "").replace(/[一-鿿]{1,4}籍/g, " ");
+  if (/(?:北|桃|竹|中|嘉|南)市/.test(title)) return false;
+  return FOREIGN_PLACE_RE.test(title) || OVERSEAS_PLACE_HINT_RE.test(title);
 }
 
 // ponytail: 有限詞表只遮掉明確比喻片段；未涵蓋的歧義留待人工稽核，不封鎖整篇財經新聞。
@@ -344,7 +347,7 @@ const FIGURATIVE_NEWS_RE = new RegExp([
 const BUSINESS_CONTEXT_RE = /外資|投信|自營商|法人|賣超|買超|[台臺]股|美股|股價|股市|股東|股王|大盤|ETF|漲停|跌停|殖利率|營收|財報|財測|盤前|盤後|期貨|持股|萬張|商機|生意|市占|訂單|年薪|加薪|[0-9.]+\s*(?:兆|億)/;
 const BUSINESS_FIGURATIVE_RE = /砍(?!人|傷|死|殺|頭)|搶(?!劫|案|奪|匪|走|錢|救|手機|包)|(?<!砍|搶|槍|刺)殺(?!人|害|死|傷|童|妻|夫|警|嬰)|屠殺|爆炸(?=開局|性|式)|萬金破案/g;
 // 有實際暴力或司法證據就不當比喻（生意糾紛遭砍十多刀、男子搶銀行）。
-const VIOLENCE_EVIDENCE_RE = /刀|槍|送醫|受傷|輕傷|重傷|身亡|喪命|死亡|警方|員警|警察|嫌犯|涉嫌|逮捕|落網|起訴|判刑|判決|羈押|送辦|報案|被害|行搶|搶銀行|搶超商/;
+const VIOLENCE_EVIDENCE_RE = /男子|女子|男童|女童|婦人|老翁|老婦|歹徒|搶匪|竊賊|刀|槍|送醫|受傷|輕傷|重傷|身亡|喪命|死亡|警方|員警|警察|嫌犯|涉嫌|逮捕|落網|起訴|判刑|判決|羈押|送辦|報案|被害|行搶|搶銀行|搶超商/;
 // 移民署新聞網會轉載一般財經新聞，雖是官方來源仍套用比喻判斷。
 const IMMIGRATION_NEWS_SOURCE_RE = /移民署|移民新聞|新住民全球新聞網/;
 
