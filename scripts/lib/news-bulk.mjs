@@ -329,8 +329,8 @@ export function isOverseasLocalNews(item) {
   if (STRONG_TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""))) return false;
   if (OVERSEAS_PUBLISHER_RE.test(publisher)) return true;
   if (publisher !== "大紀元") return false;
-  // 國籍（日本籍、美籍）只說明人，不代表事件在海外；台灣市級簡稱（北市、中市）視為台灣。
-  if (/(?:北|桃|竹|中|嘉|南)市/.test(String(item?.title || ""))) return false;
+  // 總站兼報台灣：台灣機關（刑事局、地檢署）、市級簡稱（北市）、檢方簡稱（北檢）都算台灣；國籍（日本籍）只說明人。
+  if (TAIWAN_MARKER_RE.test(text) || /(?:北|桃|竹|中|嘉|南)市|(?:北|士林|板橋|新北|桃|新竹|苗栗|中|彰|投|雲|嘉|南|橋頭|高|屏|宜|花|東|澎|金)檢/.test(text)) return false;
   const title = String(item?.title || "").replace(/[一-鿿]{1,4}籍|日本刀|武士刀/g, " ");
   return FOREIGN_PLACE_RE.test(title) || OVERSEAS_PLACE_HINT_RE.test(title);
 }
@@ -343,11 +343,14 @@ const FIGURATIVE_NEWS_RE = new RegExp([
   "(?:狠|大)砍(?=(?:「[^」]{1,12}」|[0-9]{4,6})?(?:近|逾)?[0-9.]+(?:萬)?(?:張|股|億)|AI支出|英特爾持股)",
   "外資(?:再)?砍(?=[0-9.]+億)|(?:聯發科|輝達|英特爾)(?:TPU)?也中槍",
 ].join("|"), "g");
-// 財經語境的砍、搶、殺多是比喻（外資續砍台股、會搶聯發科生意、外資殺紅眼）；搶劫、砍傷、殺害等案件用語保留。
-const BUSINESS_CONTEXT_RE = /外資|投信|自營商|法人|賣超|買超|[台臺]股|美股|股價|股市|股東|股王|大盤|ETF|漲停|跌停|殖利率|營收|財報|財測|盤前|盤後|期貨|持股|萬張|商機|生意|市占|訂單|年薪|加薪|[0-9.]+\s*(?:兆|億)/;
-const BUSINESS_FIGURATIVE_RE = /砍(?!人|傷|死|殺|頭|斷)|搶(?!劫|案|奪|匪|走|錢|救|手機|包)|(?<!砍|搶|槍|刺)殺(?!人|害|死|傷|童|妻|夫|警|嬰)|屠殺|爆炸(?=開局|性|式)|萬金破案/g;
-// 有實際暴力或司法證據就不當比喻（生意糾紛遭砍十多刀、男子搶銀行）。
-const VIOLENCE_EVIDENCE_RE = /男子|女子|男童|女童|婦人|老翁|老婦|歹徒|搶匪|竊賊|刀|槍|送醫|受傷|輕傷|重傷|身亡|喪命|死亡|警方|員警|警察|嫌犯|涉嫌|逮捕|落網|起訴|判刑|判決|羈押|送辦|報案|被害|行搶|搶銀行|搶超商/;
+// 財經比喻只認市場主詞（外資續砍、投信大砍、外資殺紅眼）或市場受詞（砍6.5萬張、搶商機），
+// 不用「生意」等泛用語境，避免誤刪生意糾紛砍人、搶銀樓等真案件。
+const MARKET_FIGURATIVE_RE = new RegExp([
+  "(?<=(?:外資|投信|自營商|法人|機構|資金|投資人|國家隊)[^，。！？ 　]{0,6})(?:砍|殺)(?!人|傷|死|害|斷|頭)",
+  "砍(?!人|傷|死|殺|頭|斷)(?=[^，。！？ 　]{0,8}(?:持股|萬張|[0-9]張|[0-9]檔|億|兆|[台臺]股|ETF|門市|據點|產能|支出|預測|評等))",
+  "搶(?!劫|案|奪|匪|走)(?=[^，。！？ 　]{0,10}(?:生意|商機|訂單|市場|市占|客戶|資料中心|基層|人才|灘|反彈))",
+  "能搶(?=[？?])|殺(?=紅眼|盤|低|進殺出)|爆炸(?=開局|性成長|式成長)|萬金破案",
+].join("|"), "g");
 // 移民署新聞網會轉載一般財經新聞，雖是官方來源仍套用比喻判斷。
 const IMMIGRATION_NEWS_SOURCE_RE = /移民署|移民新聞|新住民全球新聞網/;
 
@@ -355,7 +358,7 @@ function withoutFigurativeNewsEvidence(item) {
   if (!isDomesticMediaNews(item) && !IMMIGRATION_NEWS_SOURCE_RE.test(sourceText(item?.source))) return item;
   const strip = (value) => {
     let text = String(value || "").replace(FIGURATIVE_NEWS_RE, " ");
-    if (BUSINESS_CONTEXT_RE.test(text) && !VIOLENCE_EVIDENCE_RE.test(text)) text = text.replace(BUSINESS_FIGURATIVE_RE, " ");
+    text = text.replace(MARKET_FIGURATIVE_RE, " ");
     if (/賣超|ETF|持股/.test(text)) text = text.replace(/大屠殺/g, " ");
     if (/選情|選戰|議員|席次/.test(text)) text = text.replace(/[0-9]+搶[0-9]+/g, " ");
     return text;
