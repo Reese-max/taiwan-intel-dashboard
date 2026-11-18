@@ -319,7 +319,7 @@ const OVERSEAS_PUBLISHER_RE = /^(?:香港01|Sing Tao Daily 星島日報加拿大
 const STRONG_TAIWAN_MARKER_RE = /[台臺]灣|中華民國|[台臺]北|新北|桃園|[台臺]中|[台臺]南|高雄|基隆|新竹|苗栗|彰化|南投|雲林|嘉義|屏東|宜蘭|花蓮|[台臺]東|澎湖|金門|馬祖|連江縣|林口|二林|淡水|板橋|新莊|中壢|八里|內埔|國人|兩岸|(?:來|在|赴|返|入|駐|全)[台臺]|[台臺](?:男|女|商|海)/;
 
 // 大紀元總站兼報台灣與海外：只在標題有海外地名時剔除，地點不明者保留（不用國籍、「中共」，台灣共諜／外籍嫌犯案也會用）。
-const OVERSEAS_PLACE_HINT_RE = /(?<!和)美(?:國|機場|警)|聯邦調查局|FBI|加國|亞省|卑詩|安省|魁省|多倫多|溫哥華|堪培拉|雪梨|悉尼|墨爾本|紐約|洛杉磯|舊金山|三藩市|夏威夷|檀香山|HPD|中國(?:男子|女子|留學生)|西藏|新疆|香港|澳門/;
+const OVERSEAS_PLACE_HINT_RE = /(?<!和)美(?:國|機場|警)|聯邦調查局|FBI|加國|亞省|卑詩|安省|魁省|多倫多|溫哥華|堪培拉|雪梨|悉尼|墨爾本|紐約|洛杉磯|舊金山|三藩市|夏威夷|檀香山|HPD|中國(?:男子|女子|留學生)|西藏|新疆|香港|澳門|州|郡|斯特/;
 
 export function isOverseasLocalNews(item) {
   if (!isDomesticMediaNews(item)) return false;
@@ -342,7 +342,12 @@ const FIGURATIVE_NEWS_RE = new RegExp([
   "(?:狠|大)?砍(?:單|價|評等|持股|預算|成零元)",
   "(?:狠|大)砍(?=(?:「[^」]{1,12}」|[0-9]{4,6})?(?:近|逾)?[0-9.]+(?:萬)?(?:張|股|億)|AI支出|英特爾持股)",
   "外資(?:再)?砍(?=[0-9.]+億)|(?:聯發科|輝達|英特爾)(?:TPU)?也中槍",
+  // 選戰、演藝、消費、球賽的「搶、砍、殺」（正式站 2026-11-19 實見漏網）。
+  "搶(?:鏡|戲|C位|獎|功|主導權|經營權|大單|愛心|曬|跑|訂|買|打卡|吸)|搶(?![劫奪走])[^，。！？ 　]{0,4}(?:票|席)|搶開(?=[^，。！？ 　]{0,6}支票)|(?:限時|準時)搶",
+  "(?<![遭被])砍(?=[0-9０-９]{1,3}分(?!鐘))|砍(?=目標價|福利(?!社)|[^，。！？ 　]{0,2}行程)|大砍它|殺人事件(?=[^《》]{0,12}》)|殺人誅心|相愛相殺",
 ].join("|"), "g");
+// 「搶救、搶命」在車禍火警等真事件裡常是唯一的關鍵字，全文有傷亡或事故跡象才當證據。
+const REAL_RESCUE_RE = /撞|跌|摔|倒下|中風|職災|工安|燒|燙|墜|溺|送醫|不治|命危|傷|亡|死|倒地|輾|OHCA|心跳|火|爆|救回|救出|受困|昏迷|中毒|意外|車禍|警|消防/;
 // 財經比喻只認市場主詞（外資續砍、投信大砍、外資殺紅眼）或市場受詞（砍6.5萬張、搶商機），
 // 不用「生意」等泛用語境，避免誤刪生意糾紛砍人、搶銀樓等真案件。
 const MARKET_FIGURATIVE_RE = new RegExp([
@@ -356,8 +361,10 @@ const IMMIGRATION_NEWS_SOURCE_RE = /移民署|移民新聞|新住民全球新聞
 
 function withoutFigurativeNewsEvidence(item) {
   if (!isDomesticMediaNews(item) && !IMMIGRATION_NEWS_SOURCE_RE.test(sourceText(item?.source))) return item;
+  const realRescue = REAL_RESCUE_RE.test(`${item?.title || ""} ${item?.description || item?.summary || ""}`);
   const strip = (value) => {
     let text = String(value || "").replace(FIGURATIVE_NEWS_RE, " ");
+    if (!realRescue) text = text.replace(/搶(?:救|命|時間)/g, " ");
     text = text.replace(MARKET_FIGURATIVE_RE, " ");
     if (/賣超|ETF|持股/.test(text)) text = text.replace(/大屠殺/g, " ");
     if (/選情|選戰|議員|席次/.test(text)) text = text.replace(/[0-9]+搶[0-9]+/g, " ");
