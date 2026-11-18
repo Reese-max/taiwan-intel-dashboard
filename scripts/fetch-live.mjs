@@ -36,6 +36,8 @@ import { carryOver } from "./lib/carry-over.mjs";
 import {
   isNonEventNoise,
   isPoliceNewsNoise,
+  isFigurativeNewsNoise,
+  isOverseasLocalNews,
   isRelevantNewsItem,
   buildNewsRelevanceAudit,
   mapBulkInternationalNews,
@@ -146,10 +148,16 @@ export function buildTwNewsEvents({
 } = {}) {
   const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
   const keep = (event) => {
-    const item = event?.summary && !event?.description ? { ...event, description: event.summary } : event;
+    const item = {
+      ...event,
+      description: event?.description || event?.summary,
+      hint: event?.categoryBasis?.startsWith("hint:") ? event.categoryBasis.slice(5) : undefined,
+    };
     return (
       !isNonEventNoise(item) &&
       !isPoliceNewsNoise(item) &&
+      !isFigurativeNewsNoise(item) &&
+      !isOverseasLocalNews(item) &&
       shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now })
     );
   };

@@ -307,6 +307,53 @@ function sourceText(source) {
   ].filter(Boolean).join(" ");
 }
 
+function isDomesticMediaNews(item) {
+  const datasetId = item?.source?.datasetId ?? item?.datasetId;
+  return item?.scope !== "international" && (!datasetId || datasetId === "tw-news") &&
+    item?.official !== true && item?.source?.authority !== "official";
+}
+
+// 只認發行者完整名稱，不讓 TVB 命中 TVBS；「大紀元」總站也報台灣新聞（如桃檢殯葬駭客案），只列香港版。
+const OVERSEAS_PUBLISHER_RE = /^(?:香港01|Sing Tao Daily 星島日報加拿大|星島頭條|Singtaousa|加拿大星島日報|on\.cc東網|澳門廣播電視股份有限公司|澳門日報|澳門力報|澳門特別行政區政府入口網站|dotdotnews|巴士的報|RTHK News|明報(?:新聞網)?|香港政府資訊中心|香港經濟日報HKET|香港文匯報|大公文匯網|香港商报|東方日報|TVB|大紀元時報香港|華人今日網|澳洲看新闻)$/i;
+// 不使用海關、移工、外籍、港人、國內等各地通用詞，也不使用 feed query 的台灣標籤。
+const STRONG_TAIWAN_MARKER_RE = /[台臺]灣|中華民國|[台臺]北|新北|桃園|[台臺]中|[台臺]南|高雄|基隆|新竹|苗栗|彰化|南投|雲林|嘉義|屏東|宜蘭|花蓮|[台臺]東|澎湖|金門|馬祖|連江縣|林口|二林|淡水|板橋|新莊|中壢|八里|內埔|國人|兩岸|(?:來|在|赴|返|入|駐|全)[台臺]|[台臺](?:男|女|商|海)/;
+
+export function isOverseasLocalNews(item) {
+  if (!isDomesticMediaNews(item)) return false;
+  const publisher = sourceText(item?.source?.name ?? item?.source?.publisherName ?? item?.source).trim();
+  const text = `${item?.title || ""} ${item?.description || ""} ${item?.summary || ""}`;
+  return OVERSEAS_PUBLISHER_RE.test(publisher) &&
+    !STRONG_TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""));
+}
+
+// ponytail: 有限詞表只遮掉明確比喻片段；未涵蓋的歧義留待人工稽核，不封鎖整篇財經新聞。
+const FIGURATIVE_NEWS_RE = new RegExp([
+  "搶攻|搶進|搶搭|搶食|搶客|搶票|搶才|搶先|搶購|搶眼|搶反彈|搶(?:航太)?商機|搶席次|高薪搶人|搶人大戰|開搶|快搶|瘋搶",
+  "衝刺|刺激|諷刺|被打槍|投顧第一槍|外資殺人不眨眼|殺最兇|殺價",
+  "(?:狠|大)?砍(?:單|價|評等|持股|預算|成零元)",
+  "(?:狠|大)砍(?=(?:「[^」]{1,12}」|[0-9]{4,6})?(?:近|逾)?[0-9.]+(?:萬)?(?:張|股|億)|AI支出|英特爾持股)",
+  "外資(?:再)?砍(?=[0-9.]+億)|(?:聯發科|輝達|英特爾)(?:TPU)?也中槍",
+].join("|"), "g");
+
+function withoutFigurativeNewsEvidence(item) {
+  if (!isDomesticMediaNews(item)) return item;
+  const strip = (value) => {
+    let text = String(value || "").replace(FIGURATIVE_NEWS_RE, " ");
+    if (/賣超|ETF|持股/.test(text)) text = text.replace(/大屠殺/g, " ");
+    if (/選情|選戰|議員|席次/.test(text)) text = text.replace(/[0-9]+搶[0-9]+/g, " ");
+    return text;
+  };
+  const title = strip(item?.title);
+  const description = strip(item?.description || item?.summary);
+  if (title === String(item?.title || "") && description === String(item?.description || item?.summary || "")) return item;
+  return { ...item, title, description };
+}
+
+export function isFigurativeNewsNoise(item) {
+  const stripped = withoutFigurativeNewsEvidence(item);
+  return stripped !== item && !isRelevantNewsItem(stripped);
+}
+
 const IMMIGRATION_NEWS_SOURCE_RE = /移民署|移民新聞|新住民全球新聞網/;
 const IMMIGRATION_LIFESTYLE_RE =
   /百人百聲|TWAC|文化交流|文化體驗|文化鵲橋|七夕|職涯|親子活動|親子連結|體驗營|課程|講座|宣導|說明會|報名|抽獎|好禮|得獎名單|表揚|頒獎|影音新聞|廉政動畫|療癒|暢談|扎根|便民|填報|申報|樂園|音樂祭|能力升級|數位資訊|服務站|人道關懷/;
@@ -361,6 +408,7 @@ export function isNonEventNoise(item) {
 }
 
 export function isForeignNonTaiwan(item) {
+  if (isOverseasLocalNews(item)) return true;
   const title = String(item?.title || "");
   const text = `${title} ${String(item?.description || "")} ${String(item?.summary || "")}`;
   if (CYBER_FOREIGN_EXEMPT_RE.test(text)) return false;
@@ -396,6 +444,7 @@ const TOPIC_RE = {
 };
 
 export function isRelevantNewsItem(item) {
+  item = withoutFigurativeNewsEvidence(item);
   if (isNonEventNoise(item)) return false;
   if (isForeignNonTaiwan(item)) return false;
   if (isPoliceNewsNoise(item)) return false;

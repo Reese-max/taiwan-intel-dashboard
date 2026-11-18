@@ -15,6 +15,26 @@ const news = (id: string, timestamp: string, source: Record<string, unknown> = {
 });
 
 describe("twnews carry-over retention", () => {
+  // figurative-overseas regression start
+  it.each([{ ok: false }, { skipped: true }, { ok: true }])("沿用時清除比喻與境外當地新聞：%j", (twnewsStatus) => {
+    const timestamp = "2026-11-17T00:00:00.000Z";
+    const oldNews = [
+      { ...news("figurative", timestamp), title: "外資殺人不眨眼 連兩日狠砍0050近17萬張", summary: "外資殺人不眨眼 連兩日狠砍0050近17萬張", categoryBasis: "hint:治安" },
+      { ...news("summary-only", timestamp), title: "產業焦點", summary: "搶攻AI商機", categoryBasis: "hint:反詐" },
+      { ...news("overseas", timestamp, { name: "香港01" }), title: "羅湖口岸海關查獲體內藏毒案", summary: "越南籍外籍移工涉案" },
+      { ...news("taiwan", timestamp, { name: "香港01" }), title: "歌手遭槍擊恐嚇", summary: "台灣歌手急報警" },
+      { ...news("food", timestamp, { name: "Singtaousa" }), title: "高雄校園午餐食安連環爆 三杯雞驚見完整青蛙", categoryBasis: "hint:食安" },
+      { ...news("crime", timestamp), title: "外資大砍持股 公司涉詐遭搜索" },
+      { ...news("tvbs", timestamp, { name: "TVBS新聞網" }), title: "超市偷竊案" },
+      { ...news("official", timestamp, { authority: "official" }), title: "搶先體驗新設施" },
+      { ...news("other-dataset", timestamp, { datasetId: "13166", name: "香港01" }), title: "搶攻新市場" },
+      { ...news("international", timestamp, { name: "香港01" }), title: "超市偷竊案", scope: "international" },
+    ];
+    const result = buildTwNewsEvents({ oldNews, twnews: "ok" in twnewsStatus && twnewsStatus.ok ? oldNews : [], twnewsStatus, now: Date.parse("2026-11-18T00:00:00.000Z") });
+    expect(result.map((e: { id: string }) => e.id)).toEqual(["taiwan", "food", "crime", "tvbs", "official", "other-dataset", "international"]);
+  });
+  // figurative-overseas regression end
+
   it.each([{ ok: false }, { skipped: true }, { ok: true }])("重用新聞重算規則分類，保留官方、LLM 與人工來源：%j", (twnewsStatus) => {
     const timestamp = "2026-07-09T00:00:00.000Z";
     const oldNews = ["rule:交通", "hint:交通", "default", "official-feed-hint", "llm", "curation:reviewed"].map((basis) => ({
