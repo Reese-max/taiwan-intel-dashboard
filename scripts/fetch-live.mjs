@@ -25,7 +25,7 @@ import {
   POLICE_NEW_PER_HOUR_FALLBACK,
   POLICE_TODAY_MINIMUM,
 } from "./lib/fetch-police.mjs";
-import { isTransientPoliceFailure, policeCarryoverEvidence } from "./lib/police-carryover.mjs";
+import { SOURCE_CARRYOVER_POLICIES, sourceCarryoverEvidence } from "./lib/police-carryover.mjs";
 import { fetchRssItems, TW_NEWS_FEEDS } from "./lib/fetch-rss.mjs";
 import { fetchGdelt } from "./lib/fetch-gdelt.mjs";
 import { gdeltRetryAt } from "./lib/gdelt-cooldown.mjs";
@@ -259,18 +259,7 @@ export async function run() {
       console.log(`警政署犯罪週報：${policeResult.events.length} 筆`);
     } catch (e) {
       status.police = { ok: false, error: e.message };
-      if (isTransientPoliceFailure(e)) {
-        const carryOver = policeCarryoverEvidence({
-          events: readOld("domestic.json"),
-          provenance: readJson("provenance.json", {}),
-          now: nowMs,
-        });
-        if (carryOver) status.police.carryOver = carryOver;
-      }
       console.error(`警政失敗：${e.message}`);
-      if (status.police.carryOver) {
-        console.warn(`警政週報暫時不可用，沿用 ${status.police.carryOver.count} 筆舊快照（上次成功 ${status.police.carryOver.lastSuccessAt}；標記 stale）`);
-      }
     }
   } else status.police = { skipped: true };
 
@@ -580,6 +569,14 @@ export async function run() {
 
   // --- 國內快照（last-good carry-over：單源失敗則沿用舊快照中該源事件，保留舊 fetchedAt）---
   const oldDomestic = readOld("domestic.json");
+  const previousProvenance = readJson("provenance.json", { sources: [] });
+  for (const [name, policy] of Object.entries(SOURCE_CARRYOVER_POLICIES)) {
+    if (status[name]?.ok !== false) continue;
+    const evidence = sourceCarryoverEvidence({
+      events: oldDomestic, provenance: previousProvenance, now: nowMs, ...policy,
+    });
+    if (evidence) status[name].carryOver = evidence;
+  }
   // 地震與天氣警特報同屬「災防」類，carry-over 必須依 datasetId 精準切分，避免互相吃到對方。
   const quakeEvents = carryOver({ status: status.cwa, fresh: quakes, dropStale, oldEvents: oldDomestic, match: "E-A0015-001" });
   const warningEvents = carryOver({ status: status.cwaWarnings, fresh: warnings, dropStale, oldEvents: oldDomestic, match: "W-C0033-001" });
@@ -895,7 +892,6 @@ export async function run() {
   const snapshotWarningEvents = domesticEvents.filter((event) => event.source?.datasetId === "W-C0033-001");
   const snapshotQuakeEvents = domesticEvents.filter((event) => event.source?.datasetId === "E-A0015-001");
   const sources = [];
-  const previousProvenance = readJson("provenance.json", { sources: [] });
   const previousSources = Array.isArray(previousProvenance?.sources) ? previousProvenance.sources : [];
   const latestFetchedAt = (events) => (Array.isArray(events) ? events : [])
     .map((event) => event?.source?.fetchedAt)
