@@ -132,6 +132,10 @@ export async function chatVia(c, messages, maxTokens, temperature, onResponseMod
       && c.base?.replace(/\/$/, "") === "https://integrate.api.nvidia.com/v1"
       ? { reasoning_effort: "none" }
       : {}),
+    // MiniMax M3 預設長推理，30 則一批實測逾 120 秒；關閉後約 15 秒（M3.1-Flash 不接受 disabled）。
+    ...(/minimax/i.test(c.base || "") && !/^minimax-m3\.1-flash/i.test(c.model || "")
+      ? { thinking: { type: "disabled" } }
+      : {}),
     // The NVIDIA endpoint documents streaming as its default; this client
     // consumes a single JSON completion rather than server-sent events.
     stream: false,

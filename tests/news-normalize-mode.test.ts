@@ -95,6 +95,27 @@ describe("新聞正規化模式", () => {
     }
   });
 
+  it("INTL_NORMALIZE_MODE=llm 只讓國際新聞走 LLM，國內維持規則", async () => {
+    dataDir = mkdtempSync(join(process.cwd(), ".normalize-test-"));
+    vi.stubEnv("FETCH_LIVE_DATA_DIR", dataDir);
+    vi.stubEnv("SOURCES", "rss,twnews");
+    vi.stubEnv("NEWS_NORMALIZE_MODE", undefined);
+    vi.stubEnv("INTL_NORMALIZE_MODE", "llm");
+    vi.stubEnv("EXCLUSIVE", "");
+    vi.stubGlobal("fetch", vi.fn(() => { throw new Error("測試禁止外部網路"); }));
+    const llm = await import("../scripts/lib/nvidia.mjs");
+    vi.mocked(llm.summarize).mockReset().mockResolvedValue({ domestic: "國內測試摘要", international: "國際測試摘要" });
+    vi.mocked(llm.normalizeInternational).mockReset().mockResolvedValue([]);
+    vi.mocked(llm.normalizeDomesticNews).mockReset().mockRejectedValue(new Error("國內不應呼叫 LLM"));
+    const { run } = await import("../scripts/fetch-live.mjs");
+    await run();
+    const { pipeline } = JSON.parse(readFileSync(join(dataDir, "provenance.json"), "utf8"));
+    expect(llm.normalizeInternational).toHaveBeenCalledTimes(1);
+    expect(llm.normalizeDomesticNews).not.toHaveBeenCalled();
+    expect(pipeline.international.normalizeMode).toBeUndefined();
+    expect(pipeline.twnews).toMatchObject({ normalizeMode: "rules", normalizeFailed: false });
+  });
+
   it("規則模式不觸發 LLM 故障告警", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     expect(warnOnNormalizeFailure({

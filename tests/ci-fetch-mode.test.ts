@@ -179,6 +179,16 @@ describe("resolveFetchMode", () => {
     expect(workflow).toContain("SUMMARY_MODEL: ${{ secrets.SUMMARY_MODEL }}");
   });
 
+  it("routes international normalization to MiniMax while domestic news stays rule-based", () => {
+    const workflow = readFileSync(".github/workflows/pipeline-fetch.yml", "utf8");
+    expect(workflow).toContain("LLM_API_KEY: ${{ secrets.MINIMAX_API_KEY }}");
+    expect(workflow).toContain("LLM_BASE_URL: https://api.minimax.io/v1");
+    expect(workflow).toContain("LLM_MODEL: MiniMax-M3");
+    expect(workflow).toContain('INTL_NORMALIZE_MODE: "llm"');
+    expect(workflow).toContain('INTL_NORMALIZE_BATCH: "10"');
+    expect(workflow).not.toMatch(/^\s*NEWS_NORMALIZE_MODE:/m);
+  });
+
   it("does not inject Twinkle MCP credentials into fetch or deploy workflows", () => {
     const fetchWorkflow = readFileSync(".github/workflows/pipeline-fetch.yml", "utf8");
     const deployWorkflow = readFileSync(".github/workflows/update-and-deploy.yml", "utf8");
