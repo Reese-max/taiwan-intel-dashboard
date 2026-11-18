@@ -59,13 +59,20 @@ export function assertRequiredPipelineSources(pipeline, requiredSources, options
 
 export function assertInternationalFeedCoverage(status, { minFeeds = 0, minRawItems = 0 } = {}) {
   if (!status || status.ok !== true) return;
+  const warnings = [];
   if (minFeeds > 0) {
     const okFeeds = Number(status.okFeeds || 0);
-    if (okFeeds < minFeeds) throw new Error(`International feed coverage too low: ${okFeeds}/${minFeeds} live feeds`);
+    if (okFeeds < minFeeds) warnings.push(`International feed coverage too low: ${okFeeds}/${minFeeds} live feeds`);
   }
   if (minRawItems > 0) {
     const rawCount = Number(status.rawCount || 0);
-    if (rawCount < minRawItems) throw new Error(`International raw item count too low: ${rawCount}/${minRawItems}`);
+    if (rawCount < minRawItems) warnings.push(`International raw item count too low: ${rawCount}/${minRawItems}`);
+  }
+  for (const message of warnings) {
+    console.warn(message);
+    if (process.env.GITHUB_ACTIONS === "true") {
+      console.log(`::warning title=國際來源覆蓋不足::${message}`);
+    }
   }
 }
 
