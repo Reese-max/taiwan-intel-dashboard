@@ -36,6 +36,8 @@ import { carryOver } from "./lib/carry-over.mjs";
 import {
   isNonEventNoise,
   isPoliceNewsNoise,
+  isFigurativeNewsNoise,
+  isOverseasLocalNews,
   isRelevantNewsItem,
   buildNewsRelevanceAudit,
   mapBulkInternationalNews,
@@ -146,10 +148,17 @@ export function buildTwNewsEvents({
 } = {}) {
   const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
   const keep = (event) => {
-    const item = event?.summary && !event?.description ? { ...event, description: event.summary } : event;
+    const item = {
+      ...event,
+      description: event?.description || event?.summary,
+      // 非 hint 來源（rule、llm）以類別還原主題漏斗，避免食安等事件改走警政漏斗被誤刪。
+      hint: event?.categoryBasis?.startsWith("hint:") ? event.categoryBasis.slice(5) : event?.category,
+    };
     return (
       !isNonEventNoise(item) &&
       !isPoliceNewsNoise(item) &&
+      !isFigurativeNewsNoise(item) &&
+      !isOverseasLocalNews(item) &&
       shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now })
     );
   };
