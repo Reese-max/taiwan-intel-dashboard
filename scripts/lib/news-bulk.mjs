@@ -318,13 +318,18 @@ const OVERSEAS_PUBLISHER_RE = /^(?:香港01|Sing Tao Daily 星島日報加拿大
 // 不使用海關、移工、外籍、港人、國內等各地通用詞，也不使用 feed query 的台灣標籤。
 const STRONG_TAIWAN_MARKER_RE = /[台臺]灣|中華民國|[台臺]北|新北|桃園|[台臺]中|[台臺]南|高雄|基隆|新竹|苗栗|彰化|南投|雲林|嘉義|屏東|宜蘭|花蓮|[台臺]東|澎湖|金門|馬祖|連江縣|林口|二林|淡水|板橋|新莊|中壢|八里|內埔|國人|兩岸|(?:來|在|赴|返|入|駐|全)[台臺]|[台臺](?:男|女|商|海)/;
 
+// 大紀元總站兼報台灣與海外：只在標題有海外地名時剔除，地點不明者保留（不用「中共」「中國籍」，台灣共諜／偷渡案也會用）。
+const OVERSEAS_PLACE_HINT_RE = /美(?:國|機場|方|籍|警|州)|聯邦調查局|FBI|加國|亞省|卑詩|安省|魁省|多倫多|溫哥華|堪培拉|雪梨|悉尼|墨爾本|紐約|洛杉磯|舊金山|三藩市|夏威夷|檀香山|HPD|中國(?:男子|女子|留學生)|西藏|新疆|香港|澳門/;
+
 export function isOverseasLocalNews(item) {
   if (!isDomesticMediaNews(item)) return false;
   // RSS 原始項目把發行者放在頂層 publisherName，source 只是 feed 標籤。
   const publisher = sourceText(item?.publisherName ?? item?.source?.name ?? item?.source?.publisherName ?? item?.source).trim();
   const text = `${item?.title || ""} ${item?.description || ""} ${item?.summary || ""}`;
-  return OVERSEAS_PUBLISHER_RE.test(publisher) &&
-    !STRONG_TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""));
+  if (STRONG_TAIWAN_MARKER_RE.test(text.replace(TAIWAN_NEGATED_CONTEXT_RE, ""))) return false;
+  if (OVERSEAS_PUBLISHER_RE.test(publisher)) return true;
+  const title = String(item?.title || "");
+  return publisher === "大紀元" && (FOREIGN_PLACE_RE.test(title) || OVERSEAS_PLACE_HINT_RE.test(title));
 }
 
 // ponytail: 有限詞表只遮掉明確比喻片段；未涵蓋的歧義留待人工稽核，不封鎖整篇財經新聞。
@@ -335,11 +340,17 @@ const FIGURATIVE_NEWS_RE = new RegExp([
   "(?:狠|大)砍(?=(?:「[^」]{1,12}」|[0-9]{4,6})?(?:近|逾)?[0-9.]+(?:萬)?(?:張|股|億)|AI支出|英特爾持股)",
   "外資(?:再)?砍(?=[0-9.]+億)|(?:聯發科|輝達|英特爾)(?:TPU)?也中槍",
 ].join("|"), "g");
+// 財經語境的砍、搶、殺多是比喻（外資續砍台股、會搶聯發科生意、外資殺紅眼）；搶劫、砍傷、殺害等案件用語保留。
+const BUSINESS_CONTEXT_RE = /外資|投信|自營商|法人|賣超|買超|[台臺]股|美股|股價|股市|股東|股王|大盤|ETF|漲停|跌停|殖利率|營收|財報|財測|盤前|盤後|期貨|持股|萬張|商機|生意|市占|訂單|年薪|加薪|[0-9.]+\s*(?:兆|億)/;
+const BUSINESS_FIGURATIVE_RE = /砍(?!人|傷|死|殺|頭)|搶(?!劫|案|奪|匪|走|錢|救|手機|包)|殺(?!人|害|死|傷|童|妻|夫|警|嬰)|屠殺|爆炸(?=開局|性|式)|萬金破案/g;
+// 移民署新聞網會轉載一般財經新聞，雖是官方來源仍套用比喻判斷。
+const IMMIGRATION_NEWS_SOURCE_RE = /移民署|移民新聞|新住民全球新聞網/;
 
 function withoutFigurativeNewsEvidence(item) {
-  if (!isDomesticMediaNews(item)) return item;
+  if (!isDomesticMediaNews(item) && !IMMIGRATION_NEWS_SOURCE_RE.test(sourceText(item?.source))) return item;
   const strip = (value) => {
     let text = String(value || "").replace(FIGURATIVE_NEWS_RE, " ");
+    if (BUSINESS_CONTEXT_RE.test(text)) text = text.replace(BUSINESS_FIGURATIVE_RE, " ");
     if (/賣超|ETF|持股/.test(text)) text = text.replace(/大屠殺/g, " ");
     if (/選情|選戰|議員|席次/.test(text)) text = text.replace(/[0-9]+搶[0-9]+/g, " ");
     return text;
@@ -355,7 +366,6 @@ export function isFigurativeNewsNoise(item) {
   return stripped !== item && !isRelevantNewsItem(stripped);
 }
 
-const IMMIGRATION_NEWS_SOURCE_RE = /移民署|移民新聞|新住民全球新聞網/;
 const IMMIGRATION_LIFESTYLE_RE =
   /百人百聲|TWAC|文化交流|文化體驗|文化鵲橋|七夕|職涯|親子活動|親子連結|體驗營|課程|講座|宣導|說明會|報名|抽獎|好禮|得獎名單|表揚|頒獎|影音新聞|廉政動畫|療癒|暢談|扎根|便民|填報|申報|樂園|音樂祭|能力升級|數位資訊|服務站|人道關懷/;
 const IMMIGRATION_ENFORCEMENT_RE =

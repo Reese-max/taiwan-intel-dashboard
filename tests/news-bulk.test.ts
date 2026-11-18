@@ -134,6 +134,62 @@ describe("國內新聞比喻與境外發行者", () => {
     expect(item).toEqual({ title: "搶攻新市場", description: "衝刺業績", hint: "治安" });
     expect(isRelevantNewsItem({ title: "搶攻新市場", description: "業者涉詐遭起訴", hint: "治安" })).toBe(true);
   });
+
+  it.each([
+    "外資殺紅眼 連3天賣超台積電",
+    "外資續砍台股 新台幣貶值壓力難解創逾19個月新低",
+    "投信大砍6檔金融！它3天倒貨3.2萬張股價崩10.73% 45萬股東傻眼",
+    "三大法人賣超632億！外資連3賣狂砍766億、投信轉買大成鋼",
+    "外資連3砍台積電！今賣超8466張收最低 進出前10大一次看",
+    "外資大屠殺ETF！0050連3天遭砍19.3萬張 股價竟逆勢翻紅",
+    "前3季營收年減近6％！米斯特砍低效門市 押寶韓設計師品牌",
+    "專訪》Arm自己賣CPU 會搶聯發科、高通生意？副總裁揭開AI晶片競合新戰局",
+    "免高學歷年薪破80萬！半導體大廠急搶「這類基層」 近5成企業願加薪",
+    "輝達財報成績單滿分！Vera Rubin迎爆炸開局、給強勁財測",
+    "股王慘丟萬金破案！投信連2砍 天價進場1張最多賠1208萬",
+    "【新新聞】AI算力預測狂砍1.6兆美元！黃仁勳離開輝達的風暴還沒算進去",
+  ])("財經語境的砍搶殺是比喻：%s", (title) => {
+    for (const hint of ["治安", "反詐", "災防"]) {
+      expect(isRelevantNewsItem({ title, description: title, hint, source: "三立新聞網SETN.com" })).toBe(false);
+    }
+  });
+
+  it.each([
+    ["台灣非法殯葬業者勾結駭客，以AI入侵消防系統通報搶賺死人生意", "災防"],
+    ["台股開盤前 銀行分行遭持槍搶劫", "治安"],
+    ["股東會爆衝突 股東遭砍傷送醫", "治安"],
+    ["投資糾紛釀血案 男子殺害股東後落網", "治安"],
+    ["男子闖門市搶手機 業者營收受損", "治安"],
+    ["詐團捲款3億 車手持刀砍傷被害人", "治安"],
+  ])("財經語境的真案件保留：%s", (title, hint) => {
+    expect(isRelevantNewsItem({ title, description: title, hint, source: "經濟日報" })).toBe(true);
+  });
+
+  it("移民署新聞網轉載的財經新聞不算案件，移民署查緝照收", () => {
+    const base = { source: "移民署 新聞", official: true, hint: "治安" };
+    expect(isRelevantNewsItem({ ...base, title: "台股1個月以來急跌萬點 法人：不宜貿然搶反彈" })).toBe(false);
+    expect(isRelevantNewsItem({ ...base, title: "AI換臉假護照金門闖關踢鐵板！重犯發監前夕遭移民署當場攔截" })).toBe(true);
+  });
+
+  it.each([
+    "涉替中共偷拍美機場 中國留學生被判羈押候審",
+    "堪培拉持刀犯罪加劇 政府不能再坐視不管",
+    "領館外襲擊法輪功學員 嫌犯返中國遭加國通緝",
+    "受賄數額特別巨大 西藏女「老虎」王峻被公訴",
+    "亞省東部高速公路車禍 一女兩兒童亡",
+    "參與詐騙美國老人2700萬 中國男子獲刑6年半",
+    "警察局（HPD）",
+  ])("大紀元總站標題有海外地名就剔除：%s", (title) => {
+    expect(isRelevantNewsItem({ title, description: `${title} 大紀元`, source: "大紀元", hint: "治安" })).toBe(false);
+  });
+
+  it.each([
+    "台中市長政見辯論會 何欣純控藍不實言論恐嚇長輩",
+    "駭客竊資售殯葬業者 兩駭客遭羈押",
+    "共諜案 中共滲透國軍 退役中校遭起訴",
+  ])("大紀元總站地點不明或在台灣就保留：%s", (title) => {
+    expect(isRelevantNewsItem({ title, description: `${title} 大紀元`, source: "大紀元", hint: "治安" })).toBe(true);
+  });
 });
 // figurative-overseas regression end
 
