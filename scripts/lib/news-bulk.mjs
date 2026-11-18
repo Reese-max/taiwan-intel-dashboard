@@ -330,8 +330,8 @@ export function isOverseasLocalNews(item) {
   if (OVERSEAS_PUBLISHER_RE.test(publisher)) return true;
   if (publisher !== "大紀元") return false;
   // 國籍（日本籍、美籍）只說明人，不代表事件在海外；台灣市級簡稱（北市、中市）視為台灣。
-  const title = String(item?.title || "").replace(/[一-鿿]{1,4}籍/g, " ");
-  if (/(?:北|桃|竹|中|嘉|南)市/.test(title)) return false;
+  if (/(?:北|桃|竹|中|嘉|南)市/.test(String(item?.title || ""))) return false;
+  const title = String(item?.title || "").replace(/[一-鿿]{1,4}籍|日本刀|武士刀/g, " ");
   return FOREIGN_PLACE_RE.test(title) || OVERSEAS_PLACE_HINT_RE.test(title);
 }
 
@@ -345,7 +345,7 @@ const FIGURATIVE_NEWS_RE = new RegExp([
 ].join("|"), "g");
 // 財經語境的砍、搶、殺多是比喻（外資續砍台股、會搶聯發科生意、外資殺紅眼）；搶劫、砍傷、殺害等案件用語保留。
 const BUSINESS_CONTEXT_RE = /外資|投信|自營商|法人|賣超|買超|[台臺]股|美股|股價|股市|股東|股王|大盤|ETF|漲停|跌停|殖利率|營收|財報|財測|盤前|盤後|期貨|持股|萬張|商機|生意|市占|訂單|年薪|加薪|[0-9.]+\s*(?:兆|億)/;
-const BUSINESS_FIGURATIVE_RE = /砍(?!人|傷|死|殺|頭)|搶(?!劫|案|奪|匪|走|錢|救|手機|包)|(?<!砍|搶|槍|刺)殺(?!人|害|死|傷|童|妻|夫|警|嬰)|屠殺|爆炸(?=開局|性|式)|萬金破案/g;
+const BUSINESS_FIGURATIVE_RE = /砍(?!人|傷|死|殺|頭|斷)|搶(?!劫|案|奪|匪|走|錢|救|手機|包)|(?<!砍|搶|槍|刺)殺(?!人|害|死|傷|童|妻|夫|警|嬰)|屠殺|爆炸(?=開局|性|式)|萬金破案/g;
 // 有實際暴力或司法證據就不當比喻（生意糾紛遭砍十多刀、男子搶銀行）。
 const VIOLENCE_EVIDENCE_RE = /男子|女子|男童|女童|婦人|老翁|老婦|歹徒|搶匪|竊賊|刀|槍|送醫|受傷|輕傷|重傷|身亡|喪命|死亡|警方|員警|警察|嫌犯|涉嫌|逮捕|落網|起訴|判刑|判決|羈押|送辦|報案|被害|行搶|搶銀行|搶超商/;
 // 移民署新聞網會轉載一般財經新聞，雖是官方來源仍套用比喻判斷。
