@@ -1,6 +1,8 @@
 """Network-free checks for the weekly police ZIP resource lookup."""
 
 import importlib.util
+import io
+import zipfile
 import pathlib
 import unittest
 import urllib.error
@@ -11,6 +13,13 @@ SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "scripts" / "lib" / "pars
 SPEC = importlib.util.spec_from_file_location("crime_weekly_parser", SCRIPT)
 parser = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(parser)
+
+
+def valid_zip():
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(zipfile.ZipInfo("weekly.ods"), "test content")
+    return buffer.getvalue()
 
 
 class CrimeWeeklyDownloadTests(unittest.TestCase):
@@ -24,26 +33,26 @@ class CrimeWeeklyDownloadTests(unittest.TestCase):
         current = parser.ZIP_URL.replace("2135CF37-2C60-494B-9286-C5AA44A7A957", "12345678-1234-1234-1234-123456789ABC")
         bad_gateway = urllib.error.HTTPError(current, 502, "Bad Gateway", {}, None)
         with patch.object(parser, "discover_zip_url", return_value=current), patch.object(
-            parser, "fetch_bytes", side_effect=[bad_gateway, bad_gateway, b"PK\x03\x04archive"]
+            parser, "fetch_bytes", side_effect=[bad_gateway, bad_gateway, valid_zip()]
         ) as fetch, patch.object(parser.time, "sleep") as sleep:
-            self.assertEqual(parser.download_zip(), b"PK\x03\x04archive")
+            self.assertEqual(parser.download_zip(), valid_zip())
         self.assertEqual([call.args[0] for call in fetch.call_args_list], [current] * 3)
         self.assertEqual([call.args[0] for call in sleep.call_args_list], [1, 2])
 
     def test_portal_failure_uses_last_verified_link(self):
         with patch.object(parser, "discover_zip_url", side_effect=OSError("portal unavailable")), patch.object(
-            parser, "fetch_bytes", return_value=b"PK\x03\x04archive"
+            parser, "fetch_bytes", return_value=valid_zip()
         ) as fetch:
-            self.assertEqual(parser.download_zip(), b"PK\x03\x04archive")
+            self.assertEqual(parser.download_zip(), valid_zip())
         fetch.assert_called_once()
         self.assertEqual(fetch.call_args.args[0], parser.ZIP_URL)
 
     def test_non_zip_200_retries_then_uses_verified_resource(self):
         current = parser.ZIP_URL.replace("2135CF37-2C60-494B-9286-C5AA44A7A957", "12345678-1234-1234-1234-123456789ABC")
         with patch.object(parser, "discover_zip_url", return_value=current), patch.object(
-            parser, "fetch_bytes", side_effect=[b"<html>blocked</html>"] * 3 + [b"PK\x03\x04archive"]
+            parser, "fetch_bytes", side_effect=[b"<html>blocked</html>"] * 3 + [valid_zip()]
         ) as fetch, patch.object(parser.time, "sleep"):
-            self.assertEqual(parser.download_zip(), b"PK\x03\x04archive")
+            self.assertEqual(parser.download_zip(), valid_zip())
         self.assertEqual([call.args[0] for call in fetch.call_args_list], [current] * 3 + [parser.ZIP_URL])
 
     def test_non_zip_200_without_valid_fallback_is_transient_failure(self):
@@ -52,6 +61,25 @@ class CrimeWeeklyDownloadTests(unittest.TestCase):
         ), patch.object(parser.time, "sleep"):
             with self.assertRaisesRegex(RuntimeError, "temporary failure.*not a ZIP"):
                 parser.download_zip()
+
+    def test_incomplete_pk_zip_retries_then_uses_fallback(self):
+        current = parser.ZIP_URL.replace("2135CF37-2C60-494B-9286-C5AA44A7A957", "12345678-1234-1234-1234-123456789ABC")
+        archive = valid_zip()
+        with patch.object(parser, "discover_zip_url", return_value=current), patch.object(
+            parser, "fetch_bytes", side_effect=[archive[:20]] * 3 + [archive]
+        ) as fetch, patch.object(parser.time, "sleep") as sleep:
+            self.assertEqual(parser.download_zip(), archive)
+        self.assertEqual([call.args[0] for call in fetch.call_args_list], [current] * 3 + [parser.ZIP_URL])
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [1, 2])
+
+    def test_all_incomplete_pk_zips_raise_temporary_failure(self):
+        current = parser.ZIP_URL.replace("2135CF37-2C60-494B-9286-C5AA44A7A957", "12345678-1234-1234-1234-123456789ABC")
+        with patch.object(parser, "discover_zip_url", return_value=current), patch.object(
+            parser, "fetch_bytes", return_value=valid_zip()[:20]
+        ) as fetch, patch.object(parser.time, "sleep"):
+            with self.assertRaisesRegex(RuntimeError, "weekly crime ZIP download failed.*temporary failure"):
+                parser.download_zip()
+        self.assertEqual([call.args[0] for call in fetch.call_args_list], [current] * 3 + [parser.ZIP_URL])
 
 
 if __name__ == "__main__":

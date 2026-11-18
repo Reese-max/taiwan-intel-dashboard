@@ -131,11 +131,13 @@ def download_zip() -> bytes:
                 data = fetch_bytes(url, timeout=30, limit=40_000_000)
                 if not data.startswith(b"PK"):
                     raise ValueError("weekly crime resource is not a ZIP")
+                with zipfile.ZipFile(io.BytesIO(data)):
+                    pass
                 return data
             except urllib.error.HTTPError as error:
                 last_error = error
                 transient = error.code == 429 or 500 <= error.code <= 599
-            except (urllib.error.URLError, TimeoutError, ValueError) as error:
+            except (urllib.error.URLError, TimeoutError, ValueError, zipfile.BadZipFile) as error:
                 last_error = error
                 transient = True
             if not transient or attempt + 1 >= attempts:

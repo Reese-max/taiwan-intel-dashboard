@@ -693,6 +693,50 @@ describe("fetch-live pipeline integration (CWA)", () => {
   );
 });
 
+describe("fetch-live bounded carry-over provenance", () => {
+  it("preserves lastSuccessAt and stale for all four sources across repeated failures", async () => {
+    const dataDir = setupEnv();
+    process.env.SOURCES = "cwa,police,missing";
+    process.env.EXCLUSIVE = "1";
+    process.env.LLM_API_KEY = "";
+    process.env.NVIDIA_API_KEY = "";
+    process.env.SUMMARY_API_KEY = "";
+    const lastSuccessAt = new Date(Date.now() - 3_600_000).toISOString();
+    const definitions = [
+      ["police", "13166"], ["missing", "14420"],
+      ["cwa", "E-A0015-001"], ["cwaWarnings", "W-C0033-001"],
+    ];
+    const events = definitions.map(([name, datasetId]) => ({
+      ...makeCarryOverQuake(), id: `carry-${name}`,
+      source: { ...makeCarryOverQuake().source, datasetId, fetchedAt: lastSuccessAt },
+    }));
+    writeFileSync(join(dataDir, "domestic.json"), JSON.stringify(events));
+    writeFileSync(join(dataDir, "provenance.json"), JSON.stringify({
+      sources: definitions.map(([, datasetId]) => ({ datasetId, lastSuccessAt, fetchedAt: lastSuccessAt })),
+    }));
+    vi.doMock("../scripts/lib/fetch-police.mjs", async (importOriginal) => ({
+      ...await importOriginal<typeof import("../scripts/lib/fetch-police.mjs")>(),
+      fetchPolice: async () => { throw new Error("Traceback: zipfile.BadZipFile: File is not a zip file"); },
+    }));
+    makeMockFetch({ cwaOk: false, cwaWarningsOk: false, missingOk: false });
+    try {
+      const run = await importRun();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        await run();
+        const provenance = readJson(join(dataDir, "provenance.json"));
+        const domestic = readJson(join(dataDir, "domestic.json"));
+        for (const [name, datasetId] of definitions) {
+          expect(provenance.pipeline[name]).toMatchObject({ ok: false, carryOver: { count: 1, lastSuccessAt } });
+          expect(provenance.sources.find((source: any) => source.datasetId === datasetId)).toMatchObject({ stale: true, lastSuccessAt, fetchedAt: lastSuccessAt, count: 1 });
+          expect(domestic.find((event: any) => event.source?.datasetId === datasetId)?.source.fetchedAt).toBe(lastSuccessAt);
+        }
+      }
+    } finally {
+      vi.doUnmock("../scripts/lib/fetch-police.mjs");
+    }
+  }, 60_000);
+});
+
 describe("fetch-live pipeline integration (missing)", () => {
   it("writes missing-person events when missing is selected without police", async () => {
     const dataDir = setupEnv();

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { selectInternationalFeeds } from "./lib/international-feeds.mjs";
-import { canCarryOverPolice } from "./lib/police-carryover.mjs";
+import { canCarryOverSource, SOURCE_CARRYOVER_POLICIES } from "./lib/police-carryover.mjs";
 
 const CWA_SOURCES = new Set(["cwa", "cwaWarnings"]);
 const POLICE_CATEGORIES = new Set(["治安", "反詐", "協尋"]);
@@ -35,8 +35,15 @@ export function assertRequiredPipelineSources(pipeline, requiredSources, options
       continue;
     }
 
-    if (name === "police" && canCarryOverPolice(status, { now: options.now })) {
-      console.warn(`警政週報本輪抓取失敗，沿用 ${status.carryOver.count} 筆已標記 stale 的舊快照（上次成功 ${status.carryOver.lastSuccessAt}）`);
+    const policy = SOURCE_CARRYOVER_POLICIES[name];
+    if (policy && canCarryOverSource(status, { now: options.now, ...policy })) {
+      const error = String(status.error || "未知錯誤").replace(/\s+/g, " ").slice(0, 200);
+      const message = `${name} 本輪失敗（${error}），沿用 ${status.carryOver.count} 筆、上次成功 ${status.carryOver.lastSuccessAt}`;
+      console.warn(message);
+      if (process.env.GITHUB_ACTIONS === "true") {
+        const escaped = message.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
+        console.log(`::warning title=來源沿用舊資料::${escaped}`);
+      }
       continue;
     }
 
@@ -44,6 +51,9 @@ export function assertRequiredPipelineSources(pipeline, requiredSources, options
       const suffix = status.error ? `: ${status.error}` : "";
       throw new Error(`Required pipeline source ${name} failed${suffix}`);
     }
+  }
+  if (requiredSources.length && !requiredSources.some((name) => pipeline?.[name]?.ok === true)) {
+    throw new Error("All required pipeline sources failed; refusing to publish an entirely stale round");
   }
 }
 

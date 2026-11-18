@@ -110,17 +110,59 @@ describe("assertRequiredPipelineSources", () => {
     ).not.toThrow();
   });
 
-  it("allows a recent marked police carry-over after a transient weekly ZIP failure", () => {
+  it("allows a recent marked police carry-over after a BadZipFile parser failure", () => {
     const now = Date.parse("2026-09-29T03:00:00Z");
     const police = {
       ok: false,
-      error: "weekly crime ZIP download failed: HTTP Error 502",
+      error: "Traceback: zipfile.BadZipFile: File is not a zip file",
       carryOver: { count: 7, lastSuccessAt: "2026-09-28T03:00:00Z" },
     };
-    expect(() => assertRequiredPipelineSources({ police }, ["police"], { now })).not.toThrow();
-    expect(() => assertRequiredPipelineSources({ police }, ["police"], {
+    expect(() => assertRequiredPipelineSources({ police, cwa: { ok: true } }, ["police", "cwa"], { now })).not.toThrow();
+    expect(() => assertRequiredPipelineSources({ police, cwa: { ok: true } }, ["police", "cwa"], {
       now: now + 15 * 86400_000,
     })).toThrow("Required pipeline source police failed");
+  });
+
+  it.each(["missing", "cwa", "cwaWarnings"])("allows recent %s carry-over and rejects expired evidence", (name) => {
+    const now = Date.parse("2026-09-29T03:00:00Z");
+    const failed = { ok: false, error: "parser failed", carryOver: { count: 2, lastSuccessAt: "2026-09-28T03:00:00Z" } };
+    const pipeline = { [name]: failed, international: { ok: true } };
+    expect(() => assertRequiredPipelineSources(pipeline, [name, "international"], { now })).not.toThrow();
+    expect(() => assertRequiredPipelineSources(pipeline, [name, "international"], { now: now + 73 * 3_600_000 })).toThrow(`Required pipeline source ${name} failed`);
+    expect(() => assertRequiredPipelineSources({ ...pipeline, [name]: { ...failed, carryOver: { ...failed.carryOver, count: 0 } } }, [name, "international"], { now })).toThrow();
+  });
+
+  it.each(["twnews", "international"])("never relaxes %s even with carry-over", (name) => {
+    const failed = { ok: false, carryOver: { count: 7, lastSuccessAt: new Date().toISOString() } };
+    expect(() => assertRequiredPipelineSources({ [name]: failed, cwa: { ok: true } }, [name, "cwa"])).toThrow(`Required pipeline source ${name} failed`);
+  });
+
+  it("rejects an entirely failed required set even with recent carry-over", () => {
+    const failed = { ok: false, error: "offline", carryOver: { count: 7, lastSuccessAt: new Date().toISOString() } };
+    const pipeline = { police: failed, missing: failed, cwa: failed, cwaWarnings: failed, twnews: { ok: true } };
+    expect(() => assertRequiredPipelineSources(pipeline, ["police", "missing", "cwa", "cwaWarnings"])).toThrow("All required pipeline sources failed");
+    expect(() => assertRequiredPipelineSources(pipeline, ["cwa", "cwaWarnings"], { allowStaleCwa: true })).toThrow("All required pipeline sources failed");
+    expect(() => assertRequiredPipelineSources(pipeline, ["police"])).toThrow("All required pipeline sources failed");
+  });
+
+  it("emits a single-line Actions warning with a bounded error summary", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.stubEnv("GITHUB_ACTIONS", "true");
+    const lastSuccessAt = new Date().toISOString();
+    const error = "BadZipFile\n" + "x".repeat(250);
+    try {
+      assertRequiredPipelineSources({ missing: { ok: false, error, carryOver: { count: 2, lastSuccessAt } }, cwa: { ok: true } }, ["missing", "cwa"]);
+      expect(warn).toHaveBeenCalled();
+      expect(log).toHaveBeenCalledWith(`::warning title=來源沿用舊資料::missing 本輪失敗（${error.replace(/\s+/g, " ").slice(0, 200)}），沿用 2 筆、上次成功 ${lastSuccessAt}`);
+      log.mockClear();
+      vi.stubEnv("GITHUB_ACTIONS", "false");
+      assertRequiredPipelineSources({ police: { ok: false, error, carryOver: { count: 2, lastSuccessAt } }, cwa: { ok: true } }, ["police", "cwa"]);
+      expect(log).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+    }
   });
 
   it("still rejects CWA warnings when allowStaleCwa is off", () => {
