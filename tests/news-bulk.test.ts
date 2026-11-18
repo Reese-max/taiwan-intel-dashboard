@@ -10,6 +10,7 @@ import {
   isNonEventNoise,
   isPoliceRelevant,
   isRelevantNewsItem,
+  isFigurativeNewsNoise,
   buildNewsRelevanceAudit,
   riskFromTitle,
   detectCountyInBody,
@@ -161,8 +162,13 @@ describe("國內新聞比喻與境外發行者", () => {
     ["投資糾紛釀血案 男子殺害股東後落網", "治安"],
     ["男子闖門市搶手機 業者營收受損", "治安"],
     ["詐團捲款3億 車手持刀砍傷被害人", "治安"],
+    ["台中生意糾紛 男子遭砍十多刀送醫", "治安"],
+    ["台中男子搶銀行 稱生意失敗缺錢", "治安"],
+    ["台中股東遭砍殺", "治安"],
   ])("財經語境的真案件保留：%s", (title, hint) => {
-    expect(isRelevantNewsItem({ title, description: title, hint, source: "經濟日報" })).toBe(true);
+    const item = { title, description: title, hint, source: "經濟日報" };
+    expect(isRelevantNewsItem(item)).toBe(true);
+    expect(isFigurativeNewsNoise(item)).toBe(false);
   });
 
   it("移民署新聞網轉載的財經新聞不算案件，移民署查緝照收", () => {
@@ -187,6 +193,8 @@ describe("國內新聞比喻與境外發行者", () => {
     "台中市長政見辯論會 何欣純控藍不實言論恐嚇長輩",
     "駭客竊資售殯葬業者 兩駭客遭羈押",
     "共諜案 中共滲透國軍 退役中校遭起訴",
+    "北市美籍男子販毒遭起訴",
+    "美籍男子酒駕撞死人 法院判刑",
   ])("大紀元總站地點不明或在台灣就保留：%s", (title) => {
     expect(isRelevantNewsItem({ title, description: `${title} 大紀元`, source: "大紀元", hint: "治安" })).toBe(true);
   });
