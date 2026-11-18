@@ -48,7 +48,10 @@ describe("解析後的站內搜尋", () => {
     events[1].source.name = "臺北市政府警察局交通警察大隊";
     const net = { related: () => [] } as unknown as NetworkIndex;
     expect(applySearchSubnet(events, net, "車禍").map(e => e.id)).toEqual(["crash"]);
-    expect(applySearchSubnet(events, net, "交通").map(e => e.id)).toEqual(["crash", "police"]);
+    expect(applySearchSubnet(events, net, "交通").map(e => e.id)).toEqual(["crash"]);
+    expect(applySearchSubnet(events, net, "交通警察大隊").map(e => e.id)).toEqual(["police"]);
+    expect(applySearchSubnet(events, net, "交通 測試來源").map(e => e.id)).toEqual(["crash"]);
+    expect(applySearchSubnet(events, net, "交通 交通警察大隊")).toEqual([]);
     expect(applySearchSubnet(events, net, "constructor")).toEqual([]);
   });
 
