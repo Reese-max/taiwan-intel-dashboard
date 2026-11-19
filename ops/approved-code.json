@@ -1,4 +1,4 @@
 {
-  "sha": "0d9da93ef01a75c08636d70803aa83b9997366b0",
-  "note": "Follow-up on 2026-11-19. main 0d9da93 = #144: the domestic MiniMax review asks the second (reversed) vote only when the first answer wants to drop something, and reports a calls count. Includes previously approved 4ac074e (#142). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
+  "sha": "2e5a7e20e6573a01850ec20dea295c671a9fbc15",
+  "note": "Owner sent a phone screenshot on 2026-11-19 of an unreadable map cluster popup. main 2e5a7e2 = #146: leaflet.css now loads before global.css so popups use the dark theme; maxBounds lifted while a popup is open so auto-pan keeps it inside the map; zoom control and radar sweep hidden while a popup is open; CRITICAL 大規模 rule limited to one clause (an RTI seminar item was rated critical). Verified with local 390px build screenshots. Includes previously approved 0d9da93 (#144). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
 }
