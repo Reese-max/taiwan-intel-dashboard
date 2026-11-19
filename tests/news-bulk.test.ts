@@ -363,11 +363,15 @@ describe("mapBulkInternationalNews", () => {
     ["Hospitals disrupted by ransomware attack", "災害", "Scienmag", "資安", "evidence:資安"],
     ["Stock market crash follows bank earnings", "災害", "Financial News", "金融", "evidence:金融"],
     ["Infectious disease outbreak spreads across region", "災害", "BBC World", "災害", "evidence:災害"],
-    ["Infection control protocol contains Candida auris outbreak", "災害", "Scienmag", "其他", "rule:science-publication"],
-    ["Magnitude 5.2 event recorded at station", "災害", "USGS Quakes M4.5 week", "其他", "rule:no-disaster-evidence"],
-  ])("國際分類以標題摘要證據優先：%s", (title, hint, source, category, categoryBasis) => {
+    ["Infection control protocol contains Candida auris outbreak", "災害", "Scienmag", "其他", "hint:其他"],
+    ["Magnitude 5.2 event recorded at station", "災害", "USGS Quakes M4.5 week", "災害", "hint:災害"],
+    ["Fibre Inflation models new energy materials", "其他", "Scienmag", "其他", "hint:其他"],
+    ["Wildfire risk study models changing conditions", "其他", "Phys.org", "其他", "hint:其他"],
+    ["Police investigate fatal explosion after shooting", "治安", "BBC World", "治安", "evidence:治安"],
+  ])("國際分類以標題事件證據優先：%s", (title, hint, source, category, categoryBasis) => {
     const [event] = mapBulkInternationalNews([{ title, hint, source, link: `https://example.test/${encodeURIComponent(title)}` }], { fetchedAt: FETCHED_AT });
     expect(event).toMatchObject({ category, categoryBasis });
+    if (source === "USGS Quakes M4.5 week") expect(event.summary).toContain("地震事件");
   });
 
   it("分類關鍵字只看標題，摘要背景詞不蓋過 feed hint", () => {
@@ -379,6 +383,68 @@ describe("mapBulkInternationalNews", () => {
       link: "https://example.test/context-only-keywords",
     }], { fetchedAt: FETCHED_AT });
     expect(event).toMatchObject({ category: "其他", categoryBasis: "hint:其他" });
+  });
+
+  it("可信災害 feed 可用來源 hint 後備分類並標記事件類型", () => {
+    const [event] = mapBulkInternationalNews([{
+      title: "M 4.8 - 45 km SSW of a remote town",
+      description: "Magnitude 4.8 event",
+      hint: "其他",
+      source: "USGS Quakes M4.5 week",
+      link: "https://example.test/usgs-hint",
+    }], { fetchedAt: FETCHED_AT });
+    expect(event).toMatchObject({ category: "災害", categoryBasis: "hint:災害" });
+    expect(event.summary).toContain("地震事件");
+  });
+
+  it.each([
+    ["Tokyo officials report new regulations", "Japan", "日本"],
+    ["法國巴黎發生大規模示威", "", "法國"],
+    ["Turkey announces parliamentary elections", "", "土耳其"],
+    ["Roasted turkey sandwich recipe wins a food award", "", "國際"],
+    ["Jordan scores the winning goal", "", "國際"],
+    ["Jordanian forces patrol the border", "", "約旦"],
+    ["Chad Johnson launches a new album", "", "國際"],
+    ["Flooding reported in Chad", "", "查德"],
+    ["Georgia, USA reports storm damage", "", "美國"],
+    ["Georgia residents debate a new local proposal", "", "國際"],
+    ["Tbilisi authorities report new measures", "", "喬治亞"],
+    ["China Airlines announces a new route", "", "國際"],
+    ["Air India updates its booking system", "", "國際"],
+    ["Guinea-Bissau election results announced", "", "幾內亞比索"],
+    ["Nigeria and Niger sign a border agreement", "", "奈及利亞"],
+    ["美國科技公司公布年度營收", "", "國際"],
+    ["美國發生重大洪災", "", "美國"],
+    ["Officials discuss the latest developments", "Reports from Japan describe the event", "日本"],
+  ])("國際長尾以國家／城市推定國家層級位置：%s", (title, description, region) => {
+    const [event] = mapBulkInternationalNews([{
+      title,
+      description,
+      hint: "其他",
+      source: "Location Test Feed",
+      link: `https://example.test/location-${encodeURIComponent(title)}`,
+    }], { fetchedAt: FETCHED_AT });
+    expect(event.region).toBe(region);
+    if (region === "國際") {
+      expect(event.lat).toBeUndefined();
+      expect(event.locationPrecision).toBe("unknown");
+    } else {
+      expect(event).toMatchObject({ locationPrecision: "country" });
+      expect(event.lat).toEqual(expect.any(Number));
+      expect(event.lng).toEqual(expect.any(Number));
+      expect(event.locationNote).toContain("規則推定");
+    }
+  });
+
+  it("多國同時出現時以標題第一個明確國家為準", () => {
+    const [event] = mapBulkInternationalNews([{
+      title: "Paris authorities announce action after travel from Germany",
+      description: "Officials in Italy comment on the decision",
+      hint: "其他",
+      source: "Location Test Feed",
+      link: "https://example.test/location-order",
+    }], { fetchedAt: FETCHED_AT });
+    expect(event.region).toBe("法國");
   });
 });
 
@@ -1154,6 +1220,40 @@ describe("riskFromTitle 主題感知", () => {
     expect(riskFromTitle("園區遭大規模無差別攻擊", "治安")).toBe("critical");
     const desc = "北京近來加大對台施壓，不僅持續在台海周邊舉行大規模海上與空中軍演行動，還委託「代理人」對台灣政治人物、媒體人及藝文工作者進行跟蹤、偷拍、恐嚇，甚至暴力攻擊";
     expect(riskFromTitle("[兩岸] 成蕾談國安牢獄1154天 籲看清中國高科技表象下的人權困境", "治安", desc)).not.toBe("critical");
+  });
+
+  it("危急與高風險配對詞只在同一句命中", () => {
+    expect(riskFromTitle("高雄氣爆造成2人死亡", "災防")).toBe("critical");
+    expect(riskFromTitle("高雄氣爆發生，警方調查中。另案有2人死亡", "災防")).not.toBe("critical");
+    expect(riskFromTitle("衝突引發炸彈爆炸和縱火攻擊", "治安")).toBe("critical");
+    expect(riskFromTitle("炸彈爆炸已平息。另一地縱火攻擊", "治安")).not.toBe("critical");
+    expect(riskFromTitle("歹徒挾持人質", "治安")).toBe("critical");
+    expect(riskFromTitle("歹徒挾持案持續調查。另一地人質安全", "治安")).not.toBe("critical");
+    expect(riskFromTitle("毒品工廠遭查獲", "治安")).toBe("high");
+    expect(riskFromTitle("毒品案持續調查。另一案工廠遭搜索", "治安")).toBe("medium");
+    expect(riskFromTitle("緝毒重大案件破獲", "治安")).toBe("high");
+    expect(riskFromTitle("緝毒勤務完成。另有重大案件偵辦中", "治安")).toBe("medium");
+    expect(riskFromTitle("未授權入侵醫院系統", "治安")).toBe("high");
+    expect(riskFromTitle("未授權入侵事件調查中。醫院系統維護", "治安")).toBe("low");
+    expect(riskFromTitle("惡意程式癱瘓醫院網路", "治安")).toBe("high");
+    expect(riskFromTitle("惡意程式癱瘓事件結束。醫院網路恢復", "治安")).toBe("low");
+  });
+
+  it("國際 low 僅在分類有標題證據時升為 medium", () => {
+    const [hintOnly] = mapBulkInternationalNews([{
+      title: "Regional cooperation update",
+      hint: "地緣政治",
+      source: "Unknown Feed",
+      link: "https://example.test/hint-risk",
+    }], { fetchedAt: FETCHED_AT });
+    const [evidence] = mapBulkInternationalNews([{
+      title: "Election officials announce new voting rules",
+      hint: "地緣政治",
+      source: "Unknown Feed",
+      link: "https://example.test/evidence-risk",
+    }], { fetchedAt: FETCHED_AT });
+    expect(hintOnly.riskLevel).toBe("low");
+    expect(evidence.riskLevel).toBe("medium");
   });
 
   it("依 hint 套用主題高風險關鍵字優先，維持警政備援", () => {

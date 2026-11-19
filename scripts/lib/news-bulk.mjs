@@ -5,6 +5,7 @@ import { COUNTY_CENTER, countyCoordFromAddr } from "./coords.mjs";
 import { eventIdFor } from "./event-id.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
 import { dedupeTitleKey, titleKey } from "./title-key.mjs";
+import { INTERNATIONAL_FEEDS } from "./international-feeds.mjs";
 export { titleKey } from "./title-key.mjs";
 export { dedupeTitleKey } from "./title-key.mjs";
 
@@ -14,10 +15,10 @@ export function cleanTitle(title) {
 
 // 縣市短名規則；實際命中依文字位置排序。
 const COUNTY_MATCH = [
-  [/新北/, "新北市"], [/台北|臺北|北市/, "臺北市"], [/桃園/, "桃園市"],
+  [/新北/, "新北市"], [/台北|臺北|北市/, "臺北市"], [/桃園|桃市/, "桃園市"],
   [/台中|臺中|中市/, "臺中市"], [/台南|臺南|南市/, "臺南市"], [/高雄|高市/, "高雄市"],
   [/基隆/, "基隆市"], [/竹縣/, "新竹縣"], [/新竹|竹市/, "新竹市"], [/苗栗/, "苗栗縣"],
-  [/彰化/, "彰化縣"], [/南投/, "南投縣"], [/雲林/, "雲林縣"],
+  [/彰化|彰縣/, "彰化縣"], [/南投/, "南投縣"], [/雲林/, "雲林縣"],
   [/嘉縣/, "嘉義縣"], [/嘉義|嘉市/, "嘉義市"], [/屏東/, "屏東縣"], [/宜蘭/, "宜蘭縣"],
   [/花蓮/, "花蓮縣"], [/台東|臺東/, "臺東縣"], [/澎湖/, "澎湖縣"], [/金門/, "金門縣"],
   [/連江|馬祖/, "連江縣"],
@@ -73,10 +74,13 @@ const TOWNSHIP_COUNTY = new Map(Object.entries({
   南澳: "宜蘭縣", 卓溪: "花蓮縣", 萬榮: "花蓮縣", 海端: "臺東縣", 綠島: "臺東縣", 蘭嶼: "臺東縣",
   達仁: "臺東縣", 金峰: "臺東縣", 延平: "臺東縣",
   中科: "臺中市", 南科: "臺南市", 竹科: "新竹市", 烏山頭水庫: "臺南市",
-  北檢: "臺北市", 中檢: "臺中市", 雄檢: "高雄市",
+  北檢: "臺北市", 中檢: "臺中市", 雄檢: "高雄市", 橋檢: "高雄市", 彰檢: "彰化縣",
+  內壢站: "桃園市", 新左營站: "高雄市", 南監: "臺南市", 屏監: "屏東縣", 南警三分局: "臺南市",
+  安中所: "臺南市", 曾文溪: "臺南市",
+  漢寶段: "彰化縣",
 }));
 const AMBIGUOUS_TOWNS = new Set(["中山", "中正", "信義", "大安", "東區", "北區", "西區", "南區", "大同", "中西", "東山"]);
-const TOWNSHIP_EVENT_RE = /墜|落|遇害|遇襲|命案|殺人|兇殺|凶殺|傷害|砍|刺|搶|中刀|火警|火災|倒塌|車禍|事故|工安|職災|偵結|起訴|查獲|逮|判刑|判決|一審|羈押|聲押|移送|約談|衝撞|通緝|毒駕|毒品|詐騙|宣導|走失|迷途|失智|命危|送醫|爆炸|淹水|土石流|坍方|警|檢|分局|派出所|案件|涉案|遭竊|落網|拘提|搜索|水庫|園區|車站|國小|國中/;
+const TOWNSHIP_EVENT_RE = /墜|落|遇害|遇襲|命案|殺人|兇殺|凶殺|傷害|霸凌|偷拍|砍|刺|搶|中刀|火警|火災|倒塌|車禍|追撞|連環撞|自撞|相撞|事故|工安|職災|偵結|起訴|查獲|逮|判刑|判決|一審|羈押|聲押|移送|約談|衝撞|通緝|涉貪|賄選|車手|毒駕|毒品|詐騙|宣導|演練|走失|迷途|失智|命危|送醫|受困|爆炸|淹水|土石流|坍方|警|檢|分局|派出所|案件|涉案|遭竊|落網|拘提|搜索|水庫|園區|車站|國小|國中/;
 
 const COUNTY_DISAMBIGUATION = {
   新竹市: { county: "新竹縣", city: /新竹市|竹市/, cityPlace: /^新竹(?:東區|北區|香山|巨城|科學工業園區)/, towns: "竹北|竹東|新埔|關西|湖口|新豐|芎林|橫山|北埔|寶山|峨眉|尖石|五峰" },
@@ -275,16 +279,16 @@ const MED = /詐騙|詐欺|毒品|緝毒|販毒|竊|搶|強盜|酒駕|毒駕|肇
 const HIGH_EN = /\b(murder|homicide|killed|dead|death|fatal|shooting|stabbing|explosion|kidnap\w*|rape|sexual assault|arson)\b/i;
 const MED_EN = /\b(fraud|scam|drug|narcotic|arrest\w*|theft|robbery|burglar\w*|smuggl\w*|drunk driving|DUI|crash|fire|indict\w*|prosecut\w*|detain\w*|assault)\b/i;
 const CRITICAL =
-  /隨機殺人|無差別(?:殺人|砍人)|(?:氣爆|爆炸).*(?:[0-9０-９一二三四五六七八九十百兩]+\s*(?:死|亡)|死|亡|重傷)|(?:[0-9０-９]{2,}|[0-9０-９]{1,3}(?:[,，][0-9０-９]{3})+|[一二三四五六七八九兩幾數]*[十百千萬][一二三四五六七八九兩幾數十百千萬]*)\s*[餘多]?\s*(?:人|名)?\s*(?:死|亡|罹難|喪生|喪命|身亡)|(?:大量|重大|多人)(?:傷亡|死傷|死亡)|多人(?:罹難|喪命|身亡)|滅門|挾持.*人質|大規模[^，。！？；、]{0,12}(?:傷亡|死傷|死亡|爆炸|攻擊|砍人|殺人)/;
+  /隨機殺人|無差別(?:殺人|砍人)|(?:氣爆|爆炸)[^，。！？；]{0,24}(?:[0-9０-９一二三四五六七八九十百兩]+\s*(?:死|亡)|死|亡|重傷)|(?:炸彈爆炸|爆炸)[^，。！？；]{0,12}縱火攻擊|(?:[0-9０-９]{2,}|[0-9０-９]{1,3}(?:[,，][0-9０-９]{3})+|[一二三四五六七八九兩幾數]*[十百千萬][一二三四五六七八九兩幾數十百千萬]*)\s*[餘多]?\s*(?:人|名)?\s*(?:死|亡|罹難|喪生|喪命|身亡)|(?:大量|重大|多人)(?:傷亡|死傷|死亡)|多人(?:罹難|喪命|身亡)|滅門|挾持[^，。！？；]{0,12}人質|大規模[^，。！？；、]{0,12}(?:傷亡|死傷|死亡|爆炸|攻擊|砍人|殺人)/;
 const NO_CRITICAL_CASUALTY = /(?:幸)?無(?:人)?傷亡|未(?:造成|傳出)?傷亡|無人(?:受傷|死亡|傷亡)/;
-const HIGH_FLOOR = /命案|兇殺|凶殺|殺人|殺害|不治|罹難|奪命|斃命|喪生|喪命|遇害|遇難|悶死|枉死|猝死|暴斃|刺殺|中刀|槍手|持槍|中槍|中彈|[1-9１-９]\s*(?:人|名)?\s*(?:死(?!角)|亡|罹難|喪生|喪命|身亡)|槍擊|開槍|槍械|彈藥|持刀.*(?:致死|死亡|身亡|喪命)|毒品.*(?:重案|大案|工廠|集團|走私|販運|製造)|緝毒.*(?:重案|大案)|販毒|製毒|海洛因|安非他命|愷他命/;
+const HIGH_FLOOR = /命案|兇殺|凶殺|殺人|殺害|不治|罹難|奪命|斃命|喪生|喪命|遇害|遇難|悶死|枉死|猝死|暴斃|刺殺|中刀|槍手|持槍|中槍|中彈|[1-9１-９]\s*(?:人|名)?\s*(?:死(?!角)|亡|罹難|喪生|喪命|身亡)|槍擊|開槍|槍械|彈藥|持刀[^，。！？；]{0,16}(?:致死|死亡|身亡|喪命)|毒品[^，。！？；]{0,16}(?:重案|大案|工廠|集團|走私|販運|製造)|緝毒[^，。！？；]{0,16}(?:重案|大案)|販毒|製毒|海洛因|安非他命|愷他命/;
 const ROUTINE = /說明會|宣導|記者會|頒獎/;
 const CYBER_ROUTINE =
   /宣導|講座|說明會|研習|論壇|課程|競賽|駭客松|體驗營|防護(?:週|月|宣導)|資安月|徵才|開箱|評測|上市(?!櫃|上櫃|公司|企業)|個資保護(?:法)?|資安意識|防詐宣導/;
 const CYBER_HIGH =
-  /勒索(?:病毒|軟體|攻擊)?|遭勒索|網攻|網路攻擊|(?:遭|被)?駭(?:客)?(?:入侵|攻擊|竊)|入侵.*(?:系統|主機|伺服器)|癱瘓.*(?:系統|服務|網路)|殭屍網路|供應鏈攻擊/;
+  /勒索(?:病毒|軟體|攻擊)?|遭勒索|網攻|網路攻擊|(?:遭|被)?駭(?:客)?(?:入侵|攻擊|竊)|入侵[^，。！？；]{0,20}(?:系統|主機|伺服器)|癱瘓[^，。！？；]{0,20}(?:系統|服務|網路)|殭屍網路|供應鏈攻擊/;
 const CYBER_DATA_BREACH =
-  /個資外洩|資料外洩|個(?:人)?資(?:料)?.{0,6}(?:外洩|遭竊)|外洩.{0,6}個資|資料庫外洩|帳號(?:密碼)?外洩/;
+  /個資外洩|資料外洩|個(?:人)?資(?:料)?[^，。！？；]{0,6}(?:外洩|遭竊)|外洩[^，。！？；]{0,6}個資|資料庫外洩|帳號(?:密碼)?外洩/;
 const CYBER_DATA_BREACH_SCALE =
   /大規模|[0-9０-９]{2,}\s*萬|[0-9０-９]+\s*億|百萬|千萬|上億|數十萬|數百萬/;
 
@@ -664,14 +668,108 @@ const INTERNATIONAL_HINT_TO_CATEGORY = {
   資安: "資安",
   金融: "金融",
 };
+const INTERNATIONAL_FEED_BY_LABEL = new Map(INTERNATIONAL_FEEDS.map((feed) => [feed.label, feed]));
+const SCIENCE_STUDY_RE = /\b(?:study|research|trial|simulation|model|analysis|review|experiment|findings|predict(?:ion|s)?|protocol|webinar|risk)\b|研究|論文|試驗|實驗|模擬|分析|回顧|研討會/i;
+const CLEAR_HEALTH_EVENT_RE = /\b(?:kills?|injures?|spreads?|hits?|strikes?|destroys?|collapses?|evacuates?|displaces?|death toll)\b|造成死傷|蔓延|襲擊|摧毀|撤離|罹難|死亡/i;
 const INTERNATIONAL_CATEGORY_EVIDENCE = [
   [/\b(?:fraud|scam|ponzi|money laundering|fake investment)\b|詐騙|詐欺|洗錢|假投資/i, "反詐"],
-  [/\b(?:cyberattack|ransomware|data breach|data leak|malware|phishing|hacked)\b|網攻|駭客|勒索|資安|個資外洩|資料外洩|漏洞/i, "資安"],
-  [/\b(?:stock market|share prices?|financial results|earnings|investors?|IPO|profits?|inflation|interest rates?)\b|股市|金融|通膨|利率|股價|財報|投資|獲利/i, "金融"],
+  [/\b(?:cyber\s*attacks?|ransomware|data breaches?|data leaks?|malware|phishing|hacked)\b|網攻|駭客|勒索|資安|個資外洩|資料外洩|漏洞/i, "資安"],
+  [/\b(?:stock market|share prices?|financial results|earnings|investors?|IPO|profits?|inflation rate|interest rates?)\b|股市|金融|通膨|利率|股價|財報|投資|獲利/i, "金融"],
   [/\b(?:war|airstrike|missile strike|troops deployed|sanctions?|diplomacy|election|invasion|ceasefire)\b|戰爭|軍事|軍隊|飛彈|空襲|制裁|外交|選舉|入侵|停火/i, "地緣政治"],
-  [/\b(?:earthquake|tsunami|flood(?:s|ing)? (?:in|hits?|strikes?|kills?|leaves?)|wildfire|bushfire|hurricane|typhoon|cyclone|tornado|landslide|volcanic eruption|drought|heatwave|blizzard|avalanche|outbreak|epidemic|pandemic|explosion|derailment|capsiz\w*|evacuat\w*|death toll)\b|地震|海嘯|洪水|水災|野火|山火|颶風|颱風|龍捲風|暴雨|土石流|火山爆發|乾旱|熱浪|暴雪|疫情|爆炸|倒塌|墜機|空難|出軌|沉船|翻覆|火災|撤離|罹難|死亡/i, "災害"],
   [/\b(?:murder|homicide|shooting|stabbing|kidnapping|robbery|assault|arrested for|charged with|crime)\b|命案|殺人|槍擊|刺傷|綁架|逮捕|搶劫|竊盜|襲擊|犯罪/i, "治安"],
+  [/\b(?:earthquakes?|tsunamis?|flood(?:s|ing)? (?:in|hits?|strikes?|kills?|leaves?)|wildfires?|bushfires?|hurricanes?|typhoons?|cyclones?|tornadoes?|landslides?|volcanic eruptions?|droughts?|heatwaves?|blizzards?|avalanches?|outbreaks?|epidemics?|pandemics?|explosions?|derailments?|capsiz\w*|evacuat\w*|death toll)\b|地震|海嘯|洪水|水災|野火|山火|颶風|颱風|龍捲風|暴雨|土石流|火山爆發|乾旱|熱浪|暴雪|疫情|爆炸|倒塌|墜機|空難|出軌|沉船|翻覆|火災|撤離|罹難|死亡/i, "災害"],
 ];
+const COUNTRY_LOCATIONS = [
+  ["美國", 39.8, -98.6, /\b(?:United States|USA|U\.S\.A?\.?|US|California|Texas|Florida|Alaska|Hawaii|Arizona|Pennsylvania|Ohio|Colorado|Oregon|Washington|Rhode Island|Nebraska|West Virginia|Louisiana|Illinois|New York|New Jersey|North Carolina|South Carolina|North Dakota|South Dakota|Oklahoma|Tennessee|Utah|Vermont|Virginia|Wisconsin|Wyoming|Nevada|New Mexico|Minnesota|Montana|Idaho|Iowa|Kansas|Kentucky|Michigan|Mississippi|Arkansas|Alabama|Indiana|Missouri|Maryland|Delaware|Connecticut|Massachusetts)\b|(?:在|赴|返|自)美國|美國(?:境內|各地|全國|發生|當地|州|城市)|華盛頓特區|紐約|洛杉磯|芝加哥|波士頓|邁阿密|舊金山|西雅圖|亞特蘭大|\b(?:Washington, D\.?C\.?|New York|Los Angeles|Chicago|Boston|Miami|San Francisco|Seattle|Atlanta|Philadelphia|Houston|Dallas|Austin|Phoenix|San Diego|Denver|Portland|Detroit)\b/i],
+  ["中國", 35.86, 104.19, /中國(?!航空|國際航空)|中國大陸|\bChina\b|北京|上海|深圳|廣州|成都|武漢|\b(?:Beijing|Shanghai|Shenzhen|Guangzhou|Chengdu|Wuhan)\b/i],
+  ["日本", 36.2, 138.25, /日本|東京|大阪|京都|廣島|\b(?:Japan|Tokyo|Osaka|Kyoto|Hiroshima)\b/i],
+  ["英國", 55.38, -3.4, /英國|倫敦|曼徹斯特|\b(?:United Kingdom|Britain|UK|London|Manchester|Cardiff|Edinburgh|Bristol)\b/i],
+  ["法國", 46.2, 2.2, /法國|巴黎|里昂|\b(?:France|Paris|Lyon)\b/i],
+  ["德國", 51.16, 10.45, /德國|柏林|慕尼黑|\b(?:Germany|Berlin|Munich)\b/i],
+  ["俄羅斯", 61.5, 105.3, /俄羅斯|莫斯科|聖彼得堡|\b(?:Russia|Moscow|St\.? Petersburg)\b/i],
+  ["烏克蘭", 48.37, 31.16, /烏克蘭|基輔|哈爾科夫|敖德薩|\b(?:Ukraine|Kyiv|Kiev|Kharkiv|Odesa)\b/i],
+  ["印度", 20.59, 78.96, /印度(?!航空)|新德里|孟買|班加羅爾|清奈|\b(?:India(?!\s+Airlines)|New Delhi|Mumbai|Bengaluru|Chennai)\b/i],
+  ["加拿大", 56.13, -106.35, /加拿大|渥太華|多倫多|溫哥華|\b(?:Canada|Ottawa|Toronto|Vancouver)\b/i],
+  ["澳洲", -25.27, 133.77, /澳洲|澳大利亞|坎培拉|雪梨|悉尼|墨爾本|\b(?:Australia|Canberra|Sydney|Melbourne|Perth)\b/i],
+  ["以色列", 31, 34.85, /以色列|特拉維夫|耶路撒冷|\b(?:Israel|Tel Aviv|Jerusalem)\b/i],
+  ["伊朗", 32.42, 53.68, /伊朗|德黑蘭|\b(?:Iran|Tehran)\b/i],
+  ["巴基斯坦", 30.37, 69.35, /巴基斯坦|伊斯蘭馬巴德|卡拉奇|\b(?:Pakistan|Islamabad|Karachi)\b/i],
+  ["土耳其", 38.96, 35.24, /土耳其|安卡拉|伊斯坦堡|\b(?:Turkey|Ankara|Istanbul)\b/i],
+  ["巴西", -14.23, -51.92, /巴西|巴西利亞|里約熱內盧|聖保羅|\b(?:Brazil|Bras[ií]lia|Rio de Janeiro|S[aã]o Paulo)\b/i],
+  ["墨西哥", 23.63, -102.55, /墨西哥|墨西哥城|\b(?:Mexico|Mexico City)\b/i],
+  ["南韓", 35.9, 127.76, /南韓|韓國|首爾|釜山|\b(?:South Korea|Seoul|Busan)\b/i],
+  ["北韓", 40.34, 127.51, /北韓|平壤|\b(?:North Korea|Pyongyang)\b/i],
+  ["西班牙", 40.46, -3.74, /西班牙|馬德里|\b(?:Spain|Madrid)\b/i],
+  ["義大利", 41.87, 12.56, /義大利|羅馬|米蘭|\b(?:Italy|Rome|Milan)\b/i],
+  ["南非", -30.56, 22.94, /南非|約翰尼斯堡|開普敦|\b(?:South Africa|Johannesburg|Cape Town)\b/i],
+  ["埃及", 26.82, 30.8, /埃及|開羅|\b(?:Egypt|Cairo)\b/i],
+  ["沙烏地阿拉伯", 23.88, 45.08, /沙烏地阿拉伯|沙特阿拉伯|利雅德|\b(?:Saudi(?: Arabia)?|Riyadh)\b/i],
+  ["阿拉伯聯合大公國", 23.42, 53.85, /阿聯酋|阿拉伯聯合大公國|杜拜|阿布達比|\b(?:United Arab Emirates|Dubai|Abu Dhabi)\b/i],
+  ["荷蘭", 52.13, 5.29, /荷蘭|阿姆斯特丹|\b(?:Netherlands|Amsterdam)\b/i],
+  ["瑞典", 60.12, 18.64, /瑞典|斯德哥爾摩|\b(?:Sweden|Stockholm)\b/i],
+  ["挪威", 60.47, 8.47, /挪威|奧斯陸|\b(?:Norway|Oslo)\b/i],
+  ["波蘭", 51.92, 19.15, /波蘭|華沙|\b(?:Poland|Warsaw)\b/i],
+  ["阿根廷", -38.42, -63.62, /阿根廷|布宜諾斯艾利斯|\b(?:Argentina|Buenos Aires)\b/i],
+  ["智利", -35.67, -71.54, /智利|聖地牙哥|\b(?:Chile|Santiago)\b/i],
+  ["奈及利亞", 9.08, 8.67, /奈及利亞|尼日利亞|阿布加|拉各斯|\b(?:Nigeria|Abuja|Lagos)\b/i],
+  ["尼日", 17.6, 8.08, /尼日(?:共和國)?|尼阿美|\b(?:Niger|Niamey)\b/i],
+  ["約旦", 30.59, 36.24, /約旦|安曼|\b(?:Jordanian|in Jordan|from Jordan|Jordan's government|Jordan country|Amman)\b/i],
+  ["查德", 15.45, 18.73, /查德|恩加美納|\b(?:Chadian|in Chad|from Chad|Chad government|N'Djamena)\b/i],
+  ["喬治亞", 42.32, 43.35, /喬治亞國|喬治亞共和國|第比利斯|巴統|\b(?:Georgia,? (?:the )?country|Tbilisi|Batumi)\b/i],
+  ["幾內亞比索", 11.8, -15.18, /幾內亞比索|\bGuinea-Bissau\b/i],
+  ["巴布亞紐幾內亞", -6.31, 143.95, /巴布亞紐幾內亞|\bPapua New Guinea\b/i],
+  ["赤道幾內亞", 1.65, 10.26, /赤道幾內亞|\bEquatorial Guinea\b/i],
+  ["幾內亞", 9.94, -9.7, /幾內亞(?!比索|共和國|灣)|幾內亞共和國|科納克里|\b(?:Republic of Guinea|Conakry)\b/i],
+  ["克羅埃西亞", 45.1, 15.2, /克羅埃西亞|札格瑞布|\b(?:Croatia|Zagreb|Vukovar)\b/i],
+  ["奧地利", 47.52, 14.55, /奧地利|維也納|\b(?:Austria|Vienna)\b/i],
+  ["泰國", 15.87, 100.99, /泰國|曼谷|清邁|\b(?:Thailand|Bangkok|Chiang Mai)\b/i],
+  ["越南", 14.06, 108.28, /越南|河內|胡志明市|\b(?:Vietnam|Hanoi|Ho Chi Minh City)\b/i],
+  ["印尼", -0.79, 113.92, /印尼|印度尼西亞|雅加達|\b(?:Indonesia|Jakarta)\b/i],
+  ["厄瓜多", -1.83, -78.18, /厄瓜多|基多|瓜亞基爾|\b(?:Ecuador|Quito|Guayaquil)\b/i],
+  ["烏拉圭", -32.52, -55.77, /烏拉圭|蒙特維多|\b(?:Uruguay|Montevideo)\b/i],
+  ["烏茲別克", 41.38, 64.59, /烏茲別克|塔什干|\b(?:Uzbekistan|Tashkent)\b/i],
+  ["菲律賓", 12.88, 121.77, /菲律賓|馬尼拉|宿霧|\b(?:Philippines|Manila|Cebu)\b/i],
+  ["莫三比克", -18.67, 35.53, /莫三比克|莫桑比克|馬普托|\b(?:Mozambique|Maputo)\b/i],
+  ["丹麥", 56.26, 9.5, /丹麥|哥本哈根|\b(?:Denmark|Copenhagen)\b/i],
+  ["瑞士", 46.82, 8.23, /瑞士|蘇黎世|日內瓦|\b(?:Switzerland|Zurich|Geneva)\b/i],
+  ["芬蘭", 61.92, 25.75, /芬蘭|赫爾辛基|\b(?:Finland|Helsinki)\b/i],
+  ["愛爾蘭", 53.14, -7.69, /愛爾蘭|都柏林|\b(?:Ireland|Dublin)\b/i],
+  ["希臘", 39.07, 21.82, /希臘|雅典|\b(?:Greece|Athens)\b/i],
+  ["葡萄牙", 39.4, -8.22, /葡萄牙|里斯本|\b(?:Portugal|Lisbon)\b/i],
+  ["捷克", 49.82, 15.47, /捷克|布拉格|\b(?:Czechia|Czech Republic|Prague)\b/i],
+  ["羅馬尼亞", 45.94, 24.97, /羅馬尼亞|布加勒斯特|\b(?:Romania|Bucharest)\b/i],
+  ["匈牙利", 47.16, 19.5, /匈牙利|布達佩斯|\b(?:Hungary|Budapest)\b/i],
+  ["馬來西亞", 4.21, 101.98, /馬來西亞|吉隆坡|\b(?:Malaysia|Kuala Lumpur)\b/i],
+  ["新加坡", 1.35, 103.82, /新加坡|\bSingapore\b/i],
+  ["孟加拉", 23.68, 90.36, /孟加拉(?:國)?|達卡|\b(?:Bangladesh|Dhaka)\b/i],
+  ["迦納", 7.95, -1.02, /迦納|阿克拉|\b(?:Ghana|Accra)\b/i],
+  ["衣索比亞", 9.15, 40.49, /衣索比亞|亞的斯亞貝巴|\b(?:Ethiopia|Addis Ababa)\b/i],
+  ["肯亞", -0.02, 37.91, /肯亞|奈洛比|\b(?:Kenya|Nairobi)\b/i],
+  ["哥倫比亞", 4.57, -74.3, /哥倫比亞|波哥大|\b(?:Colombia|Bogota)\b/i],
+  ["秘魯", -9.19, -75.02, /秘魯|利馬|\b(?:Peru|Lima)\b/i],
+  ["也門", 15.55, 48.52, /葉門|也門|薩那|\b(?:Yemen|Sana'?a)\b/i],
+  ["緬甸", 21.91, 95.96, /緬甸|仰光|奈比多|\b(?:Myanmar|Yangon|Naypyidaw)\b/i],
+];
+
+function countryLocationIn(text) {
+  const source = String(text || "").replace(/China Airlines|Air India/gi, " ");
+  const matches = [];
+  for (const [country, lat, lng, re] of COUNTRY_LOCATIONS) {
+    re.lastIndex = 0;
+    const match = re.exec(source);
+    if (!match) continue;
+    if (country === "土耳其" && /\b(?:roast(?:ed)?|sandwich|dinner|recipe|turkey breast|turkey meat)\b/i.test(source)) continue;
+    if (country === "喬治亞" && /\b(?:Georgia,?\s*(?:USA|US)|state of Georgia|Atlanta)\b/i.test(source)) continue;
+    matches.push({ country, lat, lng, index: match.index, length: match[0].length });
+  }
+  matches.sort((a, b) => a.index - b.index || b.length - a.length);
+  const match = matches[0];
+  return match ? { region: match.country, lat: match.lat, lng: match.lng } : null;
+}
+
+function countryLocationFromItem(title, summary) {
+  return countryLocationIn(title) || countryLocationIn(summary);
+}
 
 // 國際 RSS 的長尾事件走確定性輕量收錄；LLM 只精修較小候選池。
 // id 與 normalizeInternational 相同，讓精修事件可直接取代 bulk 版本。
@@ -688,18 +786,26 @@ export function mapBulkInternationalNews(items, { fetchedAt, excludeIds = new Se
 
     const id = eventIdFor("international", it.link) || `intl-${hash(`${it.source || "international"}:${title}`)}`;
     if (excludeIds.has(id)) continue;
-    const summary = String(it.description || title).replace(/\s+/g, " ").trim().slice(0, 200) || title;
-    const evidence = title;
-    const evidenceCategory = INTERNATIONAL_CATEGORY_EVIDENCE.find(([re]) => re.test(evidence))?.[1];
-    const hintedCategory = INTERNATIONAL_HINT_TO_CATEGORY[it.hint];
+    const rawSummary = String(it.description || title).replace(/\s+/g, " ").trim().slice(0, 200) || title;
+    const location = countryLocationFromItem(title, rawSummary);
     const feedName = String(it.source || "");
-    const scienceFeed = /scienmag/i.test(feedName);
-    const category = scienceFeed && evidenceCategory === "災害" ? "其他"
-      : evidenceCategory || (hintedCategory === "災害" ? "其他" : hintedCategory) || "其他";
-    const detectedRisk = riskFromTitle(title, it.hint, summary);
-    const riskLevel = detectedRisk === "low" && ["地緣政治", "災害", "金融"].includes(category)
+    const feed = INTERNATIONAL_FEED_BY_LABEL.get(feedName);
+    const hint = feed?.hint || it.hint;
+    const hintedCategory = INTERNATIONAL_HINT_TO_CATEGORY[hint];
+    const evidence = title;
+    const rawEvidenceCategory = INTERNATIONAL_CATEGORY_EVIDENCE.find(([re]) => re.test(evidence))?.[1];
+    const scienceStudy = feed?.topic === "health" && (SCIENCE_STUDY_RE.test(title) || (rawEvidenceCategory === "災害" && !CLEAR_HEALTH_EVENT_RE.test(title)));
+    const evidenceCategory = scienceStudy ? undefined : rawEvidenceCategory;
+    const trustedDisasterFeed = feed?.topic === "disaster" && hintedCategory === "災害";
+    const category = scienceStudy ? hintedCategory || "其他"
+      : evidenceCategory || (hintedCategory === "災害" && !trustedDisasterFeed ? "其他" : hintedCategory) || "其他";
+    const detectedRisk = riskFromTitle(title, hint, rawSummary);
+    const riskLevel = detectedRisk === "low" && evidenceCategory === category && ["地緣政治", "災害", "金融"].includes(category)
       ? "medium"
       : detectedRisk;
+    const summary = trustedDisasterFeed && !evidenceCategory
+      ? `${feedName === "USGS Quakes M4.5 week" ? "地震事件" : "災害警報"}：${rawSummary}`.slice(0, 200)
+      : rawSummary;
     const source = deriveNewsProvenance(
       { ...it, datasetId: it.datasetId || "international-news", link: it.link || id },
       { fetchedAt },
@@ -707,16 +813,17 @@ export function mapBulkInternationalNews(items, { fetchedAt, excludeIds = new Se
     events.push({
       id,
       title,
-      region: "國際",
+      region: location?.region || "國際",
+      ...(location ? { lat: location.lat, lng: location.lng } : {}),
       timestamp: toIso(it.pubDate),
       category,
-      categoryBasis: scienceFeed && evidenceCategory === "災害" ? "rule:science-publication"
-        : evidenceCategory ? `evidence:${evidenceCategory}` : hintedCategory === "災害" ? "rule:no-disaster-evidence" : it.hint ? `hint:${it.hint}` : "default",
+      categoryBasis: scienceStudy ? `hint:${hint || "其他"}`
+        : evidenceCategory ? `evidence:${evidenceCategory}` : hintedCategory === "災害" && !trustedDisasterFeed ? "rule:no-disaster-evidence" : hint ? `hint:${hint}` : "default",
       scope: "international",
       riskLevel,
       summary,
-      locationPrecision: "unknown",
-      locationNote: "RSS 未提供可驗證的事件座標",
+      locationPrecision: location ? "country" : "unknown",
+      locationNote: location ? "依標題或摘要中的國家／城市名稱規則推定，使用國家代表座標" : "RSS 未提供可驗證的事件座標",
       source: {
         ...source,
         normalizationMethod: "bulk",
