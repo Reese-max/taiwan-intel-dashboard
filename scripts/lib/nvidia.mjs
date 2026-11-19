@@ -27,6 +27,9 @@ const RISK_ORDER = { low: 0, medium: 1, high: 2, critical: 3 };
 let lastIntlNormalizeFailed = false;
 export const intlNormalizeFailed = () => lastIntlNormalizeFailed;
 export let lastIntlNormalizeSkippedBatches = 0;
+// 最近一次國際正規化的新結果（含未被挑進前 max 的）與「有回應的批次」送出的 id，供呼叫端跨輪快取。
+let lastIntlFresh = { events: [], answeredIds: [] };
+export const intlFreshNormalized = () => lastIntlFresh;
 let lastDomesticNormalizeFailed = false;
 export const domesticNormalizeFailed = () => lastDomesticNormalizeFailed;
 export let lastDomesticNormalizeSkippedBatches = 0;
@@ -489,6 +492,7 @@ export async function normalizeInternational(
 ) {
   lastIntlNormalizeFailed = false;
   lastIntlNormalizeSkippedBatches = 0;
+  lastIntlFresh = { events: [], answeredIds: [] };
   if (!items.length) return [];
   // 入口標題去重（多查詢／多源大量重複同一則 → 省 LLM、避免重複輸出）。
   const seenTitle = new Set();
@@ -522,9 +526,15 @@ export async function normalizeInternational(
 
   let llmEvents = [];
   let skipped = 0;
+  // 有產出的批次才記錄送出的 id：整批零產出可能是模型異常，下輪照常重送。
+  const answeredIds = new Set();
+  const answered = (batch) => (events) => {
+    if (events.length) for (const it of batch) answeredIds.add(eventIdFor("international", it.link));
+    return events;
+  };
   if (fresh.length) {
     if (fresh.length <= batchSize) {
-      llmEvents = await normalizeInternationalBatch(queue, { max });
+      llmEvents = await normalizeInternationalBatch(queue, { max }).then(answered(queue));
     } else {
       const batches = [];
       for (let i = 0; i < queue.length; i += batchSize) batches.push(queue.slice(i, i + batchSize));
@@ -545,8 +555,8 @@ export async function normalizeInternational(
           skipped++;
           return [];
         }
-        return normalizeInternationalBatch(b, { max: perBatchFor(i) }).catch(() =>
-          normalizeInternationalBatch(b, { max: perBatchFor(i) }).catch((e) => {
+        return normalizeInternationalBatch(b, { max: perBatchFor(i) }).then(answered(b)).catch(() =>
+          normalizeInternationalBatch(b, { max: perBatchFor(i) }).then(answered(b)).catch((e) => {
             console.warn(`國際正規化批次 ${i + 1}/${batches.length} 重試仍失敗，放棄該批：${String(e?.message || e).slice(0, 200)}`);
             return [];
           }),
@@ -573,6 +583,7 @@ export async function normalizeInternational(
     .map((e) => calibrateIntlRisk(e))
     .map((event) => coerceOfficialPoliceEvent(event, itemById.get(event?.id)));
   const normalizedReused = reused.map((event) => coerceOfficialPoliceEvent(event, itemById.get(event?.id)));
+  lastIntlFresh = { events: calibratedFresh.filter(Boolean), answeredIds: [...answeredIds].filter(Boolean) };
   const seen = new Set();
   const merged = [];
   for (const ev of [...normalizedReused, ...calibratedFresh]) {

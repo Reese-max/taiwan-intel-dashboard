@@ -46,6 +46,8 @@ import {
   titleKey as bulkTitleKey,
 } from "./lib/news-bulk.mjs";
 import { readVerdicts, reviewNewsRelevance, serializeVerdicts, VERDICTS_FILE } from "./lib/news-llm-gate.mjs";
+import { INTL_CACHE_FILE, readIntlCache, serializeIntlCache, updateIntlCache } from "./lib/intl-normalize-cache.mjs";
+import { eventIdFor } from "./lib/event-id.mjs";
 import { buildNewsSourceContribution, eventFeedLabel, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
 import {
   normalizeInternational,
@@ -54,6 +56,7 @@ import {
   summarize,
   llmModel,
   intlNormalizeFailed,
+  intlFreshNormalized,
   domesticNormalizeFailed,
   lastIntlNormalizeSkippedBatches,
   lastDomesticNormalizeSkippedBatches,
@@ -393,8 +396,20 @@ export async function run() {
       const generalFeedLabels = new Set(
         selectInternationalFeeds({ tier: "expanded", topic: "general" }).map((feed) => feed.label),
       );
+      // 沒挑進 international.json 的正規化結果與模型看過不收的 id 另存，期限內不重送 LLM。
+      // 規則模式不讀這份快取，維持只重用 international.json 的行為；INTL_RECALIBRATE_DAYS=0（停用重評）時不依時間過期。
+      const recalibrateDays = Number(process.env.INTL_RECALIBRATE_DAYS ?? 3);
+      const intlCache = !useLlmIntl || process.env.INTL_RENORM_ALL === "true"
+        ? { events: [], rejected: new Map() }
+        : readIntlCache(readJson(INTL_CACHE_FILE, null), {
+            now: nowMs,
+            ttlMs: recalibrateDays > 0 ? recalibrateDays * 86400000 : Infinity,
+          });
+      for (const event of intlCache.events) if (!priorIntl.has(event.id)) priorIntl.set(event.id, event);
       // LLM 僅精修有界候選池；全量原文由輕量 mapper 收錄，避免來源擴充後批次數線性爆增。
-      const enrichItems = rawItems.slice(0, intlCfg.maxEvents * 2);
+      const enrichItems = rawItems
+        .slice(0, intlCfg.maxEvents * 2)
+        .filter((item) => !intlCache.rejected.has(eventIdFor("international", item.link)));
       // 規則模式只重用既有精修快取，不呼叫 LLM；其餘全量走輕量映射。
       let enriched = useLlmIntl ? [] : [...new Set(partitionByCache(enrichItems, "international", priorIntl).reused)];
       let normalizeError;
@@ -408,6 +423,17 @@ export async function run() {
       } catch (e) {
         normalizeError = e.message;
         console.error(`國際 LLM 精修失敗（改全走輕量）：${e.message}`);
+      }
+      if (useLlmIntl && !normalizeError) {
+        const { events, answeredIds } = intlFreshNormalized();
+        const updated = updateIntlCache(intlCache, {
+          freshEvents: events,
+          // 全批失敗時不記「看過不收」，避免模型異常把整批鎖住。
+          answeredIds: intlNormalizeFailed() ? [] : answeredIds,
+          now: nowMs,
+        });
+        writeJson(INTL_CACHE_FILE, serializeIntlCache(updated));
+        console.log(`國際正規化快取：新 ${events.length}／存 ${updated.events.length}／看過不收 ${updated.rejected.size}`);
       }
       const enrichedIds = new Set(enriched.map((event) => event.id).filter(Boolean));
       const bulk = mapBulkInternationalNews(rawItems, { fetchedAt: nowIso, excludeIds: enrichedIds });
