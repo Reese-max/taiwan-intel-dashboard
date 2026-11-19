@@ -418,6 +418,12 @@ export function isPoliceNewsNoise(item) {
   return politicalNoise && !CRIMINAL_PROCEEDING_RE.test(title);
 }
 
+// 標題已有明確案件字眼者不送 LLM 複核，避免模型誤刪真案件。
+export function hasStrongCaseTitle(title) {
+  const text = String(title || "");
+  return CRIMINAL_PROCEEDING_RE.test(text) || HIGH.test(text) || HIGH_FLOOR.test(text) || /工安|職災/.test(text);
+}
+
 export function isNonEventNoise(item) {
   const title = String(item?.title || "");
   const source = sourceText(item?.source);

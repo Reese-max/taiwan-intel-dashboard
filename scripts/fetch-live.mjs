@@ -45,6 +45,7 @@ import {
   refreshDomesticNewsCategory,
   titleKey as bulkTitleKey,
 } from "./lib/news-bulk.mjs";
+import { readVerdicts, reviewNewsRelevance, serializeVerdicts, VERDICTS_FILE } from "./lib/news-llm-gate.mjs";
 import { buildNewsSourceContribution, eventFeedLabel, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
 import {
   normalizeInternational,
@@ -144,6 +145,7 @@ export function buildTwNewsEvents({
   retentionDays = 5,
   advisoryRetentionDays,
   resolveRetentionDays,
+  llmDropKeys,
   now = Date.now(),
 } = {}) {
   const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
@@ -159,6 +161,7 @@ export function buildTwNewsEvents({
       !isPoliceNewsNoise(item) &&
       !isFigurativeNewsNoise(item) &&
       !isOverseasLocalNews(item) &&
+      !llmDropKeys?.has(bulkTitleKey(event?.title)) &&
       shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now })
     );
   };
@@ -226,6 +229,8 @@ export async function run() {
   const useLlmNormalization = process.env.NEWS_NORMALIZE_MODE === "llm";
   // 國際可單獨開 LLM（INTL_NORMALIZE_MODE），國內新聞維持規則正規化。
   const useLlmIntl = (process.env.INTL_NORMALIZE_MODE || process.env.NEWS_NORMALIZE_MODE) === "llm";
+  // 國內新聞相關性可另開 LLM 複核（DOMESTIC_LLM_GATE=on），正規化仍走規則。
+  const useLlmDomesticGate = process.env.DOMESTIC_LLM_GATE === "on";
   const nowMs = Date.now();
   const nowIso = new Date(nowMs).toISOString();
   const status = {};
@@ -482,6 +487,8 @@ export async function run() {
   //  抓取層 perFeed 拉滿、全量去重 → LLM 精修最近一批（地理定位上地球儀）＋其餘輕量收錄（免 LLM）。
   let twnews = [];
   let twFeedStatus = [];
+  let llmGate;
+  let llmDropKeys;
   if (want("twnews")) {
     try {
       const rss = await fetchRssItems({ perFeed: 100, feeds: TW_NEWS_FEEDS, concurrency: 6 });
@@ -506,7 +513,29 @@ export async function run() {
       }
       const rawUnique = uniq.length;
       // 先過警政過濾 → enriched 與 bulk 共用此池（LLM 名額不被非警政排擠、不浪費 token）。
-      const policeUniq = uniq.filter((it) => isRelevantNewsItem(it));
+      let policeUniq = uniq.filter((it) => isRelevantNewsItem(it));
+      if (useLlmDomesticGate) {
+        const verdicts = readVerdicts(readJson(VERDICTS_FILE, null), nowMs);
+        // 上一輪已收的新聞也一起複核，否則要等保留窗到期才會消失。
+        const carriedItems = readOld("domestic.json")
+          .filter((e) => e?.source?.datasetId === "tw-news")
+          .map((e) => ({ title: e.title, description: e.summary, official: e.source?.authority === "official" }));
+        try {
+          const review = await reviewNewsRelevance([...policeUniq, ...carriedItems], {
+            verdicts,
+            budgetMs: Number(process.env.DOMESTIC_LLM_GATE_BUDGET_MS) || undefined,
+            now: nowMs,
+          });
+          policeUniq = policeUniq.filter((it) => !review.dropped.has(it));
+          llmGate = review.stats;
+        } catch (e) {
+          llmGate = { error: String(e?.message || e).slice(0, 200) };
+          console.error(`國內新聞 LLM 複核失敗（照規則結果）：${llmGate.error}`);
+        }
+        writeJson(VERDICTS_FILE, serializeVerdicts(verdicts));
+        llmDropKeys = new Set([...verdicts].filter(([, v]) => !v.keep).map(([k]) => k));
+        console.log(`國內新聞 LLM 複核：${JSON.stringify(llmGate)}`);
+      }
       policeUniq.sort((a, b) => (Date.parse(b.pubDate) || 0) - (Date.parse(a.pubDate) || 0));
       // LLM 精修最近 N 筆（語意分類＋座標→上地球儀），其餘全量輕量收錄。
       const ENRICH_N = Number(process.env.NEWS_ENRICH_N) || 500;
@@ -558,6 +587,7 @@ export async function run() {
         enriched: enriched.length,
         bulk: bulk.length,
         policeRelevant: policeUniq.length,
+        ...(llmGate ? { llmGate } : {}),
         rawUnique,
         relevanceAudit: relevanceAudit.population,
         categoryBasis,
@@ -629,6 +659,7 @@ export async function run() {
     dropStaleNews: dropStale(status.twnews),
     retentionDays: RETENTION_DAYS,
     advisoryRetentionDays: ADVISORY_RETENTION_DAYS,
+    llmDropKeys,
     now: nowMs,
   });
   if (status.twnews?.ok && twnews.length) {

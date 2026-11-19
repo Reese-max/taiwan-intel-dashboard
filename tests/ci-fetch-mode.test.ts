@@ -185,6 +185,7 @@ describe("resolveFetchMode", () => {
     expect(workflow).toContain("LLM_BASE_URL: https://api.minimax.io/v1");
     expect(workflow).toContain("LLM_MODEL: MiniMax-M3");
     expect(workflow).toContain('INTL_NORMALIZE_MODE: "llm"');
+    expect(workflow).toContain('DOMESTIC_LLM_GATE: "on"');
     expect(workflow).toContain('INTL_NORMALIZE_BATCH: "10"');
     expect(workflow).not.toMatch(/^\s*NEWS_NORMALIZE_MODE:/m);
   });
