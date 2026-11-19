@@ -1,4 +1,4 @@
 {
-  "sha": "2b6715071004a0ffe16ffcc4ba2acb07ba07312d",
-  "note": "Owner asked on 2026-11-19 to keep optimizing. main 2b67150 = #140: international normalization caches every fresh MiniMax result (3 days, cap 1500) and ids seen but not picked (12 h, cap 3000) in intl-normalize-cache.json, so ~300 items are no longer re-sent every 30-minute run; LLM mode only. Codex review via route: 4 points handled. Includes previously approved 1228272 (#138). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
+  "sha": "4ac074ead65fcfce4f67845451859a688018a792",
+  "note": "Follow-up on 2026-11-19. main 4ac074e = #142: the domestic MiniMax review runs one batch at a time and waits 30 s / 60 s on HTTP 429 within its 4-minute budget (production run 44462004943 had all 5 batches rate-limited right after international normalization). Includes previously approved 2b67150 (#140). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
 }
