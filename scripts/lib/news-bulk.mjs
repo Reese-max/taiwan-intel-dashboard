@@ -687,11 +687,11 @@ const INTERNATIONAL_CATEGORY_EVIDENCE = [
 ];
 const COUNTRY_LOCATIONS = [
   ["美國", 39.8, -98.6, /\b(?:United States|America|USA|US|California|Texas|Florida|Alaska|Hawaii|Arizona|Pennsylvania|Ohio|Colorado|Oregon|Washington|Rhode Island|Nebraska|West Virginia|Louisiana|Illinois|New York|New Jersey|North Carolina|South Carolina|North Dakota|South Dakota|Oklahoma|Tennessee|Utah|Vermont|Virginia|Wisconsin|Wyoming|Nevada|New Mexico|Minnesota|Montana|Idaho|Iowa|Kansas|Kentucky|Michigan|Mississippi|Arkansas|Alabama|Indiana|Missouri|Maryland|Delaware|Connecticut|Massachusetts)\b|\bU\.S\.A?(?:\.|(?=\W|$))|State of Georgia|(?:在|赴|返|自|於)美國|美國(?:境內|各地|全國|發生|當地|州|城市)|華盛頓特區|紐約|洛杉磯|芝加哥|波士頓|邁阿密|舊金山|西雅圖|亞特蘭大|\b(?:Washington, D\.?C\.?|New York|Los Angeles|Chicago|Boston|Miami|San Francisco|Seattle|Atlanta|Philadelphia|Houston|Dallas|Austin|Phoenix|San Diego|Denver|Portland|Detroit)\b/i],
-  ["中國", 35.86, 104.19, /中國(?!航空|國際航空)|中國大陸|(?<!South )\bChina\b|\bChinese\b|北京|上海|深圳|廣州|成都|武漢|\b(?:Beijing|Shanghai|Shenzhen|Guangzhou|Chengdu|Wuhan)\b/i],
+  ["中國", 35.86, 104.19, /中國(?!航空|國際航空)|中國大陸|(?<!South )\bChina\b|北京|上海|深圳|廣州|成都|武漢|\b(?:Beijing|Shanghai|Shenzhen|Guangzhou|Chengdu|Wuhan)\b/i],
   ["日本", 36.2, 138.25, /日本|東京|大阪|京都|廣島|\b(?:Japan|Tokyo|Osaka|Kyoto|Hiroshima)\b/i],
-  ["英國", 55.38, -3.4, /英國|倫敦|曼徹斯特|\b(?:United Kingdom|Britain|UK|London|Manchester|Cardiff|Edinburgh|Bristol)\b/i],
+  ["英國", 55.38, -3.4, /英國|倫敦|曼徹斯特|\b(?:United Kingdom|Britain|U\.?K\.?|NHS|London|Manchester|Cardiff|Edinburgh|Bristol)\b/i],
   ["法國", 46.2, 2.2, /法國|巴黎|里昂|\b(?:France|Paris|Lyon)\b/i],
-  ["德國", 51.16, 10.45, /德國|柏林|慕尼黑|\b(?:Germany|German|Berlin|Munich)\b/i],
+  ["德國", 51.16, 10.45, /德國|柏林|慕尼黑|聯邦國防軍|\b(?:Germany|German|Bundeswehr|Berlin|Munich)\b/i],
   ["俄羅斯", 61.5, 105.3, /俄羅斯|莫斯科|聖彼得堡|\b(?:Russia|Moscow|St\.? Petersburg)\b/i],
   ["烏克蘭", 48.37, 31.16, /烏克蘭|基輔|哈爾科夫|敖德薩|\b(?:Ukraine|Kyiv|Kiev|Kharkiv|Odesa)\b/i],
   ["印度", 20.59, 78.96, /印度(?!航空)|新德里|孟買|班加羅爾|清奈|\b(?:India(?!\s+Airlines)|Indian|New Delhi|Mumbai|Bengaluru|Chennai)\b/i],
@@ -702,6 +702,7 @@ const COUNTRY_LOCATIONS = [
   ["敘利亞", 34.8, 38.99, /敘利亞|大馬士革|\b(?:Syria|Damascus)\b/i],
   ["委內瑞拉", 6.42, -66.59, /委內瑞拉|卡拉卡斯|\b(?:Venezuela|Caracas)\b/i],
   ["比利時", 50.5, 4.47, /比利時|布魯塞爾|\b(?:Belgium|Brussels|Antwerp)\b/i],
+  ["黎巴嫩", 33.85, 35.86, /黎巴嫩|貝魯特|\b(?:Lebanon|Beirut|Lebanese)\b/i],
   ["伊朗", 32.42, 53.68, /伊朗|德黑蘭|\b(?:Iran|Tehran)\b/i],
   ["伊拉克", 33.22, 43.68, /伊拉克|巴格達|\b(?:Iraq|Iraqi|Baghdad)\b/i],
   ["科威特", 29.31, 47.48, /科威特|科威特市|\b(?:Kuwait|Kuwait City)\b/i],
@@ -734,7 +735,8 @@ const COUNTRY_LOCATIONS = [
   ["幾內亞", 9.94, -9.7, /幾內亞(?!比索|共和國|灣)|幾內亞共和國|科納克里|\b(?:Guinea|Republic of Guinea|Conakry)\b/i],
   ["克羅埃西亞", 45.1, 15.2, /克羅埃西亞|札格瑞布|\b(?:Croatia|Zagreb|Vukovar)\b/i],
   ["奧地利", 47.52, 14.55, /奧地利|維也納|\b(?:Austria|Vienna)\b/i],
-  ["泰國", 15.87, 100.99, /泰國|曼谷|清邁|\b(?:Thailand|Bangkok|Chiang Mai)\b/i],
+  ["紐西蘭", -40.9, 174.89, /紐西蘭|威靈頓|奧克蘭|\b(?:New Zealand|New Zealander|Wellington|Auckland)\b/i],
+  ["泰國", 15.87, 100.99, /泰國|曼谷|清邁|\b(?:Thailand|Thai(?=\s+(?:rivers?|villages?|border|province|officials?|government|court))|Bangkok|Chiang Mai)\b/i],
   ["越南", 14.06, 108.28, /越南|河內|胡志明市|\b(?:Vietnam|Hanoi|Ho Chi Minh City)\b/i],
   ["印尼", -0.79, 113.92, /印尼|印度尼西亞|雅加達|\b(?:Indonesia|Indonesian|Jakarta)\b/i],
   ["厄瓜多", -1.83, -78.18, /厄瓜多|基多|瓜亞基爾|\b(?:Ecuador|Quito|Guayaquil)\b/i],
@@ -764,37 +766,76 @@ const COUNTRY_LOCATIONS = [
 ];
 
 function countryLocationIn(text, { uniqueOnly = false } = {}) {
-  if (/\bOsaka Gas\b/i.test(String(text || ""))) return null;
+  const raw = String(text || "");
+  if (/\bOsaka Gas\b/i.test(raw) ||
+      /\bin\s+the\s+US\s+and\s+Europe\b/i.test(raw) ||
+      /\b(?:six|6)\s+(?:countries|カ国)\b/i.test(raw) ||
+      /\b(?:watch|stream|broadcast).{0,35}\bvs\b/i.test(raw) ||
+      /\bNew Zealand vs India\b/i.test(raw) ||
+      /\bglobally\b/i.test(raw) && /\b(?:recall|recalls|affected|impact)\b/i.test(raw) ||
+      /\b(?:main topic|topic) at .*meeting\b/i.test(raw) ||
+      /\b(?:US|U\.S\.) chip restrictions\b/i.test(raw) ||
+      /\bNvidia\b.{0,70}\b(?:stock|shares?|risks?)\b/i.test(raw) ||
+      /\bRussia.{0,70}\bmunitions?\b.{0,80}\bUkraine\b/i.test(raw) ||
+      /\bweighs?\b.{0,50}\bstrikes?\s+on\s+Iran\b/i.test(raw) ||
+      /\bNorth Korea[- ]Linked\b/i.test(raw)) return null;
   const source = String(text || "").replace(/China Airlines|China Eastern|China Southern|China Merchants|Air India|Air China|Osaka Gas|Vienna Insurance Group/gi, " ");
   const matches = [];
   for (const [country, lat, lng, re] of COUNTRY_LOCATIONS) {
     const global = new RegExp(re.source, `${re.flags}g`);
     for (const match of source.matchAll(global)) {
       if (country === "美國" && match[0] === "us") continue;
+      if (country === "美國" && /^America$/i.test(match[0]) && /\bLatin\s+$/i.test(source.slice(Math.max(0, match.index - 12), match.index))) continue;
       if (country === "美國" && /^\s*-listed\b/i.test(source.slice(match.index + match[0].length))) continue;
-      if (country === "美國" && /^\s*(?:envoys?|officials?|firms?|companies|forces?|military|troops|strikes?|strike|aid)\b/i.test(source.slice(match.index + match[0].length))) continue;
+      if (country === "美國" && /\bTrump administration\b/i.test(source) && /\bUS firms?\b/i.test(source)) {
+        matches.push({ country, lat, lng, index: match.index, length: match[0].length });
+        continue;
+      }
+      if (country === "美國" && /^\s*(?:envoys?|officials?|firms?|companies|forces?|military|troops|strikes?|strike|aid|tech giant|market leader|market-leading)\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "美國" && /^\s*\$/.test(source.slice(match.index + match[0].length))) continue;
+      if (country === "美國" && /\bUS\s+(?:chip )?(?:restrictions?|policy|sanctions?)\b/i.test(source) && !/\bTrump administration\b/i.test(source)) continue;
+      if (country === "美國" && /\bUS(?:\s|-)(?:market leader|tech giant|listed)\b/i.test(source)) continue;
+      if (country === "中國" && /\bChinese\b/i.test(match[0]) && !/\bChinese\b.{0,55}\b(?:company|platform|business)\b/i.test(source)) continue;
+      if (country === "義大利" && /\bfrom\s+Italy\b/i.test(source)) continue;
+      if (country === "烏克蘭" && /^\s+war\b/i.test(source.slice(match.index + match[0].length))) continue;
+      if (country === "北韓" && /^[- ]Linked\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "土耳其" && /\b(?:roast(?:ed)?|sandwich|dinner|recipe|turkey breast|turkey meat)\b/i.test(source)) continue;
       if (country === "喬治亞" && /\b(?:Georgia,?\s*(?:USA|US)|state of Georgia|Atlanta)\b/i.test(source)) continue;
       if (country === "英國" && /^\s+Business School\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "伊朗" && /\bfrom the\s*$/i.test(source.slice(Math.max(0, match.index - 12), match.index)) && /^\s+War\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "烏克蘭" && /^\s+over\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "烏克蘭" && /\bfuture of\s*$/i.test(source.slice(Math.max(0, match.index - 14), match.index))) continue;
+      if (/^from\s+$/i.test(source.slice(Math.max(0, match.index - 8), match.index))) continue;
       matches.push({ country, lat, lng, index: match.index, length: match[0].length });
     }
   }
   matches.sort((a, b) => a.index - b.index || b.length - a.length);
   if (uniqueOnly && new Set(matches.map((match) => match.country)).size > 1) return null;
+  for (const match of source.matchAll(/\bChinese\b/gi)) {
+    if (!/\bChinese\b.{0,55}\b(?:company|platform|business)\b/i.test(source)) continue;
+    const [country, lat, lng] = COUNTRY_LOCATIONS.find(([name]) => name === "中國");
+    matches.push({ country, lat, lng, index: match.index, length: match[0].length });
+  }
   const explicit = matches.filter((match) => {
     const before = source.slice(Math.max(0, match.index - 24), match.index);
     return /\b(?:in|at|near|within)\s+(?:the\s+)?(?:central|southern|northern|eastern|western|northwestern|southwestern)\s+$/i.test(before) ||
       /\b(?:in|at|near|within)\s+(?:the\s+)?$/i.test(before) ||
+      /\bin\s+\w+\s+and\s+$/i.test(before) ||
       /(?:在|赴|回|於|位於|來自|前往|抵達|發生於)\s*$/.test(before);
   });
-  if (explicit.length) return { region: explicit[0].country, lat: explicit[0].lat, lng: explicit[0].lng };
+  if (new Set(explicit.map((match) => match.country)).size > 1) return null;
+  if (explicit.length) return { region: explicit[0].country, lat: explicit[0].lat, lng: explicit[0].lng, explicit: true };
+  if (matches[0]?.index === 0 && /^(?:Paris|New York|London|Tokyo|Berlin|Moscow|Beirut|Dublin|Miami)$/i.test(source.slice(0, matches[0].length))) {
+    return { region: matches[0].country, lat: matches[0].lat, lng: matches[0].lng, explicit: true };
+  }
   if (/\bSydney Marathon\b/i.test(source)) return null;
   if (/\bOsaka Gas\b/i.test(source)) return null;
   if (/\b(?:China[-–]US|US[-–]China|U\.S\.[-–]China|China[-–]U\.S\.)\b/i.test(source)) return null;
+  if (/\bin\s+the\s+US\s+and\s+Europe\b/i.test(source)) return null;
+  if (/\b(?:six|6)\s+(?:countries|カ国)\b/i.test(source)) return null;
+  if (/\b(?:watch|stream|broadcast).{0,35}\bvs\b/i.test(source) || /\bNew Zealand vs India\b/i.test(source)) return null;
+  if (/\bglobally\b/i.test(source) && /\b(?:recall|recalls|affected|impact)\b/i.test(source)) return null;
+  if (/\b(?:main topic|topic) at .*meeting\b/i.test(source)) return null;
   if (/\b(?:Europe Tonight|Europe Morning|Tonight: EU)\b/i.test(source)) return null;
   if (/\bLatin America.{0,80}\bacross the region\b/i.test(source)) return null;
   if (/\bDHL launches.{0,80}\bair freight service\b/i.test(source)) return null;
@@ -807,7 +848,17 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
 }
 
 function countryLocationFromItem(title, summary) {
-  return countryLocationIn(title) || countryLocationIn(summary, { uniqueOnly: true });
+  const combined = [title, summary].filter(Boolean).join(" ");
+  if (/\b(?:Nvidia\b.{0,70}\b(?:stock|shares?|risks?)|globally\b.{0,60}\b(?:recall|recalls|affected|impact))\b/i.test(combined) ||
+      /\b(?:US|U\.S\.) chip restrictions\b/i.test(combined) ||
+      /\bin\s+the\s+US\s+and\s+Europe\b/i.test(combined) ||
+      /\b(?:six|6)\s+(?:countries|カ国)\b/i.test(combined) ||
+      /\b(?:main topic|topic) at .*meeting\b/i.test(combined) ||
+      /\bRussia.{0,70}\bmunitions?\b.{0,80}\bUkraine\b/i.test(combined)) return null;
+  const titleLocation = countryLocationIn(title);
+  if (titleLocation?.explicit) return titleLocation;
+  const summaryLocation = countryLocationIn(summary, { uniqueOnly: true });
+  return summaryLocation?.explicit ? summaryLocation : titleLocation || summaryLocation;
 }
 
 // 國際 RSS 的長尾事件走確定性輕量收錄；LLM 只精修較小候選池。
