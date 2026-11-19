@@ -1,4 +1,4 @@
 {
-  "sha": "5371133a8c816905450b4828979c1099ebca62bc",
-  "note": "Follow-up to #148 on 2026-11-19. main 5371133 = #150: carried-over rule events are re-mapped with the new rules (domestic national items get a county; international bulk items re-classified and located; risk never recomputed; existing locations kept). Production-data simulation: national 57.2% -> 52.4%, Scienmag disaster 301 -> 1, critical/high unchanged. Includes previously approved 32dba67 (#148). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
+  "sha": "e5218f08c4149ece2deb12eef7f876a84a3c2df4",
+  "note": "Follow-ups on 2026-11-20. main e5218f0 = #152: general rules for international country locations after an independent Gemini review of 100 production items (fictional places, product-scope exclusions, Taiwan-agency events; 4 of 7 errors fixed), 躲過一劫/劫後餘生 no longer high, dark disabled zoom button. Codex review: 5 of 6 points reproduced and fixed. Includes previously approved 5371133 (#150). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
 }
