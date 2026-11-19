@@ -1114,6 +1114,13 @@ describe("riskFromTitle 主題感知", () => {
     expect(riskFromTitle("高雄命案嫌犯落網", "治安")).toBe("high");
   });
 
+  it("「大規模」只和同一句的傷亡攻擊詞連成危急，背景描述不跨句連結", () => {
+    expect(riskFromTitle("車站發生大規模砍人事件", "治安")).toBe("critical");
+    expect(riskFromTitle("園區遭大規模無差別攻擊", "治安")).toBe("critical");
+    const desc = "北京近來加大對台施壓，不僅持續在台海周邊舉行大規模海上與空中軍演行動，還委託「代理人」對台灣政治人物、媒體人及藝文工作者進行跟蹤、偷拍、恐嚇，甚至暴力攻擊";
+    expect(riskFromTitle("[兩岸] 成蕾談國安牢獄1154天 籲看清中國高科技表象下的人權困境", "治安", desc)).not.toBe("critical");
+  });
+
   it("依 hint 套用主題高風險關鍵字優先，維持警政備援", () => {
     expect(riskFromTitle("餿水油流入市面 廠商遭起訴", "食安")).toBe("high");
     expect(riskFromTitle("黑心廠商瘦肉精超標遭下架", "食安")).toBe("medium");

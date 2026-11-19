@@ -721,6 +721,11 @@ body.layout-compact .col-list {
 .leaflet-popup-close-button {
   color: var(--color-muted) !important;
 }
+/* 縮放鈕與雷達掃描層的層級都高於彈窗：彈窗開啟時藏起，避免蓋住標題（彈窗內有「放大拆分」，雙指縮放仍可用）。 */
+.leaflet-container:has(.leaflet-popup) .leaflet-control-zoom,
+.leaflet-container:has(.leaflet-popup) .map-radar {
+  visibility: hidden;
+}
 .leaflet-bar a {
   background: var(--color-panel-2);
   color: var(--color-text);
