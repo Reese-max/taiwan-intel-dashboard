@@ -1,3 +1,5 @@
+// Leaflet 預設樣式必須排在站點樣式前，否則同權重的白底彈窗會蓋掉深色主題。
+import "leaflet/dist/leaflet.css";
 import "./styles/global.css";
 import { t } from "./i18n/zh-TW";
 import { DEFAULT_SINCE_DAYS, getState, setState, subscribe } from "./store";

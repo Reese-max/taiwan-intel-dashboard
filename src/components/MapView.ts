@@ -228,6 +228,7 @@ export class MapView {
   private clusterTouchActive = false;
   private emptyEl?: HTMLElement;
   private lastScope: Scope = "domestic";
+  private scopeMaxBounds?: L.LatLngBounds;
 
   constructor(el: HTMLElement, options: MapViewOptions = {}) {
     this.ready = this.init(el);
@@ -259,12 +260,15 @@ export class MapView {
     );
     this.map.on("popupopen", (ev) => {
       this.popupOpen = true;
+      // 自動平移已開始；平移結束時 maxBounds 會把地圖拉回，彈窗就超出地圖。開啟期間暫時解除，關閉時恢復。
+      if (this.scopeMaxBounds) this.map.setMaxBounds(undefined as unknown as L.LatLngBounds);
       window.setTimeout(() => {
         this.attachPopupFocusHandlers((ev as L.PopupEvent).popup.getElement());
       }, 0);
     });
     this.map.on("popupclose", () => {
       this.popupOpen = false;
+      if (this.scopeMaxBounds) this.map.setMaxBounds(this.scopeMaxBounds);
       // Leaflet 尚在移除 popup／來源標記；等移除完成，避免 clearLayers 重入後留下重複標記。
       queueMicrotask(() => {
         if (this.popupOpen) return;
@@ -392,7 +396,8 @@ export class MapView {
       [TAIWAN_BBOX.minLat, TAIWAN_BBOX.minLng],
       [TAIWAN_BBOX.maxLat, TAIWAN_BBOX.maxLng],
     ]);
-    this.map.setMaxBounds(scope === "domestic" ? taiwanBounds.pad(0.5) : undefined);
+    this.scopeMaxBounds = scope === "domestic" ? taiwanBounds.pad(0.5) : undefined;
+    this.map.setMaxBounds(this.scopeMaxBounds as L.LatLngBounds);
     const fitLocated = scope === "domestic" ? this.located.filter(isInsideTaiwanBBox) : this.located;
     if (fitLocated.length) {
       const bounds = this.lib.latLngBounds(
