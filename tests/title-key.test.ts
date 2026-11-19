@@ -26,6 +26,7 @@ describe("titleKey", () => {
     expect(dedupeTitleKey(`${base}| 社會萬象| 社會`)).toBe(dedupeTitleKey(base));
     expect(dedupeTitleKey(`快訊／影／${base} - ETtoday`)).toBe(dedupeTitleKey(base));
     expect(dedupeTitleKey(`獨家：${base}｜自由時報`)).toBe(dedupeTitleKey(base));
+    expect(dedupeTitleKey(`獨家》${base}`)).toBe(dedupeTitleKey(base));
     expect(titleKey(`快訊／${base}| 社會萬象| 社會`)).toBe("快訊新店男子墜樓送醫社會萬象");
   });
 

@@ -23,7 +23,7 @@ export function titleKey(title) {
 
 export function dedupeTitleKey(title) {
   let value = String(title || "").trim();
-  value = value.replace(/^(?:(?:快訊|影|影音|獨家|最新|即時|更新|直播|討論牆)(?:\s*[／/：:｜|]\s*|\s+-\s*|\s+))+/u, "");
+  value = value.replace(/^(?:(?:快訊|影|影音|獨家|最新|即時|更新|直播|討論牆)(?:\s*[／/：:｜|》】]\s*|\s+-\s*|\s+))+/u, "");
   value = cleanNewsTitleTail(value);
   return value.replace(/[^一-鿿A-Za-z0-9]/g, "").toLowerCase();
 }
