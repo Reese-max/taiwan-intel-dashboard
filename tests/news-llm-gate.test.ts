@@ -40,6 +40,13 @@ describe("國內新聞 LLM 複核", () => {
     expect([...verdicts.values()].map((v: { keep: boolean }) => v.keep).sort()).toEqual([false, true]);
   });
 
+  it("第一次沒有要剔除就不問第二次", async () => {
+    const chatFn = chatDropping([]);
+    const { stats } = await reviewNewsRelevance([{ title: "演唱會搶票" }, { title: "搶小草票" }], { verdicts: new Map(), chatFn, now: NOW });
+    expect(chatFn).toHaveBeenCalledTimes(1);
+    expect(stats).toMatchObject({ reviewed: 2, dropped: 0, calls: 1 });
+  });
+
   it("快取命中不再呼叫模型，同標題的轉載一起剔除", async () => {
     const verdicts = new Map();
     await reviewNewsRelevance([{ title: "限時搶 漢堡買一送一" }], { verdicts, chatFn: chatDropping(["限時搶 漢堡買一送一"]), now: NOW });
@@ -105,7 +112,7 @@ describe("國內新聞 LLM 複核", () => {
   it("速率限制（429）時等待後重試，成功就照常判斷", async () => {
     let calls = 0;
     const chatFn = vi.fn(async (messages: Msg[]) => {
-      if (++calls <= 2) throw new Error("LLM HTTP 429: Token Plan rate limit reached");
+      if (++calls === 1) throw new Error("LLM HTTP 429: Token Plan rate limit reached");
       return JSON.stringify({ drop: titlesOf(messages).map((_, i) => i + 1) });
     });
     const sleepFn = vi.fn(async () => {});

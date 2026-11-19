@@ -56,7 +56,7 @@ export async function reviewNewsRelevance(items, {
   now = Date.now(),
   sleepFn = sleep,
 } = {}) {
-  const stats = { candidates: 0, cached: 0, reviewed: 0, dropped: 0, moderated: 0, failedBatches: 0, skippedBatches: 0 };
+  const stats = { candidates: 0, cached: 0, reviewed: 0, dropped: 0, moderated: 0, calls: 0, failedBatches: 0, skippedBatches: 0 };
   const dropped = new Set();
   const fresh = new Map();
   for (const it of items) {
@@ -78,15 +78,16 @@ export async function reviewNewsRelevance(items, {
   for (let i = 0; i < keys.length; i += batchSize) batches.push(keys.slice(i, i + batchSize));
   const deadline = Date.now() + budgetMs;
   const at = new Date(now).toISOString();
-  // 回傳每個標題鍵是否保留。模型對邊界新聞的判斷每次不同：正序、倒序各問一次，兩次都要剔除才剔除。
+  // 回傳每個標題鍵是否保留。模型對邊界新聞的判斷每次不同：正序、倒序各問一次，兩次都要剔除才剔除；
+  // 第一次沒有要剔的就不問第二次（省一半呼叫）。
   // MiniMax 內容審查（HTTP 422 new_sensitive）會擋下整批：對半拆開重問，單則仍被擋就保留並記住，不再重送。
+  const ask = (list) => { stats.calls++; return reviewBatch(list, chatFn); };
   const judge = async (batchKeys) => {
     const batchItems = batchKeys.map((k) => fresh.get(k)[0]);
     try {
-      const [forward, backward] = await Promise.all([
-        reviewBatch(batchItems, chatFn),
-        reviewBatch([...batchItems].reverse(), chatFn),
-      ]);
+      const forward = await ask(batchItems);
+      if (!forward.size) return batchKeys.map(() => true);
+      const backward = await ask([...batchItems].reverse());
       return batchKeys.map((_, i) => !(forward.has(i + 1) && backward.has(batchKeys.length - i)));
     } catch (e) {
       if (!/new_sensitive/.test(String(e?.message || e))) throw e;
