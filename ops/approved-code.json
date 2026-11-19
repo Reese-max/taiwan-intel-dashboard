@@ -1,4 +1,4 @@
 {
-  "sha": "1228272e574097e35a124262621134ce796827a0",
-  "note": "Follow-up to #136 on 2026-11-19. main 1228272 = #138: the domestic MiniMax review calls the primary endpoint directly; the retired NVIDIA fallback masked MiniMax 422 moderation errors as HTTP 410 so batch splitting never ran (6 batches failed in the first production run). Red/green test added. Includes previously approved 92c2d4e (#136). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
+  "sha": "2b6715071004a0ffe16ffcc4ba2acb07ba07312d",
+  "note": "Owner asked on 2026-11-19 to keep optimizing. main 2b67150 = #140: international normalization caches every fresh MiniMax result (3 days, cap 1500) and ids seen but not picked (12 h, cap 3000) in intl-normalize-cache.json, so ~300 items are no longer re-sent every 30-minute run; LLM mode only. Codex review via route: 4 points handled. Includes previously approved 1228272 (#138). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
 }
