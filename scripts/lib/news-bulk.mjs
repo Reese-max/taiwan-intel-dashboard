@@ -60,6 +60,17 @@ const TOWNSHIP_COUNTY = new Map(Object.entries({
   苓雅: "高雄市", 鼓山: "高雄市", 鹽埕: "高雄市", 新興: "高雄市", 旗津: "高雄市", 大樹: "高雄市", 燕巢: "高雄市",
   苗栗市: "苗栗縣", 斗南鎮: "雲林縣", 埔里: "南投縣", 草屯: "南投縣", 竹山: "南投縣", 集集: "南投縣",
   連江: "連江縣", 馬公: "澎湖縣", 金城: "金門縣", 金湖: "金門縣",
+  復興: "桃園市", 大溪: "桃園市", 龍潭: "桃園市", 香山: "新竹市", 造橋: "苗栗縣", 西湖: "苗栗縣", 三灣: "苗栗縣", 獅潭: "苗栗縣",
+  潭子: "臺中市", 大肚: "臺中市", 梧棲: "臺中市", 外埔: "臺中市", 石岡: "臺中市", 新社: "臺中市", 和平: "臺中市",
+  線西: "彰化縣", 伸港: "彰化縣", 福興: "彰化縣", 埔鹽: "彰化縣", 埤頭: "彰化縣", 溪湖: "彰化縣", 永靖: "彰化縣", 社頭: "彰化縣", 二水: "彰化縣", 芬園: "彰化縣", 大城: "彰化縣", 竹塘: "彰化縣",
+  台西: "雲林縣", 麥寮: "雲林縣", 莿桐: "雲林縣", 林內: "雲林縣", 崙背: "雲林縣", 二崙: "雲林縣", 元長: "雲林縣",
+  四湖: "雲林縣", 褒忠: "雲林縣", 水林: "雲林縣",
+  白河: "臺南市", 山上: "臺南市", 左鎮: "臺南市", 南化: "臺南市", 新市: "臺南市", 安南: "臺南市", 安定: "臺南市",
+  甲仙: "高雄市", 六龜: "高雄市", 桃源: "高雄市", 茂林: "高雄市", 那瑪夏: "高雄市", 阿蓮: "高雄市", 路竹: "高雄市",
+  前金: "高雄市", 永安: "高雄市", 彌陀: "高雄市", 田寮: "高雄市", 梓官: "高雄市", 茄萣: "高雄市",
+  來義: "屏東縣", 牡丹: "屏東縣", 瑪家: "屏東縣", 泰武: "屏東縣", 三地門: "屏東縣", 霧臺: "屏東縣", 春日: "屏東縣", 獅子: "屏東縣", 萬巒: "屏東縣", 竹田: "屏東縣", 高樹: "屏東縣", 枋山: "屏東縣", 新埤: "屏東縣",
+  南澳: "宜蘭縣", 卓溪: "花蓮縣", 萬榮: "花蓮縣", 海端: "臺東縣", 綠島: "臺東縣", 蘭嶼: "臺東縣",
+  達仁: "臺東縣", 金峰: "臺東縣", 延平: "臺東縣",
   中科: "臺中市", 南科: "臺南市", 竹科: "新竹市", 烏山頭水庫: "臺南市",
   北檢: "臺北市", 中檢: "臺中市", 雄檢: "高雄市",
 }));
@@ -158,12 +169,20 @@ export function detectCountyEarliest(text, context = "", isTitle = true) {
   for (const [place, key] of TOWNSHIP_COUNTY) {
     for (const m of s.matchAll(new RegExp(place, "g"))) {
       const after = s.slice(m.index + place.length);
-      if (/^(?:路(?!段)|街(?!頭)|大道|巷)/.test(after)) continue;
+      const before = s.slice(Math.max(0, m.index - 4), m.index);
+      if ((place === "成功" && /^(?:攔阻|攔截|制止|阻止)/.test(after)) ||
+          (place === "成功" && /^嶺/.test(after)) ||
+          (place === "太平" && /^間/.test(after)) ||
+          (place === "口湖" && /河$/.test(before)) ||
+          (place === "三星" && /^傳媒/.test(after)) ||
+          (place === "泰山" && /^(?:總座|董事長|集團)/.test(after)) ||
+          (place === "新興" && /^毒品/.test(after))) continue;
+      if (/^(?:[東西南北中外新舊]+)?(?:[一二三四五六七八九十0-9]+)?(?:路(?!段)|街(?!頭)|大道|巷)/.test(after)) continue;
       const sentence = s.slice(0, m.index).split(/[，。！？；\n]/).at(-1) + s.slice(m.index).split(/[，。！？；\n]/)[0];
       const prefixedCounty = Object.keys(COUNTY_CENTER).some((county) => new RegExp(`${county}.{0,6}${place}`).test(sentence));
       if (AMBIGUOUS_TOWNS.has(place) && !prefixedCounty) continue;
       if (!prefixedCounty && !TOWNSHIP_EVENT_RE.test(sentence)) continue;
-      if (/日本|韓國|美國|中國|英國|法國|德國|加拿大|澳洲|紐西蘭/.test(s.slice(Math.max(0, m.index - 8), m.index))) continue;
+      if (/日本|韓國|美國|中國|英國|法國|德國|加拿大|澳洲|紐西蘭/.test(s.slice(Math.max(0, m.index - 20), m.index))) continue;
       consider(m.index, false, key, place.length);
     }
   }

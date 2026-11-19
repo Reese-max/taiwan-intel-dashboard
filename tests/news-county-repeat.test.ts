@@ -38,8 +38,28 @@ describe("鄉鎮與地標推定縣市", () => {
   );
   it("道路名不當作鄉鎮，外國地名不會對應台灣縣市", () => {
     expect(detectCounty("中山路發生車禍").region).toBe("全國");
+    expect(detectCounty("成功一路發生車禍").region).toBe("全國");
+    expect(detectCounty("光復南路發生車禍").region).toBe("全國");
     expect(detectCounty("Turkey earthquake near Jordan").region).toBe("全國");
+    expect(detectCounty("日本河口湖發生命案").region).toBe("全國");
   });
+
+  it.each([
+    "成功攔阻詐騙車手",
+    "太平間內復活",
+    "河口湖命案引發討論",
+    "彰縣查獲刑案 三星傳媒報導",
+    "前泰山總座遭起訴",
+    "成功嶺替代役墜落送醫",
+    "新興毒品查獲多人",
+  ])("地名子字串及一般詞不誤判：%s", (title) => expect(detectCounty(title).region).toBe("全國"));
+
+  it.each([
+    ["成功鎮發生車禍", "臺東縣"],
+    ["太平區發生車禍", "臺中市"],
+    ["新興區發生車禍", "高雄市"],
+    ["三星鄉發生車禍", "宜蘭縣"],
+  ])("明確行政區後綴仍可判定：%s", (title, region) => expect(detectCounty(title).region).toBe(region));
 });
 
 describe("R1–R3：事發地優先與署名邊界", () => {
