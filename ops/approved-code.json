@@ -1,4 +1,4 @@
 {
-  "sha": "1ce2f92663e41453f1f28d480d7110fb7be6dd33",
-  "note": "Owner asked on 2026-11-19 to handle the items left over from #132. main 1ce2f92 = #134: figurative 搶/砍/殺 in politics, showbiz, sports, promos and finance are masked before relevance; 搶救/搶命 count only with injury or accident signs; 大紀元 overseas hint adds 州/郡/斯特. Production snapshot (3554 unique items): 46 more dropped, 0 added, all reviewed. Codex review via route found 3 false-drop patterns, reproduced and fixed. Includes previously approved 894a95c (#132). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
+  "sha": "92c2d4e8fcd7ff111ee76738b297d3565971300f",
+  "note": "Owner asked on 2026-11-19 to switch domestic news judgment to MiniMax. main 92c2d4e = #136: rule-accepted media titles without explicit case words are reviewed by MiniMax (two votes, forward and reversed, both must agree to drop); verdicts cached 14 days in news-llm-verdicts.json; failures keep the rule result; 422 moderation splits batches; titles with case/death/工安/職災 words skip the LLM. Codex review via route reproduced the 不治 gap, fixed. Includes previously approved 1ce2f92 (#134). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
 }
