@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   mapBulkInternationalNews,
   mapBulkNews,
+  dedupeTitleKey,
   titleKey,
   cleanTitle,
   categoryFromItem,
@@ -355,6 +356,184 @@ describe("mapBulkInternationalNews", () => {
     });
     expect(excluded.map((event) => event.id)).toEqual([events[1].id]);
   });
+
+  it.each([
+    ["New molecular study explains cell repair", "其他", "Scienmag", "其他", "hint:其他"],
+    ["Major earthquake damages homes in Chile", "金融", "BBC World", "災害", "evidence:災害"],
+    ["Hospitals disrupted by ransomware attack", "災害", "Scienmag", "資安", "evidence:資安"],
+    ["Stock market crash follows bank earnings", "災害", "Financial News", "金融", "evidence:金融"],
+    ["Infectious disease outbreak spreads across region", "災害", "BBC World", "災害", "evidence:災害"],
+    ["Factory fire kills 12 workers in Bangladesh", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Bridge collapse leaves dozens missing", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Ferry sinking off coast prompts rescue", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Severe storm leaves 200,000 without power", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Deadly flood crisis worsens", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Analysis warns deadly outbreak spreads and kills dozens", "其他", "Scienmag", "災害", "evidence:災害"],
+    ["Dozens arrested for looting after deadly earthquake", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Infection control protocol contains Candida auris outbreak", "災害", "Scienmag", "其他", "hint:其他"],
+    ["Magnitude 5.2 event recorded at station", "災害", "USGS Quakes M4.5 week", "災害", "hint:災害"],
+    ["Fibre Inflation models new energy materials", "其他", "Scienmag", "其他", "hint:其他"],
+    ["Wildfire risk study models changing conditions", "其他", "Phys.org", "其他", "hint:其他"],
+    ["Police investigate fatal explosion after shooting", "治安", "BBC World", "災害", "evidence:災害"],
+    ["Microsoft’s New Windows 11 Security Check Could Block Apps From Running On Unprotected PCs, Adobe And Blizzard On Board", "資安", "Wccftech", "資安", "hint:資安"],
+    ["Acoustic monitoring reveals previously ‘hidden’ underwater landslide processes", "金融", "Ground Engineering", "金融", "hint:金融"],
+    ["Amazon's Fire TV Stick 4K Plus drops to just $29.99", "資安", "XDA Developers", "資安", "hint:資安"],
+    ["WHO declares mpox outbreak a global emergency", "其他", "Scienmag", "災害", "evidence:災害"],
+    ["Cholera outbreak confirmed in Sudan", "其他", "Scienmag", "災害", "evidence:災害"],
+    ["Wildfire burns 200 homes", "其他", "Scienmag", "災害", "evidence:災害"],
+    ["Study finds healthcare systems exposed to ransomware", "其他", "Scienmag", "資安", "evidence:資安"],
+    ["Is Social Security a Ponzi scheme? No, but fear is fueling such talk.", "金融", "MarketWatch Top", "金融", "hint:金融"],
+    ["Bain Pushes Back LNG Glut Outlook to 2030 as War Tightens Market", "金融", "Bloomberg Markets", "金融", "evidence:金融"],
+    ["Microsoft security check blocks apps, Adobe and Blizzard on board", "資安", "Wccftech", "資安", "hint:資安"],
+    ["Acoustic monitoring reveals previously hidden underwater landslide processes", "金融", "Ground Engineering", "金融", "hint:金融"],
+    ["Landslide kills dozens in mountain villages", "其他", "Scienmag", "災害", "evidence:災害"],
+  ])("國際分類以標題事件證據優先：%s", (title, hint, source, category, categoryBasis) => {
+    const [event] = mapBulkInternationalNews([{ title, hint, source, link: `https://example.test/${encodeURIComponent(title)}` }], { fetchedAt: FETCHED_AT });
+    expect(event).toMatchObject({ category, categoryBasis });
+    if (source === "USGS Quakes M4.5 week") expect(event.summary).toContain("地震事件");
+  });
+
+  it("分類關鍵字只看標題，摘要背景詞不蓋過 feed hint", () => {
+    const [event] = mapBulkInternationalNews([{
+      title: "Researchers explain brain banks and military veterans",
+      description: "A flood of wealth follows the company's IPO; police custody healthcare study",
+      hint: "其他",
+      source: "Scienmag",
+      link: "https://example.test/context-only-keywords",
+    }], { fetchedAt: FETCHED_AT });
+    expect(event).toMatchObject({ category: "其他", categoryBasis: "hint:其他" });
+  });
+
+  it("非災害 feed 不以災害 hint 作為無證據分類後備", () => {
+    const [event] = mapBulkInternationalNews([{
+      title: "Researchers discuss a new research method",
+      hint: "災害",
+      source: "Custom science feed",
+      link: "https://example.test/no-disaster-evidence",
+    }], { fetchedAt: FETCHED_AT });
+    expect(event).toMatchObject({ category: "其他", categoryBasis: "rule:no-disaster-evidence" });
+  });
+
+  it("可信災害 feed 可用來源 hint 後備分類並標記事件類型", () => {
+    const [event] = mapBulkInternationalNews([{
+      title: "M 4.8 - 45 km SSW of a remote town",
+      description: "Magnitude 4.8 event",
+      hint: "其他",
+      source: "USGS Quakes M4.5 week",
+      link: "https://example.test/usgs-hint",
+    }], { fetchedAt: FETCHED_AT });
+    expect(event).toMatchObject({ category: "災害", categoryBasis: "hint:災害" });
+    expect(event.summary).toContain("地震事件");
+  });
+
+  it.each([
+    ["Tokyo officials report new regulations", "Japan", "日本"],
+    ["法國巴黎發生大規模示威", "", "法國"],
+    ["Turkey announces parliamentary elections", "", "土耳其"],
+    ["Roasted turkey sandwich recipe wins a food award", "", "國際"],
+    ["Jordan scores the winning goal", "", "國際"],
+    ["Jordanian forces patrol the border", "", "國際"],
+    ["Chad Johnson launches a new album", "", "國際"],
+    ["Flooding reported in Chad", "", "查德"],
+    ["Georgia, USA reports storm damage", "", "美國"],
+    ["Georgia residents debate a new local proposal", "", "國際"],
+    ["Tbilisi authorities report new measures", "", "喬治亞"],
+    ["China Airlines announces a new route", "", "國際"],
+    ["Air India updates its booking system", "", "國際"],
+    ["Guinea-Bissau election results announced", "", "幾內亞比索"],
+    ["Nigeria and Niger sign a border agreement", "", "奈及利亞"],
+    ["美國科技公司公布年度營收", "", "國際"],
+    ["美國發生重大洪災", "", "美國"],
+    ["U.S., Russia and China discuss a regional summit", "", "美國"],
+    ["America and China are trying to alter their economic bargain", "", "國際"],
+    ["MAF EAP – Holidays: the BAH HUMBUG that tries to sneak in", "An event many of us can get behind.", "國際"],
+    ["US$71.8 billion investment announced", "", "國際"],
+    ["Kuwait says it repelled an Iranian attack after US strikes island", "", "科威特"],
+    ["Iraq pumps oil to Turkey again after 12 years", "", "伊拉克"],
+    ["State of Georgia storm damage reported", "", "美國"],
+    ["Guinea announces new election results", "", "幾內亞"],
+    ["China Eastern announces new service", "", "國際"],
+    ["South China Sea crab discovery draws researchers", "", "國際"],
+    ["Global shipping outlook from China Merchants executive", "", "國際"],
+    ["Hegseth appears in Venezuela during military visit", "", "委內瑞拉"],
+    ["Israeli army launches ground operation in central Gaza", "", "巴勒斯坦"],
+    ["Israel intensifies incursions in southern Syria", "", "敘利亞"],
+    ["Hungarian band performs in Brussels", "", "比利時"],
+    ["Sydney Marathon winner banned for three years", "", "國際"],
+    ["Iraqi court sentences French nationals", "47 citizens transferred from Syria last year", "伊拉克"],
+    ["South Korean stocks rally on China trade deal", "", "南韓"],
+    ["Fort Providence RCMP lay weapon charges", "A man from the Netherlands was arrested.", "加拿大"],
+    ["The China-US AI Hotline Needs To Be Different", "", "國際"],
+    ["Brazil, Colombia and Chile lead Latin America’s agrivoltaics market across the region", "", "國際"],
+    ["DHL launches new China–India–Europe air freight service", "Cargo service connects China, India and Europe.", "國際"],
+    ["Osaka Gas to expand US and India business", "", "國際"],
+    ["VIG Re catastrophe bond milestone", "VIG Re is the reinsurance arm of Vienna Insurance Group.", "國際"],
+    ["Europe Tonight: EU proposes Ukraine loan as leaders meet", "A report on multiple European topics.", "國際"],
+    ["A CEO interview", "CFO at US-listed Chinese industrial platform.", "中國"],
+    ["A European morning bulletin", "Friends of Ukraine meet in the German capital while talks begin in China.", "國際"],
+    ["Japan included in six countries for free product release", "The product is available in the US too.", "國際"],
+    ["Ukraine was main topic at Trump-Putin meeting", "The Kremlin said the leaders met in Moscow.", "國際"],
+    ["Research study in the US and Europe", "", "國際"],
+    ["NHS warned over Palantir lock-in as contract extended", "US tech giant Palantir is involved.", "英國"],
+    ["Trump administration weighs forcing US firms to disclose Chinese AI use", "", "美國"],
+    ["Celebrations planned in Miami and Dublin", "", "國際"],
+    ["How to watch New Zealand vs India first Test from anywhere", "", "國際"],
+    ["Bundeswehr drone contract awarded", "US-market leader was among bidders.", "德國"],
+    ["Lebanon reconstruction plan announced", "Work will focus on Beirut and southern Lebanon.", "黎巴嫩"],
+    ["Toyota expands C-HR EV recall to 19,000 globally", "Most affected vehicles are in the US.", "國際"],
+    ["Husqvarna files anti-dumping complaint on Chinese robotic mowers", "", "國際"],
+    ["Nvidia stock faces four investment risks", "China is one risk factor among several.", "國際"],
+    ["Man extradited from Italy appears in federal court", "The hearing took place in Tennessee.", "美國"],
+    ["Arsenic keeps flowing into Thai rivers as China stays silent on mines", "", "泰國"],
+    ["France rejects Russian claims of involvement in Ukraine war", "", "法國"],
+    ["US chip restrictions affect Southeast Asia", "", "國際"],
+    ["U.S. soldier arrested for spying", "He was arrested in the U.K. last week.", "英國"],
+    ["Russia's cheap munitions threaten Ukraine", "In Ukraine, everyone is talking about these munitions.", "國際"],
+    ["Trump weighs fresh military strikes on Iran", "", "國際"],
+    ["North Korea-linked hackers exploit Solana", "The malware was used worldwide.", "國際"],
+    ["US envoys meet officials in Berlin", "The US envoys told Kyiv they would brief on talks held in China during meetings in Berlin.", "德國"],
+    ["Netanyahu discusses the threat of war", "Israeli writer Etgar Keret joins us from Tel Aviv.", "以色列"],
+    ["Global energy outlook released", "The forecast reflects the crisis from the Iran War.", "國際"],
+    ["Family business succession discussed", "The London Business School professor reviews global companies.", "國際"],
+    ["Officials discuss the latest developments", "Reports from Japan describe the event", "日本"],
+  ])("國際長尾以國家／城市推定國家層級位置：%s", (title, description, region) => {
+    const [event] = mapBulkInternationalNews([{
+      title,
+      description,
+      hint: "其他",
+      source: "Location Test Feed",
+      link: `https://example.test/location-${encodeURIComponent(title)}`,
+    }], { fetchedAt: FETCHED_AT });
+    expect(event.region).toBe(region);
+    if (region === "國際") {
+      expect(event.lat).toBeUndefined();
+      expect(event.locationPrecision).toBe("unknown");
+    } else {
+      expect(event).toMatchObject({ locationPrecision: "country" });
+      expect(event.lat).toEqual(expect.any(Number));
+      expect(event.lng).toEqual(expect.any(Number));
+      expect(event.locationNote).toContain("規則推定");
+    }
+  });
+
+  it("多國標題優先選標示事件地點的地名，否則取最早明確地名", () => {
+    const [event] = mapBulkInternationalNews([{
+      title: "Paris authorities announce action after travel from Germany",
+      description: "Officials in Italy comment on the decision",
+      hint: "其他",
+      source: "Location Test Feed",
+      link: "https://example.test/location-order",
+    }], { fetchedAt: FETCHED_AT });
+    expect(event.region).toBe("法國");
+    const [eventInVenezuela] = mapBulkInternationalNews([{
+      title: "US and Venezuela sign deal during Hegseth visit in Caracas",
+      description: "Military cooperation was discussed.",
+      hint: "其他",
+      source: "Location Test Feed",
+      link: "https://example.test/location-venezuela",
+    }], { fetchedAt: FETCHED_AT });
+    expect(eventInVenezuela.region).toBe("委內瑞拉");
+  });
 });
 
 const categoryCases = [
@@ -466,6 +645,16 @@ describe("mapBulkNews", () => {
     expect(fire!.region).toBe("臺南市");
     expect(fire!.category).toBe("災防");
     expect(fire!.categoryBasis).toBe("rule:災防");
+  });
+
+  it("dedupes repeated outlet/category suffix variants while preserving titleKey exclusions", () => {
+    const title = "新店23歲男4樓住處墜落";
+    const events = mapBulkNews([
+      { title: `${title}| 社會萬象| 社會`, link: "https://x/a", description: "新店發生墜落事故", hint: "治安" },
+      { title: `快訊／${title} - ETtoday`, link: "https://x/b", description: "新店發生墜落事故", hint: "治安" },
+    ], { fetchedAt: FETCHED_AT });
+    expect(dedupeTitleKey(`${title}| 社會萬象| 社會`)).toBe(dedupeTitleKey(title));
+    expect(events).toHaveLength(1);
   });
 
   it("excludes titles already enriched", () => {
@@ -1119,6 +1308,40 @@ describe("riskFromTitle 主題感知", () => {
     expect(riskFromTitle("園區遭大規模無差別攻擊", "治安")).toBe("critical");
     const desc = "北京近來加大對台施壓，不僅持續在台海周邊舉行大規模海上與空中軍演行動，還委託「代理人」對台灣政治人物、媒體人及藝文工作者進行跟蹤、偷拍、恐嚇，甚至暴力攻擊";
     expect(riskFromTitle("[兩岸] 成蕾談國安牢獄1154天 籲看清中國高科技表象下的人權困境", "治安", desc)).not.toBe("critical");
+  });
+
+  it("危急與高風險配對詞只在同一句命中", () => {
+    expect(riskFromTitle("高雄氣爆造成2人死亡", "災防")).toBe("critical");
+    expect(riskFromTitle("高雄氣爆發生，警方調查中。另案有2人死亡", "災防")).not.toBe("critical");
+    expect(riskFromTitle("衝突引發炸彈爆炸和縱火攻擊", "治安")).toBe("critical");
+    expect(riskFromTitle("炸彈爆炸已平息。另一地縱火攻擊", "治安")).not.toBe("critical");
+    expect(riskFromTitle("歹徒挾持人質", "治安")).toBe("critical");
+    expect(riskFromTitle("歹徒挾持案持續調查。另一地人質安全", "治安")).not.toBe("critical");
+    expect(riskFromTitle("毒品工廠遭查獲", "治安")).toBe("high");
+    expect(riskFromTitle("毒品案持續調查。另一案工廠遭搜索", "治安")).toBe("medium");
+    expect(riskFromTitle("緝毒重大案件破獲", "治安")).toBe("high");
+    expect(riskFromTitle("緝毒勤務完成。另有重大案件偵辦中", "治安")).toBe("medium");
+    expect(riskFromTitle("未授權入侵醫院系統", "治安")).toBe("high");
+    expect(riskFromTitle("未授權入侵事件調查中。醫院系統維護", "治安")).toBe("low");
+    expect(riskFromTitle("惡意程式癱瘓醫院網路", "治安")).toBe("high");
+    expect(riskFromTitle("惡意程式癱瘓事件結束。醫院網路恢復", "治安")).toBe("low");
+  });
+
+  it("國際 low 僅在分類有標題證據時升為 medium", () => {
+    const [hintOnly] = mapBulkInternationalNews([{
+      title: "Regional cooperation update",
+      hint: "地緣政治",
+      source: "Unknown Feed",
+      link: "https://example.test/hint-risk",
+    }], { fetchedAt: FETCHED_AT });
+    const [evidence] = mapBulkInternationalNews([{
+      title: "Election officials announce new voting rules",
+      hint: "地緣政治",
+      source: "Unknown Feed",
+      link: "https://example.test/evidence-risk",
+    }], { fetchedAt: FETCHED_AT });
+    expect(hintOnly.riskLevel).toBe("low");
+    expect(evidence.riskLevel).toBe("medium");
   });
 
   it("依 hint 套用主題高風險關鍵字優先，維持警政備援", () => {

@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 // @ts-expect-error — JS ESM module without types
 import { readVerdicts, reviewNewsRelevance, serializeVerdicts } from "../scripts/lib/news-llm-gate.mjs";
 // @ts-expect-error — JS ESM module without types
+import { dedupeTitleKey, titleKey } from "../scripts/lib/title-key.mjs";
+// @ts-expect-error — JS ESM module without types
 import { buildTwNewsEvents } from "../scripts/fetch-live.mjs";
 
 type Msg = { role: string; content: string };
@@ -15,6 +17,19 @@ const chatDropping = (dropTitles: string[]) =>
 const NOW = Date.parse("2026-11-19T00:00:00.000Z");
 
 describe("國內新聞 LLM 複核", () => {
+  it("LLM verdict cache remains keyed by legacy titleKey, not the new dedupe key", async () => {
+    const title = "快訊／某品牌新品上市| 生活焦點| 生活";
+    const legacyKey = titleKey(title);
+    expect(dedupeTitleKey(title)).not.toBe(legacyKey);
+    const verdicts = new Map([[legacyKey, { keep: false, at: new Date(NOW).toISOString() }]]);
+    const item = { title };
+    const chatFn = vi.fn(async () => JSON.stringify({ drop: [] }));
+    const { dropped, stats } = await reviewNewsRelevance([item], { verdicts, chatFn, now: NOW });
+    expect(stats).toMatchObject({ candidates: 1, cached: 1, reviewed: 0, calls: 0 });
+    expect(dropped.has(item)).toBe(true);
+    expect(chatFn).not.toHaveBeenCalled();
+  });
+
   it("只送標題沒有明確案件字眼的媒體新聞，兩次都同意才剔除", async () => {
     const items = [
       { title: "蔣萬安急搶小草票也沒用" },

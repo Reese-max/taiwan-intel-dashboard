@@ -23,6 +23,64 @@ describe("A：重複短名與無括號署名", () => {
   });
 });
 
+describe("鄉鎮與地標推定縣市", () => {
+  it.each([
+    ["新店23歲男4樓住處墜落", "新北市"],
+    ["貢寮獨居婦遇害", "新北市"],
+    ["永和秀朗國小大樹倒塌", "新北市"],
+    ["中科園區工安意外", "臺中市"],
+    ["中檢偵結起訴詐欺案", "臺中市"],
+    ["烏山頭水庫附近發生事故", "臺南市"],
+    ["龜山校園霸凌！高中生遭踹打", "桃園市"],
+    ["前枋寮鄉長涉貪遭通緝", "屏東縣"],
+    ["秀林鄉長候選人涉賄選", "花蓮縣"],
+    ["山友受困楠西龜丹山區", "臺南市"],
+    ["台鐵內壢站民眾墜落", "桃園市"],
+    ["台鐵新左營站爆偷拍", "高雄市"],
+    ["中捷吊臂事故造成車廂受損", "臺中市"],
+    ["三多警查獲詐騙車手", "高雄市"],
+    ["林口街友中途之家發生命案", "新北市"],
+    ["涉案人員屏監服刑", "屏東縣"],
+    ["南監管理員涉案", "臺南市"],
+    ["南警三分局查獲詐騙", "臺南市"],
+    ["橋檢起訴偷拍案", "高雄市"],
+    ["彰檢起訴涉賄案", "彰化縣"],
+    ["桃市議員候選人涉賄", "桃園市"],
+    ["彰縣查獲刑案", "彰化縣"],
+    ["南警三分局安中所查獲詐團車手", "臺南市"],
+    ["曾文溪流域演練致災情境", "臺南市"],
+    ["西濱漢寶段拖板車追撞", "彰化縣"],
+  ])("%s → %s", (title, region) => expect(detectCounty(title).region).toBe(region));
+
+  it.each(["中山區發生車禍", "中正區發生車禍", "信義區發生車禍", "大安區發生車禍", "東區發生車禍"])(
+    "無縣市脈絡的撞名行政區不推定：%s", (title) => expect(detectCounty(title).region).toBe("全國"),
+  );
+  it("道路名不當作鄉鎮，外國地名不會對應台灣縣市", () => {
+    expect(detectCounty("中山路發生車禍").region).toBe("全國");
+    expect(detectCounty("成功一路發生車禍").region).toBe("全國");
+    expect(detectCounty("光復南路發生車禍").region).toBe("全國");
+    expect(detectCounty("Turkey earthquake near Jordan").region).toBe("全國");
+    expect(detectCounty("日本河口湖發生命案").region).toBe("全國");
+  });
+
+  it.each([
+    "成功攔阻詐騙車手",
+    "太平間內復活",
+    "河口湖命案引發討論",
+    "三星傳媒報導",
+    "前泰山總座遭起訴",
+    "成功嶺替代役墜落送醫",
+    "新興毒品查獲多人",
+  ])("地名子字串及一般詞不誤判：%s", (title) => expect(detectCounty(title).region).toBe("全國"));
+
+  it.each([
+    ["成功鎮發生車禍", "臺東縣"],
+    ["太平區發生車禍", "臺中市"],
+    ["新興區發生車禍", "高雄市"],
+    ["三星鄉發生車禍", "宜蘭縣"],
+  ])("明確行政區後綴仍可判定：%s", (title, region) => expect(detectCounty(title).region).toBe(region));
+});
+
 describe("R1–R3：事發地優先與署名邊界", () => {
   it.each([
     "嘉義市西區今日凌晨發生住宅火警，嘉義縣消防局亦派車跨區支援。",
@@ -49,6 +107,19 @@ describe("R1–R3：事發地優先與署名邊界", () => {
   ])("事發地判定：%s", (text, region, bodyRegion = region) => {
     expect(detectCounty(text).region).toBe(region);
     expect(detectCountyInBody(text).region).toBe(bodyRegion);
+  });
+  it.each([
+    ["前泰山總經理遭起訴", "全國"],
+    ["泰山企業涉案遭起訴", "全國"],
+    ["泰山前總經理涉案", "全國"],
+    ["將軍級總座遭控傷害", "全國"],
+    ["中東將軍詐騙話術再現", "全國"],
+    ["成功導航引發爭議", "全國"],
+    ["重新營業後發生命案", "全國"],
+  ])("排除地名同形詞：%s", (title, region) => expect(detectCounty(title).region).toBe(region));
+  it("案發地縣市優先於標題檢署所在地，只有檢署時仍回退其所在地", () => {
+    expect(mapBulkNews([{ title: "北檢偵結新店汽車旅館命案", description: "新北市新店區發生命案", hint: "治安" }])[0].region).toBe("新北市");
+    expect(mapBulkNews([{ title: "北檢偵結案件", description: "檢方偵結起訴", hint: "治安" }])[0].region).toBe("臺北市");
   });
   it.each(["地檢署", "地院", "地方法院", "地方檢察署"])("R3-3：只有機關%s所在地仍回退使用", (agency) => {
     expect(detectCounty(`台北${agency}指揮破獲製毒工廠`).region).toBe("臺北市");

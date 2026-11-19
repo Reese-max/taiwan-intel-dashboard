@@ -44,6 +44,7 @@ import {
   mapBulkNews,
   refreshDomesticNewsCategory,
   titleKey as bulkTitleKey,
+  dedupeTitleKey,
 } from "./lib/news-bulk.mjs";
 import { readVerdicts, reviewNewsRelevance, serializeVerdicts, VERDICTS_FILE } from "./lib/news-llm-gate.mjs";
 import { INTL_CACHE_FILE, readIntlCache, serializeIntlCache, updateIntlCache } from "./lib/intl-normalize-cache.mjs";
@@ -151,7 +152,10 @@ export function buildTwNewsEvents({
   llmDropKeys,
   now = Date.now(),
 } = {}) {
-  const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
+  // 人工審核過的事件不參與同標題合併，避免被同標題轉載蓋掉審核結果。
+  const newsDedupKey = (e) => e.source?.datasetId === "tw-news" && e.scope !== "international" && e.title && !e.curated
+    ? "t:" + dedupeTitleKey(e.title)
+    : e.source?.recordRef || e.id || "";
   const keep = (event) => {
     const item = {
       ...event,
@@ -532,7 +536,7 @@ export async function run() {
       const seen = new Set();
       const uniq = [];
       for (const it of rss.items) {
-        const k = bulkTitleKey(it.title);
+        const k = dedupeTitleKey(it.title);
         if (!k || seen.has(k)) continue;
         seen.add(k);
         uniq.push(it);
