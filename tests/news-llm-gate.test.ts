@@ -102,6 +102,28 @@ describe("國內新聞 LLM 複核", () => {
     }
   });
 
+  it("速率限制（429）時等待後重試，成功就照常判斷", async () => {
+    let calls = 0;
+    const chatFn = vi.fn(async (messages: Msg[]) => {
+      if (++calls <= 2) throw new Error("LLM HTTP 429: Token Plan rate limit reached");
+      return JSON.stringify({ drop: titlesOf(messages).map((_, i) => i + 1) });
+    });
+    const sleepFn = vi.fn(async () => {});
+    const { dropped, stats } = await reviewNewsRelevance([{ title: "搶小草票" }], { verdicts: new Map(), chatFn, sleepFn, now: NOW });
+    expect(sleepFn).toHaveBeenCalledWith(30000);
+    expect(dropped.size).toBe(1);
+    expect(stats).toMatchObject({ reviewed: 1, failedBatches: 0, rateLimitWaits: 1 });
+  });
+
+  it("速率限制持續就放棄該批，照規則保留", async () => {
+    const chatFn = vi.fn(async () => { throw new Error("LLM HTTP 429: Token Plan rate limit reached"); });
+    const sleepFn = vi.fn(async () => {});
+    const { dropped, stats } = await reviewNewsRelevance([{ title: "搶小草票" }], { verdicts: new Map(), chatFn, sleepFn, now: NOW });
+    expect(sleepFn.mock.calls.map(([ms]) => ms)).toEqual([30000, 60000]);
+    expect(dropped.size).toBe(0);
+    expect(stats.failedBatches).toBe(1);
+  });
+
   it("時間預算用完的批次留到下一輪", async () => {
     const chatFn = chatDropping([]);
     const items = Array.from({ length: 5 }, (_, i) => ({ title: `演唱會搶票第${i}場` }));

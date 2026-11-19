@@ -1,6 +1,6 @@
 // 國內新聞 LLM 複核：規則判為相關、但標題沒有明確案件字眼的新聞，交給 LLM 判斷是否真為事件。
 // 失敗一律保留規則結果（fail-open）；判斷結果依標題鍵跨輪快取，每輪只問新進新聞。
-import { chatVia, extractJson, profileCfg } from "./llm-client.mjs";
+import { chatVia, extractJson, profileCfg, sleep } from "./llm-client.mjs";
 import { hasStrongCaseTitle } from "./news-bulk.mjs";
 import { titleKey } from "./title-key.mjs";
 
@@ -50,9 +50,11 @@ export async function reviewNewsRelevance(items, {
   verdicts = new Map(),
   chatFn = primaryChat,
   batchSize = 40,
-  concurrency = 2,
+  // 一次一批：複核緊接在國際正規化之後，並發會撞 MiniMax 的每分鐘速率上限（HTTP 429）。
+  concurrency = 1,
   budgetMs = 4 * 60e3,
   now = Date.now(),
+  sleepFn = sleep,
 } = {}) {
   const stats = { candidates: 0, cached: 0, reviewed: 0, dropped: 0, moderated: 0, failedBatches: 0, skippedBatches: 0 };
   const dropped = new Set();
@@ -100,13 +102,23 @@ export async function reviewNewsRelevance(items, {
       // 預算用完的批次留給下一輪，本輪照規則結果保留。
       if (Date.now() > deadline) { stats.skippedBatches++; continue; }
       let keeps;
-      try {
-        keeps = await judge(batch);
-      } catch (e) {
-        stats.failedBatches++;
-        console.warn(`國內新聞 LLM 複核批次失敗，本批照規則保留：${String(e?.message || e).slice(0, 200)}`);
-        continue;
+      for (let attempt = 0; !keeps; attempt++) {
+        try {
+          keeps = await judge(batch);
+        } catch (e) {
+          // 速率限制以分鐘計：等 30、60 秒再試，仍在時間預算內才等。
+          const waitMs = 30e3 * (attempt + 1);
+          if (/HTTP 429/.test(String(e?.message || e)) && attempt < 2 && Date.now() + waitMs < deadline) {
+            stats.rateLimitWaits = (stats.rateLimitWaits || 0) + 1;
+            await sleepFn(waitMs);
+            continue;
+          }
+          stats.failedBatches++;
+          console.warn(`國內新聞 LLM 複核批次失敗，本批照規則保留：${String(e?.message || e).slice(0, 200)}`);
+          break;
+        }
       }
+      if (!keeps) continue;
       batch.forEach((key, i) => {
         verdicts.set(key, { keep: keeps[i], at });
         stats.reviewed++;
