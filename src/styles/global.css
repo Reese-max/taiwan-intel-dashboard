@@ -735,6 +735,12 @@ body.layout-compact .col-list {
   background: var(--surface-3);
   color: var(--color-accent);
 }
+/* 縮到極限時的停用按鈕沿用深色底，只把字變淡（Leaflet 預設是淺灰底）。 */
+.leaflet-bar a.leaflet-disabled,
+.leaflet-bar a.leaflet-disabled:hover {
+  background: var(--color-panel-2);
+  color: var(--color-dim);
+}
 .leaflet-control-attribution {
   background: rgba(8, 12, 23, 0.72) !important;
   color: var(--color-dim) !important;

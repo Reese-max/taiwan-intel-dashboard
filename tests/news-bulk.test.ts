@@ -589,6 +589,33 @@ describe("refreshDomesticNewsCategory", () => {
   });
 });
 
+describe("國際國家地點的一般排除規則", () => {
+  const locate = (title: string, description = "") =>
+    mapBulkInternationalNews([{ title, description, link: `https://example.com/${encodeURIComponent(title)}`, source: "x", hint: "地緣政治" }])[0];
+  it.each([
+    ["'Grand Theft Auto VI' released, selling over 17 million", "Set in a fictionalised US city."],
+    ["Animators speak out as players flock to the game", "The video game is set in Leonida, a fictional Florida."],
+    ["1inch integrates Hyperliquid futures, excludes US and UK markets", ""],
+    ["Climate Change AI 共同創辦人：AI 永續關鍵是選對工具", "環境部舉辦論壇，邀請加拿大麥吉爾大學副教授分享。"],
+  ])("虛構、排除語境、台灣活動引述外國學者不給外國地點：%s", (title, description) => {
+    expect(locate(title, description).lat).toBeUndefined();
+  });
+  it.each([
+    ["Four killed as Russian strikes hit Ukraine's Odesa", "", "烏克蘭"],
+    ["China holds drills near Taiwan", "", "中國"],
+    ["Strike survivors evacuate except in Ukraine, where rescue efforts continue", "Officials say the evacuation is underway.", "烏克蘭"],
+    ["Robbery reported outside the embassy in Kenya", "Police are investigating the robbery.", "肯亞"],
+    ["Fictional account of China wartime history wins prize in Beijing", "The author won a literary prize in Beijing.", "中國"],
+    ["Video game addiction clinic opens in China", "The public clinic will treat patients in Shanghai.", "中國"],
+    ["New TSMC factory opens", "Taiwanese chipmaker TSMC opened its new plant in Japan.", "日本"],
+  ])("一般事件與標題有國家的台灣相關新聞照常定位：%s", (title, description, region) => {
+    expect(locate(title, description)).toMatchObject({ region });
+  });
+  it("中國的生態環境部不算台灣脈絡", () => {
+    expect(locate("Beijing smog alert issued", "生態環境部發布北京空氣污染警報。").region).toBe("中國");
+  });
+});
+
 describe("refreshBulkInternationalEvent", () => {
   const bulk = (over: Record<string, unknown>) => ({
     id: "intl-x", scope: "international", timestamp: "2026-11-18T00:00:00.000Z", region: "國際",
@@ -1342,6 +1369,13 @@ describe("riskFromTitle 主題感知", () => {
     expect(riskFromTitle("台中隨機殺人釀3死", "治安")).toBe("critical");
     expect(riskFromTitle("新北氣爆釀2死 多人送醫", "災防")).toBe("critical");
     expect(riskFromTitle("高雄命案嫌犯落網", "治安")).toBe("high");
+  });
+
+  it("「躲過一劫」「劫後餘生」不算高風險，搶劫與劫持照常", () => {
+    expect(riskFromTitle("國道3車連環撞 後車神反應躲過一劫", "治安")).not.toBe("high");
+    expect(riskFromTitle("劫後餘生 颱風災民返家", "災防")).not.toBe("high");
+    expect(riskFromTitle("男子遭割傷搶劫 1嫌落網", "治安")).toBe("high");
+    expect(riskFromTitle("男子持刀劫持人質", "治安")).toBe("high");
   });
 
   it("「大規模」只和同一句的傷亡攻擊詞連成危急，背景描述不跨句連結", () => {
