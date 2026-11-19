@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { titleKey } from "../scripts/lib/title-key.mjs";
+import { dedupeTitleKey, titleKey } from "../scripts/lib/title-key.mjs";
 
 describe("titleKey", () => {
   it("keeps long titles distinct when they only differ after the old 40-character prefix", () => {
@@ -19,5 +19,13 @@ describe("titleKey", () => {
 
   it("preserves existing case, full-width punctuation, and media-suffix normalization", () => {
     expect(titleKey("TaIPEI詐騙！｜自由時報")).toBe(titleKey("taipei詐騙 - ETtoday"));
+  });
+
+  it("removes repeated outlet/category tails and leading news labels", () => {
+    const base = "新店男子墜樓送醫";
+    expect(dedupeTitleKey(`${base}| 社會萬象| 社會`)).toBe(dedupeTitleKey(base));
+    expect(dedupeTitleKey(`快訊／影／${base} - ETtoday`)).toBe(dedupeTitleKey(base));
+    expect(dedupeTitleKey(`獨家：${base}｜自由時報`)).toBe(dedupeTitleKey(base));
+    expect(titleKey(`快訊／${base}| 社會萬象| 社會`)).toBe("快訊新店男子墜樓送醫社會萬象");
   });
 });

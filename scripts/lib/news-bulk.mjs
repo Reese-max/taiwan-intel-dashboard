@@ -4,8 +4,9 @@
 import { COUNTY_CENTER, countyCoordFromAddr } from "./coords.mjs";
 import { eventIdFor } from "./event-id.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
-import { titleKey } from "./title-key.mjs";
+import { dedupeTitleKey, titleKey } from "./title-key.mjs";
 export { titleKey } from "./title-key.mjs";
+export { dedupeTitleKey } from "./title-key.mjs";
 
 export function cleanTitle(title) {
   return String(title || "").replace(/\s*[-|｜–—]\s*[^-|｜–—]{1,20}$/, "").trim() || String(title || "").trim();
@@ -623,8 +624,9 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
   for (const it of items || []) {
     if (!isRelevantNewsItem(it)) continue; // 濾掉非警政內容
     const k = titleKey(it.title);
-    if (!k || seen.has(k) || excludeKeys.has(k)) continue;
-    seen.add(k);
+    const dedupeKey = dedupeTitleKey(it.title);
+    if (!dedupeKey || seen.has(dedupeKey) || excludeKeys.has(k)) continue;
+    seen.add(dedupeKey);
     const loc = countyFromItem(it);
     const source = deriveNewsProvenance({ ...it, link: it.link || k }, { fetchedAt });
     const categoryResult = categoryFromItem(it.title, it.hint);

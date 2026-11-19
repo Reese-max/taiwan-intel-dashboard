@@ -106,6 +106,16 @@ describe("twnews carry-over retention", () => {
     expect(result.map((e: { id: string }) => e.id)).toEqual(["duplicate"]);
   });
 
+  it("本輪與舊快照以正規化同標題合併轉載變體", () => {
+    const now = Date.parse("2026-07-10T00:00:00.000Z");
+    const old = { ...news("old", "2026-07-09T00:00:00.000Z"), title: "高雄街頭砍人送醫| 社會萬象| 社會" };
+    const fresh = { ...news("fresh", "2026-07-09T01:00:00.000Z"), title: "快訊／高雄街頭砍人送醫 - ETtoday" };
+    const result = buildTwNewsEvents({
+      twnews: [fresh], oldNews: [old], twnewsStatus: { ok: true }, retentionDays: 5, now,
+    });
+    expect(result.map((e: { id: string }) => e.id)).toEqual(["fresh"]);
+  });
+
   it("沿用舊快照時同步清掉新規則判定的移民生活雜訊", () => {
     const now = Date.parse("2026-07-10T00:00:00.000Z");
     const oldNews = [

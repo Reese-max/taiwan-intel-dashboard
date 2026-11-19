@@ -44,6 +44,7 @@ import {
   mapBulkNews,
   refreshDomesticNewsCategory,
   titleKey as bulkTitleKey,
+  dedupeTitleKey,
 } from "./lib/news-bulk.mjs";
 import { readVerdicts, reviewNewsRelevance, serializeVerdicts, VERDICTS_FILE } from "./lib/news-llm-gate.mjs";
 import { INTL_CACHE_FILE, readIntlCache, serializeIntlCache, updateIntlCache } from "./lib/intl-normalize-cache.mjs";
@@ -178,7 +179,14 @@ export function buildTwNewsEvents({
   });
   const seen = new Set();
   const newsEvents = [];
+  const oldNewsSet = new Set(oldNews);
+  const freshTitleKeys = new Set(twnews.map((e) => dedupeTitleKey(e.title)).filter(Boolean));
+  const variantTitleKeys = new Set([...twnews, ...oldNews]
+    .filter((e) => dedupeTitleKey(e.title) !== bulkTitleKey(e.title))
+    .map((e) => dedupeTitleKey(e.title)).filter(Boolean));
   for (const e of hasFreshTwnews ? [...carriedNews, ...oldNews] : carriedNews) {
+    const titleDedupKey = dedupeTitleKey(e.title);
+    if (oldNewsSet.has(e) && variantTitleKeys.has(titleDedupKey) && freshTitleKeys.has(titleDedupKey)) continue;
     const k = newsDedupKey(e);
     if (k && seen.has(k)) continue;
     if (!keep(e)) continue; // 超過保留窗丟棄
@@ -532,7 +540,7 @@ export async function run() {
       const seen = new Set();
       const uniq = [];
       for (const it of rss.items) {
-        const k = bulkTitleKey(it.title);
+        const k = dedupeTitleKey(it.title);
         if (!k || seen.has(k)) continue;
         seen.add(k);
         uniq.push(it);

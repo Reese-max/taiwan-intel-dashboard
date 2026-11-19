@@ -6,3 +6,14 @@ export function titleKey(title) {
     .toLowerCase();
 }
 
+export function dedupeTitleKey(title) {
+  let value = String(title || "").trim();
+  value = value.replace(/^(?:(?:快訊|影|影音|獨家|最新)(?:\s*[／/：:｜|]\s*|\s+))+/u, "");
+  let previous;
+  do {
+    previous = value;
+    value = value.replace(/\s*[-|｜–—]\s*[^\-|｜–—]{1,40}$/u, "").trim();
+  } while (value !== previous);
+  return value.replace(/[^一-鿿A-Za-z0-9]/g, "").toLowerCase();
+}
+

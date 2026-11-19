@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   mapBulkInternationalNews,
   mapBulkNews,
+  dedupeTitleKey,
   titleKey,
   cleanTitle,
   categoryFromItem,
@@ -466,6 +467,16 @@ describe("mapBulkNews", () => {
     expect(fire!.region).toBe("臺南市");
     expect(fire!.category).toBe("災防");
     expect(fire!.categoryBasis).toBe("rule:災防");
+  });
+
+  it("dedupes repeated outlet/category suffix variants while preserving titleKey exclusions", () => {
+    const title = "新店23歲男4樓住處墜落";
+    const events = mapBulkNews([
+      { title: `${title}| 社會萬象| 社會`, link: "https://x/a", description: "新店發生墜落事故", hint: "治安" },
+      { title: `快訊／${title} - ETtoday`, link: "https://x/b", description: "新店發生墜落事故", hint: "治安" },
+    ], { fetchedAt: FETCHED_AT });
+    expect(dedupeTitleKey(`${title}| 社會萬象| 社會`)).toBe(dedupeTitleKey(title));
+    expect(events).toHaveLength(1);
   });
 
   it("excludes titles already enriched", () => {
