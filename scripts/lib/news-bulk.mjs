@@ -687,15 +687,15 @@ const INTERNATIONAL_CATEGORY_EVIDENCE = [
 ];
 const COUNTRY_LOCATIONS = [
   ["美國", 39.8, -98.6, /\b(?:United States|America|USA|US|California|Texas|Florida|Alaska|Hawaii|Arizona|Pennsylvania|Ohio|Colorado|Oregon|Washington|Rhode Island|Nebraska|West Virginia|Louisiana|Illinois|New York|New Jersey|North Carolina|South Carolina|North Dakota|South Dakota|Oklahoma|Tennessee|Utah|Vermont|Virginia|Wisconsin|Wyoming|Nevada|New Mexico|Minnesota|Montana|Idaho|Iowa|Kansas|Kentucky|Michigan|Mississippi|Arkansas|Alabama|Indiana|Missouri|Maryland|Delaware|Connecticut|Massachusetts)\b|\bU\.S\.A?(?:\.|(?=\W|$))|State of Georgia|(?:在|赴|返|自|於)美國|美國(?:境內|各地|全國|發生|當地|州|城市)|華盛頓特區|紐約|洛杉磯|芝加哥|波士頓|邁阿密|舊金山|西雅圖|亞特蘭大|\b(?:Washington, D\.?C\.?|New York|Los Angeles|Chicago|Boston|Miami|San Francisco|Seattle|Atlanta|Philadelphia|Houston|Dallas|Austin|Phoenix|San Diego|Denver|Portland|Detroit)\b/i],
-  ["中國", 35.86, 104.19, /中國(?!航空|國際航空)|中國大陸|(?<!South )\bChina\b|北京|上海|深圳|廣州|成都|武漢|\b(?:Beijing|Shanghai|Shenzhen|Guangzhou|Chengdu|Wuhan)\b/i],
+  ["中國", 35.86, 104.19, /中國(?!航空|國際航空)|中國大陸|(?<!South )\bChina\b|\bChinese\b|北京|上海|深圳|廣州|成都|武漢|\b(?:Beijing|Shanghai|Shenzhen|Guangzhou|Chengdu|Wuhan)\b/i],
   ["日本", 36.2, 138.25, /日本|東京|大阪|京都|廣島|\b(?:Japan|Tokyo|Osaka|Kyoto|Hiroshima)\b/i],
   ["英國", 55.38, -3.4, /英國|倫敦|曼徹斯特|\b(?:United Kingdom|Britain|UK|London|Manchester|Cardiff|Edinburgh|Bristol)\b/i],
   ["法國", 46.2, 2.2, /法國|巴黎|里昂|\b(?:France|Paris|Lyon)\b/i],
-  ["德國", 51.16, 10.45, /德國|柏林|慕尼黑|\b(?:Germany|Berlin|Munich)\b/i],
+  ["德國", 51.16, 10.45, /德國|柏林|慕尼黑|\b(?:Germany|German|Berlin|Munich)\b/i],
   ["俄羅斯", 61.5, 105.3, /俄羅斯|莫斯科|聖彼得堡|\b(?:Russia|Moscow|St\.? Petersburg)\b/i],
   ["烏克蘭", 48.37, 31.16, /烏克蘭|基輔|哈爾科夫|敖德薩|\b(?:Ukraine|Kyiv|Kiev|Kharkiv|Odesa)\b/i],
-  ["印度", 20.59, 78.96, /印度(?!航空)|新德里|孟買|班加羅爾|清奈|\b(?:India(?!\s+Airlines)|New Delhi|Mumbai|Bengaluru|Chennai)\b/i],
-  ["加拿大", 56.13, -106.35, /加拿大|渥太華|多倫多|溫哥華|\b(?:Canada|Ottawa|Toronto|Vancouver)\b/i],
+  ["印度", 20.59, 78.96, /印度(?!航空)|新德里|孟買|班加羅爾|清奈|\b(?:India(?!\s+Airlines)|Indian|New Delhi|Mumbai|Bengaluru|Chennai)\b/i],
+  ["加拿大", 56.13, -106.35, /加拿大|渥太華|多倫多|溫哥華|\b(?:Canada|Canadian|RCMP|Fort Providence|Ottawa|Toronto|Vancouver)\b/i],
   ["澳洲", -25.27, 133.77, /澳洲|澳大利亞|坎培拉|雪梨|悉尼|墨爾本|\b(?:Australia|Canberra|Sydney|Melbourne|Perth)\b/i],
   ["以色列", 31, 34.85, /以色列|特拉維夫|耶路撒冷|\b(?:Israel|Tel Aviv|Jerusalem)\b/i],
   ["巴勒斯坦", 31.95, 35.23, /巴勒斯坦|加薩|加沙|約旦河西岸|\b(?:Palestine|Gaza|West Bank)\b/i],
@@ -703,13 +703,13 @@ const COUNTRY_LOCATIONS = [
   ["委內瑞拉", 6.42, -66.59, /委內瑞拉|卡拉卡斯|\b(?:Venezuela|Caracas)\b/i],
   ["比利時", 50.5, 4.47, /比利時|布魯塞爾|\b(?:Belgium|Brussels|Antwerp)\b/i],
   ["伊朗", 32.42, 53.68, /伊朗|德黑蘭|\b(?:Iran|Tehran)\b/i],
-  ["伊拉克", 33.22, 43.68, /伊拉克|巴格達|\b(?:Iraq|Baghdad)\b/i],
+  ["伊拉克", 33.22, 43.68, /伊拉克|巴格達|\b(?:Iraq|Iraqi|Baghdad)\b/i],
   ["科威特", 29.31, 47.48, /科威特|科威特市|\b(?:Kuwait|Kuwait City)\b/i],
   ["巴基斯坦", 30.37, 69.35, /巴基斯坦|伊斯蘭馬巴德|卡拉奇|\b(?:Pakistan|Islamabad|Karachi)\b/i],
   ["土耳其", 38.96, 35.24, /土耳其|安卡拉|伊斯坦堡|\b(?:Turkey|Ankara|Istanbul)\b/i],
   ["巴西", -14.23, -51.92, /巴西|巴西利亞|里約熱內盧|聖保羅|\b(?:Brazil|Bras[ií]lia|Rio de Janeiro|S[aã]o Paulo)\b/i],
   ["墨西哥", 23.63, -102.55, /墨西哥|墨西哥城|\b(?:Mexico|Mexico City)\b/i],
-  ["南韓", 35.9, 127.76, /南韓|韓國|首爾|釜山|\b(?:South Korea|Seoul|Busan)\b/i],
+  ["南韓", 35.9, 127.76, /南韓|韓國|首爾|釜山|\b(?:South Korean|South Korea|Seoul|Busan)\b/i],
   ["北韓", 40.34, 127.51, /北韓|平壤|\b(?:North Korea|Pyongyang)\b/i],
   ["西班牙", 40.46, -3.74, /西班牙|馬德里|\b(?:Spain|Madrid)\b/i],
   ["義大利", 41.87, 12.56, /義大利|羅馬|米蘭|\b(?:Italy|Rome|Milan)\b/i],
@@ -736,7 +736,7 @@ const COUNTRY_LOCATIONS = [
   ["奧地利", 47.52, 14.55, /奧地利|維也納|\b(?:Austria|Vienna)\b/i],
   ["泰國", 15.87, 100.99, /泰國|曼谷|清邁|\b(?:Thailand|Bangkok|Chiang Mai)\b/i],
   ["越南", 14.06, 108.28, /越南|河內|胡志明市|\b(?:Vietnam|Hanoi|Ho Chi Minh City)\b/i],
-  ["印尼", -0.79, 113.92, /印尼|印度尼西亞|雅加達|\b(?:Indonesia|Jakarta)\b/i],
+  ["印尼", -0.79, 113.92, /印尼|印度尼西亞|雅加達|\b(?:Indonesia|Indonesian|Jakarta)\b/i],
   ["厄瓜多", -1.83, -78.18, /厄瓜多|基多|瓜亞基爾|\b(?:Ecuador|Quito|Guayaquil)\b/i],
   ["烏拉圭", -32.52, -55.77, /烏拉圭|蒙特維多|\b(?:Uruguay|Montevideo)\b/i],
   ["烏茲別克", 41.38, 64.59, /烏茲別克|塔什干|\b(?:Uzbekistan|Tashkent)\b/i],
@@ -764,12 +764,14 @@ const COUNTRY_LOCATIONS = [
 ];
 
 function countryLocationIn(text, { uniqueOnly = false } = {}) {
-  const source = String(text || "").replace(/China Airlines|China Eastern|China Southern|China Merchants|Air India|Air China/gi, " ");
+  if (/\bOsaka Gas\b/i.test(String(text || ""))) return null;
+  const source = String(text || "").replace(/China Airlines|China Eastern|China Southern|China Merchants|Air India|Air China|Osaka Gas|Vienna Insurance Group/gi, " ");
   const matches = [];
   for (const [country, lat, lng, re] of COUNTRY_LOCATIONS) {
     const global = new RegExp(re.source, `${re.flags}g`);
     for (const match of source.matchAll(global)) {
       if (country === "美國" && match[0] === "us") continue;
+      if (country === "美國" && /^\s*-listed\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "美國" && /^\s*(?:envoys?|officials?|firms?|companies|forces?|military|troops|strikes?|strike|aid)\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "美國" && /^\s*\$/.test(source.slice(match.index + match[0].length))) continue;
       if (country === "土耳其" && /\b(?:roast(?:ed)?|sandwich|dinner|recipe|turkey breast|turkey meat)\b/i.test(source)) continue;
@@ -782,6 +784,7 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
     }
   }
   matches.sort((a, b) => a.index - b.index || b.length - a.length);
+  if (uniqueOnly && new Set(matches.map((match) => match.country)).size > 1) return null;
   const explicit = matches.filter((match) => {
     const before = source.slice(Math.max(0, match.index - 24), match.index);
     return /\b(?:in|at|near|within)\s+(?:the\s+)?(?:central|southern|northern|eastern|western|northwestern|southwestern)\s+$/i.test(before) ||
@@ -789,8 +792,16 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
       /(?:在|赴|回|於|位於|來自|前往|抵達|發生於)\s*$/.test(before);
   });
   if (explicit.length) return { region: explicit[0].country, lat: explicit[0].lat, lng: explicit[0].lng };
-  if (uniqueOnly && new Set(matches.map((match) => match.country)).size > 1) return null;
   if (/\bSydney Marathon\b/i.test(source)) return null;
+  if (/\bOsaka Gas\b/i.test(source)) return null;
+  if (/\b(?:China[-–]US|US[-–]China|U\.S\.[-–]China|China[-–]U\.S\.)\b/i.test(source)) return null;
+  if (/\b(?:Europe Tonight|Europe Morning|Tonight: EU)\b/i.test(source)) return null;
+  if (/\bLatin America.{0,80}\bacross the region\b/i.test(source)) return null;
+  if (/\bDHL launches.{0,80}\bair freight service\b/i.test(source)) return null;
+  if (/\bnuclear Indonesia\b/i.test(source)) {
+    const [country, lat, lng] = COUNTRY_LOCATIONS.find(([name]) => name === "印尼");
+    return { region: country, lat, lng };
+  }
   const match = matches[0];
   return match ? { region: match.country, lat: match.lat, lng: match.lng } : null;
 }
