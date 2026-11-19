@@ -285,7 +285,7 @@ export function refreshDomesticNewsCategory(event, item) {
   return { ...refreshed, region: loc.region, lat: loc.lat, lng: loc.lng, locationPrecision: "city", locationNote: "依新聞地區推論，非精準事發地址" };
 }
 
-const HIGH = /命案|兇殺|凶殺|殺人|殺害|砍人|砍殺|砍傷|持刀|刺死|刺傷|分屍|棄屍|槍擊|開槍|中彈|性侵|擄人|勒贖|劫|致死|身亡|死亡|喪命|溺斃|縱火|爆炸|氣爆|滅門/;
+const HIGH = /命案|兇殺|凶殺|殺人|殺害|砍人|砍殺|砍傷|持刀|刺死|刺傷|分屍|棄屍|槍擊|開槍|中彈|性侵|擄人|勒贖|(?<![躲逃]過一)劫(?!後餘生)|致死|身亡|死亡|喪命|溺斃|縱火|爆炸|氣爆|滅門/;
 const MED = /詐騙|詐欺|毒品|緝毒|販毒|竊|搶|強盜|酒駕|毒駕|肇逃|肇事|傷害|鬥毆|車禍|起訴|收押|羈押|逮捕|查獲|落網|火警|火災|墜|溺|走私|偷渡|賄|貪/;
 const HIGH_EN = /\b(murder|homicide|killed|dead|death|fatal|shooting|stabbing|explosion|kidnap\w*|rape|sexual assault|arson)\b/i;
 const MED_EN = /\b(fraud|scam|drug|narcotic|arrest\w*|theft|robbery|burglar\w*|smuggl\w*|drunk driving|DUI|crash|fire|indict\w*|prosecut\w*|detain\w*|assault)\b/i;
@@ -863,7 +863,29 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
   return match ? { region: match.country, lat: match.lat, lng: match.lng } : null;
 }
 
+// 產品或服務的排除地區（excludes US and UK markets、not available in Japan）不是事件地點；只認這種適用範圍片語。
+const PLACE_TOKEN = String.raw`(?:the\s+)?[A-Z][\w.]*(?:\s+[A-Z][\w.]*)?`;
+const EXCLUDED_PLACE_RE = new RegExp(
+  String.raw`\b(?:excludes?|excluding|except(?:\s+for)?)\s+${PLACE_TOKEN}(?:\s*(?:,|and|&|or)\s*${PLACE_TOKEN})*\s+(?:markets?|users?|customers|residents|regions?)\b` +
+  String.raw`|\b(?:not\s+(?:available|sold|offered)|unavailable)\s+in\s+${PLACE_TOKEN}(?:\s*(?:,|and|&|or)\s*${PLACE_TOKEN})*`,
+  "g",
+);
+// 虛構作品裡的地名（a fictionalised US city、a fictional Florida）：只去掉緊接在 fictional 後面的地名。
+const FICTIONAL_PLACE_RE = new RegExp(String.raw`\bfictional(?:i[sz]ed)?\s+(?:version\s+of\s+)?${PLACE_TOKEN}`, "gi");
+// 只認台灣政府機關：英文 Taiwan、台灣企業常出現在發生於外國的新聞（台積電日本廠），不能當台灣脈絡。
+const TAIWAN_AGENCY_RE = /行政院|立法院|(?<!生態)環境部|數位部|國科會|衛福部|農業部/;
+
 function countryLocationFromItem(title, summary) {
+  const clean = (text) => String(text || "").replace(EXCLUDED_PLACE_RE, " ").replace(FICTIONAL_PLACE_RE, " ");
+  title = clean(title);
+  summary = clean(summary);
+  const location = countryLocationFromCleanItem(title, summary);
+  // 台灣機關主辦的活動常引述外國學者：國家只出現在摘要時不定位到外國。
+  if (location && TAIWAN_AGENCY_RE.test(`${title} ${summary}`) && !countryLocationIn(title)) return null;
+  return location;
+}
+
+function countryLocationFromCleanItem(title, summary) {
   const combined = [title, summary].filter(Boolean).join(" ");
   if (/\b(?:Nvidia\b.{0,70}\b(?:stock|shares?|risks?)|globally\b.{0,60}\b(?:recall|recalls|affected|impact))\b/i.test(combined) ||
       /\b(?:US|U\.S\.) chip restrictions\b/i.test(combined) ||
