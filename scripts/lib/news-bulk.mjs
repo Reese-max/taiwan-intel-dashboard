@@ -680,7 +680,7 @@ const CLEAR_HEALTH_EVENT_RE = /\b(?:kills?|injures?|spreads?|hits?|strikes?|dest
 const INTERNATIONAL_CATEGORY_EVIDENCE = [
   [/\b(?:fraud|scam|ponzi|money laundering|fake investment)\b|詐騙|詐欺|洗錢|假投資/i, "反詐"],
   [/\b(?:cyber\s*attacks?|ransomware|data breaches?|data leaks?|malware|phishing|hacked)\b|網攻|駭客|勒索|資安|個資外洩|資料外洩|漏洞/i, "資安"],
-  [/\b(?:stock market|share prices?|financial results|earnings|investors?|IPO|profits?|inflation rate|interest rates?)\b|股市|金融|通膨|利率|股價|財報|投資|獲利/i, "金融"],
+  [/\b(?:stock market|share prices?|financial results|earnings|investors?|IPO|profits?|inflation rate|interest rates?|market outlook|markets outlook)\b|\bLNG\b.{0,40}\b(?:glut|market|outlook|supply|demand)\b|股市|金融|通膨|利率|股價|財報|投資|獲利/i, "金融"],
   [/\b(?:war|airstrike|missile strike|troops deployed|sanctions?|diplomacy|election|invasion|ceasefire)\b|戰爭|軍事|軍隊|飛彈|空襲|制裁|外交|選舉|入侵|停火/i, "地緣政治"],
   [/\b(?:earthquakes?|tsunamis?|floods?|flooding|fires?|wildfires?|bushfires?|storms?|collapses?|sinking|hurricanes?|typhoons?|cyclones?|tornadoes?|landslides?|volcanic eruptions?|droughts?|heatwaves?|blizzards?|avalanches?|outbreaks?|epidemics?|pandemics?|explosions?|derailments?|capsiz\w*|evacuat\w*|death toll)\b|地震|海嘯|洪水|水災|野火|山火|颶風|颱風|龍捲風|暴雨|土石流|火山爆發|乾旱|熱浪|暴雪|疫情|爆炸|倒塌|墜機|空難|出軌|沉船|翻覆|火災|撤離|罹難|死亡/i, "災害"],
   [/\b(?:murder|homicide|shooting|stabbing|kidnapping|robbery|assault|arrested for|charged with|crime)\b|命案|殺人|槍擊|刺傷|綁架|逮捕|搶劫|竊盜|襲擊|犯罪/i, "治安"],
@@ -808,7 +808,7 @@ export function mapBulkInternationalNews(items, { fetchedAt, excludeIds = new Se
     const feed = INTERNATIONAL_FEED_BY_LABEL.get(feedName);
     const hint = feed?.hint || it.hint;
     const hintedCategory = INTERNATIONAL_HINT_TO_CATEGORY[hint];
-    const evidence = title;
+    const evidence = title.replace(/\b(?:Is|Are|Was|Were)\b[^?!.]{0,100}\b(?:Ponzi scheme|scam|fraud)\b[^?!.]{0,4}\?\s*No\b/gi, " ");
     const productFilteredEvidence = evidence.replace(/\bFire TV(?: Stick)?\b/gi, " ");
     const disasterEvidence = productFilteredEvidence.replace(
       /\bBlizzard\b/g,

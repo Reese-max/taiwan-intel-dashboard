@@ -382,6 +382,8 @@ describe("mapBulkInternationalNews", () => {
     ["Cholera outbreak confirmed in Sudan", "其他", "Scienmag", "災害", "evidence:災害"],
     ["Wildfire burns 200 homes", "其他", "Scienmag", "災害", "evidence:災害"],
     ["Study finds healthcare systems exposed to ransomware", "其他", "Scienmag", "資安", "evidence:資安"],
+    ["Is Social Security a Ponzi scheme? No, but fear is fueling such talk.", "金融", "MarketWatch Top", "金融", "hint:金融"],
+    ["Bain Pushes Back LNG Glut Outlook to 2030 as War Tightens Market", "金融", "Bloomberg Markets", "金融", "evidence:金融"],
     ["Microsoft security check blocks apps, Adobe and Blizzard on board", "資安", "Wccftech", "資安", "hint:資安"],
     ["Acoustic monitoring reveals previously hidden underwater landslide processes", "金融", "Ground Engineering", "金融", "hint:金融"],
     ["Landslide kills dozens in mountain villages", "其他", "Scienmag", "災害", "evidence:災害"],
