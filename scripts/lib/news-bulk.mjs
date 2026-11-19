@@ -778,7 +778,12 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
       /\bNvidia\b.{0,70}\b(?:stock|shares?|risks?)\b/i.test(raw) ||
       /\bRussia.{0,70}\bmunitions?\b.{0,80}\bUkraine\b/i.test(raw) ||
       /\bweighs?\b.{0,50}\bstrikes?\s+on\s+Iran\b/i.test(raw) ||
-      /\bNorth Korea[- ]Linked\b/i.test(raw)) return null;
+      /\bNorth Korea[- ]Linked\b/i.test(raw) ||
+      /\b(?:worldwide|global(?:ly)?|across far western North America)\b/i.test(raw) ||
+      /\b(?:Foreign Policy|AI (?:export|chip|policy)|China[-–]US|US[-–]China|America and China|US President).{0,100}\b(?:China|US|U\.S\.)\b/i.test(raw) ||
+      /\b(?:Investec|FTSE 100|Sony|GTA VI|Ship Recycling Markets|Ohio State University|USA Rare Earth|AMD Japan|CNA Now|from anywhere|Washington (?:Accords|peace process))\b/i.test(raw) ||
+      /\b(?:military|war|strike|attack|battle).{0,100}\b(?:Iran|Ukraine|Russia|China|Bahrain|Kuwait)\b/i.test(raw) &&
+        /\b(?:Iran|Ukraine|Russia|China|Bahrain|Kuwait)\b.{0,100}\b(?:military|war|strike|attack|battle)\b/i.test(raw)) return null;
   const source = String(text || "").replace(/China Airlines|China Eastern|China Southern|China Merchants|Air India|Air China|Osaka Gas|Vienna Insurance Group/gi, " ");
   const matches = [];
   for (const [country, lat, lng, re] of COUNTRY_LOCATIONS) {
@@ -786,6 +791,8 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
     for (const match of source.matchAll(global)) {
       if (country === "美國" && match[0] === "us") continue;
       if (country === "美國" && /^America$/i.test(match[0]) && /\bLatin\s+$/i.test(source.slice(Math.max(0, match.index - 12), match.index))) continue;
+      if (country === "美國" && /^America$/i.test(match[0]) && /\bNorth\s+$/i.test(source.slice(Math.max(0, match.index - 12), match.index))) continue;
+      if (country === "美國" && /^USA$/i.test(match[0]) && /^\s+Rare Earth\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "美國" && /^\s*-listed\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "美國" && /\bTrump administration\b/i.test(source) && /\bUS firms?\b/i.test(source)) {
         matches.push({ country, lat, lng, index: match.index, length: match[0].length });
@@ -796,6 +803,10 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
       if (country === "美國" && /\bUS\s+(?:chip )?(?:restrictions?|policy|sanctions?)\b/i.test(source) && !/\bTrump administration\b/i.test(source)) continue;
       if (country === "美國" && /\bUS(?:\s|-)(?:market leader|tech giant|listed)\b/i.test(source)) continue;
       if (country === "中國" && /\bChinese\b/i.test(match[0]) && !/\bChinese\b.{0,55}\b(?:company|platform|business)\b/i.test(source)) continue;
+      if (country === "印度" && /^Indian$/i.test(match[0])) continue;
+      if (country === "德國" && /^German$/i.test(match[0]) && /^\s+(?:lender|company|biotech|firm|business)\b/i.test(source.slice(match.index + match[0].length))) continue;
+      if (country === "日本" && /\b(?:AMD Japan|Sony Japan)\b/i.test(source)) continue;
+      if (country === "美國" && /\b(?:Ohio State University|Washington Accords|Washington peace process)\b/i.test(source)) continue;
       if (country === "義大利" && /\bfrom\s+Italy\b/i.test(source)) continue;
       if (country === "烏克蘭" && /^\s+war\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "北韓" && /^[- ]Linked\b/i.test(source.slice(match.index + match[0].length))) continue;
@@ -810,7 +821,6 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
     }
   }
   matches.sort((a, b) => a.index - b.index || b.length - a.length);
-  if (uniqueOnly && new Set(matches.map((match) => match.country)).size > 1) return null;
   for (const match of source.matchAll(/\bChinese\b/gi)) {
     if (!/\bChinese\b.{0,55}\b(?:company|platform|business)\b/i.test(source)) continue;
     const [country, lat, lng] = COUNTRY_LOCATIONS.find(([name]) => name === "中國");
@@ -824,6 +834,7 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
       /(?:在|赴|回|於|位於|來自|前往|抵達|發生於)\s*$/.test(before);
   });
   if (new Set(explicit.map((match) => match.country)).size > 1) return null;
+  if (uniqueOnly && explicit.length === 0 && new Set(matches.map((match) => match.country)).size > 1) return null;
   if (explicit.length) return { region: explicit[0].country, lat: explicit[0].lat, lng: explicit[0].lng, explicit: true };
   if (matches[0]?.index === 0 && /^(?:Paris|New York|London|Tokyo|Berlin|Moscow|Beirut|Dublin|Miami)$/i.test(source.slice(0, matches[0].length))) {
     return { region: matches[0].country, lat: matches[0].lat, lng: matches[0].lng, explicit: true };
@@ -854,7 +865,10 @@ function countryLocationFromItem(title, summary) {
       /\bin\s+the\s+US\s+and\s+Europe\b/i.test(combined) ||
       /\b(?:six|6)\s+(?:countries|カ国)\b/i.test(combined) ||
       /\b(?:main topic|topic) at .*meeting\b/i.test(combined) ||
-      /\bRussia.{0,70}\bmunitions?\b.{0,80}\bUkraine\b/i.test(combined)) return null;
+      /\bRussia.{0,70}\bmunitions?\b.{0,80}\bUkraine\b/i.test(combined) ||
+      /\b(?:worldwide|across the region|from anywhere)\b/i.test(combined) ||
+      /\b(?:China[-–]US|US[-–]China|America and China|Trump.{0,40}(?:Xi|Putin))\b/i.test(combined) ||
+      /\b(?:Japan|Indonesia|Kuwait|Bahrain).{0,70}\b(?:six|6)\s*(?:countries|カ国)\b/i.test(combined)) return null;
   const titleLocation = countryLocationIn(title);
   if (titleLocation?.explicit) return titleLocation;
   const summaryLocation = countryLocationIn(summary, { uniqueOnly: true });

@@ -445,7 +445,7 @@ describe("mapBulkInternationalNews", () => {
     ["美國科技公司公布年度營收", "", "國際"],
     ["美國發生重大洪災", "", "美國"],
     ["U.S., Russia and China discuss a regional summit", "", "美國"],
-    ["America and China are trying to alter their economic bargain", "", "美國"],
+    ["America and China are trying to alter their economic bargain", "", "國際"],
     ["MAF EAP – Holidays: the BAH HUMBUG that tries to sneak in", "An event many of us can get behind.", "國際"],
     ["US$71.8 billion investment announced", "", "國際"],
     ["Kuwait says it repelled an Iranian attack after US strikes island", "", "科威特"],
