@@ -356,6 +356,18 @@ describe("mapBulkInternationalNews", () => {
     });
     expect(excluded.map((event) => event.id)).toEqual([events[1].id]);
   });
+
+  it.each([
+    ["New molecular study explains cell repair", "災害", "Scienmag", "其他", "rule:no-disaster-evidence"],
+    ["Major earthquake damages homes in Chile", "金融", "BBC World", "災害", "evidence:災害"],
+    ["Hospitals disrupted by ransomware attack", "災害", "Scienmag", "資安", "evidence:資安"],
+    ["Stock market crash follows bank earnings", "災害", "Financial News", "金融", "evidence:金融"],
+    ["Infectious disease outbreak spreads across region", "災害", "BBC World", "災害", "evidence:災害"],
+    ["Infection control protocol contains Candida auris outbreak", "災害", "Scienmag", "其他", "rule:science-publication"],
+  ])("國際分類以標題摘要證據優先：%s", (title, hint, source, category, categoryBasis) => {
+    const [event] = mapBulkInternationalNews([{ title, hint, source, link: `https://example.test/${encodeURIComponent(title)}` }], { fetchedAt: FETCHED_AT });
+    expect(event).toMatchObject({ category, categoryBasis });
+  });
 });
 
 const categoryCases = [

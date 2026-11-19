@@ -664,6 +664,14 @@ const INTERNATIONAL_HINT_TO_CATEGORY = {
   資安: "資安",
   金融: "金融",
 };
+const INTERNATIONAL_CATEGORY_EVIDENCE = [
+  [/\b(?:fraud|scam|phishing|ponzi|money laundering)\b|詐騙|詐欺|洗錢|假投資/i, "反詐"],
+  [/\b(?:cyber|ransomware|hacker|hackers|data breach|data leak|vulnerability|malware|phishing)\b|網攻|駭客|勒索|資安|個資外洩|資料外洩|漏洞/i, "資安"],
+  [/\b(?:stocks?|markets?|bank(?:s|ing)?|finance|financial|inflation|interest rates?|earnings|investors?)\b|股市|金融|通膨|利率|股價|財報|投資/i, "金融"],
+  [/\b(?:war|warfare|military|troops|missile|airstrike|sanctions?|diplomacy|election|government)\b|戰爭|軍事|軍隊|飛彈|空襲|制裁|外交|選舉|政府/i, "地緣政治"],
+  [/\b(?:earthquake|quake|tsunami|flood|wildfire|bushfire|hurricane|typhoon|cyclone|tornado|storm|landslide|volcan\w*|eruption|drought|heatwave|blizzard|avalanche|outbreak|epidemic|pandemic|explosion|blast|collapse|derail\w*|sinking|capsiz\w*|fire|disaster|evacuat\w*|casualt\w*|death toll)\b|地震|海嘯|洪水|水災|野火|山火|颶風|颱風|龍捲風|暴雨|土石流|火山|乾旱|熱浪|暴雪|疫情|爆炸|倒塌|墜機|空難|出軌|沉船|翻覆|火災|大火|災|撤離|罹難|死亡/i, "災害"],
+  [/\b(?:murder|homicide|killed|shooting|stabbing|kidnapping|arrest|robbery|theft|assault|police|crime)\b|命案|殺人|槍擊|刺傷|綁架|逮捕|搶劫|竊盜|襲擊|警方|犯罪/i, "治安"],
+];
 
 // 國際 RSS 的長尾事件走確定性輕量收錄；LLM 只精修較小候選池。
 // id 與 normalizeInternational 相同，讓精修事件可直接取代 bulk 版本。
@@ -680,8 +688,14 @@ export function mapBulkInternationalNews(items, { fetchedAt, excludeIds = new Se
 
     const id = eventIdFor("international", it.link) || `intl-${hash(`${it.source || "international"}:${title}`)}`;
     if (excludeIds.has(id)) continue;
-    const category = INTERNATIONAL_HINT_TO_CATEGORY[it.hint] || "其他";
     const summary = String(it.description || title).replace(/\s+/g, " ").trim().slice(0, 200) || title;
+    const evidence = `${title} ${summary}`;
+    const evidenceCategory = INTERNATIONAL_CATEGORY_EVIDENCE.find(([re]) => re.test(evidence))?.[1];
+    const hintedCategory = INTERNATIONAL_HINT_TO_CATEGORY[it.hint];
+    const scienceFeed = /scienmag/i.test(String(it.source || ""));
+    const category = scienceFeed && evidenceCategory === "災害"
+      ? "其他"
+      : evidenceCategory || (hintedCategory === "災害" ? "其他" : hintedCategory) || "其他";
     const detectedRisk = riskFromTitle(title, it.hint, summary);
     const riskLevel = detectedRisk === "low" && ["地緣政治", "災害", "金融"].includes(category)
       ? "medium"
@@ -696,7 +710,9 @@ export function mapBulkInternationalNews(items, { fetchedAt, excludeIds = new Se
       region: "國際",
       timestamp: toIso(it.pubDate),
       category,
-      categoryBasis: it.hint ? `hint:${it.hint}` : "default",
+      categoryBasis: scienceFeed && evidenceCategory === "災害"
+        ? "rule:science-publication"
+        : evidenceCategory ? `evidence:${evidenceCategory}` : hintedCategory === "災害" ? "rule:no-disaster-evidence" : it.hint ? `hint:${it.hint}` : "default",
       scope: "international",
       riskLevel,
       summary,
