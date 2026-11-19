@@ -12,7 +12,7 @@ export function dedupeTitleKey(title) {
   let previous;
   do {
     previous = value;
-    value = value.replace(/\s*[-|｜–—]\s*[^\-|｜–—]{1,40}$/u, "").trim();
+    value = value.replace(/(?:\s*-\s+|[|｜–—]\s*)[^\-|｜–—]{1,40}$/u, "").trim();
   } while (value !== previous);
   return value.replace(/[^一-鿿A-Za-z0-9]/g, "").toLowerCase();
 }

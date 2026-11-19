@@ -1043,7 +1043,7 @@ describe("fetch-live pipeline — international 全滅語義（靜默全敗家�
         expect(international[0]).toMatchObject({
           scope: "international",
           category: "地緣政治",
-          riskLevel: "medium",
+          riskLevel: "low",
           source: {
             datasetId: "international-news",
             normalizationMethod: "bulk",

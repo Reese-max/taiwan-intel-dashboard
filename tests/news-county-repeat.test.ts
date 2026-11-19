@@ -37,6 +37,9 @@ describe("鄉鎮與地標推定縣市", () => {
     ["山友受困楠西龜丹山區", "臺南市"],
     ["台鐵內壢站民眾墜落", "桃園市"],
     ["台鐵新左營站爆偷拍", "高雄市"],
+    ["中捷吊臂事故造成車廂受損", "臺中市"],
+    ["三多警查獲詐騙車手", "高雄市"],
+    ["林口街友中途之家發生命案", "新北市"],
     ["涉案人員屏監服刑", "屏東縣"],
     ["南監管理員涉案", "臺南市"],
     ["南警三分局查獲詐騙", "臺南市"],
@@ -104,6 +107,18 @@ describe("R1–R3：事發地優先與署名邊界", () => {
   ])("事發地判定：%s", (text, region, bodyRegion = region) => {
     expect(detectCounty(text).region).toBe(region);
     expect(detectCountyInBody(text).region).toBe(bodyRegion);
+  });
+  it.each([
+    ["前泰山總經理遭起訴", "全國"],
+    ["泰山前總經理涉案", "全國"],
+    ["將軍級總座遭控傷害", "全國"],
+    ["中東將軍詐騙話術再現", "全國"],
+    ["成功導航引發爭議", "全國"],
+    ["重新營業後發生命案", "全國"],
+  ])("排除地名同形詞：%s", (title, region) => expect(detectCounty(title).region).toBe(region));
+  it("案發地縣市優先於標題檢署所在地，只有檢署時仍回退其所在地", () => {
+    expect(mapBulkNews([{ title: "北檢偵結新店汽車旅館命案", description: "新北市新店區發生命案", hint: "治安" }])[0].region).toBe("新北市");
+    expect(mapBulkNews([{ title: "北檢偵結案件", description: "檢方偵結起訴", hint: "治安" }])[0].region).toBe("臺北市");
   });
   it.each(["地檢署", "地院", "地方法院", "地方檢察署"])("R3-3：只有機關%s所在地仍回退使用", (agency) => {
     expect(detectCounty(`台北${agency}指揮破獲製毒工廠`).region).toBe("臺北市");

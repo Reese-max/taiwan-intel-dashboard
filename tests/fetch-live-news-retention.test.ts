@@ -39,10 +39,10 @@ describe("twnews carry-over retention", () => {
   it.each([{ ok: false }, { skipped: true }, { ok: true }])("重用新聞重算規則分類，保留官方、LLM 與人工來源：%j", (twnewsStatus) => {
     const timestamp = "2026-07-09T00:00:00.000Z";
     const oldNews = ["rule:交通", "hint:交通", "default", "official-feed-hint", "llm", "curation:reviewed"].map((basis) => ({
-      ...news(basis, timestamp), scope: "domestic", title: "騎士車內藏安非他命 遭逮起訴",
+      ...news(basis, timestamp), scope: "domestic", title: `騎士車內藏安非他命${basis}遭逮起訴`,
       category: "交通", categoryBasis: basis,
     }));
-    const curated = { ...oldNews[0], ...news("curated", timestamp), title: oldNews[0].title, curated: { id: "review-1" } };
+    const curated = { ...oldNews[0], ...news("curated", timestamp), title: `${oldNews[0].title} curated`, curated: { id: "review-1" } };
     const result = buildTwNewsEvents({
       oldNews: [...oldNews, curated],
       twnews: "ok" in twnewsStatus && twnewsStatus.ok ? [oldNews[0]] : [],
@@ -114,6 +114,16 @@ describe("twnews carry-over retention", () => {
       twnews: [fresh], oldNews: [old], twnewsStatus: { ok: true }, retentionDays: 5, now,
     });
     expect(result.map((e: { id: string }) => e.id)).toEqual(["fresh"]);
+  });
+
+  it("沒有本輪同標題時也合併舊快照中的轉載變體", () => {
+    const now = Date.parse("2026-07-10T00:00:00.000Z");
+    const old = [
+      { ...news("old", "2026-07-09T00:00:00.000Z"), title: "高雄街頭砍人送醫| 社會萬象| 社會" },
+      { ...news("old-copy", "2026-07-09T00:30:00.000Z"), title: "快訊／高雄街頭砍人送醫 - ETtoday" },
+    ];
+    const result = buildTwNewsEvents({ oldNews: old, twnewsStatus: { ok: false }, now });
+    expect(result.map((e: { id: string }) => e.id)).toEqual(["old"]);
   });
 
   it("沿用舊快照時同步清掉新規則判定的移民生活雜訊", () => {

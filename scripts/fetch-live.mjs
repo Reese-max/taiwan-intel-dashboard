@@ -152,7 +152,9 @@ export function buildTwNewsEvents({
   llmDropKeys,
   now = Date.now(),
 } = {}) {
-  const newsDedupKey = (e) => e.source?.recordRef || (e.title ? "t:" + bulkTitleKey(e.title) : "");
+  const newsDedupKey = (e) => e.source?.datasetId === "tw-news" && e.scope !== "international" && e.title
+    ? "t:" + dedupeTitleKey(e.title)
+    : e.source?.recordRef || e.id || "";
   const keep = (event) => {
     const item = {
       ...event,
@@ -179,14 +181,7 @@ export function buildTwNewsEvents({
   });
   const seen = new Set();
   const newsEvents = [];
-  const oldNewsSet = new Set(oldNews);
-  const freshTitleKeys = new Set(twnews.map((e) => dedupeTitleKey(e.title)).filter(Boolean));
-  const variantTitleKeys = new Set([...twnews, ...oldNews]
-    .filter((e) => dedupeTitleKey(e.title) !== bulkTitleKey(e.title))
-    .map((e) => dedupeTitleKey(e.title)).filter(Boolean));
   for (const e of hasFreshTwnews ? [...carriedNews, ...oldNews] : carriedNews) {
-    const titleDedupKey = dedupeTitleKey(e.title);
-    if (oldNewsSet.has(e) && variantTitleKeys.has(titleDedupKey) && freshTitleKeys.has(titleDedupKey)) continue;
     const k = newsDedupKey(e);
     if (k && seen.has(k)) continue;
     if (!keep(e)) continue; // 超過保留窗丟棄

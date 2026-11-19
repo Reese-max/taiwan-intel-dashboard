@@ -32,6 +32,7 @@ const TOWNSHIP_COUNTY = new Map(Object.entries({
   石門: "新北市", 金山: "新北市", 萬里: "新北市", 坪林: "新北市", 石碇: "新北市", 深坑: "新北市",
   雙溪: "新北市", 平溪: "新北市", 烏來: "新北市", 中和: "新北市", 中壢: "桃園市", 龜山: "桃園市", 蘆竹: "桃園市",
   大園: "桃園市", 楊梅: "桃園市", 平鎮: "桃園市", 八德: "桃園市", 觀音: "桃園市", 新屋: "桃園市",
+  中捷: "臺中市", 三多警: "高雄市",
   竹北: "新竹縣", 竹東: "新竹縣", 新埔: "新竹縣", 關西: "新竹縣", 湖口: "新竹縣", 新豐: "新竹縣", 芎林: "新竹縣",
   橫山: "新竹縣", 北埔: "新竹縣", 寶山: "新竹縣", 峨眉: "新竹縣", 尖石: "新竹縣", 五峰: "新竹縣",
   竹南: "苗栗縣", 頭份: "苗栗縣", 苑裡: "苗栗縣", 通霄: "苗栗縣", 后龍: "苗栗縣",
@@ -175,14 +176,17 @@ export function detectCountyEarliest(text, context = "", isTitle = true) {
     for (const m of s.matchAll(new RegExp(place, "g"))) {
       const after = s.slice(m.index + place.length);
       const before = s.slice(Math.max(0, m.index - 4), m.index);
-      if ((place === "成功" && /^(?:攔阻|攔截|制止|阻止)/.test(after)) ||
+  if ((place === "成功" && /^(?:攔阻|攔截|制止|阻止|導航)/.test(after)) ||
           (place === "成功" && /^嶺/.test(after)) ||
+          (place === "將軍" && /^(?:級|詐騙)/.test(after)) ||
           (place === "太平" && /^間/.test(after)) ||
           (place === "口湖" && /河$/.test(before)) ||
           (place === "三星" && /^傳媒/.test(after)) ||
-          (place === "泰山" && /^(?:總座|董事長|集團)/.test(after)) ||
+          (place === "泰山" && /^(?:前?總經理|總座|董事長|集團)/.test(after)) ||
+          (place === "將軍" && /(?:中東|神秘|詐騙)$/.test(before)) ||
+          (place === "新營" && /重$/.test(before)) ||
           (place === "新興" && /^毒品/.test(after))) continue;
-      if (/^(?:[東西南北中外新舊]+)?(?:[一二三四五六七八九十0-9]+)?(?:路(?!段)|街(?!頭)|大道|巷)/.test(after)) continue;
+      if (/^(?:[東西南北中外新舊]+)?(?:[一二三四五六七八九十0-9]+)?(?:路(?!段)|街(?!頭)|大道|巷)/.test(after) && !(place === "林口" && /^街友/.test(after))) continue;
       const sentence = s.slice(0, m.index).split(/[，。！？；\n]/).at(-1) + s.slice(m.index).split(/[，。！？；\n]/)[0];
       const prefixedCounty = Object.keys(COUNTY_CENTER).some((county) => new RegExp(`${county}.{0,6}${place}`).test(sentence));
       if (AMBIGUOUS_TOWNS.has(place) && !prefixedCounty) continue;
@@ -230,11 +234,13 @@ export function detectCountyInBody(text) {
 // 避免摘要提及的他縣市蓋過標題（如標題無地名、摘要寫「嘉義縣 東石鄉」）。
 function countyFromItem(item) {
   const titleLoc = detectCounty(item?.title, [item?.description, item?.summary].filter(Boolean).join(" "));
-  if (titleLoc.lat != null) return titleLoc;
+  const titleNamesOffice = /(?:北檢|中檢|南檢|雄檢|桃檢|竹檢|苗檢|彰檢|嘉檢|屏檢|宜檢|花檢|東檢|地檢署|地方法院|地院)/.test(String(item?.title || ""));
+  if (titleLoc.lat != null && !titleNamesOffice) return titleLoc;
   for (const text of [item?.description, item?.summary]) {
     const loc = detectCountyInBody(text);
     if (loc.lat != null) return loc;
   }
+  if (titleLoc.lat != null) return titleLoc;
   return { region: "全國", lat: null, lng: null };
 }
 
@@ -629,7 +635,7 @@ export function mapBulkNews(items, { fetchedAt, excludeKeys = new Set() } = {}) 
     if (!isRelevantNewsItem(it)) continue; // 濾掉非警政內容
     const k = titleKey(it.title);
     const dedupeKey = dedupeTitleKey(it.title);
-    if (!dedupeKey || seen.has(dedupeKey) || excludeKeys.has(k)) continue;
+    if (!dedupeKey || seen.has(dedupeKey) || excludeKeys.has(k) || excludeKeys.has(dedupeKey)) continue;
     seen.add(dedupeKey);
     const loc = countyFromItem(it);
     const source = deriveNewsProvenance({ ...it, link: it.link || k }, { fetchedAt });
@@ -670,14 +676,14 @@ const INTERNATIONAL_HINT_TO_CATEGORY = {
 };
 const INTERNATIONAL_FEED_BY_LABEL = new Map(INTERNATIONAL_FEEDS.map((feed) => [feed.label, feed]));
 const SCIENCE_STUDY_RE = /\b(?:study|research|trial|simulation|model|analysis|review|experiment|findings|predict(?:ion|s)?|protocol|webinar|risk)\b|研究|論文|試驗|實驗|模擬|分析|回顧|研討會/i;
-const CLEAR_HEALTH_EVENT_RE = /\b(?:kills?|injures?|spreads?|hits?|strikes?|destroys?|collapses?|evacuates?|displaces?|death toll)\b|造成死傷|蔓延|襲擊|摧毀|撤離|罹難|死亡/i;
+const CLEAR_HEALTH_EVENT_RE = /\b(?:kills?|injures?|spreads?|hits?|strikes?|destroys?|evacuates?|displaces?|death toll|rescue|missing|without power|worsens)\b|造成死傷|蔓延|襲擊|摧毀|撤離|罹難|死亡/i;
 const INTERNATIONAL_CATEGORY_EVIDENCE = [
   [/\b(?:fraud|scam|ponzi|money laundering|fake investment)\b|詐騙|詐欺|洗錢|假投資/i, "反詐"],
   [/\b(?:cyber\s*attacks?|ransomware|data breaches?|data leaks?|malware|phishing|hacked)\b|網攻|駭客|勒索|資安|個資外洩|資料外洩|漏洞/i, "資安"],
   [/\b(?:stock market|share prices?|financial results|earnings|investors?|IPO|profits?|inflation rate|interest rates?)\b|股市|金融|通膨|利率|股價|財報|投資|獲利/i, "金融"],
   [/\b(?:war|airstrike|missile strike|troops deployed|sanctions?|diplomacy|election|invasion|ceasefire)\b|戰爭|軍事|軍隊|飛彈|空襲|制裁|外交|選舉|入侵|停火/i, "地緣政治"],
+  [/\b(?:earthquakes?|tsunamis?|floods?|flooding|fires?|wildfires?|bushfires?|storms?|collapses?|sinking|hurricanes?|typhoons?|cyclones?|tornadoes?|landslides?|volcanic eruptions?|droughts?|heatwaves?|blizzards?|avalanches?|outbreaks?|epidemics?|pandemics?|explosions?|derailments?|capsiz\w*|evacuat\w*|death toll)\b|地震|海嘯|洪水|水災|野火|山火|颶風|颱風|龍捲風|暴雨|土石流|火山爆發|乾旱|熱浪|暴雪|疫情|爆炸|倒塌|墜機|空難|出軌|沉船|翻覆|火災|撤離|罹難|死亡/i, "災害"],
   [/\b(?:murder|homicide|shooting|stabbing|kidnapping|robbery|assault|arrested for|charged with|crime)\b|命案|殺人|槍擊|刺傷|綁架|逮捕|搶劫|竊盜|襲擊|犯罪/i, "治安"],
-  [/\b(?:earthquakes?|tsunamis?|flood(?:s|ing)? (?:in|hits?|strikes?|kills?|leaves?)|wildfires?|bushfires?|hurricanes?|typhoons?|cyclones?|tornadoes?|landslides?|volcanic eruptions?|droughts?|heatwaves?|blizzards?|avalanches?|outbreaks?|epidemics?|pandemics?|explosions?|derailments?|capsiz\w*|evacuat\w*|death toll)\b|地震|海嘯|洪水|水災|野火|山火|颶風|颱風|龍捲風|暴雨|土石流|火山爆發|乾旱|熱浪|暴雪|疫情|爆炸|倒塌|墜機|空難|出軌|沉船|翻覆|火災|撤離|罹難|死亡/i, "災害"],
 ];
 const COUNTRY_LOCATIONS = [
   ["美國", 39.8, -98.6, /\b(?:United States|USA|U\.S\.A?\.?|US|California|Texas|Florida|Alaska|Hawaii|Arizona|Pennsylvania|Ohio|Colorado|Oregon|Washington|Rhode Island|Nebraska|West Virginia|Louisiana|Illinois|New York|New Jersey|North Carolina|South Carolina|North Dakota|South Dakota|Oklahoma|Tennessee|Utah|Vermont|Virginia|Wisconsin|Wyoming|Nevada|New Mexico|Minnesota|Montana|Idaho|Iowa|Kansas|Kentucky|Michigan|Mississippi|Arkansas|Alabama|Indiana|Missouri|Maryland|Delaware|Connecticut|Massachusetts)\b|(?:在|赴|返|自)美國|美國(?:境內|各地|全國|發生|當地|州|城市)|華盛頓特區|紐約|洛杉磯|芝加哥|波士頓|邁阿密|舊金山|西雅圖|亞特蘭大|\b(?:Washington, D\.?C\.?|New York|Los Angeles|Chicago|Boston|Miami|San Francisco|Seattle|Atlanta|Philadelphia|Houston|Dallas|Austin|Phoenix|San Diego|Denver|Portland|Detroit)\b/i],
@@ -794,7 +800,8 @@ export function mapBulkInternationalNews(items, { fetchedAt, excludeIds = new Se
     const hintedCategory = INTERNATIONAL_HINT_TO_CATEGORY[hint];
     const evidence = title;
     const rawEvidenceCategory = INTERNATIONAL_CATEGORY_EVIDENCE.find(([re]) => re.test(evidence))?.[1];
-    const scienceStudy = feed?.topic === "health" && (SCIENCE_STUDY_RE.test(title) || (rawEvidenceCategory === "災害" && !CLEAR_HEALTH_EVENT_RE.test(title)));
+    const scienceStudy = feed?.topic === "health" && !CLEAR_HEALTH_EVENT_RE.test(title) &&
+      (SCIENCE_STUDY_RE.test(title) || rawEvidenceCategory === "災害");
     const evidenceCategory = scienceStudy ? undefined : rawEvidenceCategory;
     const trustedDisasterFeed = feed?.topic === "disaster" && hintedCategory === "災害";
     const category = scienceStudy ? hintedCategory || "其他"

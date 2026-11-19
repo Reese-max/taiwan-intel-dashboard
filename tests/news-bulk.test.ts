@@ -363,11 +363,18 @@ describe("mapBulkInternationalNews", () => {
     ["Hospitals disrupted by ransomware attack", "災害", "Scienmag", "資安", "evidence:資安"],
     ["Stock market crash follows bank earnings", "災害", "Financial News", "金融", "evidence:金融"],
     ["Infectious disease outbreak spreads across region", "災害", "BBC World", "災害", "evidence:災害"],
+    ["Factory fire kills 12 workers in Bangladesh", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Bridge collapse leaves dozens missing", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Ferry sinking off coast prompts rescue", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Severe storm leaves 200,000 without power", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Deadly flood crisis worsens", "其他", "BBC World", "災害", "evidence:災害"],
+    ["Analysis warns deadly outbreak spreads and kills dozens", "其他", "Scienmag", "災害", "evidence:災害"],
+    ["Dozens arrested for looting after deadly earthquake", "其他", "BBC World", "災害", "evidence:災害"],
     ["Infection control protocol contains Candida auris outbreak", "災害", "Scienmag", "其他", "hint:其他"],
     ["Magnitude 5.2 event recorded at station", "災害", "USGS Quakes M4.5 week", "災害", "hint:災害"],
     ["Fibre Inflation models new energy materials", "其他", "Scienmag", "其他", "hint:其他"],
     ["Wildfire risk study models changing conditions", "其他", "Phys.org", "其他", "hint:其他"],
-    ["Police investigate fatal explosion after shooting", "治安", "BBC World", "治安", "evidence:治安"],
+    ["Police investigate fatal explosion after shooting", "治安", "BBC World", "災害", "evidence:災害"],
   ])("國際分類以標題事件證據優先：%s", (title, hint, source, category, categoryBasis) => {
     const [event] = mapBulkInternationalNews([{ title, hint, source, link: `https://example.test/${encodeURIComponent(title)}` }], { fetchedAt: FETCHED_AT });
     expect(event).toMatchObject({ category, categoryBasis });
@@ -383,6 +390,16 @@ describe("mapBulkInternationalNews", () => {
       link: "https://example.test/context-only-keywords",
     }], { fetchedAt: FETCHED_AT });
     expect(event).toMatchObject({ category: "其他", categoryBasis: "hint:其他" });
+  });
+
+  it("非災害 feed 不以災害 hint 作為無證據分類後備", () => {
+    const [event] = mapBulkInternationalNews([{
+      title: "Researchers discuss a new research method",
+      hint: "災害",
+      source: "Custom science feed",
+      link: "https://example.test/no-disaster-evidence",
+    }], { fetchedAt: FETCHED_AT });
+    expect(event).toMatchObject({ category: "其他", categoryBasis: "rule:no-disaster-evidence" });
   });
 
   it("可信災害 feed 可用來源 hint 後備分類並標記事件類型", () => {

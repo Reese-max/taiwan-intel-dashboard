@@ -28,4 +28,10 @@ describe("titleKey", () => {
     expect(dedupeTitleKey(`獨家：${base}｜自由時報`)).toBe(dedupeTitleKey(base));
     expect(titleKey(`快訊／${base}| 社會萬象| 社會`)).toBe("快訊新店男子墜樓送醫社會萬象");
   });
+
+  it("does not strip hyphenated product names, model numbers, or CVE identifiers", () => {
+    expect(dedupeTitleKey("N-able fixes a security flaw")).toBe("nablefixesasecurityflaw");
+    expect(dedupeTitleKey("CVE-2026-11111 vulnerability exposed")).not.toBe(dedupeTitleKey("CVE-2026-90436 vulnerability exposed"));
+    expect(dedupeTitleKey("F-16 crash investigation")).not.toBe(dedupeTitleKey("F-35 crash investigation"));
+  });
 });
