@@ -453,6 +453,13 @@ describe("mapBulkInternationalNews", () => {
     ["State of Georgia storm damage reported", "", "美國"],
     ["Guinea announces new election results", "", "幾內亞"],
     ["China Eastern announces new service", "", "國際"],
+    ["South China Sea crab discovery draws researchers", "", "國際"],
+    ["Global shipping outlook from China Merchants executive", "", "國際"],
+    ["Hegseth appears in Venezuela during military visit", "", "委內瑞拉"],
+    ["Israeli army launches ground operation in central Gaza", "", "巴勒斯坦"],
+    ["Israel intensifies incursions in southern Syria", "", "敘利亞"],
+    ["Hungarian band performs in Brussels", "", "比利時"],
+    ["Sydney Marathon winner banned for three years", "", "國際"],
     ["US envoys meet officials in Berlin", "The US envoys told Kyiv they would brief on talks held in China during meetings in Berlin.", "德國"],
     ["Netanyahu discusses the threat of war", "Israeli writer Etgar Keret joins us from Tel Aviv.", "以色列"],
     ["Global energy outlook released", "The forecast reflects the crisis from the Iran War.", "國際"],
@@ -478,7 +485,7 @@ describe("mapBulkInternationalNews", () => {
     }
   });
 
-  it("多國同時出現時以標題第一個明確國家為準", () => {
+  it("多國標題優先選標示事件地點的地名，否則取最早明確地名", () => {
     const [event] = mapBulkInternationalNews([{
       title: "Paris authorities announce action after travel from Germany",
       description: "Officials in Italy comment on the decision",
@@ -487,6 +494,14 @@ describe("mapBulkInternationalNews", () => {
       link: "https://example.test/location-order",
     }], { fetchedAt: FETCHED_AT });
     expect(event.region).toBe("法國");
+    const [eventInVenezuela] = mapBulkInternationalNews([{
+      title: "US and Venezuela sign deal during Hegseth visit in Caracas",
+      description: "Military cooperation was discussed.",
+      hint: "其他",
+      source: "Location Test Feed",
+      link: "https://example.test/location-venezuela",
+    }], { fetchedAt: FETCHED_AT });
+    expect(eventInVenezuela.region).toBe("委內瑞拉");
   });
 });
 

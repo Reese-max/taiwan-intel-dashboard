@@ -182,7 +182,7 @@ export function detectCountyEarliest(text, context = "", isTitle = true) {
           (place === "太平" && /^間/.test(after)) ||
           (place === "口湖" && /河$/.test(before)) ||
           (place === "三星" && /^傳媒/.test(after)) ||
-          (place === "泰山" && /^(?:前?總經理|總座|董事長|集團)/.test(after)) ||
+          (place === "泰山" && /^(?:企業|前?總經理|總座|董事長|集團)/.test(after)) ||
           (place === "將軍" && /(?:中東|神秘|詐騙)$/.test(before)) ||
           (place === "新營" && /重$/.test(before)) ||
           (place === "新興" && /^毒品/.test(after))) continue;
@@ -687,7 +687,7 @@ const INTERNATIONAL_CATEGORY_EVIDENCE = [
 ];
 const COUNTRY_LOCATIONS = [
   ["美國", 39.8, -98.6, /\b(?:United States|America|USA|US|California|Texas|Florida|Alaska|Hawaii|Arizona|Pennsylvania|Ohio|Colorado|Oregon|Washington|Rhode Island|Nebraska|West Virginia|Louisiana|Illinois|New York|New Jersey|North Carolina|South Carolina|North Dakota|South Dakota|Oklahoma|Tennessee|Utah|Vermont|Virginia|Wisconsin|Wyoming|Nevada|New Mexico|Minnesota|Montana|Idaho|Iowa|Kansas|Kentucky|Michigan|Mississippi|Arkansas|Alabama|Indiana|Missouri|Maryland|Delaware|Connecticut|Massachusetts)\b|\bU\.S\.A?(?:\.|(?=\W|$))|State of Georgia|(?:在|赴|返|自|於)美國|美國(?:境內|各地|全國|發生|當地|州|城市)|華盛頓特區|紐約|洛杉磯|芝加哥|波士頓|邁阿密|舊金山|西雅圖|亞特蘭大|\b(?:Washington, D\.?C\.?|New York|Los Angeles|Chicago|Boston|Miami|San Francisco|Seattle|Atlanta|Philadelphia|Houston|Dallas|Austin|Phoenix|San Diego|Denver|Portland|Detroit)\b/i],
-  ["中國", 35.86, 104.19, /中國(?!航空|國際航空)|中國大陸|\bChina\b|北京|上海|深圳|廣州|成都|武漢|\b(?:Beijing|Shanghai|Shenzhen|Guangzhou|Chengdu|Wuhan)\b/i],
+  ["中國", 35.86, 104.19, /中國(?!航空|國際航空)|中國大陸|(?<!South )\bChina\b|北京|上海|深圳|廣州|成都|武漢|\b(?:Beijing|Shanghai|Shenzhen|Guangzhou|Chengdu|Wuhan)\b/i],
   ["日本", 36.2, 138.25, /日本|東京|大阪|京都|廣島|\b(?:Japan|Tokyo|Osaka|Kyoto|Hiroshima)\b/i],
   ["英國", 55.38, -3.4, /英國|倫敦|曼徹斯特|\b(?:United Kingdom|Britain|UK|London|Manchester|Cardiff|Edinburgh|Bristol)\b/i],
   ["法國", 46.2, 2.2, /法國|巴黎|里昂|\b(?:France|Paris|Lyon)\b/i],
@@ -698,6 +698,10 @@ const COUNTRY_LOCATIONS = [
   ["加拿大", 56.13, -106.35, /加拿大|渥太華|多倫多|溫哥華|\b(?:Canada|Ottawa|Toronto|Vancouver)\b/i],
   ["澳洲", -25.27, 133.77, /澳洲|澳大利亞|坎培拉|雪梨|悉尼|墨爾本|\b(?:Australia|Canberra|Sydney|Melbourne|Perth)\b/i],
   ["以色列", 31, 34.85, /以色列|特拉維夫|耶路撒冷|\b(?:Israel|Tel Aviv|Jerusalem)\b/i],
+  ["巴勒斯坦", 31.95, 35.23, /巴勒斯坦|加薩|加沙|約旦河西岸|\b(?:Palestine|Gaza|West Bank)\b/i],
+  ["敘利亞", 34.8, 38.99, /敘利亞|大馬士革|\b(?:Syria|Damascus)\b/i],
+  ["委內瑞拉", 6.42, -66.59, /委內瑞拉|卡拉卡斯|\b(?:Venezuela|Caracas)\b/i],
+  ["比利時", 50.5, 4.47, /比利時|布魯塞爾|\b(?:Belgium|Brussels|Antwerp)\b/i],
   ["伊朗", 32.42, 53.68, /伊朗|德黑蘭|\b(?:Iran|Tehran)\b/i],
   ["伊拉克", 33.22, 43.68, /伊拉克|巴格達|\b(?:Iraq|Baghdad)\b/i],
   ["科威特", 29.31, 47.48, /科威特|科威特市|\b(?:Kuwait|Kuwait City)\b/i],
@@ -760,7 +764,7 @@ const COUNTRY_LOCATIONS = [
 ];
 
 function countryLocationIn(text, { uniqueOnly = false } = {}) {
-  const source = String(text || "").replace(/China Airlines|China Eastern|China Southern|Air India|Air China/gi, " ");
+  const source = String(text || "").replace(/China Airlines|China Eastern|China Southern|China Merchants|Air India|Air China/gi, " ");
   const matches = [];
   for (const [country, lat, lng, re] of COUNTRY_LOCATIONS) {
     const global = new RegExp(re.source, `${re.flags}g`);
@@ -778,7 +782,15 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
     }
   }
   matches.sort((a, b) => a.index - b.index || b.length - a.length);
+  const explicit = matches.filter((match) => {
+    const before = source.slice(Math.max(0, match.index - 24), match.index);
+    return /\b(?:in|at|near|within)\s+(?:the\s+)?(?:central|southern|northern|eastern|western|northwestern|southwestern)\s+$/i.test(before) ||
+      /\b(?:in|at|near|within)\s+(?:the\s+)?$/i.test(before) ||
+      /(?:在|赴|回|於|位於|來自|前往|抵達|發生於)\s*$/.test(before);
+  });
+  if (explicit.length) return { region: explicit[0].country, lat: explicit[0].lat, lng: explicit[0].lng };
   if (uniqueOnly && new Set(matches.map((match) => match.country)).size > 1) return null;
+  if (/\bSydney Marathon\b/i.test(source)) return null;
   const match = matches[0];
   return match ? { region: match.country, lat: match.lat, lng: match.lng } : null;
 }
