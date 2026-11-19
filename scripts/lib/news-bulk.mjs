@@ -277,7 +277,12 @@ export function refreshDomesticNewsCategory(event, item) {
   // 舊 rule 不含原始 hint，不能把錯誤的 category 當回退值；hint 來源則可還原。
   const hint = item?.hint ?? (basis.startsWith("hint:") ? basis.slice(5) : undefined);
   const result = categoryFromItem(item?.title ?? event.title, hint);
-  return { ...event, category: result.category, categoryBasis: result.basis };
+  const refreshed = { ...event, category: result.category, categoryBasis: result.basis };
+  // 地點規則更新後，沿用的「全國」舊新聞也重判一次；已有縣市者不動，避免來回跳動。
+  if (event.region !== "全國" || event.lat != null) return refreshed;
+  const loc = countyFromItem({ title: item?.title ?? event.title, description: item?.description ?? event.summary });
+  if (loc.lat == null) return refreshed;
+  return { ...refreshed, region: loc.region, lat: loc.lat, lng: loc.lng, locationPrecision: "city", locationNote: "依新聞地區推論，非精準事發地址" };
 }
 
 const HIGH = /命案|兇殺|凶殺|殺人|殺害|砍人|砍殺|砍傷|持刀|刺死|刺傷|分屍|棄屍|槍擊|開槍|中彈|性侵|擄人|勒贖|劫|致死|身亡|死亡|喪命|溺斃|縱火|爆炸|氣爆|滅門/;
@@ -873,6 +878,23 @@ function countryLocationFromItem(title, summary) {
   if (titleLocation?.explicit) return titleLocation;
   const summaryLocation = countryLocationIn(summary, { uniqueOnly: true });
   return summaryLocation?.explicit ? summaryLocation : titleLocation || summaryLocation;
+}
+
+// 沿用的國際輕量事件依現行規則重算分類、風險與地點（規則更新後不必等舊事件過期）。
+export function refreshBulkInternationalEvent(event) {
+  if (event?.scope !== "international" || event?.source?.normalizationMethod !== "bulk" ||
+      event?.source?.datasetId !== "international-news" || event.curated) return event;
+  const hint = event.categoryBasis?.startsWith("hint:") ? event.categoryBasis.slice(5) : undefined;
+  const [mapped] = mapBulkInternationalNews([{
+    title: event.title, description: event.summary, link: event.source?.recordRef,
+    source: event.source?.feedLabel || event.source?.name, hint, pubDate: event.timestamp,
+  }]);
+  if (!mapped) return event;
+  // 舊事件的風險與地點是用完整原文判的，這裡只剩 200 字摘要：風險不重算；摘要找不到地點時保留舊地點，避免每輪來回跳動。
+  const location = mapped.lat != null
+    ? { region: mapped.region, lat: mapped.lat, lng: mapped.lng, locationPrecision: mapped.locationPrecision, locationNote: mapped.locationNote }
+    : {};
+  return { ...event, category: mapped.category, categoryBasis: mapped.categoryBasis, ...location };
 }
 
 // 國際 RSS 的長尾事件走確定性輕量收錄；LLM 只精修較小候選池。

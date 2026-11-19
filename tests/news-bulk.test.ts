@@ -7,6 +7,7 @@ import {
   cleanTitle,
   categoryFromItem,
   refreshDomesticNewsCategory,
+  refreshBulkInternationalEvent,
   isForeignNonTaiwan,
   isNonEventNoise,
   isPoliceRelevant,
@@ -575,6 +576,46 @@ describe("refreshDomesticNewsCategory", () => {
     const event = { id: "twnews-x", title: "老婦外出迷路 警助返家", category: "協尋", categoryBasis: "rule:協尋",
       aiTopic: "協尋", scope: "domestic", source: { datasetId: "tw-news" } };
     expect(refreshDomesticNewsCategory(event)).toBe(event);
+  });
+
+  it("沿用的「全國」舊新聞依新地點規則補上縣市，已有縣市與人工審核者不動", () => {
+    const base = { scope: "domestic", categoryBasis: "hint:治安", category: "治安", source: { datasetId: "tw-news" } };
+    const national = { ...base, id: "a", title: "快訊／新店23歲男4樓住處墜落 當場無呼吸心跳", region: "全國", lat: null, lng: null };
+    expect(refreshDomesticNewsCategory(national)).toMatchObject({ region: "新北市", locationPrecision: "city" });
+    const located = { ...base, id: "b", title: "新店男子墜樓", region: "臺北市", lat: 25.03, lng: 121.56 };
+    expect(refreshDomesticNewsCategory(located)).toMatchObject({ region: "臺北市", lat: 25.03 });
+    const curated = { ...national, id: "c", curated: { id: "r1" } };
+    expect(refreshDomesticNewsCategory(curated)).toBe(curated);
+  });
+});
+
+describe("refreshBulkInternationalEvent", () => {
+  const bulk = (over: Record<string, unknown>) => ({
+    id: "intl-x", scope: "international", timestamp: "2026-11-18T00:00:00.000Z", region: "國際",
+    locationPrecision: "unknown", categoryBasis: "hint:災害", category: "災害", riskLevel: "medium",
+    source: { datasetId: "international-news", normalizationMethod: "bulk", name: "Scienmag", feedLabel: "Scienmag", recordRef: "https://example.com/x" },
+    ...over,
+  });
+
+  it("沿用的輕量事件依現行規則重算分類與國家地點", () => {
+    const out = refreshBulkInternationalEvent(bulk({
+      title: "Study Profiles Pediatric Intensive Care Admissions from Karachi Emergency Department",
+      summary: "A retrospective study of pediatric ICU admissions in Karachi, Pakistan.",
+    }));
+    expect(out.category).not.toBe("災害");
+    expect(out).toMatchObject({ region: "巴基斯坦", locationPrecision: "country" });
+    expect(out.lat).toEqual(expect.any(Number));
+  });
+
+  it("風險不重算、摘要找不到地點時保留舊地點；LLM 與非輕量事件不動", () => {
+    for (const riskLevel of ["critical", "medium"]) {
+      const kept = bulk({ title: "Study of hospital admissions", summary: "", riskLevel });
+      expect(refreshBulkInternationalEvent(kept).riskLevel).toBe(riskLevel);
+    }
+    const located = bulk({ title: "New developments reported", summary: "No named location.", region: "巴基斯坦", lat: 30.37, lng: 69.35, locationPrecision: "country" });
+    expect(refreshBulkInternationalEvent(located)).toMatchObject({ region: "巴基斯坦", lat: 30.37, lng: 69.35, locationPrecision: "country" });
+    const llm = bulk({ title: "Karachi study", source: { datasetId: "international-news", normalizationMethod: "llm" } });
+    expect(refreshBulkInternationalEvent(llm)).toBe(llm);
   });
 });
 
