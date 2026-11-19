@@ -42,7 +42,8 @@ describe("twnews carry-over retention", () => {
       ...news(basis, timestamp), scope: "domestic", title: `騎士車內藏安非他命${basis}遭逮起訴`,
       category: "交通", categoryBasis: basis,
     }));
-    const curated = { ...oldNews[0], ...news("curated", timestamp), title: `${oldNews[0].title} curated`, curated: { id: "review-1" } };
+    // 人工審核事件與一般事件同標題時仍各自保留。
+    const curated = { ...oldNews[0], ...news("curated", timestamp), title: oldNews[0].title, curated: { id: "review-1" } };
     const result = buildTwNewsEvents({
       oldNews: [...oldNews, curated],
       twnews: "ok" in twnewsStatus && twnewsStatus.ok ? [oldNews[0]] : [],

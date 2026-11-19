@@ -152,7 +152,8 @@ export function buildTwNewsEvents({
   llmDropKeys,
   now = Date.now(),
 } = {}) {
-  const newsDedupKey = (e) => e.source?.datasetId === "tw-news" && e.scope !== "international" && e.title
+  // 人工審核過的事件不參與同標題合併，避免被同標題轉載蓋掉審核結果。
+  const newsDedupKey = (e) => e.source?.datasetId === "tw-news" && e.scope !== "international" && e.title && !e.curated
     ? "t:" + dedupeTitleKey(e.title)
     : e.source?.recordRef || e.id || "";
   const keep = (event) => {
