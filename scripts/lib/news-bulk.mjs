@@ -4,13 +4,13 @@
 import { COUNTY_CENTER, countyCoordFromAddr } from "./coords.mjs";
 import { eventIdFor } from "./event-id.mjs";
 import { deriveNewsProvenance } from "./fetch-rss.mjs";
-import { dedupeTitleKey, titleKey } from "./title-key.mjs";
+import { cleanNewsTitleTail, dedupeTitleKey, titleKey } from "./title-key.mjs";
 import { INTERNATIONAL_FEEDS } from "./international-feeds.mjs";
 export { titleKey } from "./title-key.mjs";
 export { dedupeTitleKey } from "./title-key.mjs";
 
 export function cleanTitle(title) {
-  return String(title || "").replace(/\s*[-|｜–—]\s*[^-|｜–—]{1,20}$/, "").trim() || String(title || "").trim();
+  return cleanNewsTitleTail(title) || String(title || "").trim();
 }
 
 // 縣市短名規則；實際命中依文字位置排序。
@@ -74,14 +74,14 @@ const TOWNSHIP_COUNTY = new Map(Object.entries({
   來義: "屏東縣", 牡丹: "屏東縣", 瑪家: "屏東縣", 泰武: "屏東縣", 三地門: "屏東縣", 霧臺: "屏東縣", 春日: "屏東縣", 獅子: "屏東縣", 萬巒: "屏東縣", 竹田: "屏東縣", 高樹: "屏東縣", 枋山: "屏東縣", 新埤: "屏東縣",
   南澳: "宜蘭縣", 卓溪: "花蓮縣", 萬榮: "花蓮縣", 海端: "臺東縣", 綠島: "臺東縣", 蘭嶼: "臺東縣",
   達仁: "臺東縣", 金峰: "臺東縣", 延平: "臺東縣",
-  中科: "臺中市", 南科: "臺南市", 竹科: "新竹市", 烏山頭水庫: "臺南市",
+  中科: "臺中市", 南科: "臺南市", 竹科: "新竹市", 烏山頭水庫: "臺南市", 北車: "臺北市",
   北檢: "臺北市", 中檢: "臺中市", 雄檢: "高雄市", 橋檢: "高雄市", 彰檢: "彰化縣",
   內壢站: "桃園市", 新左營站: "高雄市", 南監: "臺南市", 屏監: "屏東縣", 南警三分局: "臺南市",
   安中所: "臺南市", 曾文溪: "臺南市",
   漢寶段: "彰化縣",
 }));
 const AMBIGUOUS_TOWNS = new Set(["中山", "中正", "信義", "大安", "東區", "北區", "西區", "南區", "大同", "中西", "東山"]);
-const TOWNSHIP_EVENT_RE = /墜|落|遇害|遇襲|命案|殺人|兇殺|凶殺|傷害|霸凌|偷拍|砍|刺|搶|中刀|火警|火災|倒塌|車禍|追撞|連環撞|自撞|相撞|事故|工安|職災|偵結|起訴|查獲|逮|判刑|判決|一審|羈押|聲押|移送|約談|衝撞|通緝|涉貪|賄選|車手|毒駕|毒品|詐騙|宣導|演練|走失|迷途|失智|命危|送醫|受困|爆炸|淹水|土石流|坍方|警|檢|分局|派出所|案件|涉案|遭竊|落網|拘提|搜索|水庫|園區|車站|國小|國中/;
+const TOWNSHIP_EVENT_RE = /墜|落|遇害|遇襲|命案|殺人|兇殺|凶殺|傷害|霸凌|偷拍|砍|刺|搶|中刀|火警|火災|倒塌|車禍|追撞|連環撞|自撞|相撞|事故|工安|職災|偵結|起訴|查獲|逮|判刑|判決|一審|羈押|聲押|移送|約談|衝撞|通緝|涉貪|賄選|車手|毒駕|毒品|詐騙|宣導|演練|走失|迷途|失智|命危|送醫|受困|爆炸|淹水|土石流|坍方|警|檢|分局|派出所|案件|涉案|遭竊|落網|拘提|搜索|水庫|園區|車站|國小|國中|全武行/;
 
 const COUNTY_DISAMBIGUATION = {
   新竹市: { county: "新竹縣", city: /新竹市|竹市/, cityPlace: /^新竹(?:東區|北區|香山|巨城|科學工業園區)/, towns: "竹北|竹東|新埔|關西|湖口|新豐|芎林|橫山|北埔|寶山|峨眉|尖石|五峰" },

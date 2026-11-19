@@ -34,4 +34,14 @@ describe("titleKey", () => {
     expect(dedupeTitleKey("CVE-2026-11111 vulnerability exposed")).not.toBe(dedupeTitleKey("CVE-2026-90436 vulnerability exposed"));
     expect(dedupeTitleKey("F-16 crash investigation")).not.toBe(dedupeTitleKey("F-35 crash investigation"));
   });
+
+  it("only strips recognized category/media tails and known leading labels", () => {
+    expect(dedupeTitleKey("即時｜花蓮外海規模5.8強震")).not.toBe(dedupeTitleKey("即時｜台積電法說會登場"));
+    expect(dedupeTitleKey("美–中貿易談判破局")).not.toBe(dedupeTitleKey("美–日安保會議登場"));
+    expect(dedupeTitleKey("F-16 - 空軍嘉義基地夜訓")).not.toBe(dedupeTitleKey("F-16 - 花蓮外海例行訓練"));
+    expect(dedupeTitleKey("快訊 - 台積電法說會登場")).toBe(dedupeTitleKey("台積電法說會登場"));
+    expect(dedupeTitleKey("標題|社會萬象|社會")).toBe(dedupeTitleKey("標題"));
+    expect(dedupeTitleKey("女星用藥過量陳屍Airbnb 命案現場- 股市爆料同學會"))
+      .toBe(dedupeTitleKey("女星用藥過量陳屍Airbnb 命案現場"));
+  });
 });
