@@ -375,6 +375,11 @@ describe("mapBulkInternationalNews", () => {
     ["Fibre Inflation models new energy materials", "其他", "Scienmag", "其他", "hint:其他"],
     ["Wildfire risk study models changing conditions", "其他", "Phys.org", "其他", "hint:其他"],
     ["Police investigate fatal explosion after shooting", "治安", "BBC World", "災害", "evidence:災害"],
+    ["Microsoft’s New Windows 11 Security Check Could Block Apps From Running On Unprotected PCs, Adobe And Blizzard On Board", "資安", "Wccftech", "資安", "hint:資安"],
+    ["Acoustic monitoring reveals previously ‘hidden’ underwater landslide processes", "金融", "Ground Engineering", "金融", "hint:金融"],
+    ["Microsoft security check blocks apps, Adobe and Blizzard on board", "資安", "Wccftech", "資安", "hint:資安"],
+    ["Acoustic monitoring reveals previously hidden underwater landslide processes", "金融", "Ground Engineering", "金融", "hint:金融"],
+    ["Landslide kills dozens in mountain villages", "其他", "Scienmag", "災害", "evidence:災害"],
   ])("國際分類以標題事件證據優先：%s", (title, hint, source, category, categoryBasis) => {
     const [event] = mapBulkInternationalNews([{ title, hint, source, link: `https://example.test/${encodeURIComponent(title)}` }], { fetchedAt: FETCHED_AT });
     expect(event).toMatchObject({ category, categoryBasis });
@@ -432,6 +437,19 @@ describe("mapBulkInternationalNews", () => {
     ["Nigeria and Niger sign a border agreement", "", "奈及利亞"],
     ["美國科技公司公布年度營收", "", "國際"],
     ["美國發生重大洪災", "", "美國"],
+    ["U.S., Russia and China discuss a regional summit", "", "美國"],
+    ["America and China are trying to alter their economic bargain", "", "美國"],
+    ["MAF EAP – Holidays: the BAH HUMBUG that tries to sneak in", "An event many of us can get behind.", "國際"],
+    ["US$71.8 billion investment announced", "", "國際"],
+    ["Kuwait says it repelled an Iranian attack after US strikes island", "", "科威特"],
+    ["Iraq pumps oil to Turkey again after 12 years", "", "伊拉克"],
+    ["State of Georgia storm damage reported", "", "美國"],
+    ["Guinea announces new election results", "", "幾內亞"],
+    ["China Eastern announces new service", "", "國際"],
+    ["US envoys meet officials in Berlin", "The US envoys told Kyiv they would brief on talks held in China.", "德國"],
+    ["Netanyahu discusses the threat of war", "Israeli writer Etgar Keret joins us from Tel Aviv.", "以色列"],
+    ["Global energy outlook released", "The forecast reflects the crisis from the Iran War.", "國際"],
+    ["Family business succession discussed", "The London Business School professor reviews global companies.", "國際"],
     ["Officials discuss the latest developments", "Reports from Japan describe the event", "日本"],
   ])("國際長尾以國家／城市推定國家層級位置：%s", (title, description, region) => {
     const [event] = mapBulkInternationalNews([{

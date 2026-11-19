@@ -675,7 +675,7 @@ const INTERNATIONAL_HINT_TO_CATEGORY = {
   金融: "金融",
 };
 const INTERNATIONAL_FEED_BY_LABEL = new Map(INTERNATIONAL_FEEDS.map((feed) => [feed.label, feed]));
-const SCIENCE_STUDY_RE = /\b(?:study|research|trial|simulation|model|analysis|review|experiment|findings|predict(?:ion|s)?|protocol|webinar|risk)\b|研究|論文|試驗|實驗|模擬|分析|回顧|研討會/i;
+const SCIENCE_STUDY_RE = /\b(?:study|research|trial|simulation|model|analysis|review|experiment|findings|predict(?:ion|s)?|forecast(?:s|ing)?|protocol|webinar|risk|monitoring|reveals?|hazards?|habitats?|days surged)\b|研究|論文|試驗|實驗|模擬|分析|回顧|研討會/i;
 const CLEAR_HEALTH_EVENT_RE = /\b(?:kills?|injures?|spreads?|hits?|strikes?|destroys?|evacuates?|displaces?|death toll|rescue|missing|without power|worsens)\b|造成死傷|蔓延|襲擊|摧毀|撤離|罹難|死亡/i;
 const INTERNATIONAL_CATEGORY_EVIDENCE = [
   [/\b(?:fraud|scam|ponzi|money laundering|fake investment)\b|詐騙|詐欺|洗錢|假投資/i, "反詐"],
@@ -686,7 +686,7 @@ const INTERNATIONAL_CATEGORY_EVIDENCE = [
   [/\b(?:murder|homicide|shooting|stabbing|kidnapping|robbery|assault|arrested for|charged with|crime)\b|命案|殺人|槍擊|刺傷|綁架|逮捕|搶劫|竊盜|襲擊|犯罪/i, "治安"],
 ];
 const COUNTRY_LOCATIONS = [
-  ["美國", 39.8, -98.6, /\b(?:United States|USA|U\.S\.A?\.?|US|California|Texas|Florida|Alaska|Hawaii|Arizona|Pennsylvania|Ohio|Colorado|Oregon|Washington|Rhode Island|Nebraska|West Virginia|Louisiana|Illinois|New York|New Jersey|North Carolina|South Carolina|North Dakota|South Dakota|Oklahoma|Tennessee|Utah|Vermont|Virginia|Wisconsin|Wyoming|Nevada|New Mexico|Minnesota|Montana|Idaho|Iowa|Kansas|Kentucky|Michigan|Mississippi|Arkansas|Alabama|Indiana|Missouri|Maryland|Delaware|Connecticut|Massachusetts)\b|(?:在|赴|返|自)美國|美國(?:境內|各地|全國|發生|當地|州|城市)|華盛頓特區|紐約|洛杉磯|芝加哥|波士頓|邁阿密|舊金山|西雅圖|亞特蘭大|\b(?:Washington, D\.?C\.?|New York|Los Angeles|Chicago|Boston|Miami|San Francisco|Seattle|Atlanta|Philadelphia|Houston|Dallas|Austin|Phoenix|San Diego|Denver|Portland|Detroit)\b/i],
+  ["美國", 39.8, -98.6, /\b(?:United States|America|USA|US|California|Texas|Florida|Alaska|Hawaii|Arizona|Pennsylvania|Ohio|Colorado|Oregon|Washington|Rhode Island|Nebraska|West Virginia|Louisiana|Illinois|New York|New Jersey|North Carolina|South Carolina|North Dakota|South Dakota|Oklahoma|Tennessee|Utah|Vermont|Virginia|Wisconsin|Wyoming|Nevada|New Mexico|Minnesota|Montana|Idaho|Iowa|Kansas|Kentucky|Michigan|Mississippi|Arkansas|Alabama|Indiana|Missouri|Maryland|Delaware|Connecticut|Massachusetts)\b|\bU\.S\.A?(?:\.|(?=\W|$))|State of Georgia|(?:在|赴|返|自|於)美國|美國(?:境內|各地|全國|發生|當地|州|城市)|華盛頓特區|紐約|洛杉磯|芝加哥|波士頓|邁阿密|舊金山|西雅圖|亞特蘭大|\b(?:Washington, D\.?C\.?|New York|Los Angeles|Chicago|Boston|Miami|San Francisco|Seattle|Atlanta|Philadelphia|Houston|Dallas|Austin|Phoenix|San Diego|Denver|Portland|Detroit)\b/i],
   ["中國", 35.86, 104.19, /中國(?!航空|國際航空)|中國大陸|\bChina\b|北京|上海|深圳|廣州|成都|武漢|\b(?:Beijing|Shanghai|Shenzhen|Guangzhou|Chengdu|Wuhan)\b/i],
   ["日本", 36.2, 138.25, /日本|東京|大阪|京都|廣島|\b(?:Japan|Tokyo|Osaka|Kyoto|Hiroshima)\b/i],
   ["英國", 55.38, -3.4, /英國|倫敦|曼徹斯特|\b(?:United Kingdom|Britain|UK|London|Manchester|Cardiff|Edinburgh|Bristol)\b/i],
@@ -699,6 +699,8 @@ const COUNTRY_LOCATIONS = [
   ["澳洲", -25.27, 133.77, /澳洲|澳大利亞|坎培拉|雪梨|悉尼|墨爾本|\b(?:Australia|Canberra|Sydney|Melbourne|Perth)\b/i],
   ["以色列", 31, 34.85, /以色列|特拉維夫|耶路撒冷|\b(?:Israel|Tel Aviv|Jerusalem)\b/i],
   ["伊朗", 32.42, 53.68, /伊朗|德黑蘭|\b(?:Iran|Tehran)\b/i],
+  ["伊拉克", 33.22, 43.68, /伊拉克|巴格達|\b(?:Iraq|Baghdad)\b/i],
+  ["科威特", 29.31, 47.48, /科威特|科威特市|\b(?:Kuwait|Kuwait City)\b/i],
   ["巴基斯坦", 30.37, 69.35, /巴基斯坦|伊斯蘭馬巴德|卡拉奇|\b(?:Pakistan|Islamabad|Karachi)\b/i],
   ["土耳其", 38.96, 35.24, /土耳其|安卡拉|伊斯坦堡|\b(?:Turkey|Ankara|Istanbul)\b/i],
   ["巴西", -14.23, -51.92, /巴西|巴西利亞|里約熱內盧|聖保羅|\b(?:Brazil|Bras[ií]lia|Rio de Janeiro|S[aã]o Paulo)\b/i],
@@ -725,7 +727,7 @@ const COUNTRY_LOCATIONS = [
   ["幾內亞比索", 11.8, -15.18, /幾內亞比索|\bGuinea-Bissau\b/i],
   ["巴布亞紐幾內亞", -6.31, 143.95, /巴布亞紐幾內亞|\bPapua New Guinea\b/i],
   ["赤道幾內亞", 1.65, 10.26, /赤道幾內亞|\bEquatorial Guinea\b/i],
-  ["幾內亞", 9.94, -9.7, /幾內亞(?!比索|共和國|灣)|幾內亞共和國|科納克里|\b(?:Republic of Guinea|Conakry)\b/i],
+  ["幾內亞", 9.94, -9.7, /幾內亞(?!比索|共和國|灣)|幾內亞共和國|科納克里|\b(?:Guinea|Republic of Guinea|Conakry)\b/i],
   ["克羅埃西亞", 45.1, 15.2, /克羅埃西亞|札格瑞布|\b(?:Croatia|Zagreb|Vukovar)\b/i],
   ["奧地利", 47.52, 14.55, /奧地利|維也納|\b(?:Austria|Vienna)\b/i],
   ["泰國", 15.87, 100.99, /泰國|曼谷|清邁|\b(?:Thailand|Bangkok|Chiang Mai)\b/i],
@@ -758,15 +760,20 @@ const COUNTRY_LOCATIONS = [
 ];
 
 function countryLocationIn(text) {
-  const source = String(text || "").replace(/China Airlines|Air India/gi, " ");
+  const source = String(text || "").replace(/China Airlines|China Eastern|China Southern|Air India|Air China/gi, " ");
   const matches = [];
   for (const [country, lat, lng, re] of COUNTRY_LOCATIONS) {
-    re.lastIndex = 0;
-    const match = re.exec(source);
-    if (!match) continue;
-    if (country === "土耳其" && /\b(?:roast(?:ed)?|sandwich|dinner|recipe|turkey breast|turkey meat)\b/i.test(source)) continue;
-    if (country === "喬治亞" && /\b(?:Georgia,?\s*(?:USA|US)|state of Georgia|Atlanta)\b/i.test(source)) continue;
-    matches.push({ country, lat, lng, index: match.index, length: match[0].length });
+    const global = new RegExp(re.source, `${re.flags}g`);
+    for (const match of source.matchAll(global)) {
+      if (country === "美國" && match[0] === "us") continue;
+      if (country === "美國" && /^\s*(?:envoys?|officials?|firms?|companies|forces?|military|troops|strikes?|strike|aid)\b/i.test(source.slice(match.index + match[0].length))) continue;
+      if (country === "美國" && /^\s*\$/.test(source.slice(match.index + match[0].length))) continue;
+      if (country === "土耳其" && /\b(?:roast(?:ed)?|sandwich|dinner|recipe|turkey breast|turkey meat)\b/i.test(source)) continue;
+      if (country === "喬治亞" && /\b(?:Georgia,?\s*(?:USA|US)|state of Georgia|Atlanta)\b/i.test(source)) continue;
+      if (country === "英國" && /^\s+Business School\b/i.test(source.slice(match.index + match[0].length))) continue;
+      if (country === "伊朗" && /\bfrom the\s*$/i.test(source.slice(Math.max(0, match.index - 12), match.index)) && /^\s+War\b/i.test(source.slice(match.index + match[0].length))) continue;
+      matches.push({ country, lat, lng, index: match.index, length: match[0].length });
+    }
   }
   matches.sort((a, b) => a.index - b.index || b.length - a.length);
   const match = matches[0];
@@ -799,9 +806,14 @@ export function mapBulkInternationalNews(items, { fetchedAt, excludeIds = new Se
     const hint = feed?.hint || it.hint;
     const hintedCategory = INTERNATIONAL_HINT_TO_CATEGORY[hint];
     const evidence = title;
-    const rawEvidenceCategory = INTERNATIONAL_CATEGORY_EVIDENCE.find(([re]) => re.test(evidence))?.[1];
-    const scienceStudy = feed?.topic === "health" && !CLEAR_HEALTH_EVENT_RE.test(title) &&
-      (SCIENCE_STUDY_RE.test(title) || rawEvidenceCategory === "災害");
+    const disasterEvidence = evidence.replace(
+      /\bBlizzard\b/g,
+      /\b(?:Microsoft|Adobe|Windows|PC|game|apps?)\b/i.test(evidence) ? " " : "Blizzard",
+    );
+    const rawEvidenceCategory = INTERNATIONAL_CATEGORY_EVIDENCE.find(([re, category]) =>
+      re.test(category === "災害" ? disasterEvidence : evidence))?.[1];
+    const scienceStudy = rawEvidenceCategory === "災害" && SCIENCE_STUDY_RE.test(title) &&
+      !CLEAR_HEALTH_EVENT_RE.test(title);
     const evidenceCategory = scienceStudy ? undefined : rawEvidenceCategory;
     const trustedDisasterFeed = feed?.topic === "disaster" && hintedCategory === "災害";
     const category = scienceStudy ? hintedCategory || "其他"
