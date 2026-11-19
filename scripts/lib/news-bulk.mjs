@@ -721,7 +721,7 @@ const COUNTRY_LOCATIONS = [
   ["智利", -35.67, -71.54, /智利|聖地牙哥|\b(?:Chile|Santiago)\b/i],
   ["奈及利亞", 9.08, 8.67, /奈及利亞|尼日利亞|阿布加|拉各斯|\b(?:Nigeria|Abuja|Lagos)\b/i],
   ["尼日", 17.6, 8.08, /尼日(?:共和國)?|尼阿美|\b(?:Niger|Niamey)\b/i],
-  ["約旦", 30.59, 36.24, /約旦|安曼|\b(?:Jordanian|in Jordan|from Jordan|Jordan's government|Jordan country|Amman)\b/i],
+  ["約旦", 30.59, 36.24, /約旦|安曼|\b(?:in Jordan|from Jordan|Jordan's government|Jordan country|Amman)\b/i],
   ["查德", 15.45, 18.73, /查德|恩加美納|\b(?:Chadian|in Chad|from Chad|Chad government|N'Djamena)\b/i],
   ["喬治亞", 42.32, 43.35, /喬治亞國|喬治亞共和國|第比利斯|巴統|\b(?:Georgia,? (?:the )?country|Tbilisi|Batumi)\b/i],
   ["幾內亞比索", 11.8, -15.18, /幾內亞比索|\bGuinea-Bissau\b/i],
@@ -759,7 +759,7 @@ const COUNTRY_LOCATIONS = [
   ["緬甸", 21.91, 95.96, /緬甸|仰光|奈比多|\b(?:Myanmar|Yangon|Naypyidaw)\b/i],
 ];
 
-function countryLocationIn(text) {
+function countryLocationIn(text, { uniqueOnly = false } = {}) {
   const source = String(text || "").replace(/China Airlines|China Eastern|China Southern|Air India|Air China/gi, " ");
   const matches = [];
   for (const [country, lat, lng, re] of COUNTRY_LOCATIONS) {
@@ -772,16 +772,19 @@ function countryLocationIn(text) {
       if (country === "喬治亞" && /\b(?:Georgia,?\s*(?:USA|US)|state of Georgia|Atlanta)\b/i.test(source)) continue;
       if (country === "英國" && /^\s+Business School\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "伊朗" && /\bfrom the\s*$/i.test(source.slice(Math.max(0, match.index - 12), match.index)) && /^\s+War\b/i.test(source.slice(match.index + match[0].length))) continue;
+      if (country === "烏克蘭" && /^\s+over\b/i.test(source.slice(match.index + match[0].length))) continue;
+      if (country === "烏克蘭" && /\bfuture of\s*$/i.test(source.slice(Math.max(0, match.index - 14), match.index))) continue;
       matches.push({ country, lat, lng, index: match.index, length: match[0].length });
     }
   }
   matches.sort((a, b) => a.index - b.index || b.length - a.length);
+  if (uniqueOnly && new Set(matches.map((match) => match.country)).size > 1) return null;
   const match = matches[0];
   return match ? { region: match.country, lat: match.lat, lng: match.lng } : null;
 }
 
 function countryLocationFromItem(title, summary) {
-  return countryLocationIn(title) || countryLocationIn(summary);
+  return countryLocationIn(title) || countryLocationIn(summary, { uniqueOnly: true });
 }
 
 // 國際 RSS 的長尾事件走確定性輕量收錄；LLM 只精修較小候選池。
