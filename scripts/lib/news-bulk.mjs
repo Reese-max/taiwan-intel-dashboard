@@ -809,7 +809,8 @@ export function mapBulkInternationalNews(items, { fetchedAt, excludeIds = new Se
     const hint = feed?.hint || it.hint;
     const hintedCategory = INTERNATIONAL_HINT_TO_CATEGORY[hint];
     const evidence = title;
-    const disasterEvidence = evidence.replace(
+    const productFilteredEvidence = evidence.replace(/\bFire TV(?: Stick)?\b/gi, " ");
+    const disasterEvidence = productFilteredEvidence.replace(
       /\bBlizzard\b/g,
       /\b(?:Microsoft|Adobe|Windows|PC|game|apps?)\b/i.test(evidence) ? " " : "Blizzard",
     );
