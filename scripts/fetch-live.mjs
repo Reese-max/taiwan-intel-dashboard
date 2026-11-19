@@ -43,6 +43,7 @@ import {
   mapBulkInternationalNews,
   mapBulkNews,
   refreshDomesticNewsCategory,
+  refreshBulkInternationalEvent,
   titleKey as bulkTitleKey,
   dedupeTitleKey,
 } from "./lib/news-bulk.mjs";
@@ -826,7 +827,7 @@ export async function run() {
   // 累積式滾動視窗：成功時合併本輪 + 舊快照（依 id 去重、保留近 INTL_RETENTION_DAYS 天、
   // 分主題輪詢挑選至 INTL_ACCUM_CAP），取代「每輪只留當輪 ≤maxEvents」，讓國際數量穩定更多、主題分布更廣。
   let intlEvents = intlOk
-    ? accumulateInternational(freshIntlEvents, oldIntl, {
+    ? accumulateInternational(freshIntlEvents, oldIntl.map(refreshBulkInternationalEvent), {
         retentionDays: Number(process.env.INTL_RETENTION_DAYS) || 5,
         // 約與台灣新聞快照同級；可由 CI 以 INTL_ACCUM_CAP 覆蓋。
         cap: intlAccumCap,
