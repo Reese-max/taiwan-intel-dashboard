@@ -1,4 +1,4 @@
 {
-  "sha": "4ac074ead65fcfce4f67845451859a688018a792",
-  "note": "Follow-up on 2026-11-19. main 4ac074e = #142: the domestic MiniMax review runs one batch at a time and waits 30 s / 60 s on HTTP 429 within its 4-minute budget (production run 44462004943 had all 5 batches rate-limited right after international normalization). Includes previously approved 2b67150 (#140). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
+  "sha": "0d9da93ef01a75c08636d70803aa83b9997366b0",
+  "note": "Follow-up on 2026-11-19. main 0d9da93 = #144: the domestic MiniMax review asks the second (reversed) vote only when the first answer wants to drop something, and reports a calls count. Includes previously approved 4ac074e (#142). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
 }
