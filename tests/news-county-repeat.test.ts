@@ -23,6 +23,25 @@ describe("A：重複短名與無括號署名", () => {
   });
 });
 
+describe("鄉鎮與地標推定縣市", () => {
+  it.each([
+    ["新店23歲男4樓住處墜落", "新北市"],
+    ["貢寮獨居婦遇害", "新北市"],
+    ["永和秀朗國小大樹倒塌", "新北市"],
+    ["中科園區工安意外", "臺中市"],
+    ["中檢偵結起訴詐欺案", "臺中市"],
+    ["烏山頭水庫附近發生事故", "臺南市"],
+  ])("%s → %s", (title, region) => expect(detectCounty(title).region).toBe(region));
+
+  it.each(["中山區發生車禍", "中正區發生車禍", "信義區發生車禍", "大安區發生車禍", "東區發生車禍"])(
+    "無縣市脈絡的撞名行政區不推定：%s", (title) => expect(detectCounty(title).region).toBe("全國"),
+  );
+  it("道路名不當作鄉鎮，外國地名不會對應台灣縣市", () => {
+    expect(detectCounty("中山路發生車禍").region).toBe("全國");
+    expect(detectCounty("Turkey earthquake near Jordan").region).toBe("全國");
+  });
+});
+
 describe("R1–R3：事發地優先與署名邊界", () => {
   it.each([
     "嘉義市西區今日凌晨發生住宅火警，嘉義縣消防局亦派車跨區支援。",
