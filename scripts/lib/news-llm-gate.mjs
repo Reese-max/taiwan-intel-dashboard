@@ -1,10 +1,12 @@
 // 國內新聞 LLM 複核：規則判為相關、但標題沒有明確案件字眼的新聞，交給 LLM 判斷是否真為事件。
 // 失敗一律保留規則結果（fail-open）；判斷結果依標題鍵跨輪快取，每輪只問新進新聞。
-import { chat, extractJson } from "./llm-client.mjs";
+import { chatVia, extractJson, profileCfg } from "./llm-client.mjs";
 import { hasStrongCaseTitle } from "./news-bulk.mjs";
 import { titleKey } from "./title-key.mjs";
 
 export const VERDICTS_FILE = "news-llm-verdicts.json";
+// 直接打主端點、不走 fallback：fallback 失敗時拋出的是它自己的錯，會蓋掉 MiniMax 的 422 審查訊息，拆批就不會啟動。
+const primaryChat = (messages, { maxTokens, temperature }) => chatVia(profileCfg("primary"), messages, maxTokens, temperature);
 const VERDICT_TTL_MS = 14 * 86400000;
 
 const SYSTEM_PROMPT = `你是台灣治安情資儀表板的新聞篩選員。每則新聞已被關鍵字規則收進來，你要找出其中「不是實際事件」的誤收。
@@ -46,7 +48,7 @@ async function reviewBatch(batch, chatFn) {
 // items：已通過規則的原始 RSS 項目。回傳要剔除的項目集合與統計；verdicts 會就地更新。
 export async function reviewNewsRelevance(items, {
   verdicts = new Map(),
-  chatFn = chat,
+  chatFn = primaryChat,
   batchSize = 40,
   concurrency = 2,
   budgetMs = 4 * 60e3,

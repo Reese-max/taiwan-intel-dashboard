@@ -79,6 +79,29 @@ describe("國內新聞 LLM 複核", () => {
     expect(verdicts.get("敏感標題")).toMatchObject({ keep: true });
   });
 
+  it("預設直接打主端點，MiniMax 審查錯誤不被 fallback 的錯誤蓋掉", async () => {
+    vi.stubEnv("LLM_API_KEY", "k");
+    vi.stubEnv("LLM_BASE_URL", "https://api.minimax.io/v1");
+    vi.stubEnv("LLM_MODEL", "MiniMax-M3");
+    vi.stubEnv("LLM_MAX_RETRIES", "0");
+    vi.stubEnv("LLM_FALLBACK_API_KEY", "f");
+    vi.stubEnv("LLM_FALLBACK_BASE_URL", "https://integrate.api.nvidia.com/v1");
+    vi.stubEnv("LLM_FALLBACK_MODEL", "nvidia/retired");
+    const fetchMock = vi.fn(async (url: string) => (/minimax/.test(url)
+      ? new Response('{"error":{"message":"input new_sensitive (1026)"}}', { status: 422 })
+      : new Response("gone", { status: 410 })));
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const verdicts = new Map();
+      const { stats } = await reviewNewsRelevance([{ title: "某則被審查擋下的標題" }], { verdicts, now: NOW });
+      expect(stats).toMatchObject({ moderated: 1, failedBatches: 0 });
+      expect(fetchMock.mock.calls.every(([url]) => /minimax/.test(String(url)))).toBe(true);
+    } finally {
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("時間預算用完的批次留到下一輪", async () => {
     const chatFn = chatDropping([]);
     const items = Array.from({ length: 5 }, (_, i) => ({ title: `演唱會搶票第${i}場` }));
