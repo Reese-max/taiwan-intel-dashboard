@@ -278,6 +278,12 @@ export function refreshDomesticNewsCategory(event, item) {
   const hint = item?.hint ?? (basis.startsWith("hint:") ? basis.slice(5) : undefined);
   const result = categoryFromItem(item?.title ?? event.title, hint);
   const refreshed = { ...event, category: result.category, categoryBasis: result.basis };
+  // 使用者 2026-11-20 定案的降級（單純交通事故死亡、一般毒品查獲）也套用到沿用事件；只降這兩類，其他風險不重算。
+  if (event.riskLevel === "high") {
+    const text = `${item?.title ?? event.title} ${item?.description ?? event.summary ?? ""}`;
+    const now = riskFromTitle(item?.title ?? event.title, hint, item?.description ?? event.summary);
+    if (now === "medium" && (isPlainTrafficDeath(text) || DRUG_ONLY_RE.test(text))) refreshed.riskLevel = "medium";
+  }
   // 地點規則更新後，沿用的「全國」舊新聞也重判一次；已有縣市者不動，避免來回跳動。
   if (event.region !== "全國" || event.lat != null) return refreshed;
   const loc = countyFromItem({ title: item?.title ?? event.title, description: item?.description ?? event.summary });
@@ -325,6 +331,7 @@ export const TOPIC_RISK = {
 
 // 使用者 2026-11-20 定案：單純交通事故的死亡算中；刑案（命案、殺人）與酒駕、毒駕、肇逃等刑責事故的死亡仍算高。
 const DEATH_RE = /不治|罹難|奪命|斃命|喪生|喪命|遇難|猝死|暴斃|身亡|死亡|致死|撞亡|撞死|輾斃|壓死|壓斃|[0-9０-９一二三四五六七八九十兩]+\s*(?:人|名)?\s*(?:死(?!角)|亡|罹難|喪生|喪命|身亡)|死劫/g;
+const DRUG_ONLY_RE = /海洛因|安非他命|愷他命|K他命|大麻|喵喵|依托咪酯|毒品|毒販/;
 const CRIMINAL_TRAFFIC_RE = /酒駕|毒駕|酒後|肇逃|逃逸|蓄意|故意|飆車|殺人|命案|持刀|槍|拒檢|追緝|隨機撞|衝撞人群|開車衝撞|駕車衝撞/;
 
 function isPlainTrafficDeath(s) {

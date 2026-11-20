@@ -587,6 +587,15 @@ describe("refreshDomesticNewsCategory", () => {
     const curated = { ...national, id: "c", curated: { id: "r1" } };
     expect(refreshDomesticNewsCategory(curated)).toBe(curated);
   });
+
+  it("沿用事件套用新風險標準：單純交通死亡與一般毒品查獲由高降中，其他高風險不動", () => {
+    const base = { scope: "domestic", categoryBasis: "hint:治安", category: "治安", region: "臺中市", lat: 24.1, lng: 120.7, riskLevel: "high", source: { datasetId: "tw-news" } };
+    expect(refreshDomesticNewsCategory({ ...base, id: "t", title: "台中死亡車禍 騎士遭砂石車輾斃" }).riskLevel).toBe("medium");
+    expect(refreshDomesticNewsCategory({ ...base, id: "d", title: "北市臨檢查獲騎士車內藏安非他命" }).riskLevel).toBe("medium");
+    expect(refreshDomesticNewsCategory({ ...base, id: "k", title: "高雄男遭刺殺不治" }).riskLevel).toBe("high");
+    // 原本用完整原文判高、摘要看不出原因的事件不降。
+    expect(refreshDomesticNewsCategory({ ...base, id: "x", title: "警方說明案情" }).riskLevel).toBe("high");
+  });
 });
 
 describe("國際國家地點的一般排除規則", () => {
