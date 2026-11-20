@@ -1,4 +1,4 @@
 {
-  "sha": "e5218f08c4149ece2deb12eef7f876a84a3c2df4",
-  "note": "Follow-ups on 2026-11-20. main e5218f0 = #152: general rules for international country locations after an independent Gemini review of 100 production items (fictional places, product-scope exclusions, Taiwan-agency events; 4 of 7 errors fixed), 躲過一劫/劫後餘生 no longer high, dark disabled zoom button. Codex review: 5 of 6 points reproduced and fixed. Includes previously approved 5371133 (#150). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
+  "sha": "386e87ed9058af9a0f5c6525d20962d23bf772a3",
+  "note": "Owner risk standard decided on 2026-11-20. main 386e87e = #154: plain traffic-accident deaths and drug possession rate medium (criminal traffic deaths, drug factories/rings/smuggling/kg seizures and gun seizures stay high; robberies without 劫 stay medium), also applied to carried-over news; international locations ignore place names inside company/media names and Taipei-hosted events. Codex review: 3 points reproduced and fixed; Gemini fresh-sample review 5 of 7 errors fixed. Includes previously approved e5218f0 (#152). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
 }
