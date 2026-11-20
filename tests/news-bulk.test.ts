@@ -611,6 +611,8 @@ describe("國際國家地點的一般排除規則", () => {
     ["Evotec und Bristol-Myers Squibb erreichen Zulassung", ""],
     ["Chef Rachel Khoo on cooking without gadgets", "One of the best-known chefs has spoken to FRANCE 24 about her new book."],
     ["媒體只能當維他命？新創媒體執行長分享經營心法", "韓國媒體共同創辦人 19 日在台北 IMCT 2026 論壇分享。"],
+    ["Mercury-bound X-ray telescope delivers first images", "The first data from a U.K.-built instrument heading to Mercury."],
+    ["A convincing vegan meat alternative needs taste and texture", "Plant-based turkey for Thanksgiving dinner."],
   ])("虛構、排除語境、公司媒體名稱、台灣活動引述外國講者不給外國地點：%s", (title, description) => {
     expect(locate(title, description).lat).toBeUndefined();
   });
@@ -625,6 +627,9 @@ describe("國際國家地點的一般排除規則", () => {
     ["Ukraine Power Grid Hit by Russian Strikes", "", "烏克蘭"],
     ["Guinea-Bissau holds election", "", "幾內亞比索"],
     ["Floods hit New Zealand capital", "Wellington residents evacuated.", "紐西蘭"],
+    ["Migrant boat capsizes off Senegal en route to Spain", "More than 11,000 people reached the Spanish archipelago.", "塞內加爾"],
+    ["China-based AI robotics firm MegaRobo raises $200M", "", "中國"],
+    ["Erdogan meets Turkey business leaders in Ankara", "", "土耳其"],
     ["Taiwan company opens its new plant", "The company opened its new plant in Japan. 在台北總部舉行的記者會上，公司說明投資計畫。", "日本"],
   ])("一般事件與標題有國家的台灣相關新聞照常定位：%s", (title, description, region) => {
     expect(locate(title, description)).toMatchObject({ region });
@@ -1406,6 +1411,9 @@ describe("riskFromTitle 主題感知", () => {
     ["男搭雲霄飛車遭甩飛 撞上乘客墜地身亡", "治安", "high"],
     ["龜殼花咬傷路人 凶嫌遭車輛輾斃", "治安", "low"],
     ["駕車隨機撞人造成1死", "治安", "high"],
+    ["酒駕撞機車 騎士送醫不治", "交通", "medium"],
+    ["肇逃撞死老翁 嫌犯落網", "交通", "medium"],
+    ["工安吊車翻車壓死工人", "災防", "high"],
     ["工安被吊車壓死", "治安", "high"],
     ["砂石車擦撞機車 騎士遭壓死", "交通", "medium"],
   ])("單純交通事故的死亡算中，刑案與其他事故維持：%s", (title, hint, risk) => {

@@ -329,16 +329,18 @@ export const TOPIC_RISK = {
   },
 };
 
-// 使用者 2026-11-20 定案：單純交通事故的死亡算中；刑案（命案、殺人）與酒駕、毒駕、肇逃等刑責事故的死亡仍算高。
+// 使用者 2026-11-20 定案：交通事故的死亡算中；命案、殺人與蓄意衝撞仍算高。
 const DEATH_RE = /不治|罹難|奪命|斃命|喪生|喪命|遇難|猝死|暴斃|身亡|死亡|致死|撞亡|撞死|輾斃|壓死|壓斃|[0-9０-９一二三四五六七八九十兩]+\s*(?:人|名)?\s*(?:死(?!角)|亡|罹難|喪生|喪命|身亡)|死劫/g;
 const DRUG_ONLY_RE = /海洛因|安非他命|愷他命|K他命|大麻|喵喵|依托咪酯|毒品|毒販/;
-const CRIMINAL_TRAFFIC_RE = /酒駕|毒駕|酒後|肇逃|逃逸|蓄意|故意|飆車|殺人|命案|持刀|槍|拒檢|追緝|隨機撞|衝撞人群|開車衝撞|駕車衝撞/;
+// 使用者 2026-11-20 二次確認：酒駕、毒駕、肇逃等交通死亡也算中；只有蓄意或隨機衝撞這類攻擊、命案仍算高。
+const CRIMINAL_TRAFFIC_RE = /蓄意|故意|殺人|命案|持刀|槍|隨機撞|衝撞人群|開車衝撞|駕車衝撞/;
 
 function isPlainTrafficDeath(s) {
   const traffic = TRAFFIC_INCIDENT_RE.test(s) ||
     (/撞|輾|翻覆/.test(s) && /車|騎士|行人|國道|快速道路|省道|台[0-9０-９]+[甲乙丙]?線|公路|路口|斑馬線/.test(s) &&
       !/雲霄飛車|遊樂|樂園|摩天輪/.test(s));
-  if (!traffic || CRIMINAL_TRAFFIC_RE.test(s)) return false;
+  // 工地的吊車、堆高機翻覆是工安事故，不算交通事故。
+  if (!traffic || CRIMINAL_TRAFFIC_RE.test(s) || /工安|職災|工地|吊車|堆高機|怪手/.test(s)) return false;
   const withoutDeaths = s.replace(DEATH_RE, " ");
   return withoutDeaths !== s && !HIGH_FLOOR.test(withoutDeaths) && !HIGH.test(withoutDeaths);
 }
@@ -794,6 +796,7 @@ const COUNTRY_LOCATIONS = [
   ["秘魯", -9.19, -75.02, /秘魯|利馬|\b(?:Peru|Lima)\b/i],
   ["也門", 15.55, 48.52, /葉門|也門|薩那|\b(?:Yemen|Sana'?a)\b/i],
   ["緬甸", 21.91, 95.96, /緬甸|仰光|奈比多|\b(?:Myanmar|Yangon|Naypyidaw)\b/i],
+  ["塞內加爾", 14.5, -14.45, /塞內加爾|達卡爾|\b(?:Senegal|Dakar)\b/i],
 ];
 
 function countryLocationIn(text, { uniqueOnly = false } = {}) {
@@ -825,6 +828,8 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
       if (country === "美國" && /^America$/i.test(match[0]) && /\bNorth\s+$/i.test(source.slice(Math.max(0, match.index - 12), match.index))) continue;
       if (country === "美國" && /^USA$/i.test(match[0]) && /^\s+Rare Earth\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "美國" && /^\s*-listed\b/i.test(source.slice(match.index + match[0].length))) continue;
+      // U.K.-built、Japan-made、China-backed 說的是製造或出資國，不是事件地點（-based 是公司所在地，照常定位）。
+      if (/^\.?-(?:built|made|backed|born|funded|designed)\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "美國" && /\bTrump administration\b/i.test(source) && /\bUS firms?\b/i.test(source)) {
         matches.push({ country, lat, lng, index: match.index, length: match[0].length });
         continue;
@@ -841,7 +846,9 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
       if (country === "義大利" && /\bfrom\s+Italy\b/i.test(source)) continue;
       if (country === "烏克蘭" && /^\s+war\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "北韓" && /^[- ]Linked\b/i.test(source.slice(match.index + match[0].length))) continue;
-      if (country === "土耳其" && /\b(?:roast(?:ed)?|sandwich|dinner|recipe|turkey breast|turkey meat)\b/i.test(source)) continue;
+      if (country === "土耳其" && /\b(?:roast(?:ed)?|sandwich|dinner|recipe|turkey breast|turkey meat|Thanksgiving|gravy|stuffing|leftovers?)\b/i.test(source)) continue;
+      // 小寫 turkey 是火雞；國名寫成 Turkey／Türkiye。
+      if (country === "土耳其" && match[0] === "turkey") continue;
       if (country === "喬治亞" && /\b(?:Georgia,?\s*(?:USA|US)|state of Georgia|Atlanta)\b/i.test(source)) continue;
       if (country === "英國" && /^\s+Business School\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "伊朗" && /\bfrom the\s*$/i.test(source.slice(Math.max(0, match.index - 12), match.index)) && /^\s+War\b/i.test(source.slice(match.index + match[0].length))) continue;
@@ -863,8 +870,8 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
   }
   const explicit = matches.filter((match) => {
     const before = source.slice(Math.max(0, match.index - 24), match.index);
-    return /\b(?:in|at|near|within)\s+(?:the\s+)?(?:central|southern|northern|eastern|western|northwestern|southwestern)\s+$/i.test(before) ||
-      /\b(?:in|at|near|within)\s+(?:the\s+)?$/i.test(before) ||
+    return /\b(?:in|at|near|within|off)\s+(?:the\s+)?(?:central|southern|northern|eastern|western|northwestern|southwestern)\s+$/i.test(before) ||
+      /\b(?:in|at|near|within|off)\s+(?:the\s+)?$/i.test(before) ||
       /\bin\s+\w+\s+and\s+$/i.test(before) ||
       /(?:在|赴|回|於|位於|來自|前往|抵達|發生於)\s*$/.test(before);
   });
