@@ -278,6 +278,12 @@ export function refreshDomesticNewsCategory(event, item) {
   const hint = item?.hint ?? (basis.startsWith("hint:") ? basis.slice(5) : undefined);
   const result = categoryFromItem(item?.title ?? event.title, hint);
   const refreshed = { ...event, category: result.category, categoryBasis: result.basis };
+  // 使用者 2026-11-20 定案的降級（單純交通事故死亡、一般毒品查獲）也套用到沿用事件；只降這兩類，其他風險不重算。
+  if (event.riskLevel === "high") {
+    const text = `${item?.title ?? event.title} ${item?.description ?? event.summary ?? ""}`;
+    const now = riskFromTitle(item?.title ?? event.title, hint, item?.description ?? event.summary);
+    if (now === "medium" && (isPlainTrafficDeath(text) || DRUG_ONLY_RE.test(text))) refreshed.riskLevel = "medium";
+  }
   // 地點規則更新後，沿用的「全國」舊新聞也重判一次；已有縣市者不動，避免來回跳動。
   if (event.region !== "全國" || event.lat != null) return refreshed;
   const loc = countyFromItem({ title: item?.title ?? event.title, description: item?.description ?? event.summary });
@@ -286,13 +292,13 @@ export function refreshDomesticNewsCategory(event, item) {
 }
 
 const HIGH = /命案|兇殺|凶殺|殺人|殺害|砍人|砍殺|砍傷|持刀|刺死|刺傷|分屍|棄屍|槍擊|開槍|中彈|性侵|擄人|勒贖|(?<![躲逃]過一)劫(?!後餘生)|致死|身亡|死亡|喪命|溺斃|縱火|爆炸|氣爆|滅門/;
-const MED = /詐騙|詐欺|毒品|緝毒|販毒|竊|搶|強盜|酒駕|毒駕|肇逃|肇事|傷害|鬥毆|車禍|起訴|收押|羈押|逮捕|查獲|落網|火警|火災|墜|溺|走私|偷渡|賄|貪/;
+const MED = /詐騙|詐欺|毒品|毒販|海洛因|安非他命|愷他命|K他命|大麻|喵喵|依托咪酯|緝毒|販毒|竊|搶|強盜|酒駕|毒駕|肇逃|肇事|傷害|鬥毆|車禍|起訴|收押|羈押|逮捕|查獲|落網|火警|火災|墜|溺|走私|偷渡|賄|貪/;
 const HIGH_EN = /\b(murder|homicide|killed|dead|death|fatal|shooting|stabbing|explosion|kidnap\w*|rape|sexual assault|arson)\b/i;
 const MED_EN = /\b(fraud|scam|drug|narcotic|arrest\w*|theft|robbery|burglar\w*|smuggl\w*|drunk driving|DUI|crash|fire|indict\w*|prosecut\w*|detain\w*|assault)\b/i;
 const CRITICAL =
   /隨機殺人|無差別(?:殺人|砍人)|(?:氣爆|爆炸)[^，。！？；]{0,24}(?:[0-9０-９一二三四五六七八九十百兩]+\s*(?:死|亡)|死|亡|重傷)|(?:炸彈爆炸|爆炸)[^，。！？；]{0,12}縱火攻擊|(?:[0-9０-９]{2,}|[0-9０-９]{1,3}(?:[,，][0-9０-９]{3})+|[一二三四五六七八九兩幾數]*[十百千萬][一二三四五六七八九兩幾數十百千萬]*)\s*[餘多]?\s*(?:人|名)?\s*(?:死|亡|罹難|喪生|喪命|身亡)|(?:大量|重大|多人)(?:傷亡|死傷|死亡)|多人(?:罹難|喪命|身亡)|滅門|挾持[^，。！？；]{0,12}人質|大規模[^，。！？；、]{0,12}(?:傷亡|死傷|死亡|爆炸|攻擊|砍人|殺人)/;
 const NO_CRITICAL_CASUALTY = /(?:幸)?無(?:人)?傷亡|未(?:造成|傳出)?傷亡|無人(?:受傷|死亡|傷亡)/;
-const HIGH_FLOOR = /命案|兇殺|凶殺|殺人|殺害|不治|罹難|奪命|斃命|喪生|喪命|遇害|遇難|悶死|枉死|猝死|暴斃|刺殺|中刀|槍手|持槍|中槍|中彈|[1-9１-９]\s*(?:人|名)?\s*(?:死(?!角)|亡|罹難|喪生|喪命|身亡)|槍擊|開槍|槍械|彈藥|持刀[^，。！？；]{0,16}(?:致死|死亡|身亡|喪命)|毒品[^，。！？；]{0,16}(?:重案|大案|工廠|集團|走私|販運|製造)|緝毒[^，。！？；]{0,16}(?:重案|大案)|販毒|製毒|海洛因|安非他命|愷他命/;
+const HIGH_FLOOR = /命案|兇殺|凶殺|殺人|殺害|不治|罹難|奪命|斃命|喪生|喪命|遇害|遇難|悶死|枉死|猝死|暴斃|刺殺|中刀|壓死|壓斃|槍手|持槍|中槍|中彈|[1-9１-９]\s*(?:人|名)?\s*(?:死(?!角)|亡|罹難|喪生|喪命|身亡)|槍擊|開槍|槍械|槍彈|槍枝|彈藥|持刀[^，。！？；]{0,16}(?:致死|死亡|身亡|喪命)|(?:毒品|海洛因|安非他命|愷他命|K他命|大麻|古柯鹼|喵喵)[^，。！？；]{0,16}(?:重案|大案|工廠|集團|走私|販運|製造|[0-9０-９.]+\s*(?:公斤|噸))|[0-9０-９.]+\s*(?:公斤|噸)[^，。！？；]{0,6}(?:毒品|海洛因|安非他命|愷他命|K他命|大麻|古柯鹼)|緝毒[^，。！？；]{0,16}(?:重案|大案)|(?:販毒|運毒|製毒)集團|製毒|毒品工廠/;
 const ROUTINE = /說明會|宣導|記者會|頒獎/;
 const CYBER_ROUTINE =
   /宣導|講座|說明會|研習|論壇|課程|競賽|駭客松|體驗營|防護(?:週|月|宣導)|資安月|徵才|開箱|評測|上市(?!櫃|上櫃|公司|企業)|個資保護(?:法)?|資安意識|防詐宣導/;
@@ -323,7 +329,27 @@ export const TOPIC_RISK = {
   },
 };
 
+// 使用者 2026-11-20 定案：單純交通事故的死亡算中；刑案（命案、殺人）與酒駕、毒駕、肇逃等刑責事故的死亡仍算高。
+const DEATH_RE = /不治|罹難|奪命|斃命|喪生|喪命|遇難|猝死|暴斃|身亡|死亡|致死|撞亡|撞死|輾斃|壓死|壓斃|[0-9０-９一二三四五六七八九十兩]+\s*(?:人|名)?\s*(?:死(?!角)|亡|罹難|喪生|喪命|身亡)|死劫/g;
+const DRUG_ONLY_RE = /海洛因|安非他命|愷他命|K他命|大麻|喵喵|依托咪酯|毒品|毒販/;
+const CRIMINAL_TRAFFIC_RE = /酒駕|毒駕|酒後|肇逃|逃逸|蓄意|故意|飆車|殺人|命案|持刀|槍|拒檢|追緝|隨機撞|衝撞人群|開車衝撞|駕車衝撞/;
+
+function isPlainTrafficDeath(s) {
+  const traffic = TRAFFIC_INCIDENT_RE.test(s) ||
+    (/撞|輾|翻覆/.test(s) && /車|騎士|行人|國道|快速道路|省道|台[0-9０-９]+[甲乙丙]?線|公路|路口|斑馬線/.test(s) &&
+      !/雲霄飛車|遊樂|樂園|摩天輪/.test(s));
+  if (!traffic || CRIMINAL_TRAFFIC_RE.test(s)) return false;
+  const withoutDeaths = s.replace(DEATH_RE, " ");
+  return withoutDeaths !== s && !HIGH_FLOOR.test(withoutDeaths) && !HIGH.test(withoutDeaths);
+}
+
 export function riskFromTitle(title, hint, description = "") {
+  const risk = riskFromText(title, hint, description);
+  // 只把「因死亡字眼才判高」的單純交通事故降為中，不把原本較低的拉高。
+  return risk === "high" && isPlainTrafficDeath(`${String(title || "")} ${String(description || "")}`) ? "medium" : risk;
+}
+
+function riskFromText(title, hint, description = "") {
   const titleText = String(title || "");
   const s = `${titleText} ${String(description || "")}`;
   if (CRITICAL.test(s) && !NO_CRITICAL_CASUALTY.test(s)) return "critical";
@@ -822,6 +848,10 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
       if (country === "烏克蘭" && /^\s+over\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "烏克蘭" && /\bfuture of\s*$/i.test(source.slice(Math.max(0, match.index - 14), match.index))) continue;
       if (/^from\s+$/i.test(source.slice(Math.max(0, match.index - 8), match.index))) continue;
+      // 公司、媒體名稱裡的地名（Wellington IT、Copenhagen Infrastructure Partners、Bristol-Myers Squibb、FRANCE 24）不是事件地點。
+      const following = source.slice(match.index + match[0].length);
+      if (/^\s+(?:IT|Infrastructure|Partners|Holdings|Airlines|Airways|Insurance|Securities|Investments|24)\b/.test(following) ||
+        /^-[A-Z][a-z]+\s+[A-Z]/.test(following)) continue;
       matches.push({ country, lat, lng, index: match.index, length: match[0].length });
     }
   }
@@ -874,6 +904,8 @@ const EXCLUDED_PLACE_RE = new RegExp(
 const FICTIONAL_PLACE_RE = new RegExp(String.raw`\bfictional(?:i[sz]ed)?\s+(?:version\s+of\s+)?${PLACE_TOKEN}`, "gi");
 // 只認台灣政府機關：英文 Taiwan、台灣企業常出現在發生於外國的新聞（台積電日本廠），不能當台灣脈絡。
 const TAIWAN_AGENCY_RE = /行政院|立法院|(?<!生態)環境部|數位部|國科會|衛福部|農業部/;
+// 在台灣舉辦的活動（在台北 IMCT 論壇分享）引述外國講者時，也不定位到講者的國家。
+const TAIWAN_VENUE_RE = /(?:在|於)(?:台北|臺北|新北|桃園|台中|臺中|台南|臺南|高雄)(?!總部|總公司|辦公室)|\bin\s+(?:Taipei|Kaohsiung|Taichung)\b/;
 
 function countryLocationFromItem(title, summary) {
   const clean = (text) => String(text || "").replace(EXCLUDED_PLACE_RE, " ").replace(FICTIONAL_PLACE_RE, " ");
@@ -881,7 +913,7 @@ function countryLocationFromItem(title, summary) {
   summary = clean(summary);
   const location = countryLocationFromCleanItem(title, summary);
   // 台灣機關主辦的活動常引述外國學者：國家只出現在摘要時不定位到外國。
-  if (location && TAIWAN_AGENCY_RE.test(`${title} ${summary}`) && !countryLocationIn(title)) return null;
+  if (location && !location.explicit && (TAIWAN_AGENCY_RE.test(`${title} ${summary}`) || TAIWAN_VENUE_RE.test(`${title} ${summary}`)) && !countryLocationIn(title)) return null;
   return location;
 }
 
