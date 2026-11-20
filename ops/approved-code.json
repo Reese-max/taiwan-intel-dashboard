@@ -1,4 +1,4 @@
 {
-  "sha": "97a3ba1bf8d28bcaed85e5501286232c6a45f320",
-  "note": "Owner confirmed on 2026-11-20 that all traffic deaths are medium. main 97a3ba1 = #156: drunk-driving and hit-and-run deaths also medium (deliberate/random ramming and homicides stay high; workplace crane accidents not traffic); international locations treat lowercase turkey, country-built/made/backed and off-coast correctly, Senegal added (third fresh Gemini sample: 82/6/12, 3 errors fixed). Codex review: 1 point reproduced and fixed. Includes previously approved 386e87e (#154). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
+  "sha": "b69a0c967b4b8ecb335612e263d24300ed3d73fc",
+  "note": "Owner asked on 2026-11-20 to continue the suggested next steps. main b69a0c9 = #158: international location benchmark (249 Gemini-judged production items, floor 240) and seven one-off location rules replaced by three general rules; only one of 2389 snapshot items changes. Includes previously approved 97a3ba1 (#156). PR passed test/build-preview/check/verify-preview. Release requires separate manifest PR checks and production smoke."
 }
