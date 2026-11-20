@@ -1,9 +1,10 @@
 {
- "note": "國際新聞國家地點基準：Gemini 逐筆判讀的三批正式站樣本（排除爭議）。expected 為可接受的 region，空字串代表不應給地點。",
+ "note": "國際新聞國家地點基準：Gemini 逐筆判讀的三批正式站樣本（排除爭議）。expected 為可接受的 region，空字串代表不應給地點。 另併入 Codex 協調者 G5 審查樣本（Gemini 判讀）：判對且現行結果一致者 expected 為當時地點（判對但現行結果不同者屬審查標籤互相矛盾，不收）；明確判錯者 notExpected 為當時地點（其他答案皆可）；不確定與另註項目不收。",
  "reviewRuns": [
   "gemini-2026-11-19-a: route run b79ef707",
   "gemini-2026-11-20-b: route run 3400dcef",
-  "gemini-2026-11-20-c: route run a77e3908"
+  "gemini-2026-11-20-c: route run a77e3908",
+  "codex-coordinator: tid-dq review-r16/r31/r33/r34（Gemini）"
  ],
  "cases": [
   {
@@ -2273,6 +2274,2364 @@
    "summary": "The Federal Reserve’s vice chair acknowledged that U.S. economic conditions are changing, but he would not support revisiting the Fed’s policy objective on the fly.",
    "expected": [
     "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1hui1un",
+   "title": "APEC final day in photos: Trump, Xi and Putin shake hands; Takaichi kept at a distance",
+   "summary": "Leaders gathered Thursday for the second day of the economic summit, ahead of a historic trilateral meeting between the U.S., Russia and China.",
+   "notExpected": [
+    "俄羅斯"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1agumu4",
+   "title": "Antonio Roma tiene 350.000 seguidores y no existe. Lo más loco es que va a dar un concierto en Madrid ante 500 espectadores",
+   "summary": "Es el primer cantante de flamenco hecho con IA que se sube a un escenario en España. Dicho así, suena a sinsentido, pero es que éste concretamente viene acompañado de alguien de carne y hueso que le p",
+   "expected": [
+    "西班牙"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-bcxq7c",
+   "title": "The stunning transformation of the Southern Democratic Party, in one lifetime",
+   "summary": "To understand the magnitude of Mississippi Democrat Scott Colom’s election to the Senate, you have to know what the Democratic Party long stood for in the South: the disenfranchisement of Blacks.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1nkhkq2",
+   "title": "India helped build Grand Theft Auto VI, but creating its own gaming hit is another challenge",
+   "summary": "Rockstar Games&#039; Bengaluru studio helped develop Grand Theft Auto VI, putting the spotlight on India&#039;s growing gaming industry. Experts tell CNA that while the country has skilled developers,",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-8eo6bn",
+   "title": "Peabody, Higgins complete Deptford Passivhaus development",
+   "summary": "Peabody, with construction partner Higgins, has delivered one of the UK&#039;s largest Passivhaus developments, project managed by RLB and designed by Allford Hall Monaghan Morris, comprising 189 new",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-15nl56l",
+   "title": "Democrats nominate Jeffries to be first black US House speaker",
+   "summary": "Hakeem Jeffries is on the cusp of becoming the first black speaker of the US House of Representatives after Democrats elected him their leader on Wednesday following a sweeping midterm election triump",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-11gmgem",
+   "title": "Florida pastor convicted of U.S. charges in 2021 killing of Haitian president",
+   "summary": "A Florida pastor with dual Haitian-American citizenship was convicted Wednesday of U.S. charges arising from the 2021 assassination of Haitian president Jovenel Moïse, a killing that plunged the Carib",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-7rje5z",
+   "title": "Consumer screening tests make baseless health claims, UK study finds",
+   "summary": "Easy access to dubious health tests should be considered a “patient safety issue,” researchers said.",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-a28sti",
+   "title": "Iran’s army chief vows ‘more crushing’ response if US attacks again",
+   "summary": "Army commander-in-chief Amir Hatami said Iranian forces would strike the US “along with its supporters” wherever they were based, as CENTCOM confirmed the USS Theodore Roosevelt had joined two other c",
+   "expected": [
+    "伊朗"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-18g3ckm",
+   "title": "America and China Are Trying to Alter Their Economic Bargain",
+   "summary": "With decoupling too painful, derisking is on the menu instead.",
+   "notExpected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1y420yx",
+   "title": "Canada and China expand tariff relief on pork, seafood and metals amid US trade tensions",
+   "summary": "US tariffs have put pressure on Canadian exporters and pushed Ottawa to seek new markets. Canada is rebuilding trade ties with China while continuing talks with Washington to protect its car industry",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-r2fs5r",
+   "title": "FDA approves drug for infantile-onset Niemann-Pick type C after analysis finds longer survival",
+   "summary": "Researchers at the National Institutes of Health (NIH) and their collaborators at Beren Therapeutics, Thousand Oaks, California, have developed a treatment for infants with Niemann-Pick type C (NPC) d",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-dk3sg2",
+   "title": "A2 Milk China-label infant formula sales recover to 50%",
+   "summary": "A2 Milk China-label infant formula sales recover to 50% Offtake up from about 40% in August after supply disruption",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1mrrsiz",
+   "title": "Malaysia says data centres must comply with US AI chip rules",
+   "summary": "Malaysia has emerged as a regional data centre hub, attracting nearly US$100 billion in investments since 2021, but analysts warn tighter scrutiny of AI chip deployment could slow growth in the sector",
+   "expected": [
+    "馬來西亞"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-ajwfik",
+   "title": "Half of all US states have no laws around vehicle camera surveillance",
+   "summary": "Experts answer questions to help you better understand Flock camera systems—including their potential for abuse and avenues for regulation.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1mz2k4",
+   "title": "Arnhem, Amsterdam - Phishing in Arnhem leidt naar Amsterdam",
+   "summary": "Na de oplichting van een Arnhemmer, haalde deze man in Amsterdam geld van de rekening van het slachtoffer. Herkent u hem? Laat het ons weten!",
+   "expected": [
+    "荷蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-qb5i1",
+   "title": "$275M Sale Marks Pennsylvania&#039;s Largest Grocery-Anchored Portfolio Deal: The Philadelphia Deal Sheet",
+   "summary": "Medipower bought a 16-property grocery-anchored shopping center portfolio from Vastgood Properties for $275M, with CBRE brokering the deal.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1bwfpuw",
+   "title": "The Shadow of Yalta Hangs Over Trump’s Summit in China",
+   "summary": "A 1945 meeting of Churchill, Stalin and Franklin Roosevelt set Europe’s course for decades. Here’s what happened.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1awmqqt",
+   "title": "US Bankruptcy Judge Approves Spirit Airlines Data Sale to Google",
+   "summary": "A federal bankruptcy judge has approved Google's $10 million purchase of internal business data from defunct Spirit Airlines during a hearing on Tuesday. Reuters reports: US Bankruptcy Judge Sean Lane",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-ig5vqo",
+   "title": "Infection Control Protocol Successfully Contains Candida auris Outbreak in Saudi Hospital",
+   "summary": "A multifaceted infection control protocol successfully contained a Candida auris outbreak in a Saudi Arabian ICU by employing active screening and rigorous disinfection.",
+   "expected": [
+    "沙烏地阿拉伯"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-bokv40",
+   "title": "A Journey Through the Southwest: Public Lands and the Promise of Conservation",
+   "summary": "I spotted V3 from Navajo Bridge, high above the Colorado River at Glen Canyon. The tag on the broad expanse of the condor&#x2019;s wings, used by researchers to track his movements and health, was cle",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-z9saeo",
+   "title": "AbbVie and Disco strike deal worth up to $2.54B for solid tumor targets",
+   "summary": "AbbVie is partnering with Disco Pharmaceuticals, a preclinical cancer biotech, to build out its antibody-drug conjugate and T cell engager programs. The Cologne, Germany-headquartered biotech will rec",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-3i7v0p",
+   "title": "Brewster Heights bankruptcy nears some conclusions",
+   "summary": "The long-awaited bankruptcy sale of one of Washington’s largest fruit companies may reach some conclusions this week. Judge Frederick Corbit of the U.S. Bankruptcy Court for the Eastern District of Wa",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-6fjnp4",
+   "title": "UK Milk Donors View Breastmilk as Natural Tool for Cancer Research",
+   "summary": "A qualitative study reveals that UK milk donors view breastmilk research for breast cancer detection as natural yet emotionally complex.",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1vt5qa8",
+   "title": "Trump says US, China spy on each other, claims Washington does it better",
+   "summary": "US president says there is little point in asking Beijing to stop spying as Washington conducts similar activities",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1efgdk0",
+   "title": "Klingbeil verzichtet auf Sitze im Commerzbank",
+   "summary": "Berlin macht den Weg für Unicredit frei. Finanzminister Lars Klingbeil verweist auf Zusagen des Unicredit-Chefs zur Börsennotiz, dem Standort Frankfurt und dem Mittelstandsgeschäft. Offen bleibt, ob u",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-fj9amr",
+   "title": "Vienna Students Report Lower Positive Activation During Distance Learning",
+   "summary": "A study of higher education students in Vienna found lower positive activation and higher negative activation during COVID-19-related distance learning compared with retrospective ratings of their pre",
+   "expected": [
+    "奧地利"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1dmc71g",
+   "title": "France Is Blaming Iran for the Fridge Cyberattack",
+   "summary": "Interesting : U.S. intelligence agencies have recently reached a &#8220;low confidence&#8221; assessment that Iran was responsible for the attacks in France, according to three U.S. officials who spok",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-o9hh2g",
+   "title": "China&#8217;s military seeks Nvidia chips as US tightens export curbs",
+   "summary": "The tightened U.S. export curbs could significantly hinder Nvidia's revenue growth and market position by limiting access to China. The post China&#8217;s military seeks Nvidia chips as US tightens ex",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-evu7s6",
+   "title": "Should we save every old building?",
+   "summary": "When you visit one of Norway&#039;s open-air museums, you can experience a piece of old Norway: log-built timber houses, farmsteads and farm complexes, often situated in a historic cultural landscape.",
+   "expected": [
+    "挪威"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-j7zo3v",
+   "title": "MAF EAP &#8211; Holidays – How to manage the BAH HUMBUG that tries to sneak in",
+   "summary": "Holidays are often a fun break during a busy year – a long weekend here and there is an event many of us can get behind.&#160; However, when a short holiday break turns into a full holiday season, we",
+   "notExpected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-17t60ay",
+   "title": "Traders’ Relief on UK Inflation May Prove Short-Lived as Price Woes Mount",
+   "summary": "Plus, all eyes on the Anthropic IPO",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-2nku30",
+   "title": "Malaria Microscopy Study Finds Low Parasite Quantification Accuracy Among Ethiopian Laboratory Professionals",
+   "summary": "An assessment of 131 laboratory professionals in West Oromia, Ethiopia, found high accuracy in malaria parasite detection but identified critical deficiencies in species differentiation and parasite q",
+   "expected": [
+    "衣索比亞"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-16rhr0n",
+   "title": "Ireland flyhalf Prendergast cleared to play South Africa after citing dismissed",
+   "summary": "Ireland flyhalf Prendergast cleared to play South Africa after citing dismissed",
+   "expected": [
+    "愛爾蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-i1ws5w",
+   "title": "Samsung just broke an 8-year habit with the One UI 9.5 beta",
+   "summary": "Samsung launched its first One UI beta in November 2018, giving Galaxy S9 and S9+ owners an early look at Samsung’s new interface and Android Pie. How early depended on where they lived. South Korea,",
+   "expected": [
+    "南韓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-12qyw32",
+   "title": "Kuwait says it repelled first Iranian attack in two months after US strikes island",
+   "summary": "Bahrain says it was also attacked by Iran following a US air strike on the Iranian island of Qeshm in the Gulf on Tuesday.",
+   "notExpected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1yf9nhi",
+   "title": "Iraq pumps oil to Turkey again after 12 years to bypass Hormuz disruption",
+   "summary": "The line, which can carry up to 750,000 barrels a day, was shut in 2014 after attacks by the so-called Islamic State terrorist group, and Iraq and Turkey agreed in August on a one-year arrangement for",
+   "notExpected": [
+    "土耳其"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-17iurfz",
+   "title": "How the US power rivalry with Russia and China is turning outer space into the next battlefront",
+   "summary": "After the recent US deployment of a weapon in Earth’s orbit, the space arms race looks increasingly less like something that can be prevented.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-okigvc",
+   "title": "Canada’s PM calls out ‘lying’ Putin for downplaying sanctions",
+   "summary": "Carney accuses Putin of ‘lying’ after the Russian leader dismissed Western sanctions as a ‘thing of the past’.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-jjreu8",
+   "title": "Nvidia halts its H200 chip sales to China",
+   "summary": "Back in December, Nvidia received government approval to sell its H200 AI chips to specially approved customers in China. That deal had some attached strings, like a 25% export tariff charged by the U",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-12dz2ry",
+   "title": "Expert comment: UK roads are dangerous by design. Punishing bad drivers won&#039;t fix them",
+   "summary": "In 2025, 1.16 million people around the world were killed in road collisions. That&#039;s 3,178 deaths per day. Up to 50 million were injured.",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-tgppqd",
+   "title": "Prince William presents 5 Earthshot Prizes for climate efforts",
+   "summary": "Five innovators and organizations have been awarded $1.3 million each at the Earthshot Prize ceremony in India.",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1fiuaa3",
+   "title": "Indonesia moves to protect whale shark feeding ground and possible nursery",
+   "summary": "A planned marine protected area would cover more than half of Indonesia's Saleh Bay and 90 per cent of its known whale shark hotspots. It has provincial and local backing and awaits a decision from Ja",
+   "expected": [
+    "印尼"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-19q91cz",
+   "title": "ICJ to Deliver Landmark Verdict on Myanmar",
+   "summary": "The Rohingya genocide case will have wide-ranging impacts, including for the court’s forthcoming judgment on Israel.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1hxcyjw",
+   "title": "Fathom Forthcoming: First Battery Cells Roll Out of Ford’s Michigan Plant for Electric Pickup",
+   "summary": "Ford’s BlueOval Battery Park Michigan is shipping its first lithium iron phosphate cells to Louisville for Fathom prototypes, a key milestone for the automaker’s next-generation EV.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1u5pkuv",
+   "title": "Putin relishes return to spotlight of global diplomacy alongside Trump and Xi",
+   "summary": "The Russian president is set to meet his Chinese and American counterparts on the sidelines of the Asia-Pacific Economic Cooperation summit on Thursday. Fears are mounting that the future of Ukraine c",
+   "notExpected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-9gqmql",
+   "title": "OPINION. &#xAB;&#x2009;Etats-Unis : la panne sans coupable&#x2009;&#xBB; (Michel Santi)",
+   "summary": "Le 13 novembre, &#xE0; El Dorado, petite ville de l'Arkansas de 22 000 habitants, un sous-traitant de la FAA (1) remplace un vieux routeur Cisco par un mod&#xE8;le Juniper flambant neuf.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-b1pbjn",
+   "title": "France urges other countries to 'assume their share' of climate responsibility",
+   "summary": "'We cannot be led and felt as responsible forever,' French environment minister tells Anadolu",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1f5j5no",
+   "title": "Explainer: Untangling Yemen’s complex civil war",
+   "summary": "Nov 18 - Yemen's Houthis have advanced in recent days against the internationally backed government, raising concerns they might launch an offensive against its temporary capital of Aden.",
+   "expected": [
+    "也門"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-chkr49",
+   "title": "EU proposes 45-billion-euro Ukraine loan for 2027",
+   "summary": "The loan would cover most of Ukraine&#039;s €70 billion funding gap, with EU leaders set to discuss the proposal at a summit next week.",
+   "expected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-itoruy",
+   "title": "Widening Developmental Disparities Among Israeli Children During Recent National Crises",
+   "summary": "A large-scale analysis of over five million developmental assessments in Israel reveals that while overall milestone failure rates showed only a mild increase between 2019 and 2023, disparities tied t",
+   "expected": [
+    "以色列"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-18o1wlu",
+   "title": "Trump lands in China ahead of historic meeting with Xi and Putin",
+   "summary": "President Trump landed in Shenzhen, China, on Wednesday ahead of his historic meeting with Xi Jinping and Russia&#039;s Vladimir Putin. Tony Dokoupil and Nancy Cordes report.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1r7su0d",
+   "title": "Une faille dans Java permet d’exécuter du code à distance, la France lance l'alerte",
+   "summary": "Baptisée java4shell, une faille de sécurité dans Java expose certains serveurs à des attaques à distance. Oracle a publié un correctif le 17 novembre, et le CERT-FR juge important de l'appliquer rapid",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-18iv61",
+   "title": "Was China’s choice of welcome song for Philippine leader sending a subtle message?",
+   "summary": "The choice of a classic Philippine song about remorse and forgiveness to welcome President Ferdinand Marcos Jnr to the Apec state gala has sparked widespread debate online about whether it was sending",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-11tcq72",
+   "title": "Google升級Gemini Tasks，新增AI代打電話、購物付款功能，首度開放免費使用",
+   "summary": "新聞 Google周二（11/17）宣布升級AI代理人功能 Gemini Tasks ，率先於美國推出代打電話、預約服務、購物付款及帳單分析等進階功能， 同時首度開放 美國、日本、南韓、加拿大、澳洲及印度等6國用戶免費使用。 Gemini Tasks前身為Google今年5月在Google I/O大會推出的 Gemini Spark ，先開放給Google AI Ultra付費用戶，10月整合至G",
+   "notExpected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1bjmxu9",
+   "title": "France&#8217;s Philippe steps up attacks on Le Pen and Mélenchon as his poll numbers slide",
+   "summary": "The center-right presidential candidate accused his rivals of harboring an \"unhealthy fascination\" with Russia's Vladimir Putin.",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-iiwrsm",
+   "title": "Four killed as Russian strikes hit Ukraine’s Odesa",
+   "summary": "At least four people have been killed and thirteen more injured after Russian strikes hit Ukraine’s port city of Odesa.",
+   "expected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-qzvla5",
+   "title": "JD Sports warns on profit again as France riots hit sales",
+   "summary": "JD Sports has cut its profit target for the second time this year, this time blaming trading disruption caused by anti-government riots in France.&#160; The FTSE 100 retailer, self-dubbed the ‘King of",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-64jyfm",
+   "title": "How China’s ‘carrier nannies’ are powering the Liaoning’s long Pacific push",
+   "summary": "Chinese replenishment ships were seen repeatedly transiting two major waterways around Japan as the Liaoning aircraft carrier conducted an extended western Pacific Ocean deployment that could test its",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-18oau00",
+   "title": "Ukraine says Russian strikes kill four in Odesa",
+   "summary": "Odesa, an important port city on the Black Sea, has been under heavy Russian shelling throughout the war.",
+   "expected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-jo60gb",
+   "title": "MRI advance could help monitor fatty liver disease by revealing enzyme activity",
+   "summary": "Researchers in Japan have, for the first time, visualized the activity of an important liver enzyme in vivo using an MRI-based approach, potentially providing a new way to detect and monitor fatty liv",
+   "expected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1qdyz01",
+   "title": "9 biotechs will cut at least half their California workforces",
+   "summary": "Workforce reductions have hit over 1,000 biopharma employees in The Golden State year to date, with pink slips coming from small biotechs and large pharmas. Biotechs have been hit the hardest, with ni",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1hfwew2",
+   "title": "Trump administration weighs forcing US firms to disclose Chinese AI use",
+   "summary": "The move is a bid to discourage reliance on the technology without imposing new restrictions that could anger Beijing.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1vx9no0",
+   "title": "Riyadh skyscraper damaged as Saudi Arabia reports new Houthi attacks",
+   "summary": "Riyadh skyscraper damaged as Saudi Arabia reports new Houthi attacks",
+   "expected": [
+    "沙烏地阿拉伯"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1vsenkd",
+   "title": "DP World boosts Maputo port investment to $200m",
+   "summary": "DP World boosts Maputo port investment to $200m, nearly tripling capacity to 650,000 teu by 2027",
+   "expected": [
+    "莫三比克"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-lwm3sw",
+   "title": "VodafoneThree to Trial Nokia AI",
+   "summary": "VodafoneThree plans to test Nokia’s AI-native anyRAN software running on the NVIDIA Aerial RAN computer, first in a controlled lab environment and then in a selected-site field trial in the UK, to mea",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1xfly24",
+   "title": "Fried chicken and a chat with an old friend: How Marcos catered to Trump",
+   "summary": "President Ferdinand R. Marcos Jr. of the Philippines flattered President Trump during his brief visit to Manila. It is unclear what dividends the strategy will yield.",
+   "expected": [
+    "菲律賓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-zpp80o",
+   "title": "AXA XL appoints Anita Mirzaian as Executive Underwriter, Media Liability",
+   "summary": "AXA XL, the property and casualty (P&#38;C) and specialty risk division of AXA, has appointed Anita Mirzaian as Executive Underwriter, Media Liability, based in Los Angeles. The media liability underw",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-en9ugb",
+   "title": "M 5.3 - 4 km NNW of Tsunagi, Japan",
+   "summary": "地震事件：DYFI? - III Time 2026-11-18 17:22:23 UTC 2026-11-18 17:22:23 UTC at epicenter Location 32.278&deg;N 130.461&deg;E Depth 10.00 km (6.21 mi)",
+   "expected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-jr2i4",
+   "title": "Xi Pledges $20 Million for APEC Cooperation",
+   "summary": "Bloomberg's Stephen Engle reports on China's plans to provide about $20 million for APEC cooperation, including a policy research center, signaling support for multilateralism across the 21-member gro",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1slozmq",
+   "title": "Former Macron ally Philippe unveils conservative agenda as French centre and right loses ground",
+   "summary": "Socialist, centrist and conservative candidates have been struggling to gain ground ahead of France's presidential elections, amid a race dominated by the hard left and far-right.",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-dzb4iy",
+   "title": "Police in Bangladesh clash with garment workers demanding higher minimum wages",
+   "summary": "Workers are demanding a minimum monthly wage of 30,000 takas (€215), up from 12,500 takas (€89) and say rising living costs have eroded their purchasing power.",
+   "expected": [
+    "孟加拉"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-jo9re5",
+   "title": "Philippines Returns to Retail Dollar Bonds as Peso Rebounds",
+   "summary": "The Philippines raised more than $450 million from retail dollar bonds on Thursday, marking its return to selling such debt after three years as yields eased and the peso bounced back from a record lo",
+   "expected": [
+    "菲律賓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1ig5mdc",
+   "title": "Acupuncture‑like treatment linked to sustained weight loss in new study",
+   "summary": "A form of acupuncture that leaves dissolvable threads under the skin may help people lose weight, a small trial in China suggests.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-i5mw63",
+   "title": "‘45 is the new 60’: Thailand’s Kasikornbank is paying staff to retire early as it prepares for AI",
+   "summary": "Kasikornbank is now trying to find ways to boost productivity within the bank.",
+   "expected": [
+    "泰國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1uhgrt0",
+   "title": "Japan PM Takaichi spoke with Putin at APEC summit",
+   "summary": "Japan PM Takaichi spoke with Putin at APEC summit",
+   "expected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-ir1s8l",
+   "title": "'Netanyahu's only 2 tickets are racism or starting a war: He stopped acting as a democratic player'",
+   "summary": "François Picard is pleased to welcome Israeli writer and filmmaker Etgar Keret, author of \"The Seven Good Years\", joining us from Tel Aviv. Keret argues that Netanyahu is seeking to remain in power, a",
+   "notExpected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-invk2o",
+   "title": "North Korean enrichment facility extension ‘externally complete’: IAEA",
+   "summary": "A further extension of an enrichment facility in North Korea has been “externally complete” since last month, UN nuclear watchdog head Rafael Grossi has said. Inspectors of the International Atomic En",
+   "expected": [
+    "北韓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-17yoytv",
+   "title": "After Black October, OffSec Turns PHPH2Shell and Other New Vulnerabilities Into Hands",
+   "summary": "New York City, United States, November 18th, 2026, CyberNewswire OffSec built 14 labs on real CVEs in two weeks. Its Level 20 offer takes $550 off Learn One for learners ready to train against threats",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r16",
+   "n": "intl-1gh1xsm",
+   "title": "Nigeria Develops Africa’s First Child Health State Value Set for Economic Evaluations",
+   "summary": "Researchers have established Nigeria’s first EQ-5D-Y-3L health state value set to support pediatric economic evaluations and healthcare priority setting.",
+   "expected": [
+    "奈及利亞"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-hicbwl",
+   "title": "Apec leaders suit up with Chinese-style scarves for family photo in Shenzhen",
+   "summary": "Apec leaders were given Chinese-style scarves to wear for the group summit photo on Thursday. It was a pared-back nod to the forum’s tradition of dressing attendees in the host economy’s sartorial her",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1bpzajb",
+   "title": "Dozens more children killed in Yemen amid escalating hostilities",
+   "summary": "The UN child rights agency, UNICEF, on Wednesday called for warring parties in Yemen to protect children as renewed conflict between Houthi rebels and Government forces approaches the three-month mark",
+   "expected": [
+    "也門"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-kcox2c",
+   "title": "Myanmar faces historic genocide verdict at UN court over Rohingya massacres",
+   "summary": "No state has ever been found guilty by an international court of committing genocide.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-13ru54b",
+   "title": "What really happened with the Beef Checkoff lawsuit?",
+   "summary": "Ranchers’ Rights Initiative sees both legal wins and losses against the North Dakota Beef Commission, the state of North Dakota and the governor’s office in its fight to reform the Beef Commission.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-lhrymc",
+   "title": "Iraqi court sentences six French nationals to life in prison for joining IS",
+   "summary": "Trials began in September for 47 French citizens transferred from Syria last year, charged with belonging to the extremist group. The court has already sentenced 10 members of the group to prison term",
+   "notExpected": [
+    "敘利亞"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-uq6lwx",
+   "title": "Bancroft has blown up Australian cricket and there is no going back",
+   "summary": "Cameron Bancroft's statement is the atom bomb Cricket Australia has always feared. For so many of the game's key figures, there is no turning back now.",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-5aik41",
+   "title": "New model measures airway damage caused by electronic cigarettes",
+   "summary": "University of California, Riverside researchers have developed a new way to evaluate pathological changes and cellular remodeling caused by inhaled aerosols, such as those from electronic cigarettes.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-18kvdnt",
+   "title": "'The drones don't fly here' - BBC reports from Ukraine's new front line",
+   "summary": "Ukrainian forces are fighting Russian troops in an old Soviet tunnel in the Kharkiv region.",
+   "expected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-u6h81x",
+   "title": "Mozambique clears revised $26bn Rovuma LNG development plan",
+   "summary": "Mozambique&#8217;s government has approved a revised development plan for ExxonMobil&#8217;s $26bn Rovuma LNG project, clearing another regulatory hurdle for one of Africa&#8217;s largest proposed gas",
+   "expected": [
+    "莫三比克"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-15hk6vi",
+   "title": "US Democrats put Trump inner circle on notice over investigations",
+   "summary": "Robert Garcia, the top Democrat on the House Oversight Committee, sent 12 letters targeting figures including the US president&#039;s sons, JD Vance and Jared Kushner.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-sm5cis",
+   "title": "Europe Tonight: EU proposes €45bn Ukraine loan as Trump, Xi and Putin meet",
+   "summary": "Ursula von der Leyen unveils a new joint-debt package for Kyiv, an unprecedented US-China-Russia trilateral summit unfolds at APEC, industry figures warn Europe cannot sleep through the AI revolution.",
+   "notExpected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-hez668",
+   "title": "First turbine delivery completed at largest natural gas plant under construction in the U.S.",
+   "summary": "Homer City Generation completed the delivery of two GE Vernova turbines to the Homer City Energy Campus in September 2026, marking progress toward a 4.5 GW gas plant for data centers.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1iicbmt",
+   "title": "'Parasite' backer and other South Korean media, gaming and travel stocks rally on China trade deal",
+   "summary": "Korean media, gaming and travel stocks surged on hopes of greater access to China.",
+   "notExpected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-ngxwkg",
+   "title": "Uropathogens Colonize 27.6 Percent of Diabetic Patients in Ghanaian Hospital Study",
+   "summary": "A cross-sectional investigation at Sunyani Teaching Hospital in Ghana found that 27.6 percent of evaluated type 2 diabetes patients harbored uropathogens, predominantly presenting as asymptomatic bact",
+   "expected": [
+    "迦納"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-tpmgaw",
+   "title": "(LEAD) LEET top scorer suspected of AI cheating found in cardiac arrest",
+   "summary": "SEOUL, Nov. 19 (Yonhap) -- A university student suspected of cheating with artif...",
+   "expected": [
+    "南韓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-114znga",
+   "title": "Act 59: Vermont Conservation Plan Release Provides Pathways Toward Resilience",
+   "summary": "On Monday, November 16, 2026, the Vermont Housing and Conservation Board (VHCB) and Agency of Natural Resources (ANR) released its draft Vermont Conservation Plan, representing the next major...",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-ixbytv",
+   "title": "Trump arrives in China for historic meeting with Xi, Putin",
+   "summary": "President Donald Trump in Shenzhen for historic trilateral talks with Chinese leader Xi Jinping and Russia's Vladimir Putin.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-rva2fq",
+   "title": "Telkom signs distribution deal with Amazon Leo for South Africa",
+   "summary": "Telkom Group announced that its wholesale infrastructure provider unit Openserve has signed an agreement with Amazon Leo to become an authorised distributor of its LEO satellite internet network in So",
+   "expected": [
+    "南非"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1fptwg6",
+   "title": "(URGENT) Seoul shares end higher ahead of Anthropic's stock market debut",
+   "summary": "(END)",
+   "expected": [
+    "南韓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-phq16c",
+   "title": "Feral pig crisis: 100,000 aerial culls across nation fail to curb farm damage",
+   "summary": "Unpublished report card shows soaring pig numbers across rural Australia.",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-cjfrvv",
+   "title": "Inside India newsletter: Foreign flows helped the market recover. Now it faces the inflation test",
+   "summary": "India’s inflation, which has been on the rise for 12 straight months, is becoming a risk to growth and to the reversal of foreign inflows.",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-10f6noi",
+   "title": "North Carolina Arrests 2 involved in business email compromise scam of hospital",
+   "summary": "November 16 &#8211; The West Jefferson Police Department and the North Carolina State Bureau of Investigation (SBI) have arrested two men in a multi-state fraud investigation that began when Ashe Memo",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-189jcux",
+   "title": "The U.S. Tech Outage Wave, Explained",
+   "summary": "Experts say AI likely played a role but not in the way you might think.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1vaji5f",
+   "title": "Brazil, Colombia and Chile lead Latin America’s agrivoltaics market with 60 projects across the region",
+   "summary": "New data from German consultancy AgRadiance show that 36 agrivoltaic projects are operational across 11 Latin American countries, with Brazil, Colombia, Chile and Mexico accounting for 75% of the regi",
+   "notExpected": [
+    "巴西"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-7rp4sb",
+   "title": "Waymo pulls driverless cars from highways nationwide after California ban",
+   "summary": "The DMV directive requires Waymo to stop both operating and testing its driverless vehicles on all California freeways, citing \"an imminent hazard to public safety.\" The order will remain in effect un",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1a9hqkk",
+   "title": "Cosco Shipping inaugurates China Southwest regional HQ",
+   "summary": "Two landmark cooperation agreements signed in Chongqing to bolster the New International Land-Sea Trade Corridor",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-4h2dz5",
+   "title": "The China-US AI Hotline Needs to Be Different",
+   "summary": "China-U.S. hotlines have historically failed when needed most. This one needs to actually work – and here’s how to make sure it does.",
+   "notExpected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-12dyhav",
+   "title": "Commercial poultry farms to limit El Niño impact in Philippines",
+   "summary": "Commercial poultry farms to limit El Niño impact in Philippines Heat stress and feed costs are the main risks for the sector",
+   "expected": [
+    "菲律賓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-a9hqiz",
+   "title": "Philippines imposes temporary import restriction on pork",
+   "summary": "Philippines imposes temporary import restriction on pork Provisional safeguard follows finding of serious injury to local industry",
+   "expected": [
+    "菲律賓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-ermh99",
+   "title": "ICJ to rule on Rohingya genocide case: What to expect",
+   "summary": "The ICJ rules on The Gambia’s genocide case against Myanmar. Here’s what’s at stake for the Rohingya.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-64df80",
+   "title": "VIDEO: Taking on Dementia in Texas at UT Austin",
+   "summary": "Dementia is a growing concern for aging Texans. Karen Fingerman from the Texas Institute on Dementia, Aging and Longevity explains how the University is rising to the challenge. The post VIDEO: Taking",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1siufkc",
+   "title": "Six weeks after Trump’s Russian diesel deal, no tankers have reached the U.S.",
+   "summary": "Two ships changed course, and another has halted hundreds of miles from the coast. Analysts say potential buyers probably are worried about the implications of accepting a Russian import.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-vuj6cu",
+   "title": "Amsterdam, Valkenswaard - Verdachte pint in Amsterdam van account van man uit Valkenswaard",
+   "summary": "Op zondag 5 april 2026 is een man uit Valkenswaard doormiddel van phishing opgelicht. Zijn bankpas is hierbij gekopieerd. Hiermee heeft getoonde verdachte vervolgens op maandag 6 april 2026 diverse pi",
+   "expected": [
+    "荷蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-wlmmfw",
+   "title": "Bank of Japan to raise interest rates in December and again by end-March, economists say",
+   "summary": "Bank of Japan to raise interest rates in December and again by end-March, economists say",
+   "expected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1jovol6",
+   "title": "Russia, Japan, and the Race to Power a Nuclear Indonesia",
+   "summary": "Jakarta should evaluate its international nuclear partnerships by the extent to which they can contribute to its long-term technological and industrial development.",
+   "notExpected": [
+    "俄羅斯"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-gc20ai",
+   "title": "Higher Oxidative Balance Score Linked to Lower Kidney Stone Risk in UK Biobank",
+   "summary": "A prospective UK Biobank study found that individuals with higher overall oxidative balance scores faced a lower risk of developing kidney stone disease.",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-eyn1t9",
+   "title": "Xi embraces Trump in China: 'Diplomacy playing out in real time'",
+   "summary": "President Xi Jinping personally greeted US counterpart Donald Trump on the tarmac at a Chinese airport on Wednesday, with the two leaders briefly hugging ahead of their highly anticipated meeting with",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-7nlsso",
+   "title": "Policy changes in Canada had little effect on sales of antibiotics for animals, study finds",
+   "summary": "Sales of antibiotics for use in food-producing animals have fallen by 11% in Canada since 2018, but not because of federal policy changes.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-svs85m",
+   "title": "Imelda, Modi and Jollibee: Lighter side of Trump&#039;s Manila trip",
+   "summary": "An awkward wait for Narendra Modi, a reunion with Imelda Marcos and late-night Jollibee featured in Donald Trump’s 21-hour visit to Manila.",
+   "expected": [
+    "菲律賓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1icba12",
+   "title": "William and Kate meet India's PM as they wrap up royal visit",
+   "summary": "The Prince and Princess of Wales met the prime minister of India on Wednesday to discuss trade and bilateral ‌ties at the end of their three-day visit to the country.",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-p7dfhf",
+   "title": "K-Pop Giants Position for China Return After Decade",
+   "summary": "South Korean entertainment companies are positioning themselves for a return to China after the two countries agreed to expand cultural exchanges, raising hopes that Beijing may loosen restrictions th",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-15pvha7",
+   "title": "Measles Elimination Status Revoked: What's Next?",
+   "summary": "(MedPage Today) -- What does it mean for the U.S. to lose its measles elimination status after more than 25 years -- and what will it take to regain it? In this 45-minute webinar, MedPage Today Editor",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-pjfw7p",
+   "title": "ZKH's Wang On Earnings",
+   "summary": "Jerry Qian Wang, CFO at US-listed Chinese industrial supplies procurement platform, discusses the company's third-quarter results and stock performance. He speaks on \"Bloomberg: The China Show.\" (Sour",
+   "notExpected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-quar6s",
+   "title": "WHO Director-General Candidates Put to the Test in First Public Forum",
+   "summary": "Four of the seven candidates vying to succeed Dr Tedros Adhanom Ghebreyesus faced member-state questioning in Geneva on Wednesday. The hearings exposed sharp fault lines over budget cuts and regional",
+   "expected": [
+    "瑞士"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-13nc4fv",
+   "title": "STAT+: NIH to move last group of its research chimps to a sanctuary",
+   "summary": "The last chimpanzees owned by the U.S. government and still living in a laboratory will be moved to a sanctuary next year.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1lhgj0s",
+   "title": "ACC Approves Gas Plants, Rate Hike, and Allows Annual Rate Increase",
+   "summary": "Phoenix – Yesterday, the Arizona Corporation Commission voted to approve Salt River Project’s (SRP) proposed Marigold gas plant in Pinal County, and also approved Tucson Electric Power’s (TEP) propose",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1g0uek",
+   "title": "Could measles and midterms bring down Maha?",
+   "summary": "This week the US lost its measles elimination status, an official recognition that the infectious disease is endemic in the country after being eliminated for 26 years. To find out what this means in",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-x5l7bu",
+   "title": "我在美國建立科技職涯並取得公民身分結婚生子 我們將在印度把孩子養大",
+   "summary": "旅美 18 年後，前 Meta 工程師 Balaji Gururajan 為讓孩子體驗印度文化與家族連結，毅然舉家遷回印度。他期盼彌補在美成長所缺乏的大家庭生活，並深信印度已今非昔比，能提供不同的生活品質。",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-18wpt1k",
+   "title": "India adds record 8.4 GW of open-access solar in first nine months of 2026",
+   "summary": "The nation’s cumulative installed open-access solar capacity reached 39.3 GW as of Sep. 30, 2026. The post India adds record 8.4 GW of open-access solar in first nine months of 2026 appeared first on",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1p0swx4",
+   "title": "CEVA Logistics and SIT launch AI and robotics lab in Singapore",
+   "summary": "CEVA Logistics and the Singapore Institute of Technology (SIT) have opened a joint innovation laboratory in Singapore to develop robotics and artificial intelligence solutions for warehouse operations",
+   "expected": [
+    "新加坡"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-5y828m",
+   "title": "Democrats nominate Hakeem Jeffries for next US House speaker",
+   "summary": "The incoming House Democratic Caucus nominated Jeffries in a closed-door, secret-ballot vote.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-ghwlk6",
+   "title": "UK Kidney Researchers Establish National Guidelines for Equitable and Open Data Science",
+   "summary": "The Renal Health Data Science Network has introduced community-sourced guidelines establishing standardized practices for managing, sharing, and evaluating kidney research data across the UK.",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1i94bvb",
+   "title": "All Points Logistics Announces Partnership with Expeditors for Space Prep Logistics Center at Kennedy Space Center",
+   "summary": "MERRITT ISLAND, FL, November 18, 2026 — All Points Logistics has announced a partnership with Expeditors International of Washington, Inc. (NYSE: EXPD) to serve as the exclusive logistics provider for",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1onvt2q",
+   "title": "Police reveal fourth Melbourne Cup stolen as two accused appear in court",
+   "summary": "Two men have been charged after four Melbourne Cups and a Caulfield Cup were stolen from Melbourne racecourses.",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-10b3xke",
+   "title": "Hegseth makes surprise appearance in Venezuela, renews military partnership",
+   "summary": "The visit comes less than a year after the U.S. capture of President Nicolás Maduro, whom the Trump administration accuses of running a criminal network with deep military ties.",
+   "expected": [
+    "委內瑞拉"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-qs3lmz",
+   "title": "Neural Networks Project Persistent Pneumonia Seasonality Under Climate Change in Southern Brazil",
+   "summary": "A modeling study in southern Brazil indicates that pneumonia hospitalizations will maintain strong seasonal cycles through 2049 without exhibiting a statistically significant long-term monotonic trend",
+   "expected": [
+    "巴西"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1nd4p1i",
+   "title": "China&#8217;s Terrestrial Ecosystems Acted as a Persistent Carbon Sink Across Two Decades",
+   "summary": "A study of 229 flux sites found that China's terrestrial ecosystems functioned as a persistent carbon sink between 2001 and 2020.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-16mqd63",
+   "title": "Singapore kitefoiler Max Maeder named 2026 male World Sailor of the Year",
+   "summary": "Max Maeder is the first Singaporean to claim the male World Sailor of the Year award.",
+   "expected": [
+    "新加坡"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-k4hih8",
+   "title": "M 4.8 - 11 km SSW of Santa Gertrudis Miramar, Mexico",
+   "summary": "地震事件：Time 2026-11-18 22:06:52 UTC 2026-11-18 22:06:52 UTC at epicenter Location 15.962&deg;N 95.427&deg;W Depth 35.00 km (21.75 mi)",
+   "expected": [
+    "墨西哥"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-c72p8z",
+   "title": "If Europe is not around the table, is it on the menu?",
+   "summary": "Good morning. Angela Skujins penning your Thursday newsletter. On today’s docket: Friends of Ukraine meet in the German capital while a potentially consequential trilateral gets underway in China.",
+   "notExpected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-5cd2yk",
+   "title": "US panel urges FMC probe into China’s PSC vessel detentions",
+   "summary": "Commission requests sanctions, IMO referrals, and federal investigation into Beijing’s targeted detentions of Panama-flagged ships",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-ajuawj",
+   "title": "DHL launches new China–India–Europe air freight service",
+   "summary": "DHL Global Forwarding has introduced a dedicated air freight service connecting Hong Kong, Navi Mumbai and Liège, expanding its cargo network between China, India and Europe. The new route will operat",
+   "notExpected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1xijevw",
+   "title": "Zelenskyy says Starshield speed curbs still in place over parts of Ukraine",
+   "summary": "Ukraine's charge d'affaires to the U.S., Denys Sienik, said that Starshield had been speed-limited for seven days already in Ukraine.",
+   "expected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-l7xp2z",
+   "title": "UniCredit and Germany reach deal on Commerzbank takeover terms",
+   "summary": "UniCredit and Germany reach deal on Commerzbank takeover terms",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-7q8075",
+   "title": "Elon Musk says record $446m spending on US midterms was 'pretty foolish'",
+   "summary": "The multi-billionaire also said he was \"not Maga\", distancing himself from the political movement linked to Trump.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-13j5fsi",
+   "title": "Louisiana gets EPA approval to permit waste disposal at coal",
+   "summary": "The clearance comes a year and a half after the federal agency announced it would roll back regulations on the disposal of coal waste byproducts and allow states to take over the EPA’s responsibility",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-orek7b",
+   "title": "Osaka Gas to expand US, India business despite global geopolitical risks",
+   "summary": "Osaka Gas to expand US, India business despite global geopolitical risks",
+   "notExpected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-vw2rbs",
+   "title": "UK cyber incidents hit near-record high in October",
+   "summary": "UK cyber incidents hit near-record high in October",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-5tavrm",
+   "title": "Neuer Ausschuss gebildet: Nvidia will Exportkon­trol­len künftig selbst über­wachen",
+   "summary": "Nvidia richtet einen Ausschuss für nationale Sicherheit und Exportkontrollen ein, um die Aufsicht über Handelsrisiken zu stärken. Der Schritt erfolgt vor dem Hintergrund verschärfter US-Exportbeschrän",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-1b4q7qq",
+   "title": "VIG Re&#8217;s first catastrophe bond an important retrocession milestone: CEO Sonndorfer",
+   "summary": "This content is copyright to www.artemis.bm and should not appear anywhere else, or an infringement has occurred. For VIG Re, the reinsurance arm of Vienna Insurance Group, the recent successful issua",
+   "notExpected": [
+    "奧地利"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r31",
+   "n": "intl-hff3sz",
+   "title": "U.S. charges Russian man with stalking Palantir workers over Ukraine work",
+   "summary": "Prosecutors say Igor D'iu was recruited over Telegram to surveil employees of a Palo Alto company because of its help to Ukraine",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-os2mnw",
+   "title": "People Moves: Mele Joins Starwind Environmental in Rhode Island",
+   "summary": "Starwind Environmental, a program within Starwind Specialty Insurance Services, a division of CRC Group, named Richard &#8220;Rich&#8221; Mele as assistant vice president in Rhode Island. Mele brings",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-a3cvk9",
+   "title": "Google、AIエージェント機能「Tasks in Gemini」を日本を含む6カ国で無料提供 旧「Gemini Spark」",
+   "summary": "Googleは、GeminiアプリのAIエージェント機能「Tasks in Gemini」（旧Gemini Spark）を日本を含む6カ国で無料提供すると発表した。無料版は「Gemini 4 Hydrogen」で動作し、隔離された仮想マシン上でバックグラウンド作業を代行する。米国では電話予約や決済などの機能も順次展開する。",
+   "notExpected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-alt75r",
+   "title": "Haarlem - Familie van slachtoffer babbeltruc reageert alert: nóg een nepagent aangehouden",
+   "summary": "Het 87-jarige slachtoffer werd gebeld door een persoon die zich voordeed als de politie. De nepagent, een 15-jarige jongen uit Amsterdam, liet aan de telefoon weten dat hij langs zou komen om kostbaar",
+   "expected": [
+    "荷蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-hc4tjb",
+   "title": "Dirty data centres could rival coal power plants on greenhouse gas emissions: report",
+   "summary": "An analysis of nine data centres proposed for Australia shows they could create as much pollution as three coal-fired power stations if not managed correctly. The post Dirty data centres could rival c",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1x2jwy5",
+   "title": "China goes public with stealth UAV manned by crack team of 'self-trained female drone operators' — GJ-11 looks a lot like Northrop Grumman's X-47B now",
+   "summary": "China's latest GJ-11 footage reveals its weapons bays, sensors, landing gear, and exhaust while outlining planned strikes and fighter cooperation.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1tds1ep",
+   "title": "Ukraine was main topic at Trump-Putin meeting, Kremlin says",
+   "summary": "Kremlin foreign policy aide Yuri Ushakov said Russian President Vladimir Putin&#039;s mood after the meeting was \"simply excellent\".",
+   "notExpected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-w3t0b5",
+   "title": "Exquisite X-rays and dynamic compression initiate a new era of physics experiments on plutonium",
+   "summary": "Scientists at Lawrence Livermore National Laboratory (LLNL), Argonne National Laboratory (ANL) and Washington State University (WSU) have conducted the first dynamic compression experiments on plutoni",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1y3jvso",
+   "title": "Musk says Jensen Huang is irreplaceable, regrets midterm spending",
+   "summary": "Elon Musk spoke about Jensen Huang, his U.S. midterms spending and overlaps between SpaceX and Tesla at the Dealbook Summit.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-xwzgd0",
+   "title": "Flights, banks, emails: What we know about a U.S. wave of tech outages",
+   "summary": "A string of technical outages across the U.S. has disrupted everything from air travel and banking to security systems, raising questions about whether the seemingly unrelated incidents are caused by",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-38gsj0",
+   "title": "UK agrees to significantly reduce tuition fees for European students as part of EU deal: Report",
+   "summary": "Since Brexit, EU students pay international fees rather than fees of domestic students",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-ij8tn",
+   "title": "A new life cycle assessment of polyethylene packaging and alternatives in the US and Europe",
+   "summary": "A new research study assessed five major PE packaging applications and organized the analysis around three germane, current questions. How does PE compare with paper, glass, and metal alternatives? Ho",
+   "notExpected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-hi1x7j",
+   "title": "North Korea expanded uranium enrichment plant, says IAEA head",
+   "summary": "IAEA chief Rafael Grossi has said the ongoing expansion of North Korea's uranium enrichment program remains \"a cause for serious concern.\"",
+   "expected": [
+    "北韓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1iaxcpd",
+   "title": "NHS warned over Palantir lock-in as £330m contract extended",
+   "summary": "Ministers are facing renewed scrutiny for delaying Palantir&#8217;s NHS exit until 2029, amid warnings that the health service could remain tied to the US tech giant long after its £330m contract ends",
+   "notExpected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1dck67j",
+   "title": "Tesla to continue increasing China production, state media reports",
+   "summary": "Tesla to continue increasing China production, state media reports",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-miw8v1",
+   "title": "Apple among the companies facing pressure from US senators over ‘nudify’ apps [U: Apple responds]",
+   "summary": "The Guardian reports that three US senators have sent letters to the CEOs of Apple, Google, and Meta, demanding answers about their failure to prevent access to AI-powered ‘nudify’ apps. Here are the",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-jvxu1h",
+   "title": "Hegseth in Colombia to deepen anti-drug ties after surprise Venezuela stopover",
+   "summary": "Colombian Defense Minister Jorge Eduardo Mora had told his country's parliament that the Pentagon chief would hand over a C-130 Hercules military aircraft during the visit.",
+   "expected": [
+    "哥倫比亞"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-a9obab",
+   "title": "A 115 million‑year‑old &#039;algae rebellion&#039; in Portugal&#039;s sea cliffs pushes back evolutionary timeline",
+   "summary": "Quite a few scientific discoveries are a product of chance. You set out looking for one thing, but often end up finding something totally unexpected. In micropaleontology, the study of microscopic fos",
+   "expected": [
+    "葡萄牙"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-v7flwy",
+   "title": "South Africa&#039;s Wiese ruled out of Nations Championship due to suspension",
+   "summary": "South Africa&#039;s Wiese ruled out of Nations Championship due to suspension",
+   "expected": [
+    "南非"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1ji15hm",
+   "title": "Trump arrives in China for unprecedented trilateral encounter with Xi and Putin",
+   "summary": "China’s Xi welcomes his US and Russian counterparts at the APEC summit as the three global powers’ leaders gear up for their first trilateral meeting. Xi said Asia-Pacific needs open trade, Putin cond",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1v5fe",
+   "title": "Nvidia expands AI infrastructure push into high-performance computing",
+   "summary": "Perhaps anxious to talk about technology instead of its CEO drama , Nvidia unveiled a raft of HPC-related news at the Supercomputing ’26 show taking place in Chicago. Nvidia’s announcements at SC26 co",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-x5l7bv",
+   "title": "川普僅現身就躍居中國社群媒體熱搜榜首",
+   "summary": "川普訪中引爆中國社群媒體，相關話題瀏覽量破億。他被譽為偶像，人氣超越娛樂圈，展現其在中國民間的超高人氣與影響力。",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-x5l7bn",
+   "title": "Zohran Mamdani：預測市場令人不安並「讓生活大幅惡化」",
+   "summary": "紐約市市長表示，他從未在預測市場交易。他稱此舉「令人不安」，認為將一切化為賭注會貶低生活價值，並擔憂其潛在的成癮問題。",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1s1rv0v",
+   "title": "Bangladesh needs COP31 to deliver clarity on climate finance",
+   "summary": "Bangladesh cannot bear rising climate costs alone - the UN summit in Antalya must show how timely, accessible finance will be delivered at the scale needed The post Bangladesh needs COP31 to deliver c",
+   "expected": [
+    "孟加拉"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-fznqj1",
+   "title": "Waymo Robotaxis Pulled From Freeways Indefinitely",
+   "summary": "Waymo has temporarily suspended freeway operations across all its robotaxi markets after California regulators ordered the company off the state's highways over repeated incidents involving constructi",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-zsyxwj",
+   "title": "One unusual tooth suggests Homo erectus shared southern China with another human species",
+   "summary": "One of the most important ancestors to humans was around for much longer than previously believed. That is the conclusion of a new international study published in Nature in which researchers, includi",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1qoc4h3",
+   "title": "Australia captain Cummins under pressure as Sandpapergate scandal deepens",
+   "summary": "Australia captain Cummins under pressure as Sandpapergate scandal deepens",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1pz53f4",
+   "title": "Before the world woke up: Yemen and the story of coffee",
+   "summary": "Today, coffee is grown across the world. From Brazil to Vietnam, Ethiopia to Colombia. But the story of how it became a global obsession takes us back to Yemen.",
+   "expected": [
+    "也門"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-3fxkjj",
+   "title": "Commemoration in Italian parliament of ex-fascist leader causes uproar",
+   "summary": "ROME, Nov 18 - Italy's parliament ordered the removal of fascist imagery from an exhibition honouring Pino Rauti, a prominent far-right politician and admirer of Benito Mussolini, after an exhibition",
+   "expected": [
+    "義大利"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-j54ijp",
+   "title": "5 key places that signal where Spain’s election is heading",
+   "summary": "We analyzed the results of every congressional election in the country’s history to find the battlegrounds you need to know about.",
+   "expected": [
+    "西班牙"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-19ftsi4",
+   "title": "Mississippi Businessman Sentenced to 10 Years in Prison for $19M Medicare Fraud",
+   "summary": "A Mississippi businessman was sentenced yesterday to 10 years in prison for paying illegal kickbacks for fraudulent doctors’ orders and then using those orders to fraudulently bill Medicare over $19 m",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-tokra",
+   "title": "Peel Hunt boss: My staff are backing British companies with their own money",
+   "summary": "Too few Brits own British stocks. The UK is among the lowest ranks of advanced economies showing a “home bias” towards domestic equities in its pension funds. This creates clear and current problems f",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-261j65",
+   "title": "China expected to hold benchmark lending rates in November, but some see a cut coming",
+   "summary": "China expected to hold benchmark lending rates in November, but some see a cut coming",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-qpl5qo",
+   "title": "Milkshake study offers clues to diet&#039;s brain effects in young adults",
+   "summary": "Results from a Virginia Tech eating trial add to evidence that the developing brain responds differently to foods that have been through industrial processing or contain ingredients not found in a hom",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-10utqhu",
+   "title": "GTA VI launch sparks celebrations in Miami and Dublin",
+   "summary": "After 13 years of anticipation, Grand Theft Auto VI has finally arrived. Fans celebrated at a launch party in Dublin, while Miami Heat supporters rushed to buy limited-edition Vice City merchandise.",
+   "notExpected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1llo6nn",
+   "title": "How to watch New Zealand vs India 1st Test 2026: Free Streams & TV Channels",
+   "summary": "All the ways to watch the New Zealand vs India 2026 1st Test from anywhere, as both sides fight for a place in the WTC final.",
+   "notExpected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-18osa8",
+   "title": "Be ready to rebuild from scratch after cyberattacks, UK watchdogs tell banks",
+   "summary": "The UK’s top financial watchdogs have ordered banks to be prepared to rebuild their systems from scratch if hit by a cyberattack following an explosive rise in new threats. The Bank of England and Fin",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-64gjyc",
+   "title": "Unbemannte Kampfflugzeuge: R�stungskonzerne konkurrieren um Drohnen-Auftrag der Bundeswehr",
+   "summary": "Die Luftwaffe plant den Kauf Hunderter unbemannter Kampfjets. Der US-Marktf�hrer General Atomics will den Auftrag. ( Drohne , Politik )",
+   "notExpected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1gf61fp",
+   "title": "Alleged Russian agent arrested for spying on Silicon Valley tech firm",
+   "summary": "The company was not named in the indictment but was described as a large, publicly traded technology and defence firm with offices across the US, including in Palo Alto, California.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1vqeujy",
+   "title": "'Coalition of the Willing' meets in Berlin: In an era of waning support, Europe remains committed to Ukraine",
+   "summary": "The \"Coalition of the Willing\" supporting Ukraine is gathering in Berlin. One of the key issues under discussion is whether Europe will be able to play a role in future negotiations over the country's",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1hm3gxm",
+   "title": "World Bank official says Lebanon reconstruction making slow progress",
+   "summary": "Beirut blames Israel&#039;s occupation and attacks on southern Lebanon for reconstruction delays.",
+   "notExpected": [
+    "以色列"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1q8tmms",
+   "title": "Storms Bruna and Charles bring record rain and winds to Portugal and Madeira",
+   "summary": "The two storms combined meant that several records for maximum wind gusts and rainfall were broken in the first 12 days of November, according to the Portuguese Institute for the Sea and the Atmospher",
+   "expected": [
+    "葡萄牙"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-d7kqxh",
+   "title": "RBA to remain on hold as recession risks build",
+   "summary": "The minutes of the Reserve Bank of Australia&#8217;s (RBA) November board meeting revealed a 3–6 split vote on raising the cash rate from 4.6% to 4.85%, with three board members warning that Australia",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-apipw",
+   "title": "Colombian govt proposes extending ETS implementation phase to 2035",
+   "summary": "Colombia’s incoming government is consulting on a draft decree that would replace the current rules governing the country’s emissions trading system (ETS), proposing to extend its implementation phase",
+   "expected": [
+    "哥倫比亞"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1phr6fn",
+   "title": "Noninvasive deep brain stimulation enhances reward learning and eases depressive symptoms",
+   "summary": "Researchers led by Professor TU Yiheng from the Institute of Psychology of the Chinese Academy of Sciences, in collaboration with researchers from Shenzhen University and other institutions, have deve",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-mtxn66",
+   "title": "El Niño Rains Paint the Atacama",
+   "summary": "Winter precipitation helped wake dormant seeds in northern Chile, carpeting the desert with what may be the region’s most extensive flowering of the satellite era.",
+   "expected": [
+    "智利"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1eboga",
+   "title": "2 men sentenced to prison terms over killing of film director",
+   "summary": "SEOUL, Nov. 19 (Yonhap) -- Two men indicted on charges of assaulting and killing...",
+   "expected": [
+    "南韓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1eoue6r",
+   "title": "Anthropic prices IPO at $83 US per share, valuing AI giant at $1.51 trillion US",
+   "summary": "Anthropic has set a stock price of $83 US per share for its hotly anticipated initial public offering, with shares of the U.S. artificial intelligence giant set to debut on the Nasdaq exchange on Thur",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-4m5c2j",
+   "title": "Arizona says it is investigating OpenAI, other firms over possible rogue agents",
+   "summary": "Arizona says it is investigating OpenAI, other firms over possible rogue agents",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1iis03n",
+   "title": "Takaichi gets chilly reception in China on first Japan leader visit since 2019",
+   "summary": "Takaichi received a subdued welcome on her trip to attend the APEC summit, as Beijing shows limited appetite for repairing ties strained by Taiwan dispute.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1qh0e48",
+   "title": "Toyota expands C-HR EV recall to 19,000 globally",
+   "summary": "Toyota is recalling 19,000 electric C-HR SUVs globally, with about 10,000 affected in the US. more…",
+   "notExpected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-vfsvjo",
+   "title": "'We weren't afraid of the future': France's student protests today and in May '68",
+   "summary": "As students across France continue demonstrating against conditions in schools, the movement has drawn inevitable comparisons with the biggest student protests in the country's history – those of May",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-7a6xzs",
+   "title": "Construction begins on massive underground neutrino detector in South Dakota",
+   "summary": "Physicists at The University of Texas at Arlington have been involved in the DUNE project since its inception and are playing a key role in the development and construction of the field cage and other",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1rd5x9o",
+   "title": "HS2 rail freight set to move 170,000t of material avoiding use of Euston roads",
+   "summary": "Rail freight is expected to carry up to 170,000t of excavated material from the HS2 station site at Euston avoiding more than 10,000 heavy goods vehicle (HGV) journeys on roads in London. The post HS2",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1realft",
+   "title": "Husqvarna files anti-dumping complaint on Chinese robotic mowers",
+   "summary": "Husqvarna files anti-dumping complaint on Chinese robotic mowers",
+   "notExpected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-faocl8",
+   "title": "North Korea&#039;s Kim inspects work sites, university amid overseas travel speculation",
+   "summary": "North Korea&#039;s Kim inspects work sites, university amid overseas travel speculation",
+   "expected": [
+    "北韓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1g3pz7e",
+   "title": "Germany’s Digitalisation Minister Wildberger discusses Europe's AI race with the US and China",
+   "summary": "Euronews correspondent Luca Bertuzzi spoke to Germany’s Digitalisation Minister, Karsten Wildberger, about whether Europe can catch up with the US and China in the AI race.",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1c7vqhs",
+   "title": "Farm Group Says Ex-CEO Misused Funds for Vacation Home and Plane",
+   "summary": "When Matt Carstens stepped down as chief executive officer of Landus, the board of Iowa’s largest farm cooperative expressed gratitude for his “forward-thinking” leadership.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1u5tdkl",
+   "title": "Leaders of China and Japan Meet Amid Political Feud",
+   "summary": "Xi Jinping, China’s leader, greeted Sanae Takaichi, Japan’s prime minister, in Shenzhen a year after China began punishing Japan over her comments on Taiwan.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1friuv1",
+   "title": "Searenergy lands offshore wind commissioning deal in Poland",
+   "summary": "German offshore services group Searenergy has secured a contract from Equinor and Polenergia for hook-up and commissioning work on two offshore substations at the Bałtyk 2 and Bałtyk 3 wind farms in t",
+   "expected": [
+    "波蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-t840ee",
+   "title": "Lithium Americas CEO Warns of Perils Facing US Critical Minerals Push",
+   "summary": "Lithium Americas' Thacker Pass mine cost surged nearly $900M to $3.83B, offering a stark warning for future U.S. critical mineral projects.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1kasoxk",
+   "title": "Trump Administration Weighs Naming and Shaming US Firms Using Chinese AI",
+   "summary": "The Trump administration is considering implementing a “name and shame” campaign targeting U.S. companies that use Chinese artificial intelligence (AI) models, Reuters reported Wednesday (Nov. 18), ci",
+   "notExpected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-jdug3m",
+   "title": "ICJ to rule on Rohingya genocide case against Myanmar: What to know",
+   "summary": "The ICJ is set to decide whether Myanmar's military operations in Rakhine State a decade ago were carried out with the intent to destroy the country's Rohingya minority, in whole or in part.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-i9j7jh",
+   "title": "CZ Sounds Alarm as Japan Orders Crackdown on ID Data Storage",
+   "summary": "Binance founder Changpeng Zhao (CZ) has raised concerns about the storage of sensitive personal information after a massive data breach at Japan’s Times Car exposed millions of customer accounts and c",
+   "expected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1chmvw1",
+   "title": "Amsterdam - Mishandeling in fastfoodketen op Bijlmerplein in Amsterdam",
+   "summary": "Twee jongens krijgen ruzie en worden mishandeld in een fastfoodketen op het Bijlmerplein in Amsterdam. Bent of herkent u de verdachten? Neem dan contact op met de politie.",
+   "expected": [
+    "荷蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1mhwh4f",
+   "title": "Nvidia&#x2019;s booming demand is &#x2018;hard to ignore,&#x2019; but these four questions loom over the stock",
+   "summary": "Nvidia investors face uncertainty around CEO succession, the AI ecosystem, export controls and China.",
+   "notExpected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-11nigxi",
+   "title": "Alleged Member of “8-Digits Team” Ransomware Group Extradited from Italy for Role in Major Data Extortion Campaign Against U.S. Hospitals, Healthcare Entities, and Schools",
+   "summary": "Roman Khlynovskiy, 43, a Kazak national, made his initial appearance in Knoxville, Tennessee, federal court today after being extradited from Italy to face charges for his alleged role in a ransomware",
+   "notExpected": [
+    "義大利"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-1yz0uoq",
+   "title": "Arsenic keeps flowing into Thai rivers as China stays silent on mines",
+   "summary": "Mining for gold and critical minerals in Myanmar has created a transboundary pollution crisis, with heavy metals contaminating rivers that flow into northern Thailand. A joint working group set up und",
+   "notExpected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r33",
+   "n": "intl-193fche",
+   "title": "France rejects 'absurd' Russian claims of direct involvement in Ukraine war",
+   "summary": "The French government on Tuesday dismissed Russian accusations that France is directly involved in the war in Ukraine, following an RFI investigation which revealed a small number of French soldiers h",
+   "notExpected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1bmtl4g",
+   "title": "Israeli forces launch new military operation in central Gaza",
+   "summary": "Israeli forces have launched a new military operation in central Gaza, advancing west of the Yellow Line",
+   "expected": [
+    "巴勒斯坦"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-oj4b89",
+   "title": "Chinese executive convicted in case linked to Bangkok tower collapse",
+   "summary": "A court in Thailand on Wednesday found a Chinese executive and Thai shareholders of a Thai subsidiary of a Chinese state-owned construction company guilty of illegally operating a business in Thailand",
+   "expected": [
+    "泰國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-hzft4q",
+   "title": "Philippines’ climate finance strategy highlights reliance on loans as it presses for grants at COP31",
+   "summary": "Unveiled at COP31, the Philippine Climate Finance Strategy shows that loans accounted for 88.72 per cent of a US$1.96 billion climate and disaster risk portfolio.",
+   "expected": [
+    "菲律賓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-4evy9",
+   "title": "Hakeem Jeffries poised to become 1st Black U.S. House Speaker, after internal vote by Democrats",
+   "summary": "Democrats nominated Hakeem Jeffries on Wednesday to be speaker of the U.S. House of Representatives, as he brushed past skeptics and was on track to make history as the country's first Black American",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1lfexew",
+   "title": "Missing 38-year",
+   "summary": "The RCMP is pleased to confirm that the 38-year-old man reported missing on June 18, 2026 has been located, and he is safe and sound.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1dnvu25",
+   "title": "North Korea expanding original uranium enrichment facility, UN nuclear watchdog says",
+   "summary": "The IAEA has not had access to Yongbyon or other locations in North Korea since the country kicked out the agency’s inspectors in 2009.",
+   "expected": [
+    "北韓"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-18u69m6",
+   "title": "France: Hundreds raise a glass to Beaujolais Nouveau in Lyon",
+   "summary": "Lyon welcomed the arrival of Beaujolais Nouveau with a lively nighttime parade of wine barrels, flaming torches and brass music. Hundreds gathered to celebrate the first tastings of this year's wine.",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-18hkl2n",
+   "title": "The best Black Friday deals at Amazon UK — 28 top offers on Kindles, Ninja, PlayStation 5, De'Longhi, Oral",
+   "summary": "The Amazon UK Black Friday sale officially starts tomorrow, November 19, but you can already score some excellent deals across tech, essentials, and more.",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1b1dqxn",
+   "title": "Use of AI in medical recruitment could miss top talent, doctors warn",
+   "summary": "As NHS England prepares to introduce a £1.2 billion AI-driven workforce management and recruitment platform, a new report from BMJ Careers raises concerns about quality, fairness and missing top talen",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-12wcs1g",
+   "title": "Is Social Security a Ponzi scheme? No, but fear is fueling such talk.",
+   "summary": "Wisconsin Republican Sen. Ron Johnson called Social Security a &#x201c;scam&#x201d; and urged lawmakers to shut it down.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-2b3ff3",
+   "title": "Le blé dévisse à Chicago avant le sommet de l’Apec",
+   "summary": "Les prix du blé ont dévissé avant des discussions diplomatiques entre la Russie, les États-Unis et la Chine.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-8ksy7",
+   "title": "US House Democrats nominate Hakeem Jeffries for speaker",
+   "summary": "Jeffries is set to be the first Black speaker of the US House of Representatives when Democrats take control of the chamber next year. He will be second in line to the presidency.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-3heyxs",
+   "title": "Powell River RCMP weekly report November 4 to November 10, 2026",
+   "summary": "Powell River RCMP weekly report November 4 to November 10, 2026",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-paxj4h",
+   "title": "Midterms’ ‘blue tsunami’ gives Congress and states an opportunity to take action on climate change – here’s what they could actually do",
+   "summary": "Democrats will have a stronger hand to play in negotiations with the White House, but policy choices have to consider America’s greatest concerns, including affordability.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1764hu1",
+   "title": "As Wisconsin Dems take control, advocates see opportunity to upend the energy status quo",
+   "summary": "With Democrats poised to take control of Wisconsin’s state government, energy advocates are calling for stronger utility oversight, expanded renewable energy planning and increased energy efficiency i",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-piwolc",
+   "title": "All eyes on Messi and Inter Miami as they chase back-to",
+   "summary": "All eyes on Messi and Inter Miami as they chase back-to",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1wu5mbg",
+   "title": "Four Aussies chasing biggest payday in history of women's golf",
+   "summary": "Major winners Hannah Green and Grace Kim are among four Australians chasing the biggest payday in women's golf history at the mega-money Tour Championship in Florida.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-safdwd",
+   "title": "Review Identifies Critical Gram-Negative Bacterial Resistance Across Saudi Arabian Hospitals",
+   "summary": "A comprehensive review synthesizes surveillance data and clinical studies on multidrug-resistant Gram-negative bacteria, resistance mechanisms, and stewardship interventions across Saudi Arabian healt",
+   "expected": [
+    "沙烏地阿拉伯"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-6ipvlj",
+   "title": "Was China Sending a Musical Message to Japan’s Takaichi During APEC Welcome?",
+   "summary": "A song chosen to welcome Sanae Takaichi at the APEC summit in Shenzhen grew out of protests against the American military presence in Japan.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-11roch8",
+   "title": "'Coalition of the Willing' meets in Berlin: Europe remains committed to Ukraine",
+   "summary": "The \"Coalition of the Willing\" supporting Ukraine is gathering in Berlin. One of the key issues under discussion is whether Europe will be able to play a role in future negotiations over the country's",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-jciq88",
+   "title": "Bayesian Models Map Argentina Dengue Risk but Cannot Forecast Season Magnitude",
+   "summary": "A spatio-temporal study of 817,699 dengue cases in Argentina found that climate and local waste sites shaped infection risks, though spatial models could not predict epidemic intensity.",
+   "expected": [
+    "阿根廷"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1m1m5l0",
+   "title": "Australia’s jobless rate hits 5-year high, markets ramp up rate",
+   "summary": "Australia’s jobless rate hits 5-year high, markets ramp up rate",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1m7w36y",
+   "title": "Anthropic's record IPO lands as Nvidia suffers its worst run since 2008",
+   "summary": "Anthropic priced its record IPO at $83 a share ahead of Thursday's debut, as Nvidia heads for a seventh weekly loss and Washington tightens AI chip exports.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1v0x10d",
+   "title": "Texas resumes environmental permit reviews for data centers after pause",
+   "summary": "The resumption of permit reviews may stabilize Texas's data center growth, but ERCOT's pending report could still alter future regulations. The post Texas resumes environmental permit reviews for data",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1hvx9sj",
+   "title": "Chilean Parents Show High Willingness for RSV Immunization Despite Uneven Awareness",
+   "summary": "A mixed-methods study in Chile found that while most parents express high willingness to accept RSV immunization, significant gaps remain in disease awareness and perceived transmission risk.",
+   "expected": [
+    "智利"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1b5jxs2",
+   "title": "A tarmac hug with Xi and a handshake with Putin, how Trump began his China visit",
+   "summary": "Handshakes, warm welcomes and carefully staged photo opportunities defined US President Donald Trump’s first day in Shenzhen on Wednesday, as China showcased its diplomatic priorities ahead of a plann",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-r2awnc",
+   "title": "A&#xE9;ronautique : moins de 200 millions d'euros &#xE0; rembourser, les finances de la supply chain rebondissent en France",
+   "summary": "D'apr&#xE8;s l'&#xE9;tude annuelle de la Banque de France dont les premiers &#xE9;l&#xE9;ments ont &#xE9;t&#xE9; d&#xE9;voil&#xE9;s lors de l'Aeroforum organis&#xE9; par La Tribune, la fili&#xE8;re a&",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-iowhpa",
+   "title": "Indonesia signs partnerships for $71.8 billion in Chinese investment, more than an entire year&#8217;s worth of FDI",
+   "summary": "The largest partnership agreed Wednesday, valued at approximately $50 billion, envisages 10 “future smart cities.\"",
+   "expected": [
+    "印尼"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1f0fckr",
+   "title": "Russian national indicted for allegedly acting as a foreign agent targeting Silicon Valley tech and defense firm",
+   "summary": "SAN FRANCISCO – A federal grand jury has indicted Igor D’iu, a Russian national, on charges of conspiring to act as an agent of a foreign government, acting as an agent of a foreign government without",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1xvru8f",
+   "title": "Missing persons: Help the RCMP find Calleigh Sarah Matheson",
+   "summary": "PEI RCMP is asking for the public&#039;s assistance in locating missing 26-year-old Calleigh Sarah Matheson from Forrest Hill. She was last seen on November 13, 2026 traveling in a blue Nissan vehicle",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1l82uz3",
+   "title": "Prince Albert RCMP continues working to catalogue recovered items and identify potential owners",
+   "summary": "Prince Albert RCMP is receiving numerous inquiries from the public about the stolen items police recovered after the arrest of three individuals on November 12, 2026. Police officers ask that members",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-198s2df",
+   "title": "Farmers&#8217; Perceptions of PPE Effectiveness Drive Safety Adoption in Iranian Rice Cultivation",
+   "summary": "A study of 307 rice farmers in Iran finds that perceptions of PPE effectiveness, comfort, and financial cost significantly influence whether farmers prepare, use, or recommend protective safety gear.",
+   "expected": [
+    "伊朗"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-7rfwnk",
+   "title": "German Breeding Pig Herds Show Targeted Decline in Key Antibiotic Resistance",
+   "summary": "Surveillance across German breeding pig herds between 2015 and 2023 identified targeted declines in antibiotic resistance among indicator Escherichia coli alongside persistent herd prevalence of methi",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-11tcq71",
+   "title": "JINS、三菱UFJ銀行等數十家日本企業陸續發布資安事件公告，皆因第三方行銷科技業者PLAID旗下KARTE平臺遭駭",
+   "summary": "新聞 日本行銷科技服務業者PLAID旗下的KARTE平臺遭駭，攻擊者利用伺服器漏洞入侵，竊取系統認證資訊及客戶資料，導致使用該服務的數十家日本企業受到波及，包括眼鏡品牌JINS、金融業者三菱UFJ銀行、美妝及保健食品業者DHC、工業零組件供應商MISUMI等，多家企業已陸續公告會員個資外洩或可能外洩的情況。其中，JINS已經指出最多約1,829萬個會員帳號可能受到影響，臺灣JINS則表示臺灣會員資",
+   "expected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1f9i8rc",
+   "title": "Rhein-Ruhr cities pool resources to place joint tram order",
+   "summary": "GERMANY: Škoda Group has won a jointly placed order to supply 50 low-floor trams to operators in Essen, Krefeld and Oberhausen, with options for 29 more. The trams ordered by Essen’s Ruhrbahn (40), Kr",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1e0km76",
+   "title": "Higher Dietary Index for Gut Microbiota Associated With Lower Metabolic Syndrome Odds",
+   "summary": "A cross-sectional analysis of U.S. adults suggests that diets scoring higher on the Dietary Index for Gut Microbiota are associated with lower odds of metabolic syndrome, with insulin resistance poten",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-iu33wb",
+   "title": "Healthy Lifestyle and Phase Angle Linked to Lower Musculoskeletal Risk",
+   "summary": "A large-scale, cross-sectional study of 21,340 Han Chinese adults, conducted as part of the China National Health Survey, has identified significant associations between healthy lifestyle choices, pha",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1ajn8fu",
+   "title": "🔴 US Democrats nominate Hakeem Jeffries to be first Black speaker of the House",
+   "summary": "🔴 US Democrats nominate Hakeem Jeffries to be first Black speaker of the House",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-e5mjdp",
+   "title": "Venezuela uses a third of its potential cattle land, USDA finds",
+   "summary": "Venezuela uses a third of its potential cattle land, USDA finds Only a third of potential grazing land is in use",
+   "expected": [
+    "委內瑞拉"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1rvdrnf",
+   "title": "Australia unemployment hits five-year high as jobs plunge 43,500; AUD weakens",
+   "summary": "Australia unemployment hits five-year high as jobs plunge 43,500; AUD weakens",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-k670o4",
+   "title": "Freightos Weekly Update: US air cargo recovering from outage; new US-CN tensions ahead of talks",
+   "summary": "Air cargo networks in the US are recovering from the major disruption over the weekend. Though the air traffic control system failure grounded thousands of flights and is likely to cause some delays f",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-16dwkr",
+   "title": "Blue Owl Plans $513 Million CMBS for Amazon",
+   "summary": "Blue Owl Capital Inc. is preparing to sell $513 million of commercial mortgage backed securities to fund the acquisition of a Northern Virginia data center that’s fully leased to Amazon.com Inc., acco",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "codex-coordinator-review-r34",
+   "n": "intl-1rcov2s",
+   "title": "Scoping Review Reveals Heavy Noma Burden and Critical Healthcare Gaps Across Nigeria",
+   "summary": "A systematic scoping review of 14 studies reveals a heavy burden of Noma in northwestern Nigeria alongside critical gaps in primary healthcare detection, clinical knowledge, and survivor support.",
+   "expected": [
+    "奈及利亞"
    ]
   }
  ]

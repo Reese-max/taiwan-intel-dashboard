@@ -863,13 +863,11 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
     }
   }
   matches.sort((a, b) => a.index - b.index || b.length - a.length);
-  // 兩國用連字號串在一起（China–India、US-China）是航線或雙邊議題，不是單一事件地點。
-  for (let i = 1; i < matches.length; i++) {
-    const [a, b] = [matches[i - 1], matches[i]];
-    if (a.country !== b.country && /^\s*[-–—]\s*$/.test(source.slice(a.index + a.length, b.index))) return null;
-  }
-  // 節目或彙整標題（Europe Tonight:、Morning Briefing:、newsletter）涵蓋多則新聞，不定位。
-  if (/^[^:：]{0,40}\b(?:Tonight|Morning|Briefing|Newsletter|Digest|Roundup)\s*[:：]/i.test(source)) return null;
+  // 兩國用連字號串在一起（China–India、US-China）是航線或雙邊議題；有明確事件地點（talks held in Paris）時仍以該地點為準，在下方處理。
+  const bilateralPair = matches.some((b, i) => i > 0 && matches[i - 1].country !== b.country &&
+    /^\s*[-–—]\s*$/.test(source.slice(matches[i - 1].index + matches[i - 1].length, b.index)));
+  // 節目或彙整標題（Europe Tonight:、Europe Morning –、Morning Briefing:）涵蓋多則新聞，不定位。
+  if (/^[^:：–—]{0,40}\b(?:Tonight|Morning|Briefing|Newsletter|Digest|Roundup)\s*(?:[:：]|\s[-–—]\s)/i.test(source)) return null;
   for (const match of source.matchAll(/\bChinese\b/gi)) {
     if (!/\bChinese\b.{0,55}\b(?:company|platform|business)\b/i.test(source)) continue;
     const [country, lat, lng] = COUNTRY_LOCATIONS.find(([name]) => name === "中國");
@@ -883,6 +881,7 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
       /(?:在|赴|回|於|位於|來自|前往|抵達|發生於)\s*$/.test(before);
   });
   if (new Set(explicit.map((match) => match.country)).size > 1) return null;
+  if (bilateralPair && explicit.length === 0) return null;
   if (uniqueOnly && explicit.length === 0 && new Set(matches.map((match) => match.country)).size > 1) return null;
   if (explicit.length) return { region: explicit[0].country, lat: explicit[0].lat, lng: explicit[0].lng, explicit: true };
   if (matches[0]?.index === 0 && /^(?:Paris|New York|London|Tokyo|Berlin|Moscow|Beirut|Dublin|Miami)$/i.test(source.slice(0, matches[0].length))) {
