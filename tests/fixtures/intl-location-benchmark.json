@@ -1,0 +1,2279 @@
+{
+ "note": "國際新聞國家地點基準：Gemini 逐筆判讀的三批正式站樣本（排除爭議）。expected 為可接受的 region，空字串代表不應給地點。",
+ "reviewRuns": [
+  "gemini-2026-11-19-a: route run b79ef707",
+  "gemini-2026-11-20-b: route run 3400dcef",
+  "gemini-2026-11-20-c: route run a77e3908"
+ ],
+ "cases": [
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 1,
+   "title": "Fort Providence RCMP lay weapon and trafficking charges",
+   "summary": "The Fort Providence RCMP have laid multiple weapon and drug trafficking charges against a man from the Netherlands after receiving a report of threats with a weapon on November 14.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 2,
+   "title": "Paratus and Vantris explore sale of Brazilian subsea venture",
+   "summary": "Paratus Energy Services and Malaysia&#8217;s Vantris Energy are looking into a potential sale of their jointly owned Brazilian subsea services business, Seagems, as part of a strategic review. The two",
+   "expected": [
+    "巴西"
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 4,
+   "title": "RCMP Federal Arctic Unit makes largest drug seizure destined for Nunavut",
+   "summary": "The RCMP Federal Policing Northwest Region’s (NWR) Federal Arctic Unit (FAU) in Nunavut made significant advancements in an ongoing investigation as part of its commitment to identifying, disrupting, ",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 5,
+   "title": "'Grand Theft Auto VI' released after 13-year wait, selling over 17 million copies",
+   "summary": "The series lets players live out gangster fantasies, smash up cars and fight whoever they choose in a fictionalised US city populated by lowlifes, sex workers and thugs.",
+   "expected": [
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 6,
+   "title": "One man charged following arson to vehicle in Lake Cowichan",
+   "summary": "One man was arrested after Lake Cowichan RCMP responded to a pickup truck allegedly set on fire in Lake Cowichan.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 7,
+   "title": "As Grand Theft Auto VI Players Flock to Leonida, Rockstar Animation Programmer Nestor Uriarte Fernandez Calls for Unionization and Better Working Conditions",
+   "summary": "While gamers are flocking en masse to Leonida, the fictionalized Florida featured in Rockstar's Grand Theft Auto VI, one of the developers at Rockstar publicly called for better working conditions at ",
+   "expected": [
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 8,
+   "title": "Fears grow that US will put Nobel-winning judge under sanctions after Myanmar genocide ruling",
+   "summary": "A ruling against Myanmar could set precedent for court’s judgment on Israel’s actions in Gaza Fears are growing that the US could impose sanctions on judges at the international court of justice, incl",
+   "expected": [
+    "美國",
+    "荷蘭",
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 9,
+   "title": "Kelowna RCMP investigation leads to seizure of suspected drugs, weapons and stolen property",
+   "summary": "In late October 2026, the Kelowna RCMP Target Team launched an investigation into alleged illicit drug trafficking at a residence in the 200-block of Woods Road following complaints from the public re",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 10,
+   "title": "High-Resolution Urban Air Quality Modeling Validated for Bogotá, Colombia",
+   "summary": "Researchers have successfully adapted the reduced-complexity InMAP model to analyze urban air quality in Bogotá using high-resolution meteorological simulations.",
+   "expected": [
+    "哥倫比亞"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 11,
+   "title": "Italy approves antisemitism law amid protests from left",
+   "summary": "The Chamber finally approved an anti-antisemitism bill using the IHRA definition, splitting the opposition and reviving debate on where criticism of Israel's government ends and antisemitism begins.",
+   "expected": [
+    "義大利"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 13,
+   "title": "St. Anthony RCMP responds to disturbance, drug impaired driver arrested",
+   "summary": "St. Anthony RCMP arrested and charged a 46-year-old man after responding to a reported disturbance in the community.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 16,
+   "title": "First Early Cretaceous Hadrosauroid Dinosaur Discovered in China&#8217;s Erlian Basin",
+   "summary": "Paleontologists have uncovered the first known Early Cretaceous hadrosauroid dinosaur from the Erlian Basin in Inner Mongolia, revealing a unique mosaic of primitive and derived dental traits.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 17,
+   "title": "Mexico launches anti-measles drive after losing eradication status",
+   "summary": "Mexico on Wednesday launched a 90-day \"rapid response plan\" against an ongoing outbreak of measles that has caused the country to lose its eradication status for the highly contagious disease.",
+   "expected": [
+    "墨西哥"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 19,
+   "title": "Van Gogh painting sells for record US$190.4 million after dispute",
+   "summary": "A Vincent van Gogh painting has set a record after selling for US$190.4 million at a Sotheby’s auction in New York. At its first appearance at auction, the painting Chataigniers en fleurs (Blossoming ",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 20,
+   "title": "1inch integrates Hyperliquid futures, excludes US and UK markets",
+   "summary": "The integration may boost Hyperliquid's market presence but faces hurdles in adoption due to significant regional restrictions. The post 1inch integrates Hyperliquid futures, excludes US and UK market",
+   "expected": [
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 22,
+   "title": "Manchester United loss widens, debt rises as Pochettino inherits struggling side",
+   "summary": "Manchester United loss widens, debt rises as Pochettino inherits struggling side",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 23,
+   "title": "Top UN court rules Myanmar committed genocide against Rohingya in landmark judgement",
+   "summary": "This marks the first time the International Court of Justice has found a state responsible for committing genocide.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 25,
+   "title": "Denmark ratifies Trump deal over Greenland",
+   "summary": "COPENHAGEN, Nov 19 - Denmark's parliament on Thursday unanimously ratified a security agreement with US President Donald Trump covering Greenland, hoping to end a standoff over the Arctic island's fut",
+   "expected": [
+    "丹麥"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 26,
+   "title": "Poland completes rebuild of freight loading points with military mobility funds - RailFreight.com",
+   "summary": "Poland completes rebuild of freight loading points with military mobility funds RailFreight.com",
+   "expected": [
+    "波蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 27,
+   "title": "Westcore Acquires 172,092 SF Industrial Business Park in Woodinville, Washington",
+   "summary": "Kidder Mathews Executive Vice Presidents Zach Vall-Spinosa and Andy Miller represented the seller in the transaction. Following the sale, Westcore retained Vall-Spinosa and Kidder Mathews Vice Preside",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 28,
+   "title": "eSAIL-equipped multipurpose vessel sets sail for French Polynesia",
+   "summary": "The Na Hiro E Pae – a new multipurpose vessel&#160;that is equipped with a bound4blue eSAIL – left Astilleros Armon Vigo, Spain, on Monday and is en route to French Polynesia. As previously reported b",
+   "expected": [
+    "西班牙"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 29,
+   "title": "Parts of Bangladesh shut down in protests by Hasina&#039;s party, Yunus&#039; home set ablaze",
+   "summary": "Parts of Bangladesh shut down in protests by Hasina&#039;s party, Yunus&#039; home set ablaze",
+   "expected": [
+    "孟加拉"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 30,
+   "title": "UK has ‘bowed to China’ on net zero transition despite security threats",
+   "summary": "The Labour government has been accused of “capitulation” in its trade relations with China as Britain’s transition to net zero faces a number of security risks. A new report, published shortly before ",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 31,
+   "title": "CPHI Milan celebrates record attendance figures at this year’s event",
+   "summary": "CPHI Milan celebrates record attendance figures at this year’s event Sara.Scarpinati Thu, 19/11/2026 - 13:23",
+   "expected": [
+    "義大利"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 32,
+   "title": "Climate Shocks Are Associated With Revenue Erosion in Distressed South African Municipalities",
+   "summary": "Climate shocks and environmental non-compliance threaten municipal creditworthiness and balance sheet stability in South Africa.",
+   "expected": [
+    "南非"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 33,
+   "title": "Transocean Equinox Rigs Spuds Amplitude Energy’s Well off Australia",
+   "summary": "Amplitude Energy has started drilling the Nestor-1 exploration well offshore Australia using the Transocean Equinox rig, targeting an estimated gross mean prospective resource of 64…",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 34,
+   "title": "AI Workloads Hit by Power-Quality Issues at Data Centers",
+   "summary": "Power quality, not just grid access, is limiting AI growth at US data centers, exposing weaknesses in internal infrastructure and monitoring.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 35,
+   "title": "Lauritzen Bulkers takes delivery of methanol-capable vessel in Cebu",
+   "summary": "Danish dry bulk shipping company Lauritzen Bulkers has taken delivery of the methanol-capable newbuild Brave Bulker from Tsuneishi Shipbuilding’s Cebu yard in the Philippines. The 81,000-dwt Kamsarmax",
+   "expected": [
+    "菲律賓"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 36,
+   "title": "Russian-Speaking Hackers Steal US Bank, IRS and Social Security Login Credentials From Infected PCs",
+   "summary": "Russian-speaking hackers stole US banking and federal identity credentials from infected Windows PCs. The archives contained plaintext bank logins, decrypted password vaults, and authentication cookie",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 38,
+   "title": "Switzerland wants to extend transalpine rail freight subsidies until 2035 - RailFreight.com",
+   "summary": "Switzerland wants to extend transalpine rail freight subsidies until 2035 RailFreight.com",
+   "expected": [
+    "瑞士"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 39,
+   "title": "Spain freezes new foreign degree applications as foreign doctors flood residency exam",
+   "summary": "A Spanish ministry has stopped accepting new applications to recognise foreign university degrees, after years of increases.",
+   "expected": [
+    "西班牙"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 41,
+   "title": "Community questions addressed at West Shore RCMP Town Hall",
+   "summary": "Last month, West Shore RCMP hosted a Town Hall in Metchosin. We encouraged members of the public to attend and learn more about their police service.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 42,
+   "title": "Uzbekistan Study Links Household Hygiene Sharing to Hepatitis D Infection",
+   "summary": "A countrywide study of 10,552 adults across Uzbekistan revealed a 4.7 percent hepatitis B prevalence and demonstrated that sharing household hygiene tools significantly increases the odds of hepatitis",
+   "expected": [
+    "烏茲別克"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 43,
+   "title": "UN top court says Myanmar committed genocide against Rohingya",
+   "summary": "The United Nations’ top court has ruled that Myanmar “committed genocide” against the Rohingya population in a 2017 crackdown that left at least 10,000 of its members dead and then drove vast numbers ",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 44,
+   "title": "The dark side of AI: US data centres emit more carbon than all of Denmark",
+   "summary": "The Harvard study has revealed that pledges alone might not be enough, even as COP31 negotiators push for cleaner energy use in data centres.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 45,
+   "title": "Whatì RCMP seize suspected crack and cash, and charged a youth",
+   "summary": "On November 13, 2026, the Whatì RCMP launched an investigation under the Controlled Drugs and Substances Act thanks to tips received from community members, which led to the seizure of drugs and cash,",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 46,
+   "title": "Denmark’s government just unanimously sealed a Greenland deal with Trump",
+   "summary": "Denmark's parliament on Thursday unanimously ratified a security agreement with US President Donald Trump covering Greenland, hoping to end a standoff over the Arctic island's future that has rattled ",
+   "expected": [
+    "丹麥"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 47,
+   "title": "Squamish RCMP respond to capsized kayakers on Cheakamus River",
+   "summary": "On November 15, 2026 at approximately 2:30 pm, Squamish RCMP received a request from BC Ambulance to assist with two capsized kayakers in the Cheakamus River just north of Squamish.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 48,
+   "title": "En 1974, Stephen King pasó una noche en un hotel casi vacío y tuvo una pesadilla. 51 años después, el hotel convirtió la pesadilla en 400 millones de dólares",
+   "summary": "La noche del 28 de septiembre de 1974, un joven escritor y su esposa llegaron a un hotel de Colorado que estaba a punto de cerrar por el invierno. No había otros huéspedes y los pasillos parecían inte",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 49,
+   "title": "About 6,000 years ago, farmers in what is now Ukraine built settlements covering up to 790 acres. Up to 15,000 people may have lived in each, centuries before Mesopotamia’s first cities",
+   "summary": "History is full of uncertainty, and established ideas evolve with each new discovery. Recent archaeological research at a Ukrainian site suggests that the earliest settlements designed according to a ",
+   "expected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 50,
+   "title": "US loses measles-free status amid worst outbreak in 35 years",
+   "summary": "The US has lost its measles-free status after 26 years - for failing to prevent the virus spreading for more than a year.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 51,
+   "title": "Palliser Capital pushes for break-up of UK defence group Chemring",
+   "summary": "Palliser Capital is calling for a break-up of UK defence group Chemring, arguing that the company has failed to capitalise on rising European military spending and could unlock significant shareholder",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 52,
+   "title": "Neurosteroid offers clues to brain changes linked to depression",
+   "summary": "UT Southwestern Medical Center researchers and colleagues, including two at UT Dallas, have found evidence that pregnenolone—a naturally occurring steroid hormone the body produces from cholesterol—ma",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 53,
+   "title": "Myanmar guilty of genocide against Rohingya UN court rules",
+   "summary": "The International Court of Justice ruled by nine votes to six that Myanmar had \"committed\" genocide against the Rohingya community.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 54,
+   "title": "nChroma Bio stops its only clinical study early, lays off 50%",
+   "summary": "A couple of years ago, two Boston-area biotech CEOs decided to merge their startups, hoping to survive a down market for genetic medicine companies. Jeff Walsh, the CEO of that combined company, nChro",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 56,
+   "title": "Man charged after Police unit rammed",
+   "summary": "Location: Auckland City A man is facing a raft of charges after he allegedly rammed a Police vehicle and fled in central Auckland overnight. The man first came to Police's attention around 3.30am afte",
+   "expected": [
+    "紐西蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 57,
+   "title": "面對AI加速攻擊，英國NCSC呼籲企業董事會應關切以主動威脅獵捕找出偵測缺口",
+   "summary": "新聞 僅依賴既有監控與告警機制，恐難及時偵測攻擊者利用AI以更快速度及更大規模發動的攻擊。英國國家網路安全中心（NCSC）在11月17日 發布文章，呼籲企業也應透過威脅獵捕（Threat Hunting）主動探查 ，以確認當新的攻擊技術出現在自身環境時，是否有能力及早發現。 這篇文章更是針對企業與組織的董事會而寫，NCSC指出，董事會不需要掌握威脅獵捕的技術細節，但應該要求資安團隊說明，哪些攻擊技",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 58,
+   "title": "Overasselt - Man (22) aangehouden op vliegveld, verdacht van betrokkenheid Overasselt",
+   "summary": "Op vliegveld Rotterdam The Hague Airport is dinsdagavond een man van 22 uit Amsterdam aangehouden. Hij wordt verdacht van betrokkenheid bij het geweld in Overasselt op 1 september. De man was al bij d",
+   "expected": [
+    "荷蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 59,
+   "title": "Democrat defeats Republican in Alaska in final midterms Senate race",
+   "summary": "Democrat Mary Peltola has defeated incumbent Republican Dan Sullivan to complete a sweeping victory for the party in the Senate in the US midterm elections.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 60,
+   "title": "A Village Burned, Its People Killed or Exiled. A Court Ruled It Was Genocide.",
+   "summary": "Zammona’s erasure was part of a wider campaign of violence against Rohingya Muslims. An international court found that Myanmar was culpable for the atrocities.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 61,
+   "title": "Squamish RCMP respond to capsized kayakers on Cheakamus River",
+   "summary": "On November 15, 2026 at approximately 2:30 pm, Squamish RCMP received a request from BC Ambulance to assist with two capsized kayakers in the Cheakamus River just north of Squamish.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 62,
+   "title": "‘My family would kill me if they saw it’: the ‘harmless’ images that can be deadly for women in Pakistan",
+   "summary": "Tech companies urged to adapt moderation of photos online that can trigger violence against women in some countries It was just a photo of a smiling girl in jeans and a vest top, the kind of outfit an",
+   "expected": [
+    "巴基斯坦"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 63,
+   "title": "Iraq hands six more French IS members life sentences, including Barnouin",
+   "summary": "An Iraqi court on Wednesday sentenced six more French nationals, including veteran jihadist Thomas Barnouin, to life imprisonment for belonging to the Islamic State group. The verdicts bring to 16 the",
+   "expected": [
+    "伊拉克"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 65,
+   "title": "Ho ho homework: London's Santa School prepares Father Christmas performers for the festive season",
+   "summary": "Professional Santas are heading back to school in South London to prepare for the Christmas season.Training includes everything from sign language and the latest toy trends to handling difficult quest",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 66,
+   "title": "Study Profiles Pediatric Intensive Care Admissions from Karachi Emergency Department",
+   "summary": "A retrospective study in Karachi found that 3.1% of pediatric emergency visits required direct intensive care admission, primarily involving high-acuity patients under five years old.",
+   "expected": [
+    "巴基斯坦"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 67,
+   "title": "Whatì RCMP seize suspected crack and cash, and charged a youth",
+   "summary": "On November 13, 2026, the Whatì RCMP launched an investigation under the Controlled Drugs and Substances Act thanks to tips received from community members, which led to the seizure of drugs and cash,",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 68,
+   "title": "Memecoin trader turns $5,000 into $20,618 in live final to win custom Aston Martin",
+   "summary": "A crypto trader turned $5,000 into $20,618 in about two hours at a live trading competition in London on November &#8230; Continue reading The post Memecoin trader turns $5,000 into $20,618 in live fi",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 69,
+   "title": "Two children deceased following motor vehicle incident in Kimmirut, Nunavut",
+   "summary": "The Kimmirut RCMP is investigating a fatal pedestrian motor vehicle collision. Two children died and one was medivaced to Iqaluit, Nunavut.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 70,
+   "title": "Ukraine exposes ransomware network extorting US oil, healthcare firms",
+   "summary": "Ukrainian authorities arrested four suspected members of an international ransomware network accused of extorting more than $40 million from companies around the world.",
+   "expected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 71,
+   "title": "The Honor Watch 6 Pro launches in Europe with an early bird price, free strap and clip-on buds",
+   "summary": "The Honor Watch 5 Pro never got the wide release that it deserved – oh well, all eyes are on its successor now. Initially announced at the end of September for China, this watch is launching in Europe",
+   "expected": [
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 72,
+   "title": "South Korea Launches Advanced 3,600-Tonne Stealth Frigate Equipped With Indigenous Radar",
+   "summary": "South Korea has launched its new 3,600-tonne frigate Pyeongtaek at Hanwha Ocean's Geoje shipyard, fitted with a homegrown four-panel phased array radar and a stealth mast.",
+   "expected": [
+    "南韓"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 73,
+   "title": "Is Social Security a Ponzi scheme? No. Don&#x2019;t get carried away with 1930s-era prophecies of doom.",
+   "summary": "Wisconsin Republican Sen. Ron Johnson called Social Security a &#x201c;scam&#x201d; and urged lawmakers to shut it down.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 74,
+   "title": "Peng’s English and Cantonese classics: the Shenzhen Apec details you may have missed",
+   "summary": "We have put together stories from our coverage of the first day of Apec in Shenzhen. If you would like to see more of our reporting, please consider subscribing. 1. Rare hug and roaring flyover set st",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 75,
+   "title": "Community questions addressed at West Shore RCMP Town Hall",
+   "summary": "Last month, West Shore RCMP hosted a Town Hall in Metchosin. We encouraged members of the public to attend and learn more about their police service.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 76,
+   "title": "Carry-anywhere camp cube bursts open into impressively stocked kitchen",
+   "summary": "Aiming to create the compact, high-efficiency chuck box alternative it believes the camping and overland world needs, New Jersey startup Algorithm Overland presents the Kitchen Cube, a small self-case",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 77,
+   "title": "RCMP make arrest in Whitehorse",
+   "summary": "On November 18, 2026, at approximately 10:09 a.m., officers from the Whitehorse Detachment General Investigation Unit, assisted by the Emergency Response Team, arrested one person on Front Street in W",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 78,
+   "title": "Insta360's latest gadget is a pocket-sized color e",
+   "summary": "We're liking the look of the new Toast frame from Insta360, though it's only available in China for the time being.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 79,
+   "title": "Iran Intensifies Hormuz Tanker Attacks Just as Oil Prices Slide",
+   "summary": "Iran&#8217;s attacks on oil tankers crossing the crucial Strait of Hormuz are getting more intense, just as prices have tumbled due to a flood of supply from the Middle East. After a period of low-gra",
+   "expected": [
+    "伊朗"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 82,
+   "title": "Iranian Intelligence Agent Sentenced to Over 27 Years in Prison for Foiled Plot to Assassinate U.S. Government Officials",
+   "summary": "Earlier today, in federal court in Brooklyn, Asif Merchant, 48, of Pakistan, was sentenced by U.S. District Judge Eric R. Komitee to 330 months in prison for attempting to commit an act of terrorism t",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 83,
+   "title": "Global Energy Exhibition & Congress Vietnam Set for May 2027 Debut",
+   "summary": "Supported by Vietnam’s Ministry of Industry and Trade, the event will welcome 30,000+ energy professionals, 800 exhibitors, 1,000 conference delegates and 450 speakers Event…",
+   "expected": [
+    "越南"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 84,
+   "title": "Single-Dose PCV20 Vaccination Proves Cost-Effective for Vulnerable Adults in India",
+   "summary": "A health economic simulation indicates that replacing the sequential pneumococcal vaccination regimen with single-dose PCV20 is cost-effective for older and high-risk Indian adults.",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 85,
+   "title": "Green earthquake (Magnitude 5.9M, Depth:21.895km) in Peru 18/11/2026 06:07 UTC, 40 thousand in MMI IV.",
+   "summary": "On 11/18/2026 6:07:42 AM, an earthquake occurred in Peru potentially affecting 40 thousand in MMI IV. The earthquake had Magnitude 5.9M, Depth:21.895km.",
+   "expected": [
+    "秘魯"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 86,
+   "title": "Nocturnal hunter",
+   "summary": "Ondrej Kralik, taken from Mazin, Croatia Orion the Hunter rises over a fog-filled valley, with ruddy Betelgeuse visible at left and the Orion Nebula (M42) just poking above the horizon. The latter, ap",
+   "expected": [
+    "克羅埃西亞"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 87,
+   "title": "The health costs of organized crime",
+   "summary": "This column presents evidence on the long-run health consequences of illegal toxic-waste disposal in Southern Italy.",
+   "expected": [
+    "義大利"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 88,
+   "title": "What Indian lenders Will Ask Their Fintech Partners Under DPDP",
+   "summary": "Singahi's Rahul Verma argues that India's DPDP Act leaves lenders answerable for their partners, and sets out the questions fintechs should expect to face. The post What Indian lenders Will Ask Their ",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 89,
+   "title": "Rare stonefly found beside vanishing glacier on Chile's Navarino Island",
+   "summary": "An international team of scientists, including researchers from the University of Barcelona, has discovered a rare insect beside the remains of a glacier in Chilean Patagonia.",
+   "expected": [
+    "智利"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 90,
+   "title": "Why UK energy infrastructure needs to build enduring resilience against climate change",
+   "summary": "Britain’s energy infrastructure has long been shaped by a temperate climate, that, in theory, no longer exists. The post Why UK energy infrastructure needs to build enduring resilience against climate",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 91,
+   "title": "Climate Change AI共同創辦人：AI永續關鍵不是更大模型，而是選對AI工具",
+   "summary": "新聞 隨著生成式AI快速發展，人工智慧所需算力與能源消耗也成為全球關注議題。正值聯合國COP31舉行之際，環境部也同步舉辦系列論壇，本周舉辦的「綠色算力與氣候數位科技」論壇，邀請產學界專家共同關注人工智慧與氣候變遷發展，加拿大麥吉爾大學電腦科學學院副教授，也是Climate Change AI共同創辦人的David Rolnick指出，AI與氣候變遷並非只能二選一，AI確實能協助解決氣候問題，但前",
+   "expected": [
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 92,
+   "title": "'It's surreal': US gamers get their first taste of long-awaited GTA VI",
+   "summary": "Gamers in Miami celebrated the midnight launch of Grand Theft Auto VI, ending a 13-year wait for the latest instalment of the hugely successful franchise. Some fans even took time off work to experien",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 93,
+   "title": "Ukraine arrests key members of ransomware gang that extorted $40.5 million posing as IT support",
+   "summary": "Four key members of a ransomware group that took more than $40.5 million from at least 28 companies have been detained in Ukraine. The group’s members posed as IT support staff on phone calls to break",
+   "expected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 94,
+   "title": "Geobear stabilises Hackbridge station",
+   "summary": "Geobear&#039;s non-invasive technology has been used to stabilise foundations at Hackbridge Station in South London.",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 95,
+   "title": "Miss Universe Vietnam 2026 winner Nguyen Quynh Anh loses crown after series of controversies",
+   "summary": "Nguyen Quynh Anh, who won Miss Universe Vietnam on Oct 2, has been stripped of her title six weeks after her win following allegations that she breached the organisers&#039; rules.",
+   "expected": [
+    "越南"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 97,
+   "title": "Weatherford bags new deepwater drilling deal in Brazil",
+   "summary": "US oilfield services giant Weatherford has secured a contract from Constellation Oil Services to provide managed pressure drilling (MPD) technology for a deepwater exploration campaign offshore Brazil",
+   "expected": [
+    "巴西"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 98,
+   "title": "Green forest fire notification in South Africa",
+   "summary": "On 17/11/2026, a forest fire started in South Africa, until 18/11/2026.",
+   "expected": [
+    "南非"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 99,
+   "title": "Myanmar guilty of genocide against Rohingya, top UN court rules",
+   "summary": "It is the first time the International Court of Justice has ruled that a state committed genocide in its 80-year history.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-19-a",
+   "n": 100,
+   "title": "Hospital Gut and Blood Samples Match in Most Resistant Klebsiella Cases",
+   "summary": "A genomic study of hospitalized patients in Greece found that intestinal and bloodstream carbapenem-resistant Klebsiella pneumoniae isolates were related in 86 percent of tested patient pairs.",
+   "expected": [
+    "希臘"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 2,
+   "title": "In Manila, Trump praises Marcos family, 40 years after dictator was deposed",
+   "summary": "“I knew your parents very well. And they were great,” Trump told Philippine President Ferdinand “Bongbong” Marcos Jr., whose father ruled as an autocrat until 1986.",
+   "expected": [
+    "菲律賓"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 5,
+   "title": "Phantom forests: How low-integrity offsets lead to policy failure",
+   "summary": "Australia&#039;s Safeguard Mechanism (SGM) is failing to reduce emissions and drive decarbonization in the industrial and mining sectors because of an overreliance on cheap, low-integrity offsets, acc",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 6,
+   "title": "Samsung and Apple were the only OEMs to increase US phone shipment shares year-on-year in Q3 2026",
+   "summary": "Smartphone shipments in the USA declined 9% year-on-year in the third quarter of 2026, with market watchers pointing to low-end Android shipments suffering from global memory supply issues. Apple was ",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 8,
+   "title": "Paratus and Foresight report positive outcome from UK solar price insurance policy",
+   "summary": "Energy price risk insurance provider Paratus and renewable energy investment manager Foresight Group have reported the completion of an insurance arrangement covering six operational solar projects ac",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 10,
+   "title": "Myanmar committed genocide against Rohingya, U.N. top court rules",
+   "summary": "The U.N.&#039;s top court ruled in a landmark judgment that Myanmar committed genocide against the Rohingya minority in a brutal 2017 military operation.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 11,
+   "title": "Australia&#8217;s housing downturn worsens",
+   "summary": "The latest final auction results from Cotality, released on Thursday, suggest that Australia&#8217;s housing downturn has worsened. The final national auction clearance rate fell to only 41.3% last we",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 12,
+   "title": "Can a small DNA fix protect against Parkinson&#039;s disease?",
+   "summary": "In 2021, researchers at Oslo University Hospital discovered that by switching off a specific gene in the roundworm C. elegans, they could protect a particular type of nerve cell from age-related degen",
+   "expected": [
+    "挪威"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 14,
+   "title": "(LEAD) Lee returns home from trip to ASEAN, APEC summits",
+   "summary": "SEOUL, Nov. 19 (Yonhap) -- President Lee Jae Myung arrived in Seoul on Thursday ...",
+   "expected": [
+    "南韓"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 16,
+   "title": "媒體只能當維他命？NEWNEEK 執行長金昭延：大家都從事實出發 差別在品牌",
+   "summary": "主打年輕讀者的韓國媒體 NEWNEEK 共同創辦人暨執行長金昭延 19 日在台北 IMCT 2026 論壇分享，媒體當不了解決痛點的止痛藥，各家又都從同樣的事實出發，差別在品牌。她認為，讀者的信任讓 NEWNEEK 接得到品牌內容生意，連犯錯都是經營關係的一部分。",
+   "expected": [
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 18,
+   "title": "South Korea&#039;s Supreme Court orders retrial for ex-PM Han over his role in martial law attempt",
+   "summary": "The court overturned Han Duck-soo&#039;s 15-year prison sentence for his role in the brief imposition of martial law two years ago, sending the case back to a lower court.",
+   "expected": [
+    "南韓"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 19,
+   "title": "Manchester United on course to break $1bn revenue barrier if Pochettino is success",
+   "summary": "Manchester United could join just a handful of teams in sport to achieve $1bn in annual revenue if new manager Mauricio Pochettino proves a success after reporting improved income for the first quarte",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 20,
+   "title": "Black Friday deals from Amazon Germany: deals ranging from flagship to mid-range",
+   "summary": "Amazon Germany has too many deals to fit in one day, so it did the sensible thing – it extended the sales campaign to a full week. Here are the best offers that we found. Note that we weren’t kidding ",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 21,
+   "title": "In 1913, an Ohio couple mailed their 8-month-old son to his grandmother. The postage cost 15 cents, and they insured him for $50",
+   "summary": "“It got some headlines when it happened, probably because it was so cute,” Smithsonian historian Jenny Lynch told Smithsonian Magazine. The parents paid 15 cents in postage and insured James for $50. ",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 22,
+   "title": "Irish credit unions hit by data breach after IT provider compromised",
+   "summary": "Wellington IT reportedly delayed alerting customers by multiple weeks",
+   "expected": [
+    "愛爾蘭",
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 23,
+   "title": "Bi-mode locomotives to be ordered amid lukewarm response to French night train fleet renewal tenders",
+   "summary": "FRANCE: The national government has agreed to place an order through Alpha Trains for Stadler to supply a dedicated fleet of new bi-mode locomotives to power domestic overnight passenger trains in the",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 24,
+   "title": "Copper Financial selects Osaic Institutions for credit union growth",
+   "summary": "The Lenexa, Kansas broker-dealer and its 25 advisors managing $2.5 billion will gain expanded technology and product resources",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 25,
+   "title": "Live Updates: U.N. Court Rules Myanmar Committed Genocide Against Rohingya",
+   "summary": "Myanmar became the first state held accountable for violating the 1948 Genocide Convention. The ruling by the International Court of Justice could have broad implications.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 26,
+   "title": "AI data centers consume 2% of US electricity, spark Oklahoma moratorium talks",
+   "summary": "The growing energy demands of AI data centers may prompt stricter regulations and influence energy policy debates across the U.S. The post AI data centers consume 2% of US electricity, spark Oklahoma ",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 28,
+   "title": "&#039;Justice is finally being served&#039;: Rohingya widow hears Myanmar genocide ruling from refugee camp",
+   "summary": "The International Court of Justice (ICJ) ruled on Thursday (Nov 19) that thousands of killings and widespread sexual violence by Myanmar&#039;s security forces against the Rohingya in 2017 amounted to",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 29,
+   "title": "Coal is back: Which German power plants are the biggest winners from the energy crisis?",
+   "summary": "Germany&#8217;s thermal generation mix is shifting as stronger coal economics reshape plant profitability and dispatch. Kpler Insight identifies the units benefiting most, how their generation respond",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 30,
+   "title": "COSL Places $1.64B Order for 59 Offshore Support Vessels",
+   "summary": "China Oilfield Services Limited (COSL) has signed contracts worth $1.64 billion (RMB10.93 billion) for the construction of 59 offshore support vessels (OSVs), with deliveries scheduled between 2028 an",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 31,
+   "title": "Arbeitsmarkt: Regierung will Befristungen erleichtern",
+   "summary": "Berlin – Die Bundesregierung will das Arbeitsrecht reformieren und Unternehmen in Deutschland mit erleichterten Befristungen mehr Flexibilität geben. Eingeschränkt werden soll der Kündigungsschutz von",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 33,
+   "title": "There Is Only One Thing to Talk About With Russia",
+   "summary": "The European security order’s foundational principle is never to tolerate aggression. There is no need to revise that order, as the Kremlin has proposed, only to wait for a Russian regime that is will",
+   "expected": [
+    "俄羅斯"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 34,
+   "title": "UK testers find GPT-6.2 Astra easier to jailbreak than GPT-6 Astra",
+   "summary": "The UK AI Security Institute developed a universal jailbreak against two pre-release versions of OpenAI's GPT-6.2 Astra, using half the model queries required to jailbreak GPT-6 Astra, OpenAI said in ",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 36,
+   "title": "StormGeo weather intelligence strengthens Brazil’s climate resilience through Climatempo’s Radar RS project",
+   "summary": "The new Radar RS project implemented by StormGeo subsidiary Climatempo in the Brazilian State of Rio Grande do Sul is integrating advanced radar technology with weather intelligence to turn atmospheri",
+   "expected": [
+    "巴西"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 37,
+   "title": "Fairbanks Morse Defense Showcases Economic Impact of Canadian Maritime Exports",
+   "summary": "Fairbanks Morse Defense (FMD) announced its Ontario Naval Handling facility is contributing to regional economic growth with 80% of its manufactured products destined for global markets. The announcem",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 38,
+   "title": "Criminal IP Launches AITEM to Connect Asset Discovery with AI-Powered Exposure Management",
+   "summary": "Torrance, California, USA, 19th November 2026, CyberNewswire",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 39,
+   "title": "Amtrak orders longer Airo trains to increase capacity on the Northeast Corridor",
+   "summary": "USA: National passenger operator Amtrak has awarded Siemens Mobility a contract to supply a further eight rakes of Airo coaches and modernise 18 ACS-64 electric locomotives for use on Northeast Region",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 40,
+   "title": "Data centre power buildouts are déjà vu for US storage integrators with off-grid roots",
+   "summary": "As AI-driven data centre demand reshapes the US power landscape, BESS technology providers at RE+ highlighted an unexpected competitive advantage.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 41,
+   "title": "Italy: MACSE 2.0 to see higher clearing prices, lower capex impact, but Enel ‘will still bid hard again’, developer says",
+   "summary": "The second MACSE auction for energy storage in Italy is right around the corner and the dynamics are different this time around to last year’s inaugural event, a developer said.",
+   "expected": [
+    "義大利"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 42,
+   "title": "Fossil fuel limits cut from latest draft of UN climate deal",
+   "summary": "Climate negotiators stripped out any reference to ending the use of fossil fuels in a slimmed-down draft deal text published on Thursday, as ‌the COP31 meeting in Antalya, Turkey, approaches its Frida",
+   "expected": [
+    "土耳其"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 43,
+   "title": "GENERAL FUND CONSULTANT SEARCH",
+   "summary": "The Los Angeles City Employees’ Retirement System (LACERS), a $29 billion public pension fund, is seeking qualified organizations with substantial public defined benefit plan experience to provide gen",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 44,
+   "title": "Illinois Clean Ports Program invests $104M to deploy advanced equipment at local ports",
+   "summary": "State-administered program brings clean, advanced equipment and supporting infrastructure to port locations across Illinois",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 45,
+   "title": "Philadelphia trash contracts: landfills vs. incineration",
+   "summary": "A city consultant rated landfilling and incineration nearly equally. But the city’s evaluation of bids did not compare three companies’ toxic pollution levels.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 46,
+   "title": "Evotec und Bristol-Myers Squibb erreichen Zulassung für neuen Wirkstoffkandidaten",
+   "summary": "Evotec und Bristol-Myers Squibb haben die Erlaubnis, an einem weiteren Wirkstoffkandidaten im Bereich der Protein-Degradation zu forschen. Evotec hat zuletzt hohe Verluste eingefahren und wird derzeit",
+   "expected": [
+    "德國",
+    "美國",
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 47,
+   "title": "New approach tracks e-cigarette damage to respiratory system",
+   "summary": "University of California, Riverside, researchers have developed a new way to evaluate pathological changes and cellular remodeling caused by inhaled aerosols, such as those from electronic cigarettes.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 48,
+   "title": "FEATURE: Brazilian biodiversity credit market explores compensation to unlock corporate demand",
+   "summary": "As Brazil's biodiversity credit market develops, some players are pushing for credits to be used nationally to compensate for environmental impacts while creating more reliable demand.",
+   "expected": [
+    "巴西"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 49,
+   "title": "M 4.7 - 92 km W of San Juan, Peru",
+   "summary": "地震事件：Time 2026-11-19 09:08:13 UTC 2026-11-19 09:08:13 UTC at epicenter Location 15.384&deg;S 76.025&deg;W Depth 10.00 km (6.21 mi)",
+   "expected": [
+    "秘魯"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 50,
+   "title": "M 4.9 - 65 km SSW of Atka, Alaska",
+   "summary": "地震事件：ShakeMap - III Time 2026-11-19 13:05:22 UTC 2026-11-19 13:05:22 UTC at epicenter Location 51.680&deg;N 174.660&deg;W Depth 46.05 km (28.62 mi)",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 51,
+   "title": "CalPERS affirms its divestments. A five-year review puts the cost since implementation at $6.4 billion.",
+   "summary": "CalPERS unanimously voted to continue divestment mandates on tobacco, firearms, Iran and thermal coal despite a $6.4 billion estimated return loss since inception.",
+   "expected": [
+    "美國"
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 52,
+   "title": "Bridgewater says China's open-source AI model release coincided with a cyberattack surge",
+   "summary": "The hedge fund is managing money on a one-in-three chance of an economically destabilizing cyberattack within the next year",
+   "expected": [
+    "美國",
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 53,
+   "title": "Heron Power inks 1.5GW power electronics deal with Google-owned Intersect",
+   "summary": "Google-owned renewable energy developer Intersect has signed an agreement with Heron Power to reserve 1.5GW of the US-based startup’s Heron Link medium-voltage power electronics units, with deliveries",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 54,
+   "title": "Epilepsie kann bewusste Zeitwahrnehmung beeinträchtigen",
+   "summary": "Berlin – Menschen mit mesialer Temporallappenepilepsie haben offenbar Schwierigkeiten, Zeitspannen präzise einzuschätzen. Die unbewusste Verarbeitung zeitlicher Informationen scheint dagegen weitgehen",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 56,
+   "title": "Bank of America CPO Sheri Bronstein: ‘The traditional definition of a working parent is too narrow’",
+   "summary": "Eighty-three percent of parents at Bank of America say the company offers special and unique benefits, compared with 59% of parents at a typical U.S. workplace.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 57,
+   "title": "Axor Commissions First Pasta Plant in Chad",
+   "summary": "Axor has commissioned Chad&#8217;s first pasta plant, a turnkey short-cut line with a production capacity of 2000 kg per hour, covering flour feeding through to packaging. The Axor pasta plant [&#8230",
+   "expected": [
+    "查德"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 62,
+   "title": "Lack of early border controls made UK ‘extremely vulnerable’ to Covid, inquiry finds",
+   "summary": "Latest report also says test-and-trace failures allowed virus to spread quickly and unchecked UK politics live – latest updates The lack of international border controls at the start of the Covid-19 p",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 63,
+   "title": "Top U.N. court rules Myanmar committed genocide against the Rohingya",
+   "summary": "The International Court of Justice found that Myanmar security forces \"acted with genocidal intent\" against the Rohingya during the 2017 military operations in the northern Rakhine State.",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 64,
+   "title": "Damen Delivers Hybrid CSOV for Purus Offshore Wind Operations",
+   "summary": "Damen Shipyards has delivered the 90-meter commissioning service operations vessel (CSOV) Purus Vortex to Purus, with the vessel heading to the Netherlands ahead of its deployment on an offshore wind ",
+   "expected": [
+    "荷蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 65,
+   "title": "The U.S. gas turbine fleet may have a lot left on the table",
+   "summary": "With new turbines years away, Turbine Logic’s Chris Perullo previews his POWERGEN 2027 analysis showing the existing fleet could add as much as 600 TWh a year through maintenance and upgrades.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 67,
+   "title": "Vulnerable patients face illegal corridor care in English hospitals",
+   "summary": "Exclusive data published by The BMJ today reveal that half of hospital trusts in England are breaching NHS corridor care guidelines by treating vulnerable groups in emergency department corridors, inc",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 68,
+   "title": "Siemens Gamesa to Supply Turbines for 1GW Offshore Wind Farm",
+   "summary": "Vattenfall and Copenhagen Infrastructure Partners (CIP) have selected Siemens Gamesa to supply 69 offshore wind turbines for the first phase of their Zeevonk project in the Dutch North Sea…",
+   "expected": [
+    "荷蘭"
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 69,
+   "title": "Indonesia parliament passes asset forfeiture bill into law",
+   "summary": "Indonesia passed an asset forfeiture law that lets authorities seize suspected criminal assets without a prior conviction in certain cases.",
+   "expected": [
+    "印尼"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 72,
+   "title": "South Korea uses nationwide emergency alert to catch exam cheats, exposes 22 students with hidden phones",
+   "summary": "Half a million people took South Korea's annual College Scholastic Ability Test (CSAT), known as the suneung, at 1,312 centers across the country on Thursday. The five exams take place over eight hour",
+   "expected": [
+    "南韓"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 73,
+   "title": "119 arrests made during Saskatchewan RCMP’s SERT operation in Pelican Narrows",
+   "summary": "Saskatchewan RCMP’s Saskatchewan Enforcement Response Teams arrested 119 individuals during an operation to combat violent crime and illicit trafficking in the Pelican Narrows area.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 74,
+   "title": "COP31: ANALYSIS – All eyes on Beijing, but China hesitates on leading climate action",
+   "summary": "Despite growing expectations for China to take the lead on climate change, Beijing remains hesitant to step into a stronger political leadership role, experts told Carbon Pulse.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 75,
+   "title": "M 5.2 - 169 km S of Attu Station, Alaska",
+   "summary": "地震事件：ShakeMap - III Time 2026-11-18 21:28:47 UTC 2026-11-18 21:28:47 UTC at epicenter Location 51.338&deg;N 172.860&deg;E Depth 10.00 km (6.21 mi)",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 76,
+   "title": "Große Spannweite der GKV-Zusatzbeitragssätze erwartet",
+   "summary": "Berlin – Kommendes Jahr könnte rund ein Viertel der Krankenkassen mit etwa 33 Prozent der GKV-Versicherten einen kostendeckenden Zusatzbeitragssatz unterhalb des festgelegten durchschnittlichen Zusatz",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 77,
+   "title": "India Eases Vessel Age Restrictions to Strengthen Domestic Shipping",
+   "summary": "India has relaxed rules allowing vessels more than 20 years old to be registered under its flag, according to a government order, potentially expanding its domestic shipping fleet and reducing relianc",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 78,
+   "title": "Jackery and Every Electric launch 4 MWh plug-in battery VPP for New York renters",
+   "summary": "Jackery has partnered with Brooklyn-based aggregator Every Electric to shift air conditioning load peaks without permitting limitations. The post Jackery and Every Electric launch 4 MWh plug-in batter",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 79,
+   "title": "Sechs Millionen akute Atemwegserkrankung",
+   "summary": "Berlin – Etwa sechs Millionen Menschen in Deutschland leiden zurzeit an einer neu aufgetretenen akuten Atemwegserkrankung. Das entspricht rund 7.200 Fällen pro 100.000 Einwohner, unabhängig von einem ",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 80,
+   "title": "Chef Rachel Khoo: 'You don't need fancy kitchen gadgets to cook delicious food'",
+   "summary": "One of the world's best-known chefs has spoken to FRANCE 24 about her new book that proves you certainly don't need fancy kitchen gadgets to cook delicious meals. The book \"The Smallest Restaurant in ",
+   "expected": [
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 81,
+   "title": "Last-ditch bid to prevent threatened strike at San Pedro Bay ports",
+   "summary": "A strike could disrupt cargo operations at the ports of Los Angeles and Long Beach from Saturday, after the latest contract negotiations between employers and port security workers ended without agree",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 82,
+   "title": "Myanmar committed genocide against Rohingya, top UN court rules",
+   "summary": "The International Court of Justice has upheld large parts of a genocide case against Myanmar linked to the 2017 conflict with its Rohingya minority. It called for it to pay reparations and let refugee",
+   "expected": [
+    "緬甸"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 83,
+   "title": "Nigel Farage is back in Brussels",
+   "summary": "The veteran Brexiteer is in town to attack Andy Burnham's efforts at building bridges with the EU.",
+   "expected": [
+    "比利時"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 86,
+   "title": "PACE Organization InnovAge Agrees to Pay $36M to Resolve False Claims Act Allegations of Failing to Provide Comprehensive Medical Services and Timely Specialist Referrals to Seniors",
+   "summary": "InnovAge Holding Corporation (InnovAge), headquartered in Denver, Colorado, has agreed to pay a total of $36 million to resolve allegations that it violated the federal False Claims Act and state laws",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 87,
+   "title": "Trump's team scrambles to calm U.S. fears over tech outages",
+   "summary": "After U.S. President Donald Trump brushed aside concern over the past week's series of tech outages, members of his adminstration ramped up efforts Wednesday to try to reassure the American public the",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 88,
+   "title": "Houston Ship Pilot Becomes First In US History To Face Seaman’s Manslaughter Charge",
+   "summary": "A Houston ship pilot has become the first in US history to face a seaman’s manslaughter charge over the fatal 2024 collision between Yangze 7 and Miss Peggy.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 90,
+   "title": "Portuguese families could spend 83% of average net income on rent, study finds",
+   "summary": "Among 20 Portuguese cities studied by the property listings website Idealista, Faro was the least affordable for renters and Funchal for buyers. In Lisbon, advertised rents equalled 88% of the average",
+   "expected": [
+    "葡萄牙"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 91,
+   "title": "Stablecoins are moving faster than the businesses that are supposed to use them",
+   "summary": "Stablecoins are gaining institutional backing, clearer U.S. regulation, and new payment infrastructure. But those developments don&#8217;t necessarily mean businesses are rushing to use stablecoins as",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 92,
+   "title": "Musk pledges higher Tesla output at China plant, Chinese state media says",
+   "summary": "Musk pledges higher Tesla output at China plant, Chinese state media says",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 94,
+   "title": "Manchester United post bigger Q1 loss as Pochettino inherits struggling side",
+   "summary": "Manchester United post bigger Q1 loss as Pochettino inherits struggling side",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 95,
+   "title": "Germany news: Pistorius to visit Auschwitz memorial in Poland trip",
+   "summary": "Germany's Defense Minister's first stop in Poland will be at the memorial site of the former Nazi extermination camp Auschwitz-Birkenau. Follow DW for more.",
+   "expected": [
+    "波蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 96,
+   "title": "Hegseth uses Venezuela visit to boast of Maduro’s capture by US military",
+   "summary": "Defense secretary asserts US dominance on trip that would have seemed ‘impossible, almost unbelievable’ a year ago Pete Hegseth has used his first visit to Venezuela since US special forces abducted i",
+   "expected": [
+    "委內瑞拉"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 97,
+   "title": "A Michigan city bought a closed mall for $2.4 million. In its basement was a forgotten sculpture that GM later bought for $1 million",
+   "summary": "The sculpture is 26 feet tall and was made by one of Detroit's best-known artists. For decades, almost nobody knew it was sitting in the dark under an empty shopping mall. The post A Michigan city bou",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-b",
+   "n": 99,
+   "title": "Regional network operator wins ring-fence waiver to install first-of-a-kind light pole EV chargers",
+   "summary": "Network company wins permission to dabble in kerbside EV charging, this time to test a technology commonly seen Europe but making its debut in Australia. The post Regional network operator wins ring-f",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 1,
+   "title": "Wadephul: 'Coalition of the Willing' talks in Berlin send strong signal to Moscow",
+   "summary": "German Foreign Minister Wadephul has said the Coalition of the Willing meeting in Berlin sends a clear message to Moscow to take peace talks seriously. He also warned Ukraine should be prepared for pe",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 3,
+   "title": "Campylobacter jejuni in Ethiopian Beef and Raw Milk Shows High Multidrug Resistance",
+   "summary": "A cross-sectional investigation in Gondar, Ethiopia, detected Campylobacter jejuni in over twenty percent of tested beef carcass and raw milk samples alongside widespread multidrug resistance.",
+   "expected": [
+    "衣索比亞"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 4,
+   "title": "Road closed, Norwich Street, Wadestown",
+   "summary": "District: Wellington Norwich Street is closed following a crash in Wadestown this morning. Police were called to the single vehicle crash around 8.15am. Initial indications suggest there are serious i",
+   "expected": [
+    "紐西蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 5,
+   "title": "Katie Zacharia under investigation over legal work in California, state bar says",
+   "summary": "Trump’s ex-White House press secretary, who lasted only five days in the role, is accused of practicing law without a license",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 6,
+   "title": "Devon, Avant Lead Delaware Basin’s Lea County Permit Surge",
+   "summary": "Lea County horizontal drilling permit approvals jumped 27%, but economics could limit future development, according to Novi Labs.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 7,
+   "title": "Matildas star Foord named best international player in Asia",
+   "summary": "Caitlin Foord has been named women's international player of the year at the Asian Football Confederation's annual awards in Bangkok, completing a unique treble for the Matildas striker.",
+   "expected": [
+    "泰國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 8,
+   "title": "Xcel Energy Moves 7.31 Miles of Power Lines Underground at Palo Duro Canyon",
+   "summary": "Xcel Energy is moving selected overhead power lines underground in Palo Duro Canyon State Park in Texas as part of efforts to reduce wildfire ignition risks and preserve views of the canyon. Removing ",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 9,
+   "title": "Update: Chilliwack RCMP investigating allegations of youth assault captured on video",
+   "summary": "The Chilliwack RCMP is providing an update on a previous media release regarding an alleged youth assault that was captured on video and circulated on social media.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 10,
+   "title": "North Sea operators push ahead on projects as EnQuest prepares UK exit",
+   "summary": "In this week's North Sea roundup, EnQuest agrees to sell its UK business, Rosebank moves closer to first oil, Perenco progresses a new gas development, and plans take shape for the dismantling of Stat",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 11,
+   "title": "At least one dead and dozens missing after migrant boat capsizes off Senegal en route to Spain",
+   "summary": "The latest sinking comes amid a sharp rise in departures towards the Canary Islands, with more than 11,000 people reaching the Spanish archipelago in the first two weeks of November.",
+   "expected": [
+    "塞內加爾"
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 12,
+   "title": "Canada establishes standing offer for CDR credits, federal pricing benchmarks expected",
+   "summary": "Ottawa launched a national master standing offer with 19 carbon removal (CDR) companies and their projects, where federal departments will source ‘at least’ C$10 million ($7 mln) in credits by 2030.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 13,
+   "title": "First US offshore critical minerals lease sale generates $6 million in high bids",
+   "summary": "US Interior Department auction offers two lease areas covering 31.5 million acres in federal waters off American Samoa.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 14,
+   "title": "Mercury-bound X-ray telescope delivers first images after eight years in space",
+   "summary": "The first data from a U.K.-built instrument heading to Mercury have provided observations of one of the brightest X-ray sources in the sky from aboard the ESA/JAXA BepiColombo spacecraft in the inner ",
+   "expected": [
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 15,
+   "title": "Adolescent Nutrition Links to Cognitive Function but Not School Performance in Ghana",
+   "summary": "A cross-sectional study in rural Ghana finds that adolescent girls' nutritional status is associated with fluid cognition and processing speed but not school grades.",
+   "expected": [
+    "迦納"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 16,
+   "title": "North Korea expanding uranium enrichment facility, UN nuclear watchdog says",
+   "summary": "North Korea can produce both highly enriched uranium and weapons-grade plutonium at its facilities, according to IAEA.",
+   "expected": [
+    "北韓"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 18,
+   "title": "9-month-old dies of hypothermia in Gaza as territory heads into winter season",
+   "summary": "Kinan Arqiq was nine months old when he died of hypothermia in Gaza, as heavy rains caused flooding in makeshift tent cities.",
+   "expected": [
+    "巴勒斯坦"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 19,
+   "title": "Nike Is Giving Valedictorians Free Air Force 1s. It May Get Something More Valuable in Return",
+   "summary": "The sneaker giant’s nationwide giveaway, which was proposed by Mississippi senator-elect Scott Colom, comes as the retailer works to regain momentum.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 21,
+   "title": "On this day in space! Nov. 19, 2005: Japan's Hayabusa spacecraft makes 1st-ever liftoff from surface of an asteroid",
+   "summary": "On Nov. 19, 2005, the Japanese Hayabusa spacecraft made the first liftoff from an asteroid. Here's why it mattered.",
+   "expected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 22,
+   "title": "Who knew what about Sandpapergate? The players break their silence",
+   "summary": "The Sandpapergate saga has seen a definitive split between some of Australia's greatest cricketers. Here's what everyone has said so far.",
+   "expected": [
+    "澳洲"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 23,
+   "title": "Simple steps to protect pregnant women against measles infection",
+   "summary": "Pregnant women and infants are particularly vulnerable to complications related to measles. Measles is no longer considered eliminated in the U.S., and it's important that women who are planning to be",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 25,
+   "title": "Pharmacy Owner Sentenced to 82 Months in Prison for $5.6M Health Care Fraud Scheme and Illegal Distribution of Oxycodone",
+   "summary": "A Michigan pharmacy owner was sentenced yesterday to 82 months in prison with three years’ supervised release for a $5.6 million health care fraud scheme and for illegally distributing oxycodone. The ",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 26,
+   "title": "Port of Los Angeles Releases Environmental Impact Draft for Proposed Terminal Improvements",
+   "summary": "The Port of Los Angeles has released a Draft Environmental Impact Report (DEIR) for a proposed Marine Oil Terminal and Wharf Improvements Project, located at Berths 148-151 in Wilmington, a terminal o",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 28,
+   "title": "Ultraprocessed foods alter brain responses in younger adults",
+   "summary": "Results from a Virginia Tech eating trial add to evidence that the developing brain responds differently to foods that have been through industrial processing or contain ingredients not found in a hom",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 29,
+   "title": "India Maps Regional Viral Outbreak Priorities to Guide Zonal Pandemic Preparedness",
+   "summary": "A multicriteria consultative study across four newly established zonal virology institutes in India established regional viral disease priorities, identifying dengue, influenza, measles, Japanese ence",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 30,
+   "title": "Indonesia court jails daycare head for 5 years in child abuse case",
+   "summary": "A Yogyakarta court sentenced Little Aresha Daycare Centre principal Anita Palupi to five years in prison and ordered a 510 million rupiah fine.",
+   "expected": [
+    "印尼"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 31,
+   "title": "Maryland Man Sentenced to 27 Years in Prison for Sex Trafficking Two Adult Women",
+   "summary": "Brandon Sartor, 33, of Prince George’s County, Maryland, was sentenced to 27 years in prison and ordered to pay $239,800 in restitution for sex trafficking two adult women using force, fraud, or coerc",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 32,
+   "title": "My wife pays for her family to visit us in New York. How do I tell her we can&#x2019;t afford it?",
+   "summary": "&#x201c;Hotel rooms can cost as much as $400 per night.&#x201d;",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 33,
+   "title": "Ledger Faces Growing Scrutiny as Dubai Users Report Mysterious Crypto Losses",
+   "summary": "One Dubai user claims to have lost 507K USDT from their Ledger Flex, while another is said to have lost 122K USDT also from a Ledger device.",
+   "expected": [
+    "阿拉伯聯合大公國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 34,
+   "title": "Truck sales jump 59% on replacement momentum in October",
+   "summary": "U.S. Class 8 retail sales gained further momentum in October as year-end market conditions encouraged fleets to catch up on their equipment replacement needs.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 35,
+   "title": "US plans to announce cause of outage that led to nationwide ground stop, FAA says",
+   "summary": "Transport Secretary Sean Duffy said Juniper router installations have been paused as testing continues, while he seeks US$50 billion for air traffic control upgrades.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 36,
+   "title": "A convincing vegan meat alternative needs both taste and texture—here&#039;s how food scientists manufacture it",
+   "summary": "This Thanksgiving, you may sit down to a table laden with mashed potatoes, cranberry sauce, vegetables and a golden-brown turkey. And, if you have any vegetarians or vegans in your family, you may eve",
+   "expected": [
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 37,
+   "title": "Google signs 50-MW superhot geothermal PPA with Quaise Energy",
+   "summary": "The agreement will support Google's Oregon data center operations beginning as early as 2030, advancing development of a technology designed to access geothermal resources deeper underground.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 38,
+   "title": "Little-known protein may help protect spinal disks from aging",
+   "summary": "University of Utah researchers have characterized a protein that may help protect spinal disks from age-related damage, pointing to a possible direction for future back pain treatments. Using CRISPR t",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 39,
+   "title": "How microbes make drug-like chemicals without damaging themselves",
+   "summary": "University of Michigan researchers have discovered a mechanism that enables microscopic organisms like bacteria and fungi to produce drug-like molecules—compounds that can fight infections or kill can",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 40,
+   "title": "Over Seventy Percent of Cancer Patients in Vietnam Face Late-Stage Diagnosis",
+   "summary": "A scoping review indicates that over 70 percent of cancer patients in Vietnam face late-stage diagnosis and treatment linked to geographic, financial, and health system barriers.",
+   "expected": [
+    "越南"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 41,
+   "title": "NetEase CEO Warns China's AI Short-Drama Craze Could Eat Into Gaming Time",
+   "summary": "NetEase Inc. (NASDAQ:NTES) stock plunged Thursday after the Chinese gaming giant reported weaker-than-expected third-quarter revenue and earnings . Lower revenue from certain self-developed games weig",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 42,
+   "title": "Burin Peninsula RCMP arrests three drug",
+   "summary": "RCMP in Marystown recently removed three drug-impaired operators from Burin Peninsula-area roads, as officers continue proactive patrols to ensure public and road safety.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 43,
+   "title": "France raises bird flu alert to maximum level",
+   "summary": "France raises bird flu alert to maximum level",
+   "expected": [
+    "法國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 44,
+   "title": "Michigan Home Health Care Agency Owner Sentenced to 4 Years in Prison for $1.6M Medicare Fraud Scheme Fueled by Illegal Kickbacks",
+   "summary": "A Michigan nurse and home health agency owner was sentenced today to 4 years in prison for a $1.6 million scheme to defraud Medicare. She was also ordered to pay $1,652,130.67 in restitution to Medica",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 45,
+   "title": "LX Pantos expands US presence with new Chicago office",
+   "summary": "LX Pantos Americas has opened a new office in the Chicago area, strengthening its presence in the US Midwest as part of its regional expansion strategy. The company marked the opening with a ribbon-cu",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 46,
+   "title": "The World’s 50 Best Vineyards 2026 have been revealed – and number one is in Germany",
+   "summary": "While Schloss Johannisberg in the Rheingau region took the top spot, three vineyards from France made the top 10.",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 47,
+   "title": "60% of US Crypto Owners Plan to Buy More, Topping Stock and ETF Owners",
+   "summary": "Schwab's 2026 survey finds 60% of US crypto owners plan to buy more, ahead of stock and ETF owners, despite risk fears. The post 60% of US Crypto Owners Plan to Buy More, Topping Stock and ETF Owners ",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 49,
+   "title": "California DOJ questions Nvidia on chips possibly reaching China",
+   "summary": "Increased scrutiny on Nvidia may lead to regulatory challenges and potential congressional hearings, impacting market perceptions and company operations. The post California DOJ questions Nvidia on ch",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 50,
+   "title": "Russian national accused of stalking San Francisco techie in plot against US defense-tech giant",
+   "summary": "DoJ claims suspect part of 4-month operation to steal secrets, surveil employees",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 51,
+   "title": "Musk&#039;s SpaceXSI denies liability in UK lawmaker&#039;s lawsuit over Grok images",
+   "summary": "Musk&#039;s SpaceXSI denies liability in UK lawmaker&#039;s lawsuit over Grok images",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 52,
+   "title": "US Treasury sanctions three people linked to Southeast Asia scam centers",
+   "summary": "US Treasury sanctions three people linked to Southeast Asia scam centers",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 53,
+   "title": "Two In Five Colorado Jails Lack Required Opioid Treatment Policies",
+   "summary": "A policy surveillance study reveals that nearly two in five Colorado county jails lack accessible policies for treating opioid use disorder despite a statutory mandate.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 54,
+   "title": "Fiji recall Hughes, Ikanivere to captain against Italy",
+   "summary": "Fiji recall Hughes, Ikanivere to captain against Italy",
+   "expected": [
+    "斐濟",
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 55,
+   "title": "Injectable hydrogel material shows promise for regenerating damaged tissue",
+   "summary": "A biomedical engineer at the University of Houston has developed an injectable peptide hydrogel—about the consistency of hand sanitizer—that stimulates new blood vessel growth while providing structur",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 56,
+   "title": "Amsterdam - Vier verdachten aangehouden na oplichten van 64 mensen",
+   "summary": "In een Amsterdams onderzoek zijn op maandag 2 november 2026 vier mannen aangehouden die ervan verdacht worden zich voor te hebben gedaan als een spoedklusser. De vier verdachten zijn samen verantwoord",
+   "expected": [
+    "荷蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 58,
+   "title": "Hitachi, Bechtel team up to tackle growing lead times for power grid equipment",
+   "summary": "Hitachi and Bechtel announced an agreement to enhance planning and procurement of electrical equipment for Bechtel projects in the United States.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 59,
+   "title": "Oregon has more hyperscale data centers than all but one U.S. state, study finds",
+   "summary": "Oregon is also home to the second largest concentration of energy demand from the industry’s largest server farms.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 61,
+   "title": "Google Wallet adds Agents for Gemini purchases, starting with US profiles",
+   "summary": "Although it’s not available on the Android app yet, users can access Agents from the web version of Google Wallet.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 62,
+   "title": "S&P warns Chicago budget woes, CFO exit could hurt city’s bond rating",
+   "summary": "Fallout from the finance chief&rsquo;s resignation could &ldquo;absorb scarce time&rdquo; that might otherwise be spent negotiating a better budget, S&amp;P&rsquo;s Scott Nees said.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 63,
+   "title": "In a Rohingya Refugee Camp, Jubilation but Also Apprehension",
+   "summary": "People gathered in the rain to hear the ruling on whether Myanmar had committed genocide, though they understood it might not change their lives anytime soon.",
+   "expected": [
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 64,
+   "title": "Tata Sons Largest Shareholder Meets to Discuss Listing Amid Rift",
+   "summary": "India’s Tata Group is entering a critical fortnight as the conglomerate’s controlling shareholders and holding company prepare for back-to-back meetings amid a governance dispute that has spilled beyo",
+   "expected": [
+    "印度"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 65,
+   "title": "Wells Fargo grapples with change in venerable business line",
+   "summary": "The San Francisco-based banking giant is grappling with the impact of major changes in the food, beverage and agribusiness sector, including big shifts in how Americans eat and drink.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 66,
+   "title": "New research explains how far people will go for a day at the park",
+   "summary": "A park two miles (3.2 kilometers) from home might seem close enough for a Saturday outing. In metropolitan Detroit, though, park visits had already fallen to about half their modeled peak by that dist",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 67,
+   "title": "Cancer cases among transgender people in England could more than double soon",
+   "summary": "A study led by Queen Mary University of London has found that the number of new cancer cases each year among transgender and gender-diverse people in England could more than double over the next decad",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 68,
+   "title": "Investment scams with potential victims in at least 50 countries: over 100 servers seized",
+   "summary": "Led by the German Itzehoe Public Prosecutor's Office (Staatsanwaltschaft Itzehoe), the operation targeted a company suspected of supplying fraudulent trading websites to criminal groups. The entity is",
+   "expected": [
+    "德國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 69,
+   "title": "Fed’s Goolsbee says AI surge could strain US capacity, overheat economy",
+   "summary": "Fed’s Goolsbee says AI surge could strain US capacity, overheat economy",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 70,
+   "title": "Russian charged with spying on Palantir employees for Moscow",
+   "summary": "Igor Andreevich D’iu, A Russian national recruited through Telegram, has been charged in the United States with acting as a Moscow agent in a surveillance campaign targeting employees of a defense tec",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 71,
+   "title": "New York sues IHG, others over Holiday Inn accused of exploiting immigrant workers",
+   "summary": "New York sues IHG, others over Holiday Inn accused of exploiting immigrant workers",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 72,
+   "title": "Unity RCMP investigating serious collision",
+   "summary": "On November 17, 2026, around 12:15 p.m., Unity RCMP received a report of a two-vehicle collision on Highway #14, approximately five kilometers east of Unity, SK.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 73,
+   "title": "Israel says it concludes Gaza tank raid",
+   "summary": "CAIRO, Nov 19 - Israel’s military said on Thursday it had concluded a tank raid to dismantle a suspected Hamas tunnel in the central Gaza Strip, its highest-profile ground incursion across the yellow ",
+   "expected": [
+    "巴勒斯坦"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 74,
+   "title": "NHS Talking Therapies Supply Linked to Reduced Mental Health Employment Gap",
+   "summary": "A retrospective observational study of English survey data found higher regional supplies of psychological therapy appointments were associated with narrower workforce participation gaps for individua",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 76,
+   "title": "The surprising reason the U.S. economy is speeding up &#x2014; and might have more room to run",
+   "summary": "The main engine of U.S. growth is in overdrive.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 77,
+   "title": "China-based AI robotics biotech firm MegaRobo raises $200M to accelerate scientific discovery",
+   "summary": "Chinese biotech robotics firm MegaRobo Co. Ltd. today announced it has raised $200 million in new funding to invest in its core technology and expand its automated life sciences infrastructure for inc",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 78,
+   "title": "Houthis target Saudi Arabia&#8217;s Jizan in attack",
+   "summary": "The attack underscores persistent regional instability, potentially affecting global oil markets and prompting international diplomatic responses. The post Houthis target Saudi Arabia&#8217;s Jizan in",
+   "expected": [
+    "沙烏地阿拉伯"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 79,
+   "title": "Children exposed to more radiation from medical scans may face higher brain tumor risk",
+   "summary": "A new large study led by UC Davis and UC San Francisco researchers has found that higher cumulative radiation dose to the brain from medical imaging during childhood is linked to a greater brain tumor",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 80,
+   "title": "Dutch and Austrian Embassies Are Damaged as Russian Drones Swarm Kyiv",
+   "summary": "Foreign ministers for Austria and the Netherlands said no one was harmed at their embassy compounds, and the European Union’s ambassador said a drone “exploded right above my head&#34; by her hotel.",
+   "expected": [
+    "烏克蘭"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 82,
+   "title": "Shell delivers first gas from Mina West-WDDM tieback offshore Egypt",
+   "summary": "Shell Egypt has started gas production at the Mina West Field, with output of up to 160 MMcf/d routed to Egypt’s domestic gas grid.",
+   "expected": [
+    "埃及"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 83,
+   "title": "Aussie has first-round lead in prestigious Tour Championship",
+   "summary": "Emerging Australian golf superstar Karis Davidson has defied the odds to seize the first-round clubhouse lead at the LPGA's rich and prestigious Tour Championship in Florida.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 85,
+   "title": "Iraq orders armed factions to withdraw from strategic area amid alleged oil smuggling and US pressure",
+   "summary": "Prime Minister Ali Faleh al-Zaidi has given the Iran-backed group until Friday to leave Jurf al-Nasr, as Baghdad faces growing pressure from Washington to bring powerful militias under state control.",
+   "expected": [
+    "伊拉克"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 86,
+   "title": "FabTek Industries to Manufacture Doors for Washington State Ferries",
+   "summary": "FabTek Industries, LLC, a Washington-based metal fabricator specializing in marine doors, windows and hatches, has been awarded a contract to manufacture doors for Washington State Ferries' new vessel",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 87,
+   "title": "Wildfires Causing $1 Billion in Damage Have Jumped in Frequency in the US",
+   "summary": "Billion-dollar wildfires in the U.S. have become more than five times as frequent and 10 times as costly over the past two decades, according to a new analysis of the nation&#8217;s most destructive f",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 88,
+   "title": "Nurses in China Face Multilevel Barriers When Discontinuing Low-Value Care",
+   "summary": "A qualitative study across three acute care hospitals in China reveals the multilevel determinants, strategies, and managerial roles shaping nurse-led de-implementation of low-value care.",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 89,
+   "title": "In Maryland and Minnesota, a Cheaper BEAD is Costing More and Moving Slower",
+   "summary": "A program rebuilt to find the lowest cost per home is running into rising prices, fiber shortages and slow federal reviews",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 90,
+   "title": "South Korea's top court overturns charges against ex-prime minister for his role in martial law",
+   "summary": "South Korea's Supreme Court on Thursday overturned the conviction of former Prime Minister Han Duck-soo for aiding in the declaration of martial law in December 2024.",
+   "expected": [
+    "南韓"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 91,
+   "title": "Wanted: Cassandra Monckton",
+   "summary": "This week, the Terrace RCMP is featuring 43-year-old Cassandra Monckton-Milnes for Wanted Wednesday.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 93,
+   "title": "No more asteroid landing: Engine trouble forces Japan's Hayabusa2 probe to change plans",
+   "summary": "Japan's space agency has decided to switch destinations and objectives for the final act of its Hayabusa2 asteroid mission, due to problems with the spacecraft's ion thrusters.",
+   "expected": [
+    "日本"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 94,
+   "title": "The Gulf Is America’s Next AI Security Test",
+   "summary": "Even after the Nvidia scandal, new rules leave significant loopholes.",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 95,
+   "title": "UK Loses Secrecy Fight Over Apple &#039;Backdoor&#039; Order",
+   "summary": "Apple's challenge to a UK government demand for access to encrypted customer data can now be heard largely in public, after a tribunal rejected the Home Office's attempt to keep the order secret, acco",
+   "expected": [
+    "英國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 96,
+   "title": "CircleCI Expands Smarter Testing to Power Independent Validation for AI-Driven Development",
+   "summary": "SAN FRANCISCO, CA — CircleCI, a leading continuous integration and continuous delivery (CI/CD) platform, announced new features available in its Smarter Testing suite. Smarter Testing helps engineerin",
+   "expected": [
+    "美國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 97,
+   "title": "Danny Quah on Asean’s middle course and a prisoner’s dilemma for US, China",
+   "summary": "Danny Quah is an economics professor at the National University of Singapore’s Lee Kuan Yew School of Public Policy. He served as the school’s dean between 2018 and 2025, and has consulted for, among ",
+   "expected": [
+    "新加坡",
+    ""
+   ],
+   "geminiError": true
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 98,
+   "title": "APEC live: China releases leaders' statement after its disappearance from APEC website",
+   "summary": "APEC live: China releases leaders' statement after its disappearance from APEC website",
+   "expected": [
+    "中國"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 99,
+   "title": "Missing person located",
+   "summary": "UPDATE (November 18, 2026): Burin Peninsula RCMP reports that the 16-year-old woman reported missing has been located and confirmed safe.",
+   "expected": [
+    "加拿大"
+   ]
+  },
+  {
+   "sample": "gemini-2026-11-20-c",
+   "n": 100,
+   "title": "Jefferson: Inflation must return to 2% before Fed changes target",
+   "summary": "The Federal Reserve’s vice chair acknowledged that U.S. economic conditions are changing, but he would not support revisiting the Fed’s policy objective on the fly.",
+   "expected": [
+    "美國"
+   ]
+  }
+ ]
+}

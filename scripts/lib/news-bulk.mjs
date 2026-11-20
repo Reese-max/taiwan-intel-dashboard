@@ -855,14 +855,21 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
       if (country === "烏克蘭" && /^\s+over\b/i.test(source.slice(match.index + match[0].length))) continue;
       if (country === "烏克蘭" && /\bfuture of\s*$/i.test(source.slice(Math.max(0, match.index - 14), match.index))) continue;
       if (/^from\s+$/i.test(source.slice(Math.max(0, match.index - 8), match.index))) continue;
-      // 公司、媒體名稱裡的地名（Wellington IT、Copenhagen Infrastructure Partners、Bristol-Myers Squibb、FRANCE 24）不是事件地點。
+      // 公司、媒體、賽事名稱裡的地名（Wellington IT、Bristol-Myers Squibb、FRANCE 24、Sydney Marathon）不是事件地點。
       const following = source.slice(match.index + match[0].length);
-      if (/^\s+(?:IT|Infrastructure|Partners|Holdings|Airlines|Airways|Insurance|Securities|Investments|24)\b/.test(following) ||
+      if (/^\s+(?:IT|Infrastructure|Partners|Holdings|Airlines|Airways|Insurance|Securities|Investments|24|Marathon|Open|Grand Prix|Masters)\b/.test(following) ||
         /^-[A-Z][a-z]+\s+[A-Z]/.test(following)) continue;
       matches.push({ country, lat, lng, index: match.index, length: match[0].length });
     }
   }
   matches.sort((a, b) => a.index - b.index || b.length - a.length);
+  // 兩國用連字號串在一起（China–India、US-China）是航線或雙邊議題，不是單一事件地點。
+  for (let i = 1; i < matches.length; i++) {
+    const [a, b] = [matches[i - 1], matches[i]];
+    if (a.country !== b.country && /^\s*[-–—]\s*$/.test(source.slice(a.index + a.length, b.index))) return null;
+  }
+  // 節目或彙整標題（Europe Tonight:、Morning Briefing:、newsletter）涵蓋多則新聞，不定位。
+  if (/^[^:：]{0,40}\b(?:Tonight|Morning|Briefing|Newsletter|Digest|Roundup)\s*[:：]/i.test(source)) return null;
   for (const match of source.matchAll(/\bChinese\b/gi)) {
     if (!/\bChinese\b.{0,55}\b(?:company|platform|business)\b/i.test(source)) continue;
     const [country, lat, lng] = COUNTRY_LOCATIONS.find(([name]) => name === "中國");
@@ -881,17 +888,10 @@ function countryLocationIn(text, { uniqueOnly = false } = {}) {
   if (matches[0]?.index === 0 && /^(?:Paris|New York|London|Tokyo|Berlin|Moscow|Beirut|Dublin|Miami)$/i.test(source.slice(0, matches[0].length))) {
     return { region: matches[0].country, lat: matches[0].lat, lng: matches[0].lng, explicit: true };
   }
-  if (/\bSydney Marathon\b/i.test(source)) return null;
-  if (/\bOsaka Gas\b/i.test(source)) return null;
-  if (/\b(?:China[-–]US|US[-–]China|U\.S\.[-–]China|China[-–]U\.S\.)\b/i.test(source)) return null;
   if (/\bin\s+the\s+US\s+and\s+Europe\b/i.test(source)) return null;
   if (/\b(?:six|6)\s+(?:countries|カ国)\b/i.test(source)) return null;
-  if (/\b(?:watch|stream|broadcast).{0,35}\bvs\b/i.test(source) || /\bNew Zealand vs India\b/i.test(source)) return null;
   if (/\bglobally\b/i.test(source) && /\b(?:recall|recalls|affected|impact)\b/i.test(source)) return null;
   if (/\b(?:main topic|topic) at .*meeting\b/i.test(source)) return null;
-  if (/\b(?:Europe Tonight|Europe Morning|Tonight: EU)\b/i.test(source)) return null;
-  if (/\bLatin America.{0,80}\bacross the region\b/i.test(source)) return null;
-  if (/\bDHL launches.{0,80}\bair freight service\b/i.test(source)) return null;
   if (/\bnuclear Indonesia\b/i.test(source)) {
     const [country, lat, lng] = COUNTRY_LOCATIONS.find(([name]) => name === "印尼");
     return { region: country, lat, lng };
