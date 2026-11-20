@@ -597,7 +597,12 @@ describe("國際國家地點的一般排除規則", () => {
     ["Animators speak out as players flock to the game", "The video game is set in Leonida, a fictional Florida."],
     ["1inch integrates Hyperliquid futures, excludes US and UK markets", ""],
     ["Climate Change AI 共同創辦人：AI 永續關鍵是選對工具", "環境部舉辦論壇，邀請加拿大麥吉爾大學副教授分享。"],
-  ])("虛構、排除語境、台灣活動引述外國學者不給外國地點：%s", (title, description) => {
+    ["Irish credit unions hit by data breach after IT provider compromised", "Wellington IT reportedly delayed alerting customers."],
+    ["Siemens Gamesa to supply turbines for offshore wind farm", "Vattenfall and Copenhagen Infrastructure Partners selected Siemens Gamesa."],
+    ["Evotec und Bristol-Myers Squibb erreichen Zulassung", ""],
+    ["Chef Rachel Khoo on cooking without gadgets", "One of the best-known chefs has spoken to FRANCE 24 about her new book."],
+    ["媒體只能當維他命？新創媒體執行長分享經營心法", "韓國媒體共同創辦人 19 日在台北 IMCT 2026 論壇分享。"],
+  ])("虛構、排除語境、公司媒體名稱、台灣活動引述外國講者不給外國地點：%s", (title, description) => {
     expect(locate(title, description).lat).toBeUndefined();
   });
   it.each([
@@ -608,6 +613,10 @@ describe("國際國家地點的一般排除規則", () => {
     ["Fictional account of China wartime history wins prize in Beijing", "The author won a literary prize in Beijing.", "中國"],
     ["Video game addiction clinic opens in China", "The public clinic will treat patients in Shanghai.", "中國"],
     ["New TSMC factory opens", "Taiwanese chipmaker TSMC opened its new plant in Japan.", "日本"],
+    ["Ukraine Power Grid Hit by Russian Strikes", "", "烏克蘭"],
+    ["Guinea-Bissau holds election", "", "幾內亞比索"],
+    ["Floods hit New Zealand capital", "Wellington residents evacuated.", "紐西蘭"],
+    ["Taiwan company opens its new plant", "The company opened its new plant in Japan. 在台北總部舉行的記者會上，公司說明投資計畫。", "日本"],
   ])("一般事件與標題有國家的台灣相關新聞照常定位：%s", (title, description, region) => {
     expect(locate(title, description)).toMatchObject({ region });
   });
@@ -1378,6 +1387,33 @@ describe("riskFromTitle 主題感知", () => {
     expect(riskFromTitle("男子持刀劫持人質", "治安")).toBe("high");
   });
 
+  // 使用者 2026-11-20 定案的風險標準。
+  it.each([
+    ["快訊／三峽女疑越雙黃線撞黃牌重機 騎士搶救1小時不治", "交通", "medium"],
+    ["台南大貨車右轉輾機車 女騎士當場身亡", "交通", "medium"],
+    ["高雄男遭刺殺不治", "治安", "high"],
+    ["登玉山失足墜50米邊坡傷重不治", "災防", "high"],
+    ["遊覽車翻覆釀12死", "交通", "critical"],
+    ["男搭雲霄飛車遭甩飛 撞上乘客墜地身亡", "治安", "high"],
+    ["龜殼花咬傷路人 凶嫌遭車輛輾斃", "治安", "low"],
+    ["駕車隨機撞人造成1死", "治安", "high"],
+    ["工安被吊車壓死", "治安", "high"],
+    ["砂石車擦撞機車 騎士遭壓死", "交通", "medium"],
+  ])("單純交通事故的死亡算中，刑案與其他事故維持：%s", (title, hint, risk) => {
+    expect(riskFromTitle(title, hint)).toBe(risk);
+  });
+
+  it.each([
+    ["北市臨檢查獲騎士車內藏安非他命藥錠100顆", "medium"],
+    ["毒販交保又賣毒 海巡抄出海洛因磚", "medium"],
+    ["破獲製毒工廠 查扣安非他命200公斤", "high"],
+    ["跨國販毒集團走私海洛因落網", "high"],
+    ["行李藏34公斤大麻遭逮捕", "high"],
+    ["屏東男住處搜出大批槍彈", "high"],
+  ])("持有與一般查獲毒品算中，製毒、集團、大量與槍彈算高：%s", (title, risk) => {
+    expect(riskFromTitle(title, "治安")).toBe(risk);
+  });
+
   it("「大規模」只和同一句的傷亡攻擊詞連成危急，背景描述不跨句連結", () => {
     expect(riskFromTitle("車站發生大規模砍人事件", "治安")).toBe("critical");
     expect(riskFromTitle("園區遭大規模無差別攻擊", "治安")).toBe("critical");
@@ -1458,7 +1494,7 @@ describe("riskFromTitle 主題感知", () => {
     expect(riskFromTitle("彰化男子失去生命徵象送醫不治", "災防")).toBe("high");
     expect(riskFromTitle("登玉山失足墜50米邊坡傷重不治", "災防")).toBe("high");
     expect(riskFromTitle("桃園街頭槍手開3槍", "治安")).toBe("high");
-    expect(riskFromTitle("苗栗車禍1人死亡", "災防")).toBe("high");
+    expect(riskFromTitle("苗栗車禍1人死亡", "災防")).toBe("medium"); // 2026-11-20 使用者定案：單純交通事故死亡算中
     expect(riskFromTitle("中壢4死案", "治安")).toBe("high");
   });
 
@@ -1466,7 +1502,7 @@ describe("riskFromTitle 主題感知", () => {
     expect(riskFromTitle("委國雙強震近3,000死", "災防")).toBe("critical");
     expect(riskFromTitle("巴基斯坦客運墜深谷 已知40死", "災防")).toBe("critical");
     expect(riskFromTitle("俄羅斯襲基輔至少17死90多傷", "治安")).toBe("critical");
-    expect(riskFromTitle("苗栗車禍1人死亡", "災防")).toBe("high");
+    expect(riskFromTitle("苗栗車禍1人死亡", "災防")).toBe("medium"); // 2026-11-20 使用者定案：單純交通事故死亡算中
     expect(riskFromTitle("中壢4死案", "治安")).toBe("high");
   });
 
