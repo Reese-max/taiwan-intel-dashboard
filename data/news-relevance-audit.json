@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-11-21T20:31:15.244Z",
+  "windowHours": 24,
+  "windowStart": "2026-11-20T20:31:15.244Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 1691,
+    "accepted": 661,
+    "rejected": 1030
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "梧棲國小129歲生日迎新校舍！斥資1.7億元重建進學樓22間教室打造海洋風學習空間- 生活新聞 - PChome Online 新聞",
+        "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQZXpWOEhpdGF6VDAwaUFDMU1WYUoyM3N1ek8tRDdHNTNEVWFFdVJoUlJsQVlNc0pZR3EzUk9mRmJqOHo3cDR1N09peXpkdnl2bnpfNTdoLWFDOEN5Z0g1N204LXA4N2Y0YXZUbFJSQ001Y2hTdEVaS3dqemlHMlhmc1J1d0lZbUNI?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 20:25:53 GMT",
+        "source": "GN 校園安全",
+        "hint": "治安",
+        "authority": "media",
+        "description": "梧棲國小129歲生日迎新校舍！斥資1.7億元重建進學樓22間教室打造海洋風學習空間- 生活新聞 PChome Online 新聞"
+      },
+      {
+        "title": "英男家暴妻子42年 妻決意離婚竟遭持霰彈槍射殺 警早知家暴仍批續牌 - 巴士的報",
+        "link": "https://news.google.com/rss/articles/CBMi5wJBVV95cUxQQzlBVUYtSGp3QVRnYjZjdzY3T2pWRTBrdzJ0MkhPYzJTS0pZdmN6UzFDUVM4WDF1aW5jMUp5WmU4Q1pmRnRVVEo1UWwzNXJHbUlTOGtQQTZWcDVIR0hJeFRDYUV2MUdoaXAwY0hsczhZWHEyd2djNlhNdm5aQnFOa3ZnN0J3UTFaektLdkhXUlo2bXRxWTVOUkJjUC1PdjNaTDJFVW1mbUIxRUM4MUtWM0x6R1Z3aWNsMldOQjMyaER0LVgyUmxXTmlLUEgxTW9LSE82MEUwc3NsR0dDQm9oRk01WWZ2MnZoMEp3elB4QXNUYjBSa0NQQkpWaUZtOHoyMnJ3YmxxdmkyZ3RxR3R5YThoTm9KaG8wenV3bWQ1VVhQa0Q2c3NkNlRjRnhvWTZBQk1Hc3JSZWZMNExFNWRHYjJ5Sm9xQllsNWlXUEVlbTIxUktFUHVHM09yYkJXUmFQNEVHaEVJUQ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 20:10:55 GMT",
+        "source": "GN 家暴兒虐",
+        "hint": "治安",
+        "authority": "media",
+        "description": "英男家暴妻子42年 妻決意離婚竟遭持霰彈槍射殺 警早知家暴仍批續牌 巴士的報"
+      },
+      {
+        "title": "不是不愛你！5星座男「珍惜和背叛同時存在」 他難抗拒誘惑 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFBsdFdXdFo5OFp6MGFfc0dMQVVRTVAzdmRlQWVpamEwSGF4ZDlhaDNHTjd5R2pVcGxkNy13REpNNG96R3FFNnpTRU05ZktKZw?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 20:00:00 GMT",
+        "source": "GN TVBS 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "不是不愛你！5星座男「珍惜和背叛同時存在」 他難抗拒誘惑 TVBS新聞網"
+      },
+      {
+        "title": "共享收成 - 澳門日報",
+        "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE0zVGlVekxuOWxVN0I4WmRMYXFYYmY3N2ZBSlV1LUxpbFNhNzdQM0Q1Q0N0bUhqNi1wT3ZncThobDlsb3dzX2VocFdjVjViNUVkWHlYekpZYWx0SlIzeXVIMW1vaDE5ZUVn?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:50:29 GMT",
+        "source": "GN 家暴兒虐 6h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "共享收成 澳門日報"
+      },
+      {
+        "title": "FR方程式決未來之星 - 澳門日報",
+        "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBnNVlob29uTVpER1pqRnR4MFFUc0NjMUp0MzBXbk01Y2N4a1pxRVlKcGZENGVqX2FRS1NTcDRCZ3hmRUtuNVdpejFtLUhXSGg0NG9QbjFTYmtsVHBMNHVGN3NKNlJkODJI?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:50:15 GMT",
+        "source": "GN 家暴兒虐 6h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "FR方程式決未來之星 澳門日報"
+      },
+      {
+        "title": "影／穿小英總統勝選戰袍為童子瑋加持 張惇涵：基隆不能再當機4年 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE5ZaFVMV0hZUXl6cS1tMU16aGI3ZHhUM1FkQlVLTDhwcURTSDlWUUh5RG5zOC1hMVBXcklhMk0xRjBOSnhVZnZrbjhhQWdJSjloSmozS1JvMng2NmfSAWBBVV95cUxOdWVHdW1VUGN1M0cybFNDOTBuSVplbnItdjM2ZDVxUTRUOTV1ZkhYVnRoczdhV2ZNTVhDOVVyaW42OU50clpPUVNrbVMyRXQzNVloMkxteE81dGFwTnRUakM?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:41:49 GMT",
+        "source": "GN 經濟日報詐騙金融 2h",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "影／穿小英總統勝選戰袍為童子瑋加持 張惇涵：基隆不能再當機4年 經濟日報"
+      },
+      {
+        "title": "11月22日 五件財經大事搶先看 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE0wYjVqNkhQOGpueWRTQXl0U183bHFKZTEweUxnZFRmal9pSXkyYmFzLVpSOU9BZ3QwLXhQN2ctOVA5NVlYMm9DOWNuLVdqaDRyb3A1WHowaDJQZ9IBX0FVX3lxTE1xSmF6Z1F1UmVrQzhYdUhZZy1DUkZTN2ZRZzBQbE1IbWJILUZKaEFhUlFUTE1mbl9KUmZRaVdpRC1WbTNDWGVKeVlxQXdMU2Vra2dwRjlJaklPenlBSFc4?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:40:36 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "11月22日 五件財經大事搶先看 經濟日報"
+      },
+      {
+        "title": "破毒工場分銷中心 起160萬元大麻製品 - 東方日報",
+        "link": "https://news.google.com/rss/articles/CBMi3gJBVV95cUxORlM2RTgyaXNKOFB1MllsdVdic1oybHRaclYwZFk2eVRrRkZwUHF3aTY1VEZoSmdiRi1ZQWhIcUp6TnNQVUNnM3lOa0FOY3E4dkhTOExCQzI5UkNFb2JybVBOZWlKMm0yZWJ2N2FYMmk3aHpKOUZkMElNaHZNY3dXaXJFVkFybEE3ZjQ0clNXQW1rR3ZzZUlHMGlXdko1NWJ3QVI3N3hXcndIQ2hiSEhETzE3OXJ4MWFwanZCQWdHdWdqN2paRWJzaE83dHZLQ0FrSERYejBpS1dCV05TOV9zVFVaSDEwLUMzNmxGbWkta0pwTWJJcnlRNWc2Tmc3cGdZdElmT1k5UmU2QVIzZ1NJVHpwbjJTRVpNRFBCTlR0d01pMFZpOUgxTE16aEdBeDF1aS1ISnpXR3I4M0tVUW5EUE5wTnVmbVVSMGtTb0k2Q0swcWowQVVWZ3pMTWdIUQ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:40:21 GMT",
+        "source": "GN 毒品種類",
+        "hint": "治安",
+        "authority": "media",
+        "description": "破毒工場分銷中心 起160萬元大麻製品 東方日報"
+      },
+      {
+        "title": "撞警車突圍 司機落網揭屢掛假牌 - 東方日報",
+        "link": "https://news.google.com/rss/articles/CBMizgJBVV95cUxNM3Q3UHhkNVdINnpHWGxaUjdNVzVUV0NHWTdXVU91VHU3X2YxUFNRT1N4YTROY3M0T1ZaMWQzTGM3YnZ0MnlCSFc1dUJZWWRoZE4taldVQlE5TUQ4dVpndUsxb3BJSk92Z1VZZHJJaVF5Z3Nra2FkeldUX1RranVnSklmUlVjbkNZTFZpNjRpaDByR1VGLWo4MUtxZmtuZ0N0ejhBZ05DYm1ibmV5Z0RkNHJoMHNyY1AtM3BZb0lGcXlLNEhhdVYwb2FJemsydjcwZDY1MGVFM0RCbzltdWhXVzBZVHhFcXdNd18tdk00Q1RUVjdSRlBaSjhvX1gyeHZXUHBMZ25QR0lUcHE1dDZHTGh3VC1DdGlEQjBmZE5fRXlyX09WN05nc0NFN2ZjYm9BSDd6VFZ4aDBlTF93R1FYRWt0aGlZYk5JQjRXSWx3?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:40:21 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "撞警車突圍 司機落網揭屢掛假牌 東方日報"
+      },
+      {
+        "title": "- judicial.gov.tw",
+        "link": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFB0ZFNzSnhHWTdJa1BickNlVGdnLTFMT1d5YmcwT1ExaXd1eUQxN1BwY3pzLUluY3hNM2RqTHBQdl93WjNZLXVNdnFWLXQ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:25:13 GMT",
+        "source": "司法院官網",
+        "hint": "治安",
+        "authority": "official",
+        "description": "judicial.gov.tw"
+      },
+      {
+        "title": "川習三會後料美中關稅戰趨和緩 美不支持台獨待觀察 - Rti 中央廣播電臺",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9UNXBjSXl5OW4xSkZJRFlNS2dIVVMyNEdadTE3SHpsWTNBX3k3YVlCTzRaWkRncnBBYmVKdE1LSWJlbVRVRENGMmFyYmN5dUhQRVZDcEExck96cTEycnVzNg?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:22:29 GMT",
+        "source": "央廣 RTI 治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "川習三會後料美中關稅戰趨和緩 美不支持台獨待觀察 Rti 中央廣播電臺"
+      },
+      {
+        "title": "LED廠掀擴產潮…涵蓋元件、光收發模組到檢測設備 全面卡位CPO商機 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5kckhpUFJNQ3U4dnhVWi1tNzRSanhTWUtJcXVVZmJzeXJaVjJ5OUp1S01YN3hBMEZfNXgtUGZlN0puek96Q1JEeEJ4RXl0YWtJ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:21:29 GMT",
+        "source": "GN UDN 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "LED廠掀擴產潮…涵蓋元件、光收發模組到檢測設備 全面卡位CPO商機 UDN"
+      },
+      {
+        "title": "基隆上千人遊行 反台肥土資場、拒廢土 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBQWEJqYlRUaDBaZV91S21yaUdCWjV3ME5RLUJVbmhpMWxnY3ZMN3JGcFo1cHA0UHQ0QVlZRXBrcktOUElGMHVlU3ZlajBmamJl0gFWQVVfeXFMT2RYaHRla0MzNmYtbFNGWHRhdUEyUktQa3NWZEd3aWpJX3J6UGFBUlhCOVZETFBBLTZoRl9DV1ViaUR1X1ltUVMzcWphM0hJUjhOR3l4LVE?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:18:42 GMT",
+        "source": "GN UDN 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "基隆上千人遊行 反台肥土資場、拒廢土 UDN"
+      },
+      {
+        "title": "FBI 十大通緝犯之一 墨西哥毒梟「矮子伊西德羅」落網 - 星島頭條",
+        "link": "https://news.google.com/rss/articles/CBMi1gJBVV95cUxOWDdaRE5CT2c2aE5uMXFGc3Npdm1pSEt0VW9nUFgybHZwYmU3QTFSeFhQWWNnZlotamd4cWtleGo2ZXoyMHlNNmROclB3cldyb3pOXzZyYnMyT2F4aWlOWnc5aWdUVkJ6dVl4MzAycmw2dTZtYWRfb0VQbzBBc2xqcWZONUdjZVByUERrS18xTDdZQlF3eHFyMTg5MXhYeGM2WnMwOUFlQTBocS1hbWNIZDQwQnhELTAzOHRqMWNFcGFvMWx1V3ljbFdEQXRaOEk4Q3ExN0FMNXBGTXpOeHVBN2k2eFBOcVJodVlsREdNTUhER1RGdmVGQVo5cmFGektpbzZxc0pvWVNFTlZ3UllYMDNPRFFsd0hvemtOc202aDE3ZVpUbWM1c3cySUNYODNEOXpzU2pnaVFVQlM1V1M1X29xY1d1MTlzMFk0TDV6b0VVeV9QclE?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:09:25 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "FBI 十大通緝犯之一 墨西哥毒梟「矮子伊西德羅」落網 星島頭條"
+      },
+      {
+        "title": "節儉一輩子的92歲母親走了！哥哥一句話揭開 妹妹不知道的家族資產祕密 - 三立新聞網SETN.com",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE1JMEVWZFpJQThpa2E0RUZ4TUdIR1NBRUNiNGFnWFJCaEV0eV9EMG9RNElCXzQ2R3NQLWllclFFbVlMNmR4VnVDUtIBTEFVX3lxTE5paXBSRjczZnVYSEZIOG1EZGRTYWgzaWFvQnFteXBtZVMySXNSbjNTQllaRW9VY0ZIbzh4aG4wYW1pUFpFeFpDdnJVQ0I?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:03:00 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "節儉一輩子的92歲母親走了！哥哥一句話揭開 妹妹不知道的家族資產祕密 三立新聞網SETN.com"
+      },
+      {
+        "title": "ADFW 2026 公佈歷來最大規模的合作夥伴主導議程，由 L'IMAD 領銜 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMifEFVX3lxTE03dFhCQTFqaW5WeW8xQnd6VnhrMW80VW1iRWJ1ZXg0ZkgzeDRPTTNzWFpOWVVHMUhjbkdiZ2hLV1BWT1Y0RnNlTXU0STlOdjBJYk52ZDRnbTE4QW1lTWF4SllxV2wyZ3pfQVh3aFJIVDRGeHBWV0tENzNLT0LSAWJBVV95cUxQeGxQdjJScW1yZ1FOd1U5b1lKdzhITUJ4MVg5QnpBX0VSVDBocklNbFZtazdwdTVzb0JlOVZWQ2k4eTBXNzN3cHlBLXE5QUtJUkhZUHU5bkZyeGxEQk9hZXo3Zw?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:00:40 GMT",
+        "source": "GN 經濟日報詐騙金融 2h",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "ADFW 2026 公佈歷來最大規模的合作夥伴主導議程，由 L'IMAD 領銜 經濟日報"
+      },
+      {
+        "title": "Morrison 宣佈拓展中東業務，於阿布扎比國際金融中心設立新辦事處 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE9KRk5mZ3BQSGtfeHdrOG5WY3BtcmNNUVlGU3hHMjNBVjRnSElYZzB1MUdGTnl5SVNMczJQeG9JR1VXU3I3bGc0NHJBUURfeTBuYnF4bW1oTlAwZnhU0gFiQVVfeXFMT0dxY1BTV2w3MzZxZUxZbVZtQ3VGZnVJVC1yakxOQnVJMzhTSEQxQnZXYjJkX095aXNZLUR4bEFTSnJmcGdkM2M2SXFVYURfbllIT25IMVg2V1FvaUdobk5QOEE?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:00:25 GMT",
+        "source": "GN 經濟日報詐騙金融 2h",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "Morrison 宣佈拓展中東業務，於阿布扎比國際金融中心設立新辦事處 經濟日報"
+      },
+      {
+        "title": "天冷用足浴機泡腳？醫急示警：「1類人」恐釀致命肺栓塞 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9qczFvWFlTZWFSMmtLUjdNZG1NZW5QLXV3cDhVZ0hRenNnX0QxRE9FaGFqdmFQdzVhd2RfWE9rdmI4MXV2elY3ckFVNGhkRi1Y?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:00:00 GMT",
+        "source": "GN TVBS 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "天冷用足浴機泡腳？醫急示警：「1類人」恐釀致命肺栓塞 TVBS新聞網"
+      },
+      {
+        "title": "台股限空令再升級 明起平盤下全面禁止放空 融券保證金拉升至150% | 金融脈動 | 金融 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE52bHpJQzhiVGt1X3dwLVFYNE9aTUlOa2RwZHEyaERZNXV0eURadFZfWUlFZUpRUFQyUEkwZ09QeEJQQnd5QXRrU2FRb3RyVGZTcHEyYzR1V3ZXdw?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 18:59:49 GMT",
+        "source": "GN 經濟日報詐騙金融",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "台股限空令再升級 明起平盤下全面禁止放空 融券保證金拉升至150% | 金融脈動 | 金融 經濟日報"
+      },
+      {
+        "title": "台加貿易協議為經貿突圍開路 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1qajU1cFA1YUl6RU9ETlpuZTV5dlI3LUNXTWZEOTdJT0tCYlIzbnphSHBZNl9BRjUyWlIzb1c5ZVFfQmN6MEtxV1dPeGd1R1czc09vekh1ZjVxZ9IBX0FVX3lxTE1GcEJ1d21DZGVGU2h4Um1tMlVwanVlX3R4MDVzZW5fV2ZoUmZ0Y3J0SDVIcEg3RF8xRmRmR0ZfcUhEUENJSkcyNU1GVndja3FrUGU5UnE4TkNrSUNqM1g0?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 18:58:02 GMT",
+        "source": "GN 經濟日報詐騙金融 2h",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "台加貿易協議為經貿突圍開路 經濟日報"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "Cyber 疑遭駭客盜走百萬美元跨鏈資金，Upbit 與 Bithumb 凍結 CYBER 轉帳 - BigGo 財經",
+        "link": "https://news.google.com/rss/articles/CBMiekFVX3lxTE1UMThwbE91S0pJY2pqSUY2b0FhNEc4cEF6eXZOcldsNVlNTjdNb0tCb3FQVjk1SUVGWnZoUWpIN3pqQzVkY2hzUm1uMEdTajVkQVpZSFRBWFhIdURmWi14TE9HT1BKNlhyWFpQZGZlQzVVMzFrNzktWHdB?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 20:05:00 GMT",
+        "source": "GN 個資駭客",
+        "hint": "資安",
+        "authority": "media",
+        "description": "Cyber 疑遭駭客盜走百萬美元跨鏈資金，Upbit 與 Bithumb 凍結 CYBER 轉帳 BigGo 財經"
+      },
+      {
+        "title": "年年送暖竟成賄選？礁溪議員候選人游順評還原春節慰勞始末 捍衛清白 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFB5XzVHcGVIeF9Gd3Ytb0MyYkJDc1BLWURLUDR0SjhFVExHaDBhcUl3M2JuTGhTdGtuUnRJZjdBTllYMGQxV2M2T3JWelBqUW1lVVpHNlZRbTkzcDjSAWBBVV95cUxPUXJsY0Y3ZHo3T09MMEdsUTV4SjRiTzEtXzVXdzlUQzMxV0VJZEVvQ1BmMWVjM0FDR0RqUjFOTTRfUTNtaHVQTWVCQURXUnpIbEx4amJoQ0M3aHFkeU5XOUw?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:41:44 GMT",
+        "source": "GN 經濟日報詐騙金融 2h",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "年年送暖竟成賄選？礁溪議員候選人游順評還原春節慰勞始末 捍衛清白 經濟日報"
+      },
+      {
+        "title": "加拿大深化對中貿易關係 陳明祺示警北京經濟脅迫風險 | 政經焦點 | 要聞 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9OOVU0TW4xV3lieGVMR2R2Vm5vaS1sVUtTVUVlVjJhbGpOS01lR243WG9ZMV9JLTdIaWoxNjBfWWtzeTNPRlh0TDJIMlo1SGxCYTZLdzBEb04wUQ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:36:18 GMT",
+        "source": "GN 經濟日報詐騙金融 2h",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "加拿大深化對中貿易關係 陳明祺示警北京經濟脅迫風險 | 政經焦點 | 要聞 經濟日報"
+      },
+      {
+        "title": "快訊／自撞分隔島下車被撞飛！國1麻豆段6車撞爛年輕男女當場慘死| 社會 - 三立新聞",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE5DVUdZWFhSa0FFSHhWbHkyTGtPdzBIckktTVhIUnRvbU1IRUF0bkh5WGF4YVRuV0lTUDVLZ29pX3FXQWhydEhPUw?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:35:00 GMT",
+        "source": "GN 三立綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "快訊／自撞分隔島下車被撞飛！國1麻豆段6車撞爛年輕男女當場慘死| 社會 三立新聞"
+      },
+      {
+        "title": "台中榮總火速拔官停職！神外部長被收押免兼主管 副主任職務也換人 - 鏡報",
+        "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5ZYkcwaTJEeXdobWQ0eFduczhYejhieTBWUFBTb0EwakJnNjJ3b2ljOS1wZnRka0tFVm9SQ3dzWFZxeUZvYmRzaklfMHNhdm1rbnc?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:30:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台中榮總火速拔官停職！神外部長被收押免兼主管 副主任職務也換人 鏡報"
+      },
+      {
+        "title": "快訊／國1南下嚴重事故！6車追撞...1車陷火海 傷亡不明 - newsdaily.tw",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE04TDJoMTdweDBRQk5iZi1QUlhOWGNMdm02RmdpNXpjZGdJZEJsYm5IdFc0NG9xdFh1VHdxcEpiWE9NeXFDekttUUM1cTJ5UQ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:10:36 GMT",
+        "source": "GN 車禍肇逃",
+        "hint": "交通",
+        "authority": "media",
+        "description": "快訊／國1南下嚴重事故！6車追撞...1車陷火海 傷亡不明 newsdaily.tw"
+      },
+      {
+        "title": "記憶體景氣將反轉？大摩降評華邦電、力積電等4台廠砍低南亞科目標價| 財經 - 三立新聞",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE5Ja05pWHdSWlZCUXo4MG53R3BvMk5fUVpzR0pTZUZvWENONUc1Tlp5b283Qi1sdllxZzhtMWlwWFY2N0t3TExhTQ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 19:10:00 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "記憶體景氣將反轉？大摩降評華邦電、力積電等4台廠砍低南亞科目標價| 財經 三立新聞"
+      },
+      {
+        "title": "墨西哥逮捕FBI十大通緝毒梟 當地爆槍戰與暴力事件 - TVBS新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFBvUFBQaUZFZmFjRWxoX1BfbjhTWHNQbzV2ajJjRHFRNmdJWnRuVkhYSE9mU29SdTdxRlRXaFl6WGVnVk1EOGdnQjNTWFM5RUU?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 18:56:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "墨西哥逮捕FBI十大通緝毒梟 當地爆槍戰與暴力事件 TVBS新聞網"
+      },
+      {
+        "title": "高雄小學生涉暴累計校安通報逾20次…台南私幼也爆虐童 教育局要求涉案師停職 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBxS2pZSnVxNU1pcnZjbFpWQjY1ZTVvMVRoMXkzRGdzdG4tMlNMUFd1Zm9KeHpMY3RNQWNnTE1EdHhYdWFmYVFKdEFVcHhkd3dX0gFWQVVfeXFMTUR2RFl5cmVJV1FEQTI5SDFVVTRlQXhGWmFNWXBzcTdHWlA1QzhyNGthOFFhUERzMXFKTUpYc1M4Z0NPemRTcnRET2hEU1VzZjE2R3hoUHc?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 18:55:20 GMT",
+        "source": "GN 家暴兒虐",
+        "hint": "治安",
+        "authority": "media",
+        "description": "高雄小學生涉暴累計校安通報逾20次…台南私幼也爆虐童 教育局要求涉案師停職 UDN"
+      },
+      {
+        "title": "台菲聯手打擊網路詐騙 菲律賓移民局再逮4台男 - 經濟日報",
+        "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBQdHRldk1vTEpQa00td21NYk1VeUhEUFBWT2liRXZ0S1hoZ0oxVkdyU2lwbk9rdk1DVlZqTk5hNnhDbDBOR2EwY0hyRVdya2hHb3FucGdtLURsQdIBX0FVX3lxTE5iZjNFT3RSZXFCMWFQak1KdkFMN1NIdFZaSV9QUy1DWm1TaEZiY3lBVFN5ZlpZU0NPNTVlNE0ybGJXLWVHSjVQTDFMbUQ0OXhhRkhfRFp5dnozUno0a2g4?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 18:51:07 GMT",
+        "source": "GN 詐騙逮捕",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "台菲聯手打擊網路詐騙 菲律賓移民局再逮4台男 經濟日報"
+      },
+      {
+        "title": "搜索競辦徐欣瑩助理疑散布非法影像| 2026九合一選舉 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5mMTlEQU5xa3VYQXRpSkFVaWlUNU9FNzdfeUotMmp1cm5rYkFlMzZfR1hiUUFXenRUTk9VcklnOUVuSzBlNlNlN3F3aVEtdlNtdE1uMXlNM2o?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 18:37:13 GMT",
+        "source": "GN 檢調起訴",
+        "hint": "治安",
+        "authority": "media",
+        "description": "搜索競辦徐欣瑩助理疑散布非法影像| 2026九合一選舉 UDN"
+      },
+      {
+        "title": "臺灣資安廠商 - iThome",
+        "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxORGllU1I2WXQwOEhOZ2J6Q1ZRTlU4OTdLc1V3SEZvcmRvSk8xWG5kZUYzbjYwOF9MRlpsWmltakJWX29fX0hEZW1UcU0wWnc1R1pSZjNiMXJBc25yM2luQjhiV1ItMWFFUi1FWk11TDF1bTB5TU5pSUxiZWZ5d1R3a3liOXVUc0I0dHRwRFZ3?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 17:39:44 GMT",
+        "source": "GN iThome 資安",
+        "hint": "資安",
+        "authority": "media",
+        "description": "臺灣資安廠商 iThome"
+      },
+      {
+        "title": "網擎策略投資微智安聯，臺灣資安業者攜手擴大產品布局、拓展海外市場 - iThome",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE5KTERiSXZnU1RMemxMOS14M0UxVnIzODM5UFR1VXduczNfUkdmRjhoZ3V5ZmktazdBQXZXa2E2LS1vUTZLM19MRzk0YVA1UQ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 17:35:27 GMT",
+        "source": "GN iThome 資安",
+        "hint": "資安",
+        "authority": "media",
+        "description": "網擎策略投資微智安聯，臺灣資安業者攜手擴大產品布局、拓展海外市場 iThome"
+      },
+      {
+        "title": "快訊》國1麻豆段嚴重車禍！ 多車連撞「火燒車」死傷不明- 社會 - 中時新聞網",
+        "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1RajFaVDlRTFh6QU4wVWMtNllGUTF2ZFo3Rkw4Y1p4TVpqSGpEZ0hrcUVBNEtCMjk0SXJzZTIweGhmVUFKSFIxbnJwVjNSU3Yxd3d0LWNPWWJYRURvZE5IN2lMQ3ZPb21tR2U2MXF3?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 17:34:00 GMT",
+        "source": "GN 車禍肇逃",
+        "hint": "交通",
+        "authority": "media",
+        "description": "快訊》國1麻豆段嚴重車禍！ 多車連撞「火燒車」死傷不明- 社會 中時新聞網"
+      },
+      {
+        "title": "網擎策略投資微智安聯，臺灣資安業者攜手擴大產品布局、拓展海外市場",
+        "link": "https://www.ithome.com.tw/news/180692",
+        "pubDate": "2026-11-22T01:31+08:00",
+        "source": "iThome Security RSS",
+        "hint": "資安",
+        "authority": "media",
+        "description": "網擎資訊投資2,000萬元取得微智安聯37.6%股權，結合雙方在郵件安全與資安攻防演練領域的專長，擴大企業資安產品組合，並運用網擎既有的海外合作通路，協助微智安聯進軍日本市場，展現臺灣資安業者透過產品與通路互補、共同拓展海外市場的合作模式"
+      },
+      {
+        "title": "普林斯頓中國女博士生被羈押 ICE首次回應 - 大紀元",
+        "link": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFByVUwyaUpEMkFCemFsV1YyLS1XMlNtY3VLd3F1RGZSd2c0djViR0RXNHpta1VfM1I5TVJNVl9CWUJBQXQ5RnMxLVF4azhfWTdZX2R1RS1Rdjh2N0pTRVBtRTVR0gFnQVVfeXFMTlNsWWhBRW9GQnBZM0tHUUVmWEpLUVZmNUJTb19lS0FmdWVna1VCUEpmNG11a2NFSmQ0X3pRWV9CTjV5UEI2aVo4MGxVeUdhTUdraFp2X3ZMWTVmYjgzem5iOTNnaVJtVQ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 17:13:00 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "普林斯頓中國女博士生被羈押 ICE首次回應 大紀元"
+      },
+      {
+        "title": "毒煙彈賣給少女 男二審判10年6月 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9kSzJ6ck4tczJ2TDFRN2ZwczBuV1B0SzlzNVNxS3gtMXgxbmRsbjVxZ3ZjNGdPRmh6ZUFkMWlqVG13VzVTY0RCTy05eGdnOEZr0gFWQVVfeXFMUG5iN3E0RmdkWVY3RHNsUXpXVDRHOWo2RUp5dkxRZEVkRnhTQVhpNi11N05Pbk54U2ExdF9ZTnJMY0JTMU5UVTJLNE1fZ1Fhak5iSDBDYWc?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 17:02:32 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "毒煙彈賣給少女 男二審判10年6月 UDN"
+      },
+      {
+        "title": "傳收回扣、廠商代刀 中榮鄒錫凱收押 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5RQ0RBM293d1lRc3VNbmhmclRocENzbHV4U0Q3NkFXRzRsTk5kTFh4YjdKcjNYRmNsd1lQcEt3NjIzVVcyZlRIVmM1VFdSc281Q2FuNXZn0gFWQVVfeXFMTlFDREEzb3d3WVFzdU1uaGZyVGhwQ3NsdXhTRDc2QVdHNGxOTmRMWHhiN0pyM1hGY2x3WVBwS3c2MjNVVzJmVEhWYzVUV1JzbzVDYW41dmc?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 17:02:25 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "傳收回扣、廠商代刀 中榮鄒錫凱收押 UDN"
+      },
+      {
+        "title": "上半年懷疑家暴個案20宗呈下降趨勢 - TDM",
+        "link": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPTzJBMzItTU5JcHpTTm9BSU9jcGREdEs0Unk1Y002OWpMb3NFaDVqYlBPejlCNFdKd2ZhaGs1cXdjck5CSFE4bEZESXhHSEtKLW80WkNJWkxXT3ZTQ2dZZDBFelBVSzJBY2tTcEw5Z3BhQTg4QTl3X25Jb0wxZWtQc0ItNW12SVlwamNLVG9MOW5uNjQ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 16:57:42 GMT",
+        "source": "GN 家暴兒虐 6h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "上半年懷疑家暴個案20宗呈下降趨勢 TDM"
+      },
+      {
+        "title": "墨西哥軍方聯手美方情資 逮捕FBI十大通緝大毒梟 - 民視新聞網",
+        "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBSX25TbTh6WXFOQWpsQVFsR2ZlS2Jnb0kzVjdnVVJ4UVVHaDJUanlObFd2TVFURWJ2a3pEckhZQkRCc3FINGxFZTd1UlgzTklrM2ZWcGY5anRQcjRjVFhDUQ?oc=5",
+        "pubDate": "Sat, 21 Nov 2026 16:50:32 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "墨西哥軍方聯手美方情資 逮捕FBI十大通緝大毒梟 民視新聞網"
+      }
+    ]
+  }
+}

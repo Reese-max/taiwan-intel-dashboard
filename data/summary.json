@@ -1,0 +1,84 @@
+{
+  "domestic": "全球安全形勢極度緊張。俄烏衝突升級，俄軍對基輔發動戰火以來最大規模飛彈攻擊，同時俄中領導人互動引發西方警惕。亞洲災難與社會風險並存，西藏尼泊爾山洪釀重災，上海發生惡性滅門案，孟加拉因前總理返國計畫陷入動亂。區域外交上，美哥加強軍事掃毒合作，越南則修訂死刑法制。整體而言，武裝衝突、重大災難與社會治理危機正交織，全球不確定性顯著升高。",
+  "international": "俄烏戰事因飛彈落入波蘭領土，大幅升高北約與俄直接衝突風險；中東局勢同步惡化，美伊互射、油輪遭襲及胡塞武裝攻擊沙烏地，嚴重威脅能源航運與地區穩定。非洲奈及利亞、烏幹達等地區爆發伊波拉疫情並伴隨治安惡化，多地旅遊警示升至紅色。全球面臨地緣政治熱戰與公共衛生危機交織的複合風險，企業資安亦需應對AI加速攻擊之新威脅。",
+  "recent24h": "過去24小時聚焦安全與災防：香港將迎宏福苑大火週年，官方容許合法悼念；洛杉磯野火縱火嫌犯重審定罪。資安方面，美農業部及FBI傳遭駭客入侵，樂桃航空個資外洩。國內治安嚴肅，移民署在金門攔截利用AI換臉闖關的重刑犯，並破獲活體動物走私案。",
+  "byCategory": {
+    "治安": "俄烏互襲基礎設施規模空前，上海滅門案引發震盪，越南廢毒品死刑；多國強化邊界查緝與資安防護，整體治安態勢高度緊張。",
+    "反詐": "個資外洩與AI詐騙並行，金融旅遊業成駭客目標，官民緊盯假客服與深層滲透風險。",
+    "交通": "桃城中壢毒駕衝撞寶雅緻菲籍女移工身亡，車上搜出毒品；高雄小貨車違規撞死女大生引發圍毆，臺61亦傳死亡車禍，交通安全形勢嚴峻。",
+    "資安": "美國農業部與FBI接連遭入侵，歐洲商冷設備頻繁受駭，AI駭客工具興起，全球實體與數位基礎設施面臨多重資安危機。"
+  },
+  "trend": "事件數自高點2019顯著回落至1185，整體呈明顯下降趨勢，近期波動幅度縮小，顯示熱度正在逐步退燒。",
+  "dailyCounts": [
+    1437,
+    1577,
+    2019,
+    1604,
+    1185
+  ],
+  "clusterSummaries": {
+    "c2": "桃園中壢毒駕男衝撞寶雅釀1死6傷，法官裁定羈押，凸顯公共安全風險。",
+    "c17": "新北多起家庭糾紛事件，妻子因口角情緒失控持刀砍傷丈夫，遭警方依殺人未遂罪移送法辦。",
+    "c4": "北市長政見會聚焦兒虐案治理與市府處理爭議，蔣萬安、沈伯洋交鋒施政缺失。",
+    "c276": "女子在臺北市長選戰中捏造沈伯洋涉汽車旅館私德謠言，遭北檢偵結起訴並求處重刑。",
+    "c20": "宜蘭多起地方民代涉集團性賄選案，檢調擴大偵辦聲押收押，多名樁腳遭羈押或交保。",
+    "c135": "臺中名媛「臺中小S」控訴消費破億遭香奈兒櫃姐偷拍點鈔畫面外流，引發隱私侵犯爭議，涉事員工遭開除。",
+    "c22": "桃園多名政治人物及嫌疑人因涉收受中共資金、製造假帳號或散播深偽影片等反滲透法案件遭檢方起訴求刑。",
+    "c263": "高雄議員陳明澤、陳善慧因假協調真勒索光電及土方工程收斂，涉嫌貪汙，正式遭檢察機關起訴。"
+  },
+  "clusterVersions": {
+    "c2": "[\"twnews-10wfpbl\",\"twnews-1183rvm\",\"twnews-11c76uz\",\"twnews-11rtbrp\",\"twnews-12ptszr\",\"twnews-13ve32u\",\"twnews-13ve32u\",\"twnews-13w6be2\",\"twnews-13w6be2\",\"twnews-13w6be2\",\"twnews-15e9kc3\",\"twnews-15e9kc3\",\"twnews-15e9kc3\",\"twnews-15og0xc\",\"twnews-15og0xc\",\"twnews-167o4h7\",\"twnews-167o4h7\",\"twnews-16atjiv\",\"twnews-17ahtiq\",\"twnews-17ondr8\",\"twnews-18eq1up\",\"twnews-1989u7t\",\"twnews-198behk\",\"twnews-198behk\",\"twnews-198bgbg\",\"twnews-198bire\",\"twnews-198bire\",\"twnews-198bjlt\",\"twnews-198c65w\",\"twnews-198c67u\",\"twnews-19ylczl\",\"twnews-1aiebp0\",\"twnews-1b3sc26\",\"twnews-1bntujs\",\"twnews-1ck8ip9\",\"twnews-1ck8ip9\",\"twnews-1d8ga3q\",\"twnews-1ddo3p6\",\"twnews-1dj5kfu\",\"twnews-1dj5kfu\",\"twnews-1e5e9a6\",\"twnews-1e98yh6\",\"twnews-1e98yh6\",\"twnews-1epxch5\",\"twnews-1esdob6\",\"twnews-1fc09yq\",\"twnews-1fwklad\",\"twnews-1g2b5g4\",\"twnews-1gagvpf\",\"twnews-1hu7fx2\",\"twnews-1iuy0i\",\"twnews-1iw4rlc\",\"twnews-1k0w7c4\",\"twnews-1k86ek0\",\"twnews-1k9ff1b\",\"twnews-1k9ff1b\",\"twnews-1khbqkf\",\"twnews-1l711lt\",\"twnews-1l711lt\",\"twnews-1lbqwpr\",\"twnews-1m4vwup\",\"twnews-1maajex\",\"twnews-1n9t36d\",\"twnews-1ncms0v\",\"twnews-1ncms0v\",\"twnews-1nflirz\",\"twnews-1o7sz68\",\"twnews-1o7sz68\",\"twnews-1odfb0b\",\"twnews-1odfb0b\",\"twnews-1ogc2r2\",\"twnews-1ogc2r2\",\"twnews-1pdaut1\",\"twnews-1pr1fpn\",\"twnews-1pr1fpn\",\"twnews-1pz9i63\",\"twnews-1r0yvdi\",\"twnews-1r1426f\",\"twnews-1r351if\",\"twnews-1r5hbra\",\"twnews-1ra02s4\",\"twnews-1sec64k\",\"twnews-1sutfol\",\"twnews-1thxq5w\",\"twnews-1u28hr9\",\"twnews-1u8t2hp\",\"twnews-1ucqgmm\",\"twnews-1v4p6bk\",\"twnews-1vd5orq\",\"twnews-1vp6rkm\",\"twnews-1x3qpf7\",\"twnews-1x5kue2\",\"twnews-1xmehs5\",\"twnews-1xmehs5\",\"twnews-1yr8iu5\",\"twnews-1ys8hyy\",\"twnews-2ltpub\",\"twnews-3i0fxu\",\"twnews-4gds75\",\"twnews-4h3sot\",\"twnews-arrveb\",\"twnews-avxcb8\",\"twnews-aw431i\",\"twnews-aw431i\",\"twnews-bz4wd9\",\"twnews-c497ql\",\"twnews-c4acdm\",\"twnews-c7tfdz\",\"twnews-cnezt6\",\"twnews-dke0c0\",\"twnews-dke0c0\",\"twnews-dm18ga\",\"twnews-dm18ga\",\"twnews-dngii1\",\"twnews-dq8g3l\",\"twnews-du146s\",\"twnews-e1cdsa\",\"twnews-fqwv3b\",\"twnews-gw0xru\",\"twnews-h20uci\",\"twnews-h20uci\",\"twnews-hh8jlb\",\"twnews-i53pyk\",\"twnews-i9f6w4\",\"twnews-ike7nh\",\"twnews-j6y7jd\",\"twnews-kp4itv\",\"twnews-kp4itv\",\"twnews-kzddb\",\"twnews-l70xtb\",\"twnews-l70xtb\",\"twnews-l70xtb\",\"twnews-l70xtb\",\"twnews-lkx4tc\",\"twnews-ln0sus\",\"twnews-mdlion\",\"twnews-n8ejt4\",\"twnews-nh6h7g\",\"twnews-nqsvzo\",\"twnews-nqsvzo\",\"twnews-olfgz0\",\"twnews-pc6wgd\",\"twnews-porn1k\",\"twnews-q2t71x\",\"twnews-q2t71x\",\"twnews-q2t71x\",\"twnews-q3f2ng\",\"twnews-q3y2ui\",\"twnews-qqf719\",\"twnews-r9ys2w\",\"twnews-t61jbh\",\"twnews-themqc\",\"twnews-tnh8q5\",\"twnews-tqqnj0\",\"twnews-tu81rh\",\"twnews-u90hm5\",\"twnews-vcrzfr\",\"twnews-vl0w5j\",\"twnews-vok12j\",\"twnews-vok12j\",\"twnews-vshppy\",\"twnews-vxg7ld\",\"twnews-vxg7ld\",\"twnews-wcmbkg\",\"twnews-wji412\",\"twnews-wji41t\",\"twnews-wji42w\",\"twnews-xe92kz\",\"twnews-xo8smd\",\"twnews-xrwyoe\",\"twnews-yaos19\",\"twnews-yj27yi\",\"twnews-yj27yi\",\"twnews-ysfet2\"]",
+    "c17": "[\"twnews-10e6wsa\",\"twnews-10uxl5o\",\"twnews-10uxl5o\",\"twnews-11ego3z\",\"twnews-11i9dem\",\"twnews-11i9dem\",\"twnews-12448d7\",\"twnews-12448d7\",\"twnews-12ybs4i\",\"twnews-1377hvi\",\"twnews-147kqv9\",\"twnews-15e11zu\",\"twnews-16wwzsq\",\"twnews-16y2n07\",\"twnews-177rs5f\",\"twnews-17a6czw\",\"twnews-17c84vm\",\"twnews-17c84vm\",\"twnews-18klxt5\",\"twnews-1907pmg\",\"twnews-198bkbd\",\"twnews-1akmz5a\",\"twnews-1bb7l68\",\"twnews-1bjrmb4\",\"twnews-1boqegz\",\"twnews-1boqegz\",\"twnews-1bslf4g\",\"twnews-1buhy82\",\"twnews-1d991eg\",\"twnews-1e8de41\",\"twnews-1ejhiwf\",\"twnews-1g8zmrs\",\"twnews-1g8zmrs\",\"twnews-1go06w2\",\"twnews-1go06w2\",\"twnews-1h10fkn\",\"twnews-1h8utbu\",\"twnews-1h8utbu\",\"twnews-1hn533u\",\"twnews-1hrxwe3\",\"twnews-1i22rcg\",\"twnews-1i66wcy\",\"twnews-1jdr4bq\",\"twnews-1jy6e97\",\"twnews-1k9pui2\",\"twnews-1kl2lp6\",\"twnews-1kqsvp2\",\"twnews-1kqsvp2\",\"twnews-1l5u6ze\",\"twnews-1m7feng\",\"twnews-1ml0201\",\"twnews-1oadefc\",\"twnews-1ocvb7q\",\"twnews-1p75sst\",\"twnews-1pgdkru\",\"twnews-1poo8cx\",\"twnews-1poo8cx\",\"twnews-1ptpvjo\",\"twnews-1r9bhg0\",\"twnews-1rlxc4c\",\"twnews-1s4x6xa\",\"twnews-1sark8g\",\"twnews-1tyukb7\",\"twnews-1tyukb7\",\"twnews-1ulqpm6\",\"twnews-1uraq3x\",\"twnews-1wi0e66\",\"twnews-1x86bhk\",\"twnews-1xb5dk1\",\"twnews-1xzy6wk\",\"twnews-1yfwx0l\",\"twnews-1yq3ar6\",\"twnews-1yqe0hm\",\"twnews-1yxv6wi\",\"twnews-28tro5\",\"twnews-2xy5mk\",\"twnews-3kq3vb\",\"twnews-3uqq7m\",\"twnews-410x30\",\"twnews-4xwyp\",\"twnews-517ate\",\"twnews-6prfyn\",\"twnews-6prfyn\",\"twnews-6v9s9q\",\"twnews-7bqft2\",\"twnews-7d9tv\",\"twnews-7fsf2i\",\"twnews-8d2cru\",\"twnews-9983cb\",\"twnews-9iry3l\",\"twnews-9xons0\",\"twnews-afl6p5\",\"twnews-b0dry1\",\"twnews-b70nw7\",\"twnews-bkfdnp\",\"twnews-c16xzi\",\"twnews-cyihyi\",\"twnews-dhg65u\",\"twnews-fd25qx\",\"twnews-frc71f\",\"twnews-fxoqpj\",\"twnews-h8uns0\",\"twnews-hbpgz5\",\"twnews-hbpgz5\",\"twnews-i4gvr\",\"twnews-ig45tv\",\"twnews-io3wjx\",\"twnews-io3wjx\",\"twnews-jdxlwu\",\"twnews-jvngmf\",\"twnews-kw3yg4\",\"twnews-lvdyy1\",\"twnews-n9w0aj\",\"twnews-nel1w8\",\"twnews-oa26f7\",\"twnews-ofngbv\",\"twnews-p2h5ao\",\"twnews-p9exez\",\"twnews-pivixv\",\"twnews-r4uzk5\",\"twnews-t8c6td\",\"twnews-ucgtgu\",\"twnews-udwnsw\",\"twnews-udwnsw\",\"twnews-ufh048\",\"twnews-uj167t\",\"twnews-uxafn6\",\"twnews-vcvhwi\",\"twnews-wjyz8p\",\"twnews-xaex1v\",\"twnews-xc43nc\",\"twnews-y2uhdj\",\"twnews-yb8eje\"]",
+    "c4": "[\"twnews-11wp01z\",\"twnews-13twlzz\",\"twnews-13twlzz\",\"twnews-14i5y1f\",\"twnews-15yz6cl\",\"twnews-15yz6cl\",\"twnews-18c2777\",\"twnews-18ed68f\",\"twnews-18q709h\",\"twnews-18q709h\",\"twnews-19hlj2i\",\"twnews-1a0nmxg\",\"twnews-1a8hjye\",\"twnews-1aal48e\",\"twnews-1fgf3e6\",\"twnews-1fgf3e6\",\"twnews-1h6hg84\",\"twnews-1i71agu\",\"twnews-1ighu5o\",\"twnews-1ighu5o\",\"twnews-1ighu5o\",\"twnews-1jkro1i\",\"twnews-1jowrkr\",\"twnews-1jowt5p\",\"twnews-1jowwkg\",\"twnews-1m4anai\",\"twnews-1np95h5\",\"twnews-1nt573r\",\"twnews-1o9bxq5\",\"twnews-1qcc61w\",\"twnews-1r6v8ki\",\"twnews-1r6v8ki\",\"twnews-1r8vp2k\",\"twnews-1tzm1zb\",\"twnews-1uwurpy\",\"twnews-1v9b6fd\",\"twnews-1vau1mo\",\"twnews-1w0hwu8\",\"twnews-1wzu6r9\",\"twnews-1x8l10f\",\"twnews-1x8l10f\",\"twnews-1xfyj9h\",\"twnews-1xhtl30\",\"twnews-1xnpfh5\",\"twnews-1xu6vuw\",\"twnews-2mvy7u\",\"twnews-2tpyvb\",\"twnews-5hwysr\",\"twnews-5v26tl\",\"twnews-5w8uwo\",\"twnews-6wbdmq\",\"twnews-7y7130\",\"twnews-7ydx5\",\"twnews-7ye0t\",\"twnews-8fqmm8\",\"twnews-b032sw\",\"twnews-b032sw\",\"twnews-b3ksmb\",\"twnews-b3ksmb\",\"twnews-brpyle\",\"twnews-c19top\",\"twnews-cre11s\",\"twnews-d7nrr8\",\"twnews-d9oc72\",\"twnews-dc9opp\",\"twnews-fgbvhq\",\"twnews-i3k0io\",\"twnews-i9afgu\",\"twnews-i9f533\",\"twnews-i9f6v7\",\"twnews-i9f6v7\",\"twnews-i9f6vc\",\"twnews-ifiimm\",\"twnews-ifiimm\",\"twnews-ihvifn\",\"twnews-iva9nm\",\"twnews-kv1riz\",\"twnews-lousu9\",\"twnews-mm3hl6\",\"twnews-mm3hl6\",\"twnews-mubx9z\",\"twnews-mubx9z\",\"twnews-na6913\",\"twnews-no3sro\",\"twnews-nsicve\",\"twnews-nsicve\",\"twnews-p685lg\",\"twnews-pfo773\",\"twnews-plts62\",\"twnews-qeufvj\",\"twnews-qjhqse\",\"twnews-r6c3ll\",\"twnews-stbsxo\",\"twnews-suyvvt\",\"twnews-t25epq\",\"twnews-tqvur3\",\"twnews-tr3q2w\",\"twnews-v6hynb\",\"twnews-vypcvf\",\"twnews-wji42p\",\"twnews-wji44q\",\"twnews-wji4sf\",\"twnews-wji4uc\",\"twnews-xug1m1\"]",
+    "c276": "[\"twnews-1325h6j\",\"twnews-1987kt0\",\"twnews-1azmjw2\",\"twnews-1bq5abp\",\"twnews-1d11rrs\",\"twnews-1dtw2hf\",\"twnews-1dtw2hf\",\"twnews-1emwmuz\",\"twnews-1ex57tr\",\"twnews-1jm7zcm\",\"twnews-1jovaic\",\"twnews-1jovznz\",\"twnews-1kbbqeb\",\"twnews-1pk29y2\",\"twnews-1pk29y2\",\"twnews-1rbmcej\",\"twnews-1thkd5y\",\"twnews-1thkd5y\",\"twnews-1wottmv\",\"twnews-1wottmv\",\"twnews-1xu6u1w\",\"twnews-34j034\",\"twnews-3dc1nr\",\"twnews-3nctsw\",\"twnews-4nlsrn\",\"twnews-4ub317\",\"twnews-6m83qy\",\"twnews-7ydx6\",\"twnews-7ydzu\",\"twnews-7ydzy\",\"twnews-arr1hk\",\"twnews-b70j1t\",\"twnews-b8p9ag\",\"twnews-dmvs75\",\"twnews-ep0apk\",\"twnews-eyqu5t\",\"twnews-gzcgpt\",\"twnews-hsw022\",\"twnews-hsw022\",\"twnews-i51u82\",\"twnews-jjoihm\",\"twnews-kfqntm\",\"twnews-kyw44o\",\"twnews-n3o2o2\",\"twnews-otyxuj\",\"twnews-ssltr7\",\"twnews-ssltr7\",\"twnews-vwejo2\",\"twnews-xggama\"]",
+    "c20": "[\"twnews-11lp90u\",\"twnews-127hu47\",\"twnews-12c5uk9\",\"twnews-12s3arh\",\"twnews-14s7a22\",\"twnews-14s7a22\",\"twnews-172mg1t\",\"twnews-172mg1t\",\"twnews-1byhgbf\",\"twnews-1byhgbf\",\"twnews-1ffddbm\",\"twnews-1h18af\",\"twnews-1ikszlk\",\"twnews-1jskafk\",\"twnews-1k64wl9\",\"twnews-1s2qvd1\",\"twnews-1uup4ur\",\"twnews-2d82qd\",\"twnews-2s24hm\",\"twnews-4zdxb6\",\"twnews-a9ft5m\",\"twnews-baeqm5\",\"twnews-cvftsg\",\"twnews-d8awk\",\"twnews-g0fp5h\",\"twnews-hszb50\",\"twnews-i4p30b\",\"twnews-ilz8e1\",\"twnews-ilz8e1\",\"twnews-ky76w3\",\"twnews-lmn0i2\",\"twnews-mozud2\",\"twnews-mozud2\",\"twnews-nhxgu7\",\"twnews-od9yvp\",\"twnews-od9yvp\",\"twnews-ofz2om\",\"twnews-ptpbpw\",\"twnews-q49afs\",\"twnews-rigruy\",\"twnews-uoxxf5\",\"twnews-uoxxf5\",\"twnews-uxww6z\",\"twnews-w1ekj7\",\"twnews-wzjhbg\",\"twnews-xulkkc\",\"twnews-xulkkc\"]",
+    "c135": "[\"twnews-131m4me\",\"twnews-13pka1g\",\"twnews-19s2jop\",\"twnews-19xgpoi\",\"twnews-1d19q5u\",\"twnews-1d5iya\",\"twnews-1dkreeo\",\"twnews-1eovc5s\",\"twnews-1eu2fp7\",\"twnews-1hdzczi\",\"twnews-1hjmzt8\",\"twnews-1hjmzt8\",\"twnews-1lot80h\",\"twnews-1mnl3q6\",\"twnews-1mnl3q6\",\"twnews-1qfx032\",\"twnews-1r18nsa\",\"twnews-1v924xk\",\"twnews-2u8wha\",\"twnews-2uydro\",\"twnews-38dlel\",\"twnews-38dlel\",\"twnews-772057\",\"twnews-akpw25\",\"twnews-gjghdt\",\"twnews-gjghdt\",\"twnews-h7tbd6\",\"twnews-i42oo2\",\"twnews-i42oo2\",\"twnews-ijjhcs\",\"twnews-lca7e9\",\"twnews-nhx0pu\",\"twnews-o43dva\",\"twnews-sr9nv4\",\"twnews-u0re7n\",\"twnews-u0re7n\",\"twnews-u18o2t\",\"twnews-ulttqk\",\"twnews-y9vhsx\",\"twnews-z1n26x\",\"twnews-zgn00r\",\"twnews-zgn00r\"]",
+    "c22": "[\"twnews-14tuaes\",\"twnews-198blbz\",\"twnews-19s1m04\",\"twnews-1cevwki\",\"twnews-1iq3s19\",\"twnews-1jow5q8\",\"twnews-1p2d7up\",\"twnews-1pjzb13\",\"twnews-1pq1il0\",\"twnews-1qv5b0i\",\"twnews-1upmu8j\",\"twnews-1xu6uxv\",\"twnews-1xu6vnl\",\"twnews-2otuls\",\"twnews-57dhf2\",\"twnews-5j9fy0\",\"twnews-6pkfgo\",\"twnews-6z9lwk\",\"twnews-7a4z7k\",\"twnews-7axw5f\",\"twnews-7ydzw\",\"twnews-7yev3\",\"twnews-9i99hg\",\"twnews-9wzkl3\",\"twnews-b9dofa\",\"twnews-cd4p26\",\"twnews-d4c9ec\",\"twnews-d4c9ec\",\"twnews-dkck4g\",\"twnews-eufika\",\"twnews-hvpn6b\",\"twnews-l5gbcy\",\"twnews-lv6bfh\",\"twnews-ndyxbw\",\"twnews-psmllc\",\"twnews-qmy2hi\",\"twnews-rvggmp\",\"twnews-t45c9h\",\"twnews-wji3z8\"]",
+    "c263": "[\"twnews-10jxbal\",\"twnews-15sn29n\",\"twnews-15sn29n\",\"twnews-17r33u4\",\"twnews-1989xln\",\"twnews-19uk44i\",\"twnews-19uk44i\",\"twnews-1bgfbgm\",\"twnews-1bgfbgm\",\"twnews-1cj90w6\",\"twnews-1d44npp\",\"twnews-1dwmydc\",\"twnews-1ei457a\",\"twnews-1hkxoc9\",\"twnews-1l511rk\",\"twnews-1lpb2c1\",\"twnews-1p06lxw\",\"twnews-1rn6qzo\",\"twnews-1wegwbp\",\"twnews-1wegwbp\",\"twnews-1wegwbp\",\"twnews-1x0icl1\",\"twnews-1ygmleb\",\"twnews-1ygmleb\",\"twnews-4up1wc\",\"twnews-6jdgcg\",\"twnews-gpydrw\",\"twnews-hkml1a\",\"twnews-hkml1a\",\"twnews-i9f540\",\"twnews-jn3m1e\",\"twnews-jn3m1e\",\"twnews-mf2ugm\",\"twnews-mf2ugm\",\"twnews-q2qkub\",\"twnews-zqr8bu\",\"twnews-zshhud\",\"twnews-zshhud\",\"twnews-zt6dsj\"]"
+  },
+  "degraded": {
+    "domestic": false,
+    "international": false
+  },
+  "lastSuccessAt": "2026-11-21T20:33:40.894Z",
+  "lastSuccessAtByScope": {
+    "domestic": "2026-11-21T20:33:40.894Z",
+    "international": "2026-11-21T20:33:40.894Z"
+  },
+  "lastSuccessful": {
+    "domestic": "全球安全形勢極度緊張。俄烏衝突升級，俄軍對基輔發動戰火以來最大規模飛彈攻擊，同時俄中領導人互動引發西方警惕。亞洲災難與社會風險並存，西藏尼泊爾山洪釀重災，上海發生惡性滅門案，孟加拉因前總理返國計畫陷入動亂。區域外交上，美哥加強軍事掃毒合作，越南則修訂死刑法制。整體而言，武裝衝突、重大災難與社會治理危機正交織，全球不確定性顯著升高。",
+    "international": "俄烏戰事因飛彈落入波蘭領土，大幅升高北約與俄直接衝突風險；中東局勢同步惡化，美伊互射、油輪遭襲及胡塞武裝攻擊沙烏地，嚴重威脅能源航運與地區穩定。非洲奈及利亞、烏幹達等地區爆發伊波拉疫情並伴隨治安惡化，多地旅遊警示升至紅色。全球面臨地緣政治熱戰與公共衛生危機交織的複合風險，企業資安亦需應對AI加速攻擊之新威脅。",
+    "recent24h": "過去24小時聚焦安全與災防：香港將迎宏福苑大火週年，官方容許合法悼念；洛杉磯野火縱火嫌犯重審定罪。資安方面，美農業部及FBI傳遭駭客入侵，樂桃航空個資外洩。國內治安嚴肅，移民署在金門攔截利用AI換臉闖關的重刑犯，並破獲活體動物走私案。",
+    "byCategory": {
+      "治安": "俄烏互襲基礎設施規模空前，上海滅門案引發震盪，越南廢毒品死刑；多國強化邊界查緝與資安防護，整體治安態勢高度緊張。",
+      "反詐": "個資外洩與AI詐騙並行，金融旅遊業成駭客目標，官民緊盯假客服與深層滲透風險。",
+      "交通": "桃城中壢毒駕衝撞寶雅緻菲籍女移工身亡，車上搜出毒品；高雄小貨車違規撞死女大生引發圍毆，臺61亦傳死亡車禍，交通安全形勢嚴峻。",
+      "資安": "美國農業部與FBI接連遭入侵，歐洲商冷設備頻繁受駭，AI駭客工具興起，全球實體與數位基礎設施面臨多重資安危機。"
+    },
+    "trend": "事件數自高點2019顯著回落至1185，整體呈明顯下降趨勢，近期波動幅度縮小，顯示熱度正在逐步退燒。",
+    "clusterSummaries": {
+      "c2": "桃園中壢毒駕男衝撞寶雅釀1死6傷，法官裁定羈押，凸顯公共安全風險。",
+      "c17": "新北多起家庭糾紛事件，妻子因口角情緒失控持刀砍傷丈夫，遭警方依殺人未遂罪移送法辦。",
+      "c4": "北市長政見會聚焦兒虐案治理與市府處理爭議，蔣萬安、沈伯洋交鋒施政缺失。",
+      "c276": "女子在臺北市長選戰中捏造沈伯洋涉汽車旅館私德謠言，遭北檢偵結起訴並求處重刑。",
+      "c20": "宜蘭多起地方民代涉集團性賄選案，檢調擴大偵辦聲押收押，多名樁腳遭羈押或交保。",
+      "c135": "臺中名媛「臺中小S」控訴消費破億遭香奈兒櫃姐偷拍點鈔畫面外流，引發隱私侵犯爭議，涉事員工遭開除。",
+      "c22": "桃園多名政治人物及嫌疑人因涉收受中共資金、製造假帳號或散播深偽影片等反滲透法案件遭檢方起訴求刑。",
+      "c263": "高雄議員陳明澤、陳善慧因假協調真勒索光電及土方工程收斂，涉嫌貪汙，正式遭檢察機關起訴。"
+    },
+    "model": "agnes-3.0-flash",
+    "generatedAt": "2026-11-21T20:33:40.894Z",
+    "scopeMetadata": {
+      "domestic": {
+        "generatedAt": "2026-11-21T20:33:40.894Z",
+        "model": "agnes-3.0-flash"
+      },
+      "international": {
+        "generatedAt": "2026-11-21T20:33:40.894Z",
+        "model": "agnes-3.0-flash"
+      }
+    }
+  },
+  "model": "agnes-3.0-flash",
+  "generatedAt": "2026-11-21T20:33:40.894Z"
+}

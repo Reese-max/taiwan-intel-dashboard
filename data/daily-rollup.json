@@ -1,0 +1,20 @@
+{
+  "days": {
+    "2027-10-16": {
+      "total": 1,
+      "byScope": {
+        "domestic": 0,
+        "international": 1
+      },
+      "byRisk": {
+        "low": 1,
+        "medium": 1,
+        "high": 0,
+        "critical": 0
+      },
+      "byCategory": {
+        "金融": 1
+      }
+    }
+  }
+}

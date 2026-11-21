@@ -1,0 +1,47 @@
+{
+  "manifestVersion": 1,
+  "snapshotId": "cohort-20261121-83a5ccde",
+  "generatedAt": "2026-11-21T20:31:15.244Z",
+  "rulesVersion": "correlate-v1",
+  "scopes": {
+    "domestic": {
+      "events": "domestic.json",
+      "map": "domestic.json",
+      "network": "network.json",
+      "eventCount": 8023,
+      "sha256": "d954329e98ddde9fa790c627147462f6aa6adb068ed468bb4a19a500dba210c3"
+    },
+    "international": {
+      "events": "international.json",
+      "map": "international.json",
+      "network": "network.json",
+      "eventCount": 3200,
+      "sha256": "26c6e0348ff5e397abd0c8ca4ea6012a77e2afd997caef9fc5d9977abb3eea16"
+    }
+  },
+  "files": {
+    "domestic.json": {
+      "path": "domestic.json",
+      "sha256": "d954329e98ddde9fa790c627147462f6aa6adb068ed468bb4a19a500dba210c3",
+      "bytes": 15043574,
+      "count": 8023
+    },
+    "international.json": {
+      "path": "international.json",
+      "sha256": "26c6e0348ff5e397abd0c8ca4ea6012a77e2afd997caef9fc5d9977abb3eea16",
+      "bytes": 4606105,
+      "count": 3200
+    },
+    "network.json": {
+      "path": "network.json",
+      "sha256": "3c163ac3c1d80944671aee2f4c1b2e3e2d5f5f2d646e9a89f96e040de80a6033",
+      "bytes": 19465776,
+      "snapshotId": "cohort-20261121-83a5ccde"
+    },
+    "summary.json": {
+      "path": "summary.json",
+      "sha256": "430f3a9ffab86c148965edf28c85bc2e7df11d81c4ac32450c2fdbc14747ac79",
+      "bytes": 19196
+    }
+  }
+}
