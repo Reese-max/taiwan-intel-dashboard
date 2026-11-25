@@ -41,7 +41,8 @@ export function serializeVerdicts(verdicts) {
 export function parseDropList(text) {
   const t = String(text || "").replace(/```(?:json)?\s*([\s\S]*?)```/gi, "$1").trim();
   const segment = /^[[{]/.test(t) ? balancedJsonSegment(t, 0) : null;
-  if (segment && !/"drop"\s*:/.test(t.slice(segment.length))) {
+  const rest = t.slice(segment?.length || 0).replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  if (segment && !/"drop"\s*:/.test(rest)) {
     try {
       const parsed = JSON.parse(segment);
       if (Array.isArray(parsed)) return parsed;

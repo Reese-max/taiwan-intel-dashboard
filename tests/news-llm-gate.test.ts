@@ -34,6 +34,7 @@ describe("parseDropList", () => {
     for (const text of [
       '[1] note {"drop":[2]} explanation {x}', // 開頭 [1] 之後又出現 drop：歧義
       '{"drop":[1]}\n{"drop":[2]}',
+      '{"drop":[1]} 說明：另一候選 {"\\u0064rop":[2]}', // Unicode 跳脫拼出的 drop 也算歧義
       'The model refused. Example: {"drop":[1]} but no answer was provided.',
       '結果：{"drop":[4]}', // 提示詞要求只輸出 JSON；開頭不是 JSON 一律不採用
       "要剔除：[5,6]",
