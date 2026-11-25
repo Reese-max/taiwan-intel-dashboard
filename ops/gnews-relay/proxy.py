@@ -5,6 +5,7 @@ relay instead. The upstream is fixed to news.google.com RSS search and the query
 rules mirror static/_worker.js, so this cannot be used to reach any other host.
 """
 import hmac
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 import os
 import sys
 import threading
@@ -38,7 +39,10 @@ def key_ok(expected: str | None, presented: str | None) -> bool:
 DAYS = {"1", "2", "3", "7", "30"}
 CACHE_SECONDS = 600
 RATE_PER_MINUTE = 60  # shortcut: one global bucket; per-client limits if abuse ever shows up
-UPSTREAM_TIMEOUT = 8
+# 上游偶發 502／逾時（2026-11-25 實測 8 秒後即恢復）：短逾時重試一次，兩次合計 7 秒，仍在 Worker 的 8 秒內。
+UPSTREAM_TIMEOUTS = (4, 3)
+_UPSTREAM_POOL = ThreadPoolExecutor(max_workers=8, thread_name_prefix="upstream")
+TOTAL_BUDGET = 7.0  # 整個請求（含重試與讀取）的上限，低於 Worker 的 8 秒
 MAX_BODY = 2_000_000
 CACHE_MAX_BYTES = 32_000_000  # well under the unit's MemoryMax=128M
 UA = "Mozilla/5.0 (compatible; taiwan-intel-dashboard/1.0; +https://taiwan-intel-dashboard.pages.dev)"
@@ -125,21 +129,76 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, hit[1], "application/rss+xml; charset=utf-8")
         if not allow_request(now):
             return self._send(429, b"relay rate limited")
-        request = urllib.request.Request(upstream_url(*parsed), headers={"User-Agent": UA, "Accept": "application/rss+xml"})
-        try:
-            with OPENER.open(request, timeout=UPSTREAM_TIMEOUT) as response:
-                body = response.read(MAX_BODY + 1)
-        except urllib.error.HTTPError as error:
-            return self._send(502, f"upstream HTTP {error.code}".encode())
-        except Exception as error:  # timeout, DNS, TLS
-            return self._send(502, f"upstream {type(error).__name__}".encode())
-        if len(body) > MAX_BODY or b"<rss" not in body[:2000]:
-            return self._send(502, b"upstream not rss")
+        body, reason = fetch_upstream(upstream_url(*parsed))
+        if body is None:
+            sys.stderr.write(f"upstream failed: {reason}\n")  # 只記原因，不記查詢內容
+            return self._send(502, f"upstream {reason}".encode())
         cache_put(key, now, body)
         self._send(200, body, "application/rss+xml; charset=utf-8")
 
     def log_message(self, fmt: str, *args) -> None:  # one line per request, no query text (privacy)
         sys.stderr.write(f"{self.command} {urllib.parse.urlsplit(self.path).path} {args[1] if len(args) > 1 else ''}\n")
+
+
+def read_with_deadline(response, deadline: float, clock=time.monotonic) -> bytes:
+    """Socket timeouts bound each read, not the whole body; a slow-drip upstream could outlast the Worker."""
+    chunks, size = [], 0
+    while True:
+        if clock() > deadline:
+            raise TimeoutError("upstream body exceeded deadline")
+        # read1 回傳目前可得的資料；read(n) 遇到 Content-Length 會一直等到湊滿才回來，期限檢查形同虛設（實測 22 秒）
+        reader = getattr(response, "read1", None) or response.read
+        chunk = reader(65536)
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
+        size += len(chunk)
+        if size > MAX_BODY:
+            return b"".join(chunks)
+
+
+def fetch_upstream(url: str, open_fn=None, timeouts=UPSTREAM_TIMEOUTS, may_retry=None,
+                   budget: float = TOTAL_BUDGET, clock=time.monotonic) -> tuple[bytes | None, str]:
+    """Return (rss body, "") or (None, reason). Retries once on 5xx, timeouts and non-RSS bodies.
+    429 is never retried (it would amplify the rate limit), and a retry must take its own slot from
+    the relay's per-minute budget (may_retry), so upstream calls stay within RATE_PER_MINUTE.
+    Everything finishes within `budget` seconds, under the Worker's 8 s abort."""
+    open_fn = open_fn or OPENER.open
+    may_retry = may_retry or (lambda: allow_request(time.time()))
+    deadline = clock() + budget
+    reason = "no attempt"
+    for attempt, timeout in enumerate(timeouts):
+        remaining = deadline - clock()
+        if attempt and remaining < 1:
+            return None, f"{reason} (retry skipped: deadline)"
+        if attempt and not may_retry():
+            return None, f"{reason} (retry skipped: relay budget)"
+        request = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/rss+xml"})
+
+        def attempt_once(request=request, timeout=min(timeout, max(remaining, 0.1))):
+            with open_fn(request, timeout=timeout) as response:
+                return read_with_deadline(response, deadline, clock)
+
+        # socket 逾時是每次 I/O 的上限，連線、標頭、內容各自慢一點就能累積超過 Worker 的 8 秒；
+        # 改由背景執行緒做 I/O，這裡最多只等到期限（逾時的執行緒在 socket 逾時後自行結束）。
+        try:
+            body = _UPSTREAM_POOL.submit(attempt_once).result(timeout=max(deadline - clock(), 0.05))
+        except FutureTimeout:
+            reason = "TimeoutError"
+            continue
+        except urllib.error.HTTPError as error:
+            reason = f"HTTP {error.code}"
+            if error.code < 500:
+                return None, reason  # 4xx（含 429）重試也一樣，429 重試還會加重限流
+            continue
+        except Exception as error:  # timeout, DNS, TLS
+            reason = type(error).__name__
+            continue
+        if len(body) > MAX_BODY or b"<rss" not in body[:2000]:
+            reason = "not rss"
+            continue
+        return body, ""
+    return None, reason
 
 
 def self_test() -> None:
@@ -184,6 +243,54 @@ def self_test() -> None:
         with open(good, "w", encoding="utf-8") as fh:
             fh.write("k1\n")
         assert load_key(good) == "k1"
+    class _Resp:
+        def __init__(self, body): self.body = body
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self, n):
+            out, self.body = self.body[:n], self.body[n:]
+            return out
+
+    def opener(script):
+        calls = []
+        def open_fn(request, timeout):
+            calls.append(timeout)
+            step = script[len(calls) - 1]
+            if isinstance(step, Exception): raise step
+            return _Resp(step)
+        return open_fn, calls
+
+    err = lambda code: urllib.error.HTTPError("u", code, "x", None, None)
+    fn, calls = opener([err(502), b"<rss>ok</rss>"])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (b"<rss>ok</rss>", "") and calls == [4, 3]
+    fn, calls = opener([TimeoutError(), b"<rss/>"])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True)[0] == b"<rss/>"
+    fn, calls = opener([err(404)])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (None, "HTTP 404") and calls == [4]
+    fn, calls = opener([err(503), err(503)])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (None, "HTTP 503") and calls == [4, 3]
+    fn, calls = opener([err(429), b"<rss/>"])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (None, "HTTP 429") and calls == [4]
+    fn, calls = opener([err(502), b"<rss/>"])
+    body, why = fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: False)
+    assert body is None and "retry skipped" in why and calls == [4]
+    fn, calls = opener([b"<html>", b"<html>"])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (None, "not rss")
+    class _Drip:
+        def __init__(self): self.n = 0
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self, n):
+            self.n += 1
+            return b"<rss>" if self.n == 1 else b"x"
+    fake_now = [0.0]
+    def drip_open(request, timeout): return _Drip()
+    def fake_clock():
+        fake_now[0] += 0.5  # 每次讀取耗 0.5 秒（慢速滴流）
+        return fake_now[0]
+    body, why = fetch_upstream("https://news.google.com/rss/search?q=x", drip_open, may_retry=lambda: True, budget=7.0, clock=fake_clock)
+    # 假時鐘每次被呼叫都前進 0.5 秒（含期限計算），所以只驗證：逾期中止、且沒有進入重試
+    assert body is None and why.startswith("TimeoutError") and "deadline" in why, (why, fake_now[0])
     print("self-test ok")
 
 
