@@ -1,7 +1,7 @@
 // 國內新聞 LLM 複核：規則判為相關、但標題沒有明確案件字眼的新聞，交給 LLM 判斷是否真為事件。
 // 失敗一律保留規則結果（fail-open）；判斷結果依標題鍵跨輪快取，每輪只問新進新聞。
 import { chatVia, extractJson, profileCfg, sleep } from "./llm-client.mjs";
-import { hasStrongCaseTitle, isForeignLeadCandidate } from "./news-bulk.mjs";
+import { hasStrongCaseTitle, isForeignNewsCandidate } from "./news-bulk.mjs";
 import { titleKey } from "./title-key.mjs";
 
 export const VERDICTS_FILE = "news-llm-verdicts.json";
@@ -15,11 +15,11 @@ const SYSTEM_PROMPT = `你是台灣治安情資儀表板的新聞篩選員。每
 不算事件（剔除）：只是比喻用字（搶票、搶鏡、搶C位、狂砍27分、砍目標價、殺紅眼）、選戰造勢與政治口水、演藝娛樂、運動賽事、財經股市、商品促銷、醫療衛教、生活資訊、與台灣無關的國外政治經濟新聞。
 拿不準時一律保留。只輸出 JSON：{"drop":[要剔除的編號]}，沒有要剔除就輸出 {"drop":[]}。`;
 
-// 2026-11-25 負責人決定：國內層不收完全發生在國外、與台灣無直接關係的事件；候選由 isForeignLeadCandidate 挑出。
-const FOREIGN_PROMPT = `你是台灣治安情資儀表板「國內」頁的新聞篩選員。以下每則新聞標題都以外國地名開頭，你要判斷事件是否屬於台灣國內。
+// 2026-11-25 負責人決定：國內層不收完全發生在國外、與台灣無直接關係的事件；候選由 isForeignNewsCandidate 挑出。
+const FOREIGN_PROMPT = `你是台灣治安情資儀表板「國內」頁的新聞篩選員。以下每則新聞標題都提到外國地名，你要判斷事件是否屬於台灣國內。
 屬於台灣（保留）：事件發生在台灣；或直接涉及台灣——台灣人或在台外國人（移工、旅客、外籍配偶）、台灣的機關、店家、學校、法院、警消、防疫或邊境措施、在台販售的商品；台灣人在國外涉案或受害也保留。
 不屬於台灣（剔除）：完全發生在國外、當事人與台灣無關的事件。
-例：「日本福岡商場旁男子遇刺亡」剔除；「墨西哥逮捕FBI十大通緝毒梟」剔除；「日本籍男子西門町砍人」保留；「日本腦炎今年首例致死」保留（台灣疫情）；「韓國烤肉店深夜氣爆」保留（台灣店家）；「泰國蝦養殖場股東糾紛」保留（台灣養殖場）。
+例：「日本福岡商場旁男子遇刺亡」剔除；「墨西哥逮捕FBI十大通緝毒梟」剔除；「日本籍男子西門町砍人」保留；「日本腦炎今年首例致死」保留（台灣疫情）；「韓國烤肉店深夜氣爆」保留（台灣店家）；「泰國蝦養殖場股東糾紛」保留（台灣養殖場）；「北海道鮮乳遭竊 超商店員報警」保留（台灣商店）；「綁票取贖私吞逃越南 3共犯判刑」保留（台灣案件、嫌犯逃往國外）；「候選人遭押70天 胞弟轟新加坡羈押最長8天」保留（台灣司法，外國只作比較）。
 拿不準時一律保留。只輸出 JSON：{"drop":[要剔除的編號]}，沒有要剔除就輸出 {"drop":[]}。`;
 export const FOREIGN_VERDICT_PREFIX = "foreign:";
 
@@ -87,7 +87,7 @@ export async function reviewNewsRelevance(items, {
   for (const it of items) {
     const key = titleKey(it?.title);
     if (!key) continue;
-    if (isForeignLeadCandidate(it)) consider("foreign", `${FOREIGN_VERDICT_PREFIX}${key}`, it);
+    if (isForeignNewsCandidate(it)) consider("foreign", `${FOREIGN_VERDICT_PREFIX}${key}`, it);
     if (it?.official === true || hasStrongCaseTitle(it?.title)) continue;
     consider("relevance", key, it);
   }

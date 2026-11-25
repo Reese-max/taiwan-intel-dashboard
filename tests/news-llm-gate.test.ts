@@ -31,7 +31,7 @@ describe("國內新聞 LLM 複核", () => {
     const verdicts = new Map();
     const { dropped, stats } = await reviewNewsRelevance(items, { verdicts, chatFn, now: NOW });
     // 西門町有台灣地標不列候選；福岡與腦炎送外國複核，模型只剔福岡。
-    const foreignCalls = chatFn.mock.calls.filter((c: Msg[][]) => c[0][0].content.includes("以外國地名開頭"));
+    const foreignCalls = chatFn.mock.calls.filter((c: Msg[][]) => c[0][0].content.includes("都提到外國地名"));
     expect(foreignCalls).toHaveLength(2);
     expect(titlesOf(foreignCalls[0][0]).sort()).toEqual(["日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃", "日本腦炎今年首例致死！醫籲高風險族群速接種"].sort());
     expect([...dropped].map((it: { title: string }) => it.title)).toEqual(["日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃"]);

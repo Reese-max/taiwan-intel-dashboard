@@ -39,7 +39,7 @@ import {
   isFigurativeNewsNoise,
   isOverseasLocalNews,
   isRelevantNewsItem,
-  isForeignLeadCandidate,
+  isForeignNewsCandidate,
   buildNewsRelevanceAudit,
   mapBulkInternationalNews,
   mapBulkNews,
@@ -175,7 +175,7 @@ export function buildTwNewsEvents({
       (!/移民署/.test(event?.source?.name || "") || isRelevantNewsItem(item)) &&
       !llmDropKeys?.has(bulkTitleKey(event?.title)) &&
       // 外國複核只套用在本身也是外國候選的事件：同標題的食安、官方或摘要有台灣證據者不受影響。
-      !(llmForeignDropKeys?.has(bulkTitleKey(event?.title)) && isForeignLeadCandidate(item)) &&
+      !(llmForeignDropKeys?.has(bulkTitleKey(event?.title)) && isForeignNewsCandidate(item)) &&
       shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now })
     );
   };
