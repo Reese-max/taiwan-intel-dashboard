@@ -449,7 +449,7 @@ const FOREIGN_ADJECTIVE_RE =
 // 只用於挑 LLM 候選的外國城市／州（FOREIGN_PLACE_RE 多為國名，福岡、倫敦開頭的外國案件會漏送）；判斷仍由 LLM 做。
 const FOREIGN_CITY_LEAD_RE =
   /^(?:福岡|京都|名古屋|札幌|橫濱|横濱|神戶|千葉|埼玉|兵庫|北海道|沖繩|廣島|長崎|熊本|仙台|倫敦|巴黎|柏林|羅馬|紐約|洛杉磯|舊金山|芝加哥|西雅圖|波士頓|休士頓|德州|加州|佛州|紐澤西|雪梨|墨爾本|釜山|仁川|芭達雅|普吉|清邁|河內|胡志明市|峴港|峇里|宿霧|吉隆坡|新德里|孟買|莫斯科|杜拜|伊斯坦堡)/;
-const FOREIGN_CITY_ANY_RE = new RegExp(FOREIGN_CITY_LEAD_RE.source.replace(/^^/, ""), "g");
+const FOREIGN_CITY_ANY_RE = new RegExp(FOREIGN_CITY_LEAD_RE.source.replace(/^\^/, ""), "g");
 const FOREIGN_PLACE_ANY_RE = new RegExp(FOREIGN_PLACE_RE.source, "g");
 // TAIWAN_MARKER_RE 沒涵蓋的台灣證據：檢方與市級簡稱（排除「檢出」「越南檢方」「越南市民」「東北市長」等外國用法）、台嫌、地標與機關。
 const TAIWAN_EXTRA_EVIDENCE_RE = new RegExp([
