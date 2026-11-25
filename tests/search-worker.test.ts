@@ -36,6 +36,8 @@ describe("Google News 站外搜尋端點", () => {
     expect(url.searchParams.get("q")).toBe("電信 when:7d");
     expect(url.searchParams.get("ceid")).toBe("TW:zh-Hant");
     expect(upstream.mock.calls[0][1].redirect).toBe("manual");
+    // Worker 預設不送 User-Agent，Google 對無 UA 的機房請求會回 429／503。
+    expect(new Headers(upstream.mock.calls[0][1].headers).get("user-agent")).toMatch(/^Mozilla\/5\.0 /);
     expect(response.headers.get("cache-control")).toBe("public, max-age=300");
     expect(cache.put).toHaveBeenCalledOnce();
     expect(cache.put.mock.calls[0][1].headers.get("cache-control")).toBe("public, max-age=600");
