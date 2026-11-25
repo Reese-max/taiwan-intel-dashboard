@@ -1,6 +1,6 @@
 // 國內新聞 LLM 複核：規則判為相關、但標題沒有明確案件字眼的新聞，交給 LLM 判斷是否真為事件。
 // 失敗一律保留規則結果（fail-open）；判斷結果依標題鍵跨輪快取，每輪只問新進新聞。
-import { chatVia, extractJson, profileCfg, sleep } from "./llm-client.mjs";
+import { chatVia, profileCfg, sleep } from "./llm-client.mjs";
 import { hasStrongCaseTitle, isForeignNewsCandidate } from "./news-bulk.mjs";
 import { titleKey } from "./title-key.mjs";
 
@@ -36,6 +36,40 @@ export function serializeVerdicts(verdicts) {
   return { version: 1, verdicts: Object.fromEntries([...verdicts].sort(([a], [b]) => a.localeCompare(b))) };
 }
 
+// 答案必須是回應開頭的那段 JSON（{"drop":[...]} 或陣列）；後面可接說明文字（2026-11-25 正式站一批因此失敗），
+// 但開頭不是 JSON、或說明裡又出現 drop（答案有歧義）一律丟錯，由呼叫端照規則保留，不從說明裡挑答案（跨家族審查重現）。
+export function parseDropList(text) {
+  const t = String(text || "").replace(/```(?:json)?\s*([\s\S]*?)```/gi, "$1").trim();
+  const segment = /^[[{]/.test(t) ? balancedJsonSegment(t, 0) : null;
+  const rest = t.slice(segment?.length || 0).replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  if (segment && !/"drop"\s*:/.test(rest)) {
+    try {
+      const parsed = JSON.parse(segment);
+      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed?.drop)) return parsed.drop;
+    } catch { /* 落到下方錯誤 */ }
+  }
+  throw new Error(`LLM 回應缺 drop 陣列：${t.slice(0, 120)}`);
+}
+
+function balancedJsonSegment(t, start) {
+  let depth = 0;
+  let inString = false;
+  for (let i = start; i < t.length; i++) {
+    const ch = t[i];
+    if (inString) {
+      if (ch === "\\") i++;
+      else if (ch === '"') inString = false;
+    } else if (ch === '"') inString = true;
+    else if (ch === "[" || ch === "{") depth++;
+    else if (ch === "]" || ch === "}") {
+      depth--;
+      if (depth === 0) return t.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
 async function reviewBatch(batch, chatFn, prompt = SYSTEM_PROMPT) {
   const lines = batch.map((it, i) => {
     const desc = String(it.description || "").replace(/\s+/g, " ").slice(0, 80);
@@ -45,10 +79,7 @@ async function reviewBatch(batch, chatFn, prompt = SYSTEM_PROMPT) {
     [{ role: "system", content: prompt }, { role: "user", content: lines.join("\n") }],
     { maxTokens: 400, temperature: 0 },
   );
-  const parsed = extractJson(String(text || ""));
-  const drop = Array.isArray(parsed) ? parsed : parsed?.drop;
-  if (!Array.isArray(drop)) throw new Error(`LLM 回應缺 drop 陣列：${String(text).slice(0, 120)}`);
-  const ids = new Set(drop.map(Number));
+  const ids = new Set(parseDropList(text).map(Number));
   for (const id of ids) if (!Number.isInteger(id) || id < 1 || id > batch.length) throw new Error(`LLM 回應編號超出範圍：${id}`);
   return ids;
 }

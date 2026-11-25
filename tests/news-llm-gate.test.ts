@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { readVerdicts, reviewNewsRelevance, serializeVerdicts } from "../scripts/lib/news-llm-gate.mjs";
+import { parseDropList, readVerdicts, reviewNewsRelevance, serializeVerdicts } from "../scripts/lib/news-llm-gate.mjs";
 // @ts-expect-error — JS ESM module without types
 import { dedupeTitleKey, titleKey } from "../scripts/lib/title-key.mjs";
 // @ts-expect-error — JS ESM module without types
@@ -15,6 +15,35 @@ const chatDropping = (dropTitles: string[]) =>
     drop: titlesOf(messages).flatMap((title, i) => (dropTitles.includes(title) ? [i + 1] : [])),
   }));
 const NOW = Date.parse("2026-11-19T00:00:00.000Z");
+
+describe("parseDropList", () => {
+  it("一般回應照常解析", () => {
+    expect(parseDropList('{"drop":[1,2]}')).toEqual([1, 2]);
+    expect(parseDropList("[3]")).toEqual([3]);
+    expect(parseDropList('```json\n{"drop":[]}\n```')).toEqual([]);
+    expect(parseDropList('  {"drop":[4]}  ')).toEqual([4]);
+    // 字串裡的跳脫引號與括號不算結構。
+    expect(parseDropList('{"note":"escaped \\" { brace","drop":[3]}')).toEqual([3]);
+  });
+
+  it("drop JSON 後接帶括號的說明仍能解析（2026-11-25 正式站複核批次失敗）", () => {
+    expect(parseDropList('{"drop":[1,2,5]}\n\n說明：第[3]則拿不準 {保留}')).toEqual([1, 2, 5]);
+  });
+
+  it("回應開頭不是 JSON、或答案有歧義時丟錯，由呼叫端照規則保留（跨家族審查重現）", () => {
+    for (const text of [
+      '[1] note {"drop":[2]} explanation {x}', // 開頭 [1] 之後又出現 drop：歧義
+      '{"drop":[1]}\n{"drop":[2]}',
+      '{"drop":[1]} 說明：另一候選 {"\\u0064rop":[2]}', // Unicode 跳脫拼出的 drop 也算歧義
+      'The model refused. Example: {"drop":[1]} but no answer was provided.',
+      '結果：{"drop":[4]}', // 提示詞要求只輸出 JSON；開頭不是 JSON 一律不採用
+      "要剔除：[5,6]",
+      '{"x":"unfinished} then [1]',
+      '{"note":"沒有 drop"}',
+      "沒有 JSON",
+    ]) expect(() => parseDropList(text), text).toThrow();
+  });
+});
 
 describe("國內新聞 LLM 複核", () => {
   it("外國地名開頭的候選即使標題有明確案件字眼也送外國提示詞複核，兩次都剔才剔，鍵加 foreign: 前綴", async () => {
