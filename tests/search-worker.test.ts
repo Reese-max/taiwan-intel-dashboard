@@ -32,9 +32,10 @@ describe("Google News 站外搜尋端點", () => {
       pubDate: "2026-11-17T00:00:00.000Z", source: "中央社 & 地方",
     }] });
     const url = new URL(String(upstream.mock.calls[0][0]));
-    expect(url.origin).toBe("https://news.google.com");
-    expect(url.searchParams.get("q")).toBe("電信 when:7d");
-    expect(url.searchParams.get("ceid")).toBe("TW:zh-Hant");
+    // Google 依 Cloudflare 出口 IP 限流，改經自有主機的固定轉發（只轉 Google News RSS 搜尋）。
+    expect(`${url.origin}${url.pathname}`).toBe("https://video-mcp-a1.tail930e77.ts.net/gnews");
+    expect(url.searchParams.get("q")).toBe("電信");
+    expect(url.searchParams.get("days")).toBe("7");
     expect(upstream.mock.calls[0][1].redirect).toBe("manual");
     expect(response.headers.get("cache-control")).toBe("public, max-age=300");
     expect(cache.put).toHaveBeenCalledOnce();
