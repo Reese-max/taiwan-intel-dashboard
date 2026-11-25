@@ -1105,7 +1105,7 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
       "倫敦街頭驚傳隨機砍人！3路人中刀送醫 警逮1嫌",
       "德州驚傳連續槍擊案 5人中彈死亡",
     ]) expect(isForeignLeadCandidate(media(title)), title).toBe(true);
-    for (const title of ["京都男子西門町鬧事遭警壓制", "首爾旅客桃機夾帶毒品遭航警查獲"]) {
+    for (const title of ["京都男子西門町鬧事遭警壓制", "首爾旅客桃機夾帶毒品遭航警查獲", "北海道鮮乳遭竊 超商店員報警", "沖繩黑糖遭偷 店家報案"]) {
       expect(isForeignLeadCandidate(media(title)), title).toBe(false);
     }
   });
