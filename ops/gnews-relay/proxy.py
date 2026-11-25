@@ -5,6 +5,7 @@ relay instead. The upstream is fixed to news.google.com RSS search and the query
 rules mirror static/_worker.js, so this cannot be used to reach any other host.
 """
 import hmac
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 import os
 import sys
 import threading
@@ -40,6 +41,7 @@ CACHE_SECONDS = 600
 RATE_PER_MINUTE = 60  # shortcut: one global bucket; per-client limits if abuse ever shows up
 # 上游偶發 502／逾時（2026-11-25 實測 8 秒後即恢復）：短逾時重試一次，兩次合計 7 秒，仍在 Worker 的 8 秒內。
 UPSTREAM_TIMEOUTS = (4, 3)
+_UPSTREAM_POOL = ThreadPoolExecutor(max_workers=8, thread_name_prefix="upstream")
 TOTAL_BUDGET = 7.0  # 整個請求（含重試與讀取）的上限，低於 Worker 的 8 秒
 MAX_BODY = 2_000_000
 CACHE_MAX_BYTES = 32_000_000  # well under the unit's MemoryMax=128M
@@ -172,9 +174,18 @@ def fetch_upstream(url: str, open_fn=None, timeouts=UPSTREAM_TIMEOUTS, may_retry
         if attempt and not may_retry():
             return None, f"{reason} (retry skipped: relay budget)"
         request = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/rss+xml"})
+
+        def attempt_once(request=request, timeout=min(timeout, max(remaining, 0.1))):
+            with open_fn(request, timeout=timeout) as response:
+                return read_with_deadline(response, deadline, clock)
+
+        # socket 逾時是每次 I/O 的上限，連線、標頭、內容各自慢一點就能累積超過 Worker 的 8 秒；
+        # 改由背景執行緒做 I/O，這裡最多只等到期限（逾時的執行緒在 socket 逾時後自行結束）。
         try:
-            with open_fn(request, timeout=min(timeout, max(remaining, 0.1))) as response:
-                body = read_with_deadline(response, deadline, clock)
+            body = _UPSTREAM_POOL.submit(attempt_once).result(timeout=max(deadline - clock(), 0.05))
+        except FutureTimeout:
+            reason = "TimeoutError"
+            continue
         except urllib.error.HTTPError as error:
             reason = f"HTTP {error.code}"
             if error.code < 500:
