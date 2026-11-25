@@ -463,7 +463,13 @@ const TAIWAN_EXTRA_EVIDENCE_RE = new RegExp([
 export function isForeignLeadCandidate(item) {
   if (!isDomesticMediaNews(item)) return false;
   const rawTitle = String(item?.title || "");
-  const fullText = `${rawTitle} ${item?.description || ""} ${item?.summary || ""}`.replace(TAIWAN_NEGATED_CONTEXT_RE, "");
+  // GN 標題尾「 - 發行者」與摘要裡的同名發行者（奧丁丁新聞等台灣媒體名）不是事件的台灣證據。
+  // 只認長得像媒體名的尾段；正文尾段（「 - 台灣外交部」）不當發行者剝除。
+  const tail = rawTitle.match(/\s+-\s+([^-]{2,40})$/)?.[1]?.trim();
+  const publisher = tail && /新聞|報|週刊|雜誌|電視|電臺|電台|廣播|網|傳媒|頻道|News|TV|Times|Media|Online|Yahoo|LINE/i.test(tail) ? tail : undefined;
+  let fullText = `${rawTitle} ${item?.description || ""} ${item?.summary || ""}`;
+  if (publisher) fullText = fullText.split(publisher).join(" ");
+  fullText = fullText.replace(TAIWAN_NEGATED_CONTEXT_RE, "");
   // 原始 RSS 項目還沒有 category，依標題即時判類，詐騙園區等反詐新聞才保有豁免。
   const leadCategory = item?.category || categoryFromItem(rawTitle, item?.hint)?.category;
   if ([item?.hint, leadCategory].some((t) => CROSS_BORDER_TOPICS.has(t) || t === "反詐") || CYBER_FOREIGN_EXEMPT_RE.test(fullText)) {
