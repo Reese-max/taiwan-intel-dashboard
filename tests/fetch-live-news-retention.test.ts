@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 // @ts-expect-error — JS ESM module without types
 import { buildCategoryBasisDistribution, buildTwNewsEvents } from "../scripts/fetch-live.mjs";
 // @ts-expect-error — JS ESM module without types
+import { titleKey } from "../scripts/lib/title-key.mjs";
+// @ts-expect-error — JS ESM module without types
 import { isPoliceDomesticEvent } from "../scripts/lib/fetch-police.mjs";
 // @ts-expect-error — JS ESM module without types
 import { eventIdFor, normalizeDomesticNews, partitionByCache } from "../scripts/lib/nvidia.mjs";
@@ -35,6 +37,23 @@ describe("twnews carry-over retention", () => {
     expect(result.map((e: { id: string }) => e.id)).toEqual(["taiwan", "food", "crime", "llm-food", "tvbs", "official", "other-dataset", "international"]);
   });
   // figurative-overseas regression end
+
+  it("外國複核的剔除只套用在同樣是外國候選的事件，同標題的食安、官方與台灣摘要事件保留", () => {
+    const timestamp = "2026-11-25T10:00:00.000Z";
+    const title = "日本青森蘋果農藥超標遭裁罰";
+    const events = [
+      { ...news("media", timestamp, { name: "GN 綜合治安" }), title, categoryBasis: "hint:治安", category: "治安" },
+      { ...news("food", timestamp, { name: "GN 食安" }), title, categoryBasis: "hint:食安", category: "食安" },
+      { ...news("official", timestamp, { authority: "official" }), title, categoryBasis: "hint:治安", category: "治安" },
+      { ...news("tw-summary", timestamp, { name: "GN 綜合治安" }), title, summary: "台灣代理商已預防性下架", categoryBasis: "hint:治安", category: "治安" },
+    ];
+    const llmForeignDropKeys = new Set([titleKey(title)]);
+    // 同標題會被去重，逐則各跑一次。
+    const kept = events.filter((event) => buildTwNewsEvents({
+      oldNews: [event], twnews: [], twnewsStatus: { ok: false }, llmForeignDropKeys, now: Date.parse("2026-11-25T12:00:00.000Z"),
+    }).length === 1).map((e) => e.id);
+    expect(kept).toEqual(["food", "official", "tw-summary"]);
+  });
 
   it.each([{ ok: false }, { skipped: true }, { ok: true }])("沿用時清除央廣[國際]欄目與移民署全文誤收：%j", (twnewsStatus) => {
     const timestamp = "2026-11-24T00:00:00.000Z";

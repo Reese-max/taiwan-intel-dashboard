@@ -1123,6 +1123,13 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     ]) {
       expect(isForeignLeadCandidate(media(title, hint)), title).toBe(false);
     }
+    // 主題豁免、官方來源、資安內文、摘要有台灣證據都不列候選。
+    const title = "日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃";
+    for (const topic of ["資安", "食安", "衛生", "環境", "反詐"]) expect(isForeignLeadCandidate(media(title, topic)), topic).toBe(false);
+    expect(isForeignLeadCandidate({ ...media(title), official: true })).toBe(false);
+    expect(isForeignLeadCandidate({ ...media(title), category: "食安" })).toBe(false);
+    expect(isForeignLeadCandidate({ ...media(title), summary: "嫌犯為台灣籍" })).toBe(false);
+    expect(isForeignLeadCandidate(media("日本電商遭駭客入侵 個資外洩"))).toBe(false);
     // 檢方、市級簡稱的邊界：外國內容不算台灣證據（避免漏網）。
     for (const title of [
       "美國酒駕撞死人案 血液中檢出高濃度毒品",

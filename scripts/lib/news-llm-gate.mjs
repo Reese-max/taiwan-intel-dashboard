@@ -142,8 +142,10 @@ export async function reviewNewsRelevance(items, {
         verdicts.set(key, { keep: keeps[i], at });
         stats.reviewed++;
         if (keeps[i]) return;
-        for (const it of groups[batch.group].fresh.get(key)) dropped.add(it);
-        if (batch.group === "foreign") stats.foreignDropped++;
+        for (const it of groups[batch.group].fresh.get(key)) {
+          dropped.add(it);
+          if (batch.group === "foreign") stats.foreignDropped++; // 以則數計，與 candidates、dropped 一致
+        }
       });
     }
   };
