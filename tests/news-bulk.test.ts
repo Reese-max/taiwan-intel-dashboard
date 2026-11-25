@@ -1028,6 +1028,64 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(immigration("菲籍母子車站走散 捷警10分鐘尋回7歲童"))).toBe(true);
   });
 
+  it("移民署 description 是轉載全文：只看標題與導言，內文順帶的詞不算案件證據", () => {
+    const immigration = (title: string, description: string) =>
+      ({ ...mk(title, "治安"), source: "移民署 新聞", description });
+    const filler = "文".repeat(200);
+
+    // 2026-11-25 線上誤收：文章編號 1151105 命中 110、「保險事故」命中事故、「旅遊中毒者」命中中毒。
+    expect(isRelevantNewsItem(immigration("10月進口物價漲幅創近50年最大 主計總處：無輸入性通膨",
+      `主計總處今天公布物價。${filler}（編輯：潘羿菁）1151105此文章經 中央社 授權使用`))).toBe(false);
+    expect(isRelevantNewsItem(immigration("勞保、就保、職災給付可開專戶 保險金免遭強制執行",
+      `勞保局提醒民眾。${filler}勞工遭遇保險事故，可能面臨收入中斷`))).toBe(false);
+    expect(isRelevantNewsItem(immigration("日本退稅新制上路 記者實測機台操作不到30秒",
+      `日本退稅新制上路。${filler}林氏璧在粉絲專頁日本自助旅遊中毒者中提醒`))).toBe(false);
+    // 導言就有案件證據者照收。
+    expect(isRelevantNewsItem(immigration("提領千萬現金疑點多 臺北市婦人遭警銀勸阻",
+      `一名婦人到銀行欲提領1,009萬元現金，行員察覺有異通報警方，員警到場勸阻。${filler}`))).toBe(true);
+  });
+
+  it("央廣標題自帶「[國際]」欄目者不進國內層，其他欄目照舊", () => {
+    const rti = (title: string) => ({ ...mk(title, "治安"), source: "中央廣播電臺 RSS" });
+    expect(isRelevantNewsItem(rti("[國際] 塞爾維亞校園槍擊案釀2傷 17歲犯案少年遭逮"))).toBe(false);
+    expect(isRelevantNewsItem(rti("[國際] 美國陪審團裁定 華為共謀竊取商業機密罪名成立"))).toBe(false);
+    expect(isRelevantNewsItem(rti("[兩岸] 共諜案起訴 退役軍官遭求刑"))).toBe(true);
+    expect(isRelevantNewsItem(rti("[生活] 酒駕撞死人 男子遭起訴"))).toBe(true);
+    // 標題寫明台灣關聯、或非央廣來源的同樣前綴，不套用欄目規則。
+    expect(isRelevantNewsItem(rti("[國際] 台灣旅客在日本遭詐騙 警方逮捕嫌犯"))).toBe(true);
+    expect(isRelevantNewsItem({ ...mk("[國際] 台灣旅客在日本遭詐騙 警方逮捕嫌犯", "治安"), source: "自由時報" })).toBe(true);
+    // 「泰國人民黨」「美國人」「跨國人口」裡的「國人」不是台灣國人。
+    expect(isRelevantNewsItem(rti("[國際] 泰國人民黨議員上訴減刑至3年 電腦犯罪罪名獲撤銷"))).toBe(false);
+    expect(isRelevantNewsItem(rti("[國際] 國人赴日旅遊遭搶 駐日代表處協助"))).toBe(true);
+  });
+
+  it("媒體自標國際版（標題尾欄目、Taipei Times world 網址）不進國內層；台灣相關與主題來源照舊", () => {
+    const media = (title: string, extra: Record<string, unknown> = {}) => ({ ...mk(title, "治安"), source: "GN UDN 綜合治安", ...extra });
+    expect(isRelevantNewsItem(media("薩爾瓦多派兵協助掃黑 海地總理駁斥人權疑慮| 國際焦點| 全球 - udn"))).toBe(false);
+    expect(isRelevantNewsItem(media("巴拉圭前總統涉洗錢賄賂 檢方聲請追加罪名 | 國際焦點 | 國際 - 經濟日報"))).toBe(false);
+    expect(isRelevantNewsItem(media("伊朗爆「榮譽處決」悲劇！16歲少女遭父親推下5樓身亡| 國際 - 三立新聞網SETN.com"))).toBe(false);
+    expect(isRelevantNewsItem(media("Mexico captures wanted drug kingpin", { link: "https://www.taipeitimes.com/News/world/archives/2026/11/23/2003868240" }))).toBe(false);
+    // 標題寫明台灣關聯、社會版、主題來源的跨境新聞維持原判。
+    expect(isRelevantNewsItem(media("又有台灣人被抓！33歲男赴日涉詐騙8旬老翁| 國際 - 三立新聞網SETN.com"))).toBe(true);
+    expect(isRelevantNewsItem(media("黑吃黑！他策畫綁票取贖1410萬得手竟私吞逃越南3共犯全得入監| 社會焦點 - 太報 TaiSounds"))).toBe(true);
+    expect(isRelevantNewsItem(media("Man indicted for drunk driving crash", { link: "https://www.taipeitimes.com/News/taiwan/archives/2026/11/23/1" }))).toBe(true);
+    expect(isRelevantNewsItem({ ...mk("韓國三星證券遭駭逾8000名客戶個資外洩| 全球財經| 全球 - UDN", "資安"), source: "GN 個資駭客" })).toBe(true);
+    // 摘要才有台灣證據也保留；「全國人口」不是台灣標記；保留窗事件的連結在 source.recordRef。
+    expect(isRelevantNewsItem({ ...media("男子涉詐遭起訴 | 國際 - 三立新聞"), description: "台北地檢署表示，案件發生於台灣。" })).toBe(true);
+    expect(isRelevantNewsItem(media("印度全國人口普查承辦商涉詐遭起訴 | 國際 - UDN"))).toBe(false);
+    expect(isRelevantNewsItem(media("全國人大常委會通過反詐法 嫌犯遭起訴 | 國際 - UDN"))).toBe(false);
+    expect(isRelevantNewsItem({ ...media("男子涉詐遭起訴 | 國際 - 三立新聞"), description: "警方說明案情", summary: "台北地檢署偵辦" })).toBe(true);
+    expect(isRelevantNewsItem(media("Jury convicts man of sparking deadly LA fire",
+      { link: undefined, source: { name: "Taipei Times (EN)", recordRef: "https://www.taipeitimes.com/News/world/archives/2026/11/22/2003868192" } }))).toBe(false);
+  });
+
+  it("110／165 只認獨立號碼，不吃文章編號或其他數字的一部分", () => {
+    expect(isPoliceRelevant("主計總處公布物價", "（編輯：潘羿菁）1151105")).toBe(false);
+    expect(isPoliceRelevant("颱風來襲 全台1650戶停電", "")).toBe(false);
+    expect(isPoliceRelevant("遇可疑情況撥打110報案", "")).toBe(true);
+    expect(isPoliceRelevant("可撥165反詐騙諮詢專線", "")).toBe(true);
+  });
+
   it("排除反詐宣導行銷稿，但保留真實查緝事件", () => {
     expect(isRelevantNewsItem(mk("東勢地政換照講習 宣導不動產防詐", "反詐"))).toBe(false);
     expect(isRelevantNewsItem(mk("台南反詐宣傳聯名角色換上警察制服", "治安"))).toBe(false);

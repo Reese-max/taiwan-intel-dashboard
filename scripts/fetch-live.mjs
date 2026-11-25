@@ -169,6 +169,8 @@ export function buildTwNewsEvents({
       !isPoliceNewsNoise(item) &&
       !isFigurativeNewsNoise(item) &&
       !isOverseasLocalNews(item) &&
+      // 移民署新聞網轉載全文，舊版閘門曾因內文順帶詞誤收；沿用時依現行閘門重判，不等 5 天到期。
+      (!/移民署/.test(event?.source?.name || "") || isRelevantNewsItem(item)) &&
       !llmDropKeys?.has(bulkTitleKey(event?.title)) &&
       shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now })
     );

@@ -1332,7 +1332,7 @@ const DIRECT_INTERNATIONAL_FEEDS = [
   { label: "American Journal of Transportation", url: "https://ajot.com/news/rss", hint: "金融", tier: "expanded", topic: "finance", topics: ["finance"] },
   { label: "Air Cargo News", url: "https://aircargonews.net/feed", hint: "金融", tier: "expanded", topic: "finance", topics: ["finance"] },
   { label: "Air Cargo Week", url: "https://aircargoweek.com/feed/", hint: "金融", tier: "expanded", topic: "finance", topics: ["finance"] },
-  { label: "The STAT Trade Times", url: "https://www.stattimes.com/google_feeds.xml", hint: "金融", tier: "expanded", topic: "finance", topics: ["finance"] },
+  { label: "The STAT Trade Times", url: "https://www.stattimes.com/rss", hint: "金融", tier: "expanded", topic: "finance", topics: ["finance"] },
   { label: "Railway Gazette International", url: "https://railwaygazette.com/feed", hint: "金融", tier: "expanded", topic: "finance", topics: ["finance"] },
   { label: "RailFreight.com", url: "https://railfreight.com/feed", hint: "金融", tier: "expanded", topic: "finance", topics: ["finance"] },
   { label: "Supply Chain Dive", url: "https://www.supplychaindive.com/feeds/news/", hint: "金融", tier: "expanded", topic: "finance", topics: ["finance"] },
