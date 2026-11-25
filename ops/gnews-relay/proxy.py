@@ -38,7 +38,8 @@ def key_ok(expected: str | None, presented: str | None) -> bool:
 DAYS = {"1", "2", "3", "7", "30"}
 CACHE_SECONDS = 600
 RATE_PER_MINUTE = 60  # shortcut: one global bucket; per-client limits if abuse ever shows up
-UPSTREAM_TIMEOUT = 8
+# 上游偶發 502／逾時（2026-11-25 實測 8 秒後即恢復）：短逾時重試一次，兩次合計 7 秒，仍在 Worker 的 8 秒內。
+UPSTREAM_TIMEOUTS = (4, 3)
 MAX_BODY = 2_000_000
 CACHE_MAX_BYTES = 32_000_000  # well under the unit's MemoryMax=128M
 UA = "Mozilla/5.0 (compatible; taiwan-intel-dashboard/1.0; +https://taiwan-intel-dashboard.pages.dev)"
@@ -125,21 +126,39 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, hit[1], "application/rss+xml; charset=utf-8")
         if not allow_request(now):
             return self._send(429, b"relay rate limited")
-        request = urllib.request.Request(upstream_url(*parsed), headers={"User-Agent": UA, "Accept": "application/rss+xml"})
-        try:
-            with OPENER.open(request, timeout=UPSTREAM_TIMEOUT) as response:
-                body = response.read(MAX_BODY + 1)
-        except urllib.error.HTTPError as error:
-            return self._send(502, f"upstream HTTP {error.code}".encode())
-        except Exception as error:  # timeout, DNS, TLS
-            return self._send(502, f"upstream {type(error).__name__}".encode())
-        if len(body) > MAX_BODY or b"<rss" not in body[:2000]:
-            return self._send(502, b"upstream not rss")
+        body, reason = fetch_upstream(upstream_url(*parsed))
+        if body is None:
+            sys.stderr.write(f"upstream failed: {reason}\n")  # 只記原因，不記查詢內容
+            return self._send(502, f"upstream {reason}".encode())
         cache_put(key, now, body)
         self._send(200, body, "application/rss+xml; charset=utf-8")
 
     def log_message(self, fmt: str, *args) -> None:  # one line per request, no query text (privacy)
         sys.stderr.write(f"{self.command} {urllib.parse.urlsplit(self.path).path} {args[1] if len(args) > 1 else ''}\n")
+
+
+def fetch_upstream(url: str, open_fn=None, timeouts=UPSTREAM_TIMEOUTS) -> tuple[bytes | None, str]:
+    """Return (rss body, "") or (None, reason). Retries once on 5xx, 429, timeouts and non-RSS bodies."""
+    open_fn = open_fn or OPENER.open
+    reason = "no attempt"
+    for timeout in timeouts:
+        request = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/rss+xml"})
+        try:
+            with open_fn(request, timeout=timeout) as response:
+                body = response.read(MAX_BODY + 1)
+        except urllib.error.HTTPError as error:
+            reason = f"HTTP {error.code}"
+            if error.code < 500 and error.code != 429:
+                return None, reason  # 4xx 重試也一樣
+            continue
+        except Exception as error:  # timeout, DNS, TLS
+            reason = type(error).__name__
+            continue
+        if len(body) > MAX_BODY or b"<rss" not in body[:2000]:
+            reason = "not rss"
+            continue
+        return body, ""
+    return None, reason
 
 
 def self_test() -> None:
@@ -184,6 +203,32 @@ def self_test() -> None:
         with open(good, "w", encoding="utf-8") as fh:
             fh.write("k1\n")
         assert load_key(good) == "k1"
+    class _Resp:
+        def __init__(self, body): self.body = body
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self, n): return self.body[:n]
+
+    def opener(script):
+        calls = []
+        def open_fn(request, timeout):
+            calls.append(timeout)
+            step = script[len(calls) - 1]
+            if isinstance(step, Exception): raise step
+            return _Resp(step)
+        return open_fn, calls
+
+    err = lambda code: urllib.error.HTTPError("u", code, "x", None, None)
+    fn, calls = opener([err(502), b"<rss>ok</rss>"])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn) == (b"<rss>ok</rss>", "") and calls == [4, 3]
+    fn, calls = opener([TimeoutError(), b"<rss/>"])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn)[0] == b"<rss/>"
+    fn, calls = opener([err(404)])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn) == (None, "HTTP 404") and calls == [4]
+    fn, calls = opener([err(503), err(503)])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn) == (None, "HTTP 503") and calls == [4, 3]
+    fn, calls = opener([b"<html>", b"<html>"])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn) == (None, "not rss")
     print("self-test ok")
 
 
