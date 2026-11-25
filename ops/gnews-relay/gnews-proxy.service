@@ -1,0 +1,21 @@
+[Unit]
+Description=Google News RSS relay for taiwan-intel-dashboard /api/search (127.0.0.1:8331)
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/gnews-proxy
+ExecStart=/usr/bin/python3 -I -X utf8 /home/ubuntu/gnews-proxy/proxy.py
+Restart=always
+RestartSec=5
+Nice=10
+MemoryMax=128M
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

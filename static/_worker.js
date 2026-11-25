@@ -65,8 +65,9 @@ export default {
     let upstream = "ok";
     let upstreamDetail;
     try {
-      const params = new URLSearchParams({ q: `${query} when:${days}d`, hl: "zh-TW", gl: "TW", ceid: "TW:zh-Hant" });
-      const response = await fetch(`https://news.google.com/rss/search?${params}`, { signal: controller.signal, redirect: "manual" });
+      // Google 依 Cloudflare 出口 IP 回 429／503（2026-11-25 實測）；改經自有主機固定轉發，轉發端只組 Google News RSS 搜尋網址。
+      const params = new URLSearchParams({ q: query, days: daysText });
+      const response = await fetch(`https://video-mcp-a1.tail930e77.ts.net/gnews?${params}`, { signal: controller.signal, redirect: "manual" });
       // 不跟隨轉址（上游寫死防 SSRF）；只回報狀態碼與轉址主機供診斷。
       if (response.status >= 300 && response.status < 400) {
         let host = "";

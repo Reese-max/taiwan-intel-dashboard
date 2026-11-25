@@ -48,7 +48,7 @@
 - 重產快照：`node scripts/build-search-golden-fixture.mjs <domestic事件檔路徑> <network檔路徑>`，再跑 `npx vitest run tests/search-golden.test.ts`。
 - 站內結果依「標題命中所有詞組 → 其他直接命中 → 關聯展開」排序，各層保留原順序；收合後依代表報導的位置排列。相同或近似標題（忽略空白、標點與常見媒體尾綴）會合併，同媒體重複以「收合 N 則」展開原文，不增加來源數。
 - 搜尋框可輸入一句話，例如「最近的電信新聞」：自動拆出時間（今天＝1 天、最近／本週＝7 天、本月＝30 天、近 N 天）並去掉填充詞，輸入主題名時依 `src/search-topics.ts` 擴充同義詞（電信→中華電信、5G、基地台…），具體詞（如「車禍」）照字面搜；「台」「臺」視為同字。多個詞時每個詞都要命中，命中後只帶出強關聯（同事件強度 1.5 的不同報導與人工標的後續報導），不帶同城同類的弱關聯。
-- 同時呼叫 `/api/search`（`static/_worker.js`，Cloudflare Pages 進階模式，`_routes.json` 只攔這一條路徑）即時查 Google News，列在「站外即時新聞」區，與站內重複的報導會隱藏，相似的站內事件以按鈕連回關聯網。上游失敗或限流時只顯示提示，站內結果照常。
+- 同時呼叫 `/api/search`（`static/_worker.js`，Cloudflare Pages 進階模式，`_routes.json` 只攔這一條路徑）經自有主機的固定轉發（[`ops/gnews-relay/`](ops/gnews-relay/README.md)；Google 會對 Cloudflare 出口 IP 限流）即時查 Google News，列在「站外即時新聞」區，與站內重複的報導會隱藏，相似的站內事件以按鈕連回關聯網。上游失敗或限流時只顯示提示，站內結果照常。
 
 ## CI 排程（`.github/workflows/update-and-deploy.yml`）
 
