@@ -66,12 +66,7 @@ export default {
     let upstreamDetail;
     try {
       const params = new URLSearchParams({ q: `${query} when:${days}d`, hl: "zh-TW", gl: "TW", ceid: "TW:zh-Hant" });
-      const response = await fetch(`https://news.google.com/rss/search?${params}`, {
-        signal: controller.signal,
-        redirect: "manual",
-        // Worker 預設不送 User-Agent；Google 對無 UA 的機房請求回 429／503。
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; taiwan-intel-dashboard/1.0; +https://taiwan-intel-dashboard.pages.dev)", Accept: "application/rss+xml" },
-      });
+      const response = await fetch(`https://news.google.com/rss/search?${params}`, { signal: controller.signal, redirect: "manual" });
       // 不跟隨轉址（上游寫死防 SSRF）；只回報狀態碼與轉址主機供診斷。
       if (response.status >= 300 && response.status < 400) {
         let host = "";
