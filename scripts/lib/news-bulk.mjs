@@ -379,7 +379,7 @@ function riskFromText(title, hint, description = "") {
 }
 
 // 警政相關性關鍵字（標題＋摘要任一命中才收）。濾掉政府/綜合 feed 的非犯罪內容（政策、活動、排名、衛教…）。
-const POLICE_RE = /詐|車手|毒品|緝毒|販毒|製毒|安非他命|海洛因|大麻|愷他命|竊|偷|扒|搶|強盜|劫|侵占|命案|兇殺|凶殺|殺人|砍|刺|鬥毆|毆|傷害|施暴|槍|彈藥|爆裂|爆炸|氣爆|性侵|性騷|猥褻|偷拍|性影像|妨害|家暴|虐|跟蹤|跟騷|騷擾|恐嚇|脅迫|擄|勒贖|綁架|賭|博弈|簽賭|假球|娼|應召|嫖|幫派|黑道|圍事|角頭|竹聯|四海幫|天道盟|潛逃|逃亡|走私|偷渡|人口販運|人蛇|洗錢|吸金|騙局|行騙|賄選|查賄|買票|貪污|貪瀆|收賄|圖利|掏空|背信|內線|偽造|偽鈔|變造|假冒|冒用|盜刷|盜用|個資|駭客|勒索病毒|起訴|公訴|偵辦|偵查|偵結|偵破|搜索|約談|羈押|聲押|收押|交保|通緝|落網|到案|逮捕|查獲|破獲|查緝|查扣|移送|判刑|判決|定讞|求刑|宣判|一審|二審|體罰|犯|嫌|警方|員警|警察|捷警|鐵警|刑事|刑警|檢方|檢警|檢調|地檢|調查局|海巡|移民署|消防|救護|搜救|溺|墜|罹難|傷亡|死傷|身亡|致死|喪命|奪命|縱火|火警|火災|肇事|肇逃|酒駕|毒駕|車禍|碰撞|擦撞|追撞|自撞|撞死|撞傷|撞進|翻車|事故|失蹤|協尋|尋回|走失|迷航|迷途|失聯|襲警|拒檢|拒捕|臨檪|臨檢|攔查|路檢|掃蕩|掃黑|肅竊|取締|落水|中毒|外洩|不法|違法|非法|犯罪|刑案|治安|報案|110|165/;
+const POLICE_RE = /詐|車手|毒品|緝毒|販毒|製毒|安非他命|海洛因|大麻|愷他命|竊|偷|扒|搶|強盜|劫|侵占|命案|兇殺|凶殺|殺人|砍|刺|鬥毆|毆|傷害|施暴|槍|彈藥|爆裂|爆炸|氣爆|性侵|性騷|猥褻|偷拍|性影像|妨害|家暴|虐|跟蹤|跟騷|騷擾|恐嚇|脅迫|擄|勒贖|綁架|賭|博弈|簽賭|假球|娼|應召|嫖|幫派|黑道|圍事|角頭|竹聯|四海幫|天道盟|潛逃|逃亡|走私|偷渡|人口販運|人蛇|洗錢|吸金|騙局|行騙|賄選|查賄|買票|貪污|貪瀆|收賄|圖利|掏空|背信|內線|偽造|偽鈔|變造|假冒|冒用|盜刷|盜用|個資|駭客|勒索病毒|起訴|公訴|偵辦|偵查|偵結|偵破|搜索|約談|羈押|聲押|收押|交保|通緝|落網|到案|逮捕|查獲|破獲|查緝|查扣|移送|判刑|判決|定讞|求刑|宣判|一審|二審|體罰|犯|嫌|警方|員警|警察|捷警|鐵警|刑事|刑警|檢方|檢警|檢調|地檢|調查局|海巡|移民署|消防|救護|搜救|溺|墜|罹難|傷亡|死傷|身亡|致死|喪命|奪命|縱火|火警|火災|肇事|肇逃|酒駕|毒駕|車禍|碰撞|擦撞|追撞|自撞|撞死|撞傷|撞進|翻車|事故|失蹤|協尋|尋回|走失|迷航|迷途|失聯|襲警|拒檢|拒捕|臨檪|臨檢|攔查|路檢|掃蕩|掃黑|肅竊|取締|落水|中毒|外洩|不法|違法|非法|犯罪|刑案|治安|報案|(?<!\d)(?:110|165)(?!\d)/;
 
 const CASE_TITLE_RE = /(?<!\p{Script=Han})\p{Script=Han}{2,6}案/gu;
 // 行政／商業與泛稱國安案不足以推定一般刑案，尤其不能擴收港澳政治審判。
@@ -442,6 +442,10 @@ const OVERSEAS_PLACE_HINT_RE = /(?<!和)美(?:國|機場|警)|聯邦調查局|FB
 
 export function isOverseasLocalNews(item) {
   if (!isDomesticMediaNews(item)) return false;
+  // 央廣標題自帶欄目；「[國際]」是編輯判定的國際新聞，全文順帶的警政詞不能讓它進國內層（標題寫明台灣關聯者照留）。
+  const rawTitle = String(item?.title || "");
+  if (/^\s*\[國際\]/.test(rawTitle) && /中央廣播電臺|央廣/.test(sourceText(item?.source)) &&
+      !STRONG_TAIWAN_MARKER_RE.test(rawTitle)) return true;
   // RSS 原始項目把發行者放在頂層 publisherName，source 只是 feed 標籤。
   const publisher = sourceText(item?.publisherName ?? item?.source?.name ?? item?.source?.publisherName ?? item?.source).trim();
   const text = `${item?.title || ""} ${item?.description || ""} ${item?.summary || ""}`;
@@ -605,6 +609,10 @@ export function isRelevantNewsItem(item) {
   if (item?.official === true && /https:\/\/news\.google\.com\//.test(item?.sourceUrl || "")) {
     // GN description 是同一標題加發行者，機關署名不構成案件證據。
     return isPoliceRelevant(String(item?.title || "").replace(/\s+-\s+[^-]+$/, ""), "");
+  }
+  if (IMMIGRATION_NEWS_SOURCE_RE.test(sourceText(item?.source))) {
+    // 移民署新聞網 description 是轉載全文（數千字），內文順帶的「保險事故」「旅遊中毒者」不構成案件；只看標題與導言。
+    return isPoliceRelevant(item?.title, String(item?.description || "").slice(0, 120));
   }
   return isPoliceRelevant(item?.title, item?.description);
 }

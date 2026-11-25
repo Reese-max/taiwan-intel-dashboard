@@ -36,6 +36,19 @@ describe("twnews carry-over retention", () => {
   });
   // figurative-overseas regression end
 
+  it.each([{ ok: false }, { skipped: true }, { ok: true }])("沿用時清除央廣[國際]欄目與移民署全文誤收：%j", (twnewsStatus) => {
+    const timestamp = "2026-11-24T00:00:00.000Z";
+    const oldNews = [
+      { ...news("rti-intl", timestamp, { name: "中央廣播電臺 RSS" }), title: "[國際] 塞爾維亞校園槍擊案釀2傷 17歲犯案少年遭逮", categoryBasis: "hint:治安" },
+      { ...news("rti-cross-strait", timestamp, { name: "中央廣播電臺 RSS" }), title: "[兩岸] 共諜案起訴 退役軍官遭求刑", categoryBasis: "hint:治安" },
+      { ...news("imm-econ", timestamp, { name: "移民署 新聞" }), title: "10月進口物價漲幅創近50年最大 主計總處：無輸入性通膨",
+        summary: "主計總處近日公布10月消費者物價指數（CPI）年增2.33%，漲幅收斂。", categoryBasis: "hint:治安" },
+      { ...news("imm-case", timestamp, { name: "移民署 新聞" }), title: "移民署查獲非法仲介藏匿18名失聯移工 全案移送", categoryBasis: "hint:治安" },
+    ];
+    const result = buildTwNewsEvents({ oldNews, twnews: "ok" in twnewsStatus && twnewsStatus.ok ? oldNews : [], twnewsStatus, now: Date.parse("2026-11-25T00:00:00.000Z") });
+    expect(result.map((e: { id: string }) => e.id)).toEqual(["rti-cross-strait", "imm-case"]);
+  });
+
   it.each([{ ok: false }, { skipped: true }, { ok: true }])("重用新聞重算規則分類，保留官方、LLM 與人工來源：%j", (twnewsStatus) => {
     const timestamp = "2026-07-09T00:00:00.000Z";
     const oldNews = ["rule:交通", "hint:交通", "default", "official-feed-hint", "llm", "curation:reviewed"].map((basis) => ({

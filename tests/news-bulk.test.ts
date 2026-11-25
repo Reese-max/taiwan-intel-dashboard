@@ -1028,6 +1028,41 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(immigration("菲籍母子車站走散 捷警10分鐘尋回7歲童"))).toBe(true);
   });
 
+  it("移民署 description 是轉載全文：只看標題與導言，內文順帶的詞不算案件證據", () => {
+    const immigration = (title: string, description: string) =>
+      ({ ...mk(title, "治安"), source: "移民署 新聞", description });
+    const filler = "文".repeat(200);
+
+    // 2026-11-25 線上誤收：文章編號 1151105 命中 110、「保險事故」命中事故、「旅遊中毒者」命中中毒。
+    expect(isRelevantNewsItem(immigration("10月進口物價漲幅創近50年最大 主計總處：無輸入性通膨",
+      `主計總處今天公布物價。${filler}（編輯：潘羿菁）1151105此文章經 中央社 授權使用`))).toBe(false);
+    expect(isRelevantNewsItem(immigration("勞保、就保、職災給付可開專戶 保險金免遭強制執行",
+      `勞保局提醒民眾。${filler}勞工遭遇保險事故，可能面臨收入中斷`))).toBe(false);
+    expect(isRelevantNewsItem(immigration("日本退稅新制上路 記者實測機台操作不到30秒",
+      `日本退稅新制上路。${filler}林氏璧在粉絲專頁日本自助旅遊中毒者中提醒`))).toBe(false);
+    // 導言就有案件證據者照收。
+    expect(isRelevantNewsItem(immigration("提領千萬現金疑點多 臺北市婦人遭警銀勸阻",
+      `一名婦人到銀行欲提領1,009萬元現金，行員察覺有異通報警方，員警到場勸阻。${filler}`))).toBe(true);
+  });
+
+  it("央廣標題自帶「[國際]」欄目者不進國內層，其他欄目照舊", () => {
+    const rti = (title: string) => ({ ...mk(title, "治安"), source: "中央廣播電臺 RSS" });
+    expect(isRelevantNewsItem(rti("[國際] 塞爾維亞校園槍擊案釀2傷 17歲犯案少年遭逮"))).toBe(false);
+    expect(isRelevantNewsItem(rti("[國際] 美國陪審團裁定 華為共謀竊取商業機密罪名成立"))).toBe(false);
+    expect(isRelevantNewsItem(rti("[兩岸] 共諜案起訴 退役軍官遭求刑"))).toBe(true);
+    expect(isRelevantNewsItem(rti("[生活] 酒駕撞死人 男子遭起訴"))).toBe(true);
+    // 標題寫明台灣關聯、或非央廣來源的同樣前綴，不套用欄目規則。
+    expect(isRelevantNewsItem(rti("[國際] 台灣旅客在日本遭詐騙 警方逮捕嫌犯"))).toBe(true);
+    expect(isRelevantNewsItem({ ...mk("[國際] 台灣旅客在日本遭詐騙 警方逮捕嫌犯", "治安"), source: "自由時報" })).toBe(true);
+  });
+
+  it("110／165 只認獨立號碼，不吃文章編號或其他數字的一部分", () => {
+    expect(isPoliceRelevant("主計總處公布物價", "（編輯：潘羿菁）1151105")).toBe(false);
+    expect(isPoliceRelevant("颱風來襲 全台1650戶停電", "")).toBe(false);
+    expect(isPoliceRelevant("遇可疑情況撥打110報案", "")).toBe(true);
+    expect(isPoliceRelevant("可撥165反詐騙諮詢專線", "")).toBe(true);
+  });
+
   it("排除反詐宣導行銷稿，但保留真實查緝事件", () => {
     expect(isRelevantNewsItem(mk("東勢地政換照講習 宣導不動產防詐", "反詐"))).toBe(false);
     expect(isRelevantNewsItem(mk("台南反詐宣傳聯名角色換上警察制服", "治安"))).toBe(false);
