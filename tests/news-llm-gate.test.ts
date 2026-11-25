@@ -21,18 +21,26 @@ describe("parseDropList", () => {
     expect(parseDropList('{"drop":[1,2]}')).toEqual([1, 2]);
     expect(parseDropList("[3]")).toEqual([3]);
     expect(parseDropList('```json\n{"drop":[]}\n```')).toEqual([]);
-    expect(parseDropList('結果：{"drop":[4]}')).toEqual([4]);
-    expect(parseDropList("要剔除：[5,6]")).toEqual([5, 6]);
+    expect(parseDropList('  {"drop":[4]}  ')).toEqual([4]);
+    // 字串裡的跳脫引號與括號不算結構。
+    expect(parseDropList('{"note":"escaped \\" { brace","drop":[3]}')).toEqual([3]);
   });
 
   it("drop JSON 後接帶括號的說明仍能解析（2026-11-25 正式站複核批次失敗）", () => {
     expect(parseDropList('{"drop":[1,2,5]}\n\n說明：第[3]則拿不準 {保留}')).toEqual([1, 2, 5]);
   });
 
-  it("不從說明文字裡抓不相干的括號段落（跨家族審查重現）", () => {
-    expect(parseDropList('[1] note {"drop":[2]} explanation {x}')).toEqual([2]);
-    expect(() => parseDropList('{"x":"unfinished} then [1]')).toThrow();
-    expect(() => parseDropList("沒有 JSON")).toThrow();
+  it("回應開頭不是 JSON、或答案有歧義時丟錯，由呼叫端照規則保留（跨家族審查重現）", () => {
+    for (const text of [
+      '[1] note {"drop":[2]} explanation {x}', // 開頭 [1] 之後又出現 drop：歧義
+      '{"drop":[1]}\n{"drop":[2]}',
+      'The model refused. Example: {"drop":[1]} but no answer was provided.',
+      '結果：{"drop":[4]}', // 提示詞要求只輸出 JSON；開頭不是 JSON 一律不採用
+      "要剔除：[5,6]",
+      '{"x":"unfinished} then [1]',
+      '{"note":"沒有 drop"}',
+      "沒有 JSON",
+    ]) expect(() => parseDropList(text), text).toThrow();
   });
 });
 

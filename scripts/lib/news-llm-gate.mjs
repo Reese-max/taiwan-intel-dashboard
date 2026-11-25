@@ -36,33 +36,17 @@ export function serializeVerdicts(verdicts) {
   return { version: 1, verdicts: Object.fromEntries([...verdicts].sort(([a], [b]) => a.localeCompare(b))) };
 }
 
-// 只接受 {"drop":[...]} 物件或整段就是陣列；模型在 JSON 後接帶括號的說明時仍可解析（2026-11-25 正式站一批失敗），
-// 但不從說明文字裡抓不相干的括號段落當答案（誤刪風險，跨家族審查重現）。找不到就丟錯，呼叫端照規則保留。
+// 答案必須是回應開頭的那段 JSON（{"drop":[...]} 或陣列）；後面可接說明文字（2026-11-25 正式站一批因此失敗），
+// 但開頭不是 JSON、或說明裡又出現 drop（答案有歧義）一律丟錯，由呼叫端照規則保留，不從說明裡挑答案（跨家族審查重現）。
 export function parseDropList(text) {
   const t = String(text || "").replace(/```(?:json)?\s*([\s\S]*?)```/gi, "$1").trim();
-  try {
-    const whole = JSON.parse(t);
-    if (Array.isArray(whole)) return whole;
-    if (Array.isArray(whole?.drop)) return whole.drop;
-  } catch { /* 不是整段 JSON，往下找 */ }
-  for (let i = t.indexOf("{"); i !== -1; i = t.indexOf("{", i + 1)) {
-    const segment = balancedJsonSegment(t, i);
-    if (!segment) continue;
+  const segment = /^[[{]/.test(t) ? balancedJsonSegment(t, 0) : null;
+  if (segment && !/"drop"\s*:/.test(t.slice(segment.length))) {
     try {
-      const obj = JSON.parse(segment);
-      if (Array.isArray(obj?.drop)) return obj.drop;
-    } catch { /* 不是合法 JSON，換下一個起點 */ }
-  }
-  // 「要剔除：[5,6]」這種沒有物件的回應：全文只有一段陣列時才採用。
-  if (!t.includes("{")) {
-    const start = t.indexOf("[");
-    const segment = start === -1 ? null : balancedJsonSegment(t, start);
-    if (segment && t.indexOf("[", start + segment.length) === -1) {
-      try {
-        const arr = JSON.parse(segment);
-        if (Array.isArray(arr)) return arr;
-      } catch { /* 落到下方錯誤 */ }
-    }
+      const parsed = JSON.parse(segment);
+      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed?.drop)) return parsed.drop;
+    } catch { /* 落到下方錯誤 */ }
   }
   throw new Error(`LLM 回應缺 drop 陣列：${t.slice(0, 120)}`);
 }
