@@ -268,7 +268,32 @@ export function extractJson(text) {
   if (firstObj !== -1 && lastObj > firstObj) {
     try { return JSON.parse(t.slice(firstObj, lastObj + 1)); } catch {}
   }
+  // 模型在 JSON 後面接了帶括號的說明（「說明：第[3]則…」）時，上面切到最後一個括號會失敗；改取第一段括號平衡的 JSON。
+  for (const start of [firstArr, firstObj]) {
+    const segment = start === -1 ? null : balancedJsonSegment(t, start);
+    if (segment) {
+      try { return JSON.parse(segment); } catch {}
+    }
+  }
   throw new Error(`無法解析 JSON：${text.slice(0, 200)}`);
+}
+
+function balancedJsonSegment(t, start) {
+  let depth = 0;
+  let inString = false;
+  for (let i = start; i < t.length; i++) {
+    const ch = t[i];
+    if (inString) {
+      if (ch === "\\") i++;
+      else if (ch === '"') inString = false;
+    } else if (ch === '"') inString = true;
+    else if (ch === "[" || ch === "{") depth++;
+    else if (ch === "]" || ch === "}") {
+      depth--;
+      if (depth === 0) return t.slice(start, i + 1);
+    }
+  }
+  return null;
 }
 
 export { sleep };
