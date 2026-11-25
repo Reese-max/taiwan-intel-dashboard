@@ -1097,6 +1097,14 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isForeignLeadCandidate(media("越南籍移工酒後鬥毆", "桃園警方到場逮人"))).toBe(false);
   });
 
+  it("GN 標題尾與摘要裡的台灣發行者名稱（奧丁丁新聞）不算台灣證據", () => {
+    const title = "印尼糖果工廠奪命惡火！大量遺體袋運出還有 29 人生死未卜 - 奧丁丁新聞 OwlNews";
+    const item = { ...mk(title, "治安", "印尼糖果工廠奪命惡火！大量遺體袋運出還有 29 人生死未卜 奧丁丁新聞 OwlNews"), source: "GN 綜合治安" };
+    expect(isForeignLeadCandidate(item)).toBe(true);
+    // 內文真的提到台灣仍不列候選。
+    expect(isForeignLeadCandidate({ ...item, description: "印尼工廠大火 台灣外交部關切 奧丁丁新聞 OwlNews" })).toBe(false);
+  });
+
   it("外國城市開頭（福岡、倫敦）也列 LLM 候選；城市後接人稱或在台證據則不列", () => {
     const media = (title: string) => ({ ...mk(title, "治安"), source: "GN 綜合治安" });
     for (const title of [
