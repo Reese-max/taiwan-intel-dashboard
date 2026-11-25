@@ -40,6 +40,7 @@ CACHE_SECONDS = 600
 RATE_PER_MINUTE = 60  # shortcut: one global bucket; per-client limits if abuse ever shows up
 # 上游偶發 502／逾時（2026-11-25 實測 8 秒後即恢復）：短逾時重試一次，兩次合計 7 秒，仍在 Worker 的 8 秒內。
 UPSTREAM_TIMEOUTS = (4, 3)
+TOTAL_BUDGET = 7.0  # 整個請求（含重試與讀取）的上限，低於 Worker 的 8 秒
 MAX_BODY = 2_000_000
 CACHE_MAX_BYTES = 32_000_000  # well under the unit's MemoryMax=128M
 UA = "Mozilla/5.0 (compatible; taiwan-intel-dashboard/1.0; +https://taiwan-intel-dashboard.pages.dev)"
@@ -137,20 +138,43 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write(f"{self.command} {urllib.parse.urlsplit(self.path).path} {args[1] if len(args) > 1 else ''}\n")
 
 
-def fetch_upstream(url: str, open_fn=None, timeouts=UPSTREAM_TIMEOUTS, may_retry=None) -> tuple[bytes | None, str]:
+def read_with_deadline(response, deadline: float, clock=time.monotonic) -> bytes:
+    """Socket timeouts bound each read, not the whole body; a slow-drip upstream could outlast the Worker."""
+    chunks, size = [], 0
+    while True:
+        if clock() > deadline:
+            raise TimeoutError("upstream body exceeded deadline")
+        # read1 回傳目前可得的資料；read(n) 遇到 Content-Length 會一直等到湊滿才回來，期限檢查形同虛設（實測 22 秒）
+        reader = getattr(response, "read1", None) or response.read
+        chunk = reader(65536)
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
+        size += len(chunk)
+        if size > MAX_BODY:
+            return b"".join(chunks)
+
+
+def fetch_upstream(url: str, open_fn=None, timeouts=UPSTREAM_TIMEOUTS, may_retry=None,
+                   budget: float = TOTAL_BUDGET, clock=time.monotonic) -> tuple[bytes | None, str]:
     """Return (rss body, "") or (None, reason). Retries once on 5xx, timeouts and non-RSS bodies.
     429 is never retried (it would amplify the rate limit), and a retry must take its own slot from
-    the relay's per-minute budget (may_retry), so upstream calls stay within RATE_PER_MINUTE."""
+    the relay's per-minute budget (may_retry), so upstream calls stay within RATE_PER_MINUTE.
+    Everything finishes within `budget` seconds, under the Worker's 8 s abort."""
     open_fn = open_fn or OPENER.open
     may_retry = may_retry or (lambda: allow_request(time.time()))
+    deadline = clock() + budget
     reason = "no attempt"
     for attempt, timeout in enumerate(timeouts):
+        remaining = deadline - clock()
+        if attempt and remaining < 1:
+            return None, f"{reason} (retry skipped: deadline)"
         if attempt and not may_retry():
             return None, f"{reason} (retry skipped: relay budget)"
         request = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/rss+xml"})
         try:
-            with open_fn(request, timeout=timeout) as response:
-                body = response.read(MAX_BODY + 1)
+            with open_fn(request, timeout=min(timeout, max(remaining, 0.1))) as response:
+                body = read_with_deadline(response, deadline, clock)
         except urllib.error.HTTPError as error:
             reason = f"HTTP {error.code}"
             if error.code < 500:
@@ -212,7 +236,9 @@ def self_test() -> None:
         def __init__(self, body): self.body = body
         def __enter__(self): return self
         def __exit__(self, *a): return False
-        def read(self, n): return self.body[:n]
+        def read(self, n):
+            out, self.body = self.body[:n], self.body[n:]
+            return out
 
     def opener(script):
         calls = []
@@ -239,6 +265,21 @@ def self_test() -> None:
     assert body is None and "retry skipped" in why and calls == [4]
     fn, calls = opener([b"<html>", b"<html>"])
     assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (None, "not rss")
+    class _Drip:
+        def __init__(self): self.n = 0
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self, n):
+            self.n += 1
+            return b"<rss>" if self.n == 1 else b"x"
+    fake_now = [0.0]
+    def drip_open(request, timeout): return _Drip()
+    def fake_clock():
+        fake_now[0] += 0.5  # 每次讀取耗 0.5 秒（慢速滴流）
+        return fake_now[0]
+    body, why = fetch_upstream("https://news.google.com/rss/search?q=x", drip_open, may_retry=lambda: True, budget=7.0, clock=fake_clock)
+    # 假時鐘每次被呼叫都前進 0.5 秒（含期限計算），所以只驗證：逾期中止、且沒有進入重試
+    assert body is None and why.startswith("TimeoutError") and "deadline" in why, (why, fake_now[0])
     print("self-test ok")
 
 
