@@ -552,7 +552,8 @@ export async function run() {
         // 上一輪已收的新聞也一起複核，否則要等保留窗到期才會消失。
         const carriedItems = readOld("domestic.json")
           .filter((e) => e?.source?.datasetId === "tw-news")
-          .map((e) => ({ title: e.title, description: e.summary, official: e.source?.authority === "official" }));
+          .map((e) => ({ title: e.title, description: e.summary, official: e.source?.authority === "official",
+            source: e.source, category: e.category }));
         try {
           const review = await reviewNewsRelevance([...policeUniq, ...carriedItems], {
             verdicts,
@@ -566,7 +567,8 @@ export async function run() {
           console.error(`國內新聞 LLM 複核失敗（照規則結果）：${llmGate.error}`);
         }
         writeJson(VERDICTS_FILE, serializeVerdicts(verdicts));
-        llmDropKeys = new Set([...verdicts].filter(([, v]) => !v.keep).map(([k]) => k));
+        // 外國候選的判斷存在 foreign: 前綴下；保留窗以標題鍵比對，去掉前綴才清得掉已收錄的舊事件。
+        llmDropKeys = new Set([...verdicts].filter(([, v]) => !v.keep).map(([k]) => k.replace(/^foreign:/, "")));
         console.log(`國內新聞 LLM 複核：${JSON.stringify(llmGate)}`);
       }
       policeUniq.sort((a, b) => (Date.parse(b.pubDate) || 0) - (Date.parse(a.pubDate) || 0));

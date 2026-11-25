@@ -454,6 +454,24 @@ const TAIWAN_EXTRA_EVIDENCE_RE = new RegExp([
   "西門町|信義區|北投|士林|九份|墾丁|日月潭|阿里山|國道|[台臺]鐵|高鐵|桃機|松機|小港機場|桃園機場|航警|鐵警|捷警|關務署|海巡|地院|高分院",
 ].join("|"));
 
+// 外國犯罪新聞送 LLM 複核的候選：標題以外國地名開頭（主詞是外國）、標題與摘要都沒有台灣證據。
+// 只挑候選、不直接剔除：字串規則分不出「日本腦炎」「韓國烤肉店」這類台灣新聞（2026-11-25 跨家族審查兩輪重現），由 LLM 判斷。
+// 反詐（詐騙園區、打詐借鏡）與資安內文沿用 isForeignNonTaiwan 的既有豁免（07-05 收窄紀錄）。
+export function isForeignLeadCandidate(item) {
+  if (!isDomesticMediaNews(item)) return false;
+  const rawTitle = String(item?.title || "");
+  const fullText = `${rawTitle} ${item?.description || ""} ${item?.summary || ""}`.replace(TAIWAN_NEGATED_CONTEXT_RE, "");
+  // 原始 RSS 項目還沒有 category，依標題即時判類，詐騙園區等反詐新聞才保有豁免。
+  const leadCategory = item?.category || categoryFromItem(rawTitle, item?.hint)?.category;
+  if ([item?.hint, leadCategory].some((t) => CROSS_BORDER_TOPICS.has(t) || t === "反詐") || CYBER_FOREIGN_EXEMPT_RE.test(fullText)) {
+    return false;
+  }
+  const leadTitle = rawTitle.replace(FOREIGN_LEAD_IN_RE, "");
+  const foreignLead = FOREIGN_PLACE_RE.exec(leadTitle);
+  return foreignLead?.index === 0 && !FOREIGN_ADJECTIVE_RE.test(leadTitle.slice(foreignLead[0].length)) &&
+    !TAIWAN_MARKER_RE.test(fullText) && !STRONG_TAIWAN_MARKER_RE.test(fullText) && !TAIWAN_EXTRA_EVIDENCE_RE.test(fullText);
+}
+
 export function isOverseasLocalNews(item) {
   if (!isDomesticMediaNews(item)) return false;
   // 央廣標題自帶欄目；「[國際]」是編輯判定的國際新聞，全文順帶的警政詞不能讓它進國內層（標題寫明台灣關聯者照留）。
@@ -467,18 +485,6 @@ export function isOverseasLocalNews(item) {
   const crossBorder = CROSS_BORDER_TOPICS.has(item?.hint);
   if (!crossBorder && !STRONG_TAIWAN_MARKER_RE.test(briefText) &&
       (/\|\s*(?:國際焦點|國際|全球)\s*-\s*[^|]+$/.test(rawTitle) || /^https:\/\/www\.taipeitimes\.com\/News\/world\//.test(link))) return true;
-  // 標題以外國地名開頭（主詞是外國）且標題、摘要都沒有台灣證據 → 境外案件；外國地名在句中（「日本學者走進士檢」）不算。
-  // 反詐（詐騙園區、打詐借鏡）與資安內文沿用 isForeignNonTaiwan 的既有豁免（07-05 收窄紀錄）。
-  const fullText = briefText.replace(TAIWAN_NEGATED_CONTEXT_RE, "");
-  // 原始 RSS 項目還沒有 category，依標題即時判類，詐騙園區等反詐新聞才保有豁免。
-  const leadCategory = item?.category || categoryFromItem(rawTitle, item?.hint)?.category;
-  const leadExempt = [item?.hint, leadCategory].some((t) => CROSS_BORDER_TOPICS.has(t) || t === "反詐") ||
-    CYBER_FOREIGN_EXEMPT_RE.test(fullText);
-  const leadTitle = rawTitle.replace(FOREIGN_LEAD_IN_RE, "");
-  const foreignLead = FOREIGN_PLACE_RE.exec(leadTitle);
-  if (!leadExempt && foreignLead?.index === 0 && !FOREIGN_ADJECTIVE_RE.test(leadTitle.slice(foreignLead[0].length)) &&
-      !TAIWAN_MARKER_RE.test(fullText) && !STRONG_TAIWAN_MARKER_RE.test(fullText) &&
-      !TAIWAN_EXTRA_EVIDENCE_RE.test(fullText)) return true;
   // RSS 原始項目把發行者放在頂層 publisherName，source 只是 feed 標籤。
   const publisher = sourceText(item?.publisherName ?? item?.source?.name ?? item?.source?.publisherName ?? item?.source).trim();
   const text = `${item?.title || ""} ${item?.description || ""} ${item?.summary || ""}`;
