@@ -19,17 +19,22 @@ HOST, PORT = "127.0.0.1", 8331
 KEY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "relay.key")
 
 
-def load_key(path: str = KEY_FILE) -> str:
-    """Shared key from the Worker (X-Relay-Key). No key file = not enforced yet (staged rollout)."""
+def load_key(path: str = KEY_FILE) -> str | None:
+    """Shared key from the Worker (X-Relay-Key). No key file = not enforced yet (staged rollout).
+    A key file that exists but is empty fails closed instead of silently disabling the check."""
     try:
         with open(path, encoding="utf-8") as fh:
-            return fh.read().strip()
+            key = fh.read().strip()
     except FileNotFoundError:
-        return ""
+        return None
+    if not key:
+        raise SystemExit(f"{path} exists but is empty; refusing to start without a key")
+    return key
 
 
-def key_ok(expected: str, presented: str | None) -> bool:
-    return not expected or hmac.compare_digest(expected.encode(), (presented or "").encode())
+def key_ok(expected: str | None, presented: str | None) -> bool:
+    return expected is None or hmac.compare_digest(expected.encode(), (presented or "").encode())
+
 DAYS = {"1", "2", "3", "7", "30"}
 CACHE_SECONDS = 600
 RATE_PER_MINUTE = 60  # shortcut: one global bucket; per-client limits if abuse ever shows up
@@ -162,9 +167,23 @@ def self_test() -> None:
     cache_put(("q3", "7"), 2002.0 + CACHE_SECONDS, b"<rss/>")
     assert list(_cache) == [("q3", "7")]
     _cache.clear()
-    assert key_ok("", None) and key_ok("", "x")
-    assert key_ok("k1", "k1") and not key_ok("k1", "k2") and not key_ok("k1", None)
-    assert load_key(os.path.join(os.path.dirname(os.path.abspath(__file__)), "no-such.key")) == ""
+    assert key_ok(None, None) and key_ok(None, "x")
+    assert key_ok("k1", "k1") and not key_ok("k1", "k2") and not key_ok("k1", None) and not key_ok("k1", "")
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        assert load_key(os.path.join(tmp, "no-such.key")) is None
+        empty = os.path.join(tmp, "empty.key")
+        with open(empty, "w", encoding="utf-8") as fh:
+            fh.write(" \n")
+        try:
+            load_key(empty)
+            raise AssertionError("empty key file must fail closed")
+        except SystemExit:
+            pass
+        good = os.path.join(tmp, "good.key")
+        with open(good, "w", encoding="utf-8") as fh:
+            fh.write("k1\n")
+        assert load_key(good) == "k1"
     print("self-test ok")
 
 
