@@ -1,7 +1,7 @@
 // 國內新聞 LLM 複核：規則判為相關、但標題沒有明確案件字眼的新聞，交給 LLM 判斷是否真為事件。
 // 失敗一律保留規則結果（fail-open）；判斷結果依標題鍵跨輪快取，每輪只問新進新聞。
 import { chatVia, extractJson, profileCfg, sleep } from "./llm-client.mjs";
-import { hasStrongCaseTitle } from "./news-bulk.mjs";
+import { hasStrongCaseTitle, isForeignLeadCandidate } from "./news-bulk.mjs";
 import { titleKey } from "./title-key.mjs";
 
 export const VERDICTS_FILE = "news-llm-verdicts.json";
@@ -14,6 +14,14 @@ const SYSTEM_PROMPT = `你是台灣治安情資儀表板的新聞篩選員。每
 只要標題提到可能違法的具體行為、或檢警調查與處分，即使出現在政治或演藝新聞裡也保留。
 不算事件（剔除）：只是比喻用字（搶票、搶鏡、搶C位、狂砍27分、砍目標價、殺紅眼）、選戰造勢與政治口水、演藝娛樂、運動賽事、財經股市、商品促銷、醫療衛教、生活資訊、與台灣無關的國外政治經濟新聞。
 拿不準時一律保留。只輸出 JSON：{"drop":[要剔除的編號]}，沒有要剔除就輸出 {"drop":[]}。`;
+
+// 2026-11-25 負責人決定：國內層不收完全發生在國外、與台灣無直接關係的事件；候選由 isForeignLeadCandidate 挑出。
+const FOREIGN_PROMPT = `你是台灣治安情資儀表板「國內」頁的新聞篩選員。以下每則新聞標題都以外國地名開頭，你要判斷事件是否屬於台灣國內。
+屬於台灣（保留）：事件發生在台灣；或直接涉及台灣——台灣人或在台外國人（移工、旅客、外籍配偶）、台灣的機關、店家、學校、法院、警消、防疫或邊境措施、在台販售的商品；台灣人在國外涉案或受害也保留。
+不屬於台灣（剔除）：完全發生在國外、當事人與台灣無關的事件。
+例：「日本福岡商場旁男子遇刺亡」剔除；「墨西哥逮捕FBI十大通緝毒梟」剔除；「日本籍男子西門町砍人」保留；「日本腦炎今年首例致死」保留（台灣疫情）；「韓國烤肉店深夜氣爆」保留（台灣店家）；「泰國蝦養殖場股東糾紛」保留（台灣養殖場）。
+拿不準時一律保留。只輸出 JSON：{"drop":[要剔除的編號]}，沒有要剔除就輸出 {"drop":[]}。`;
+export const FOREIGN_VERDICT_PREFIX = "foreign:";
 
 export function readVerdicts(raw, now = Date.now()) {
   const verdicts = new Map();
@@ -28,13 +36,13 @@ export function serializeVerdicts(verdicts) {
   return { version: 1, verdicts: Object.fromEntries([...verdicts].sort(([a], [b]) => a.localeCompare(b))) };
 }
 
-async function reviewBatch(batch, chatFn) {
+async function reviewBatch(batch, chatFn, prompt = SYSTEM_PROMPT) {
   const lines = batch.map((it, i) => {
     const desc = String(it.description || "").replace(/\s+/g, " ").slice(0, 80);
     return `${i + 1}. ${String(it.title || "").trim()}${desc ? `｜${desc}` : ""}`;
   });
   const text = await chatFn(
-    [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: lines.join("\n") }],
+    [{ role: "system", content: prompt }, { role: "user", content: lines.join("\n") }],
     { maxTokens: 400, temperature: 0 },
   );
   const parsed = extractJson(String(text || ""));
@@ -56,33 +64,46 @@ export async function reviewNewsRelevance(items, {
   now = Date.now(),
   sleepFn = sleep,
 } = {}) {
-  const stats = { candidates: 0, cached: 0, reviewed: 0, dropped: 0, moderated: 0, calls: 0, failedBatches: 0, skippedBatches: 0 };
+  const stats = { candidates: 0, cached: 0, reviewed: 0, dropped: 0, moderated: 0, calls: 0, failedBatches: 0, skippedBatches: 0,
+    foreignCandidates: 0, foreignDropped: 0 };
   const dropped = new Set();
-  const fresh = new Map();
-  for (const it of items) {
-    if (it?.official === true || hasStrongCaseTitle(it?.title)) continue;
-    const key = titleKey(it?.title);
-    if (!key) continue;
-    stats.candidates++;
+  // 兩組各自的提示詞與快取鍵：一般相關性（標題無明確案件字眼）、外國候選（明確案件標題也要問）。
+  const groups = { relevance: { prompt: SYSTEM_PROMPT, fresh: new Map() }, foreign: { prompt: FOREIGN_PROMPT, fresh: new Map() } };
+  const consider = (group, key, it) => {
+    stats[group === "foreign" ? "foreignCandidates" : "candidates"]++;
     const cached = verdicts.get(key);
     if (cached) {
       stats.cached++;
-      if (!cached.keep) dropped.add(it);
-      continue;
+      if (!cached.keep) {
+        dropped.add(it);
+        if (group === "foreign") stats.foreignDropped++;
+      }
+      return;
     }
+    const { fresh } = groups[group];
     if (!fresh.has(key)) fresh.set(key, []);
     fresh.get(key).push(it);
+  };
+  for (const it of items) {
+    const key = titleKey(it?.title);
+    if (!key) continue;
+    if (isForeignLeadCandidate(it)) consider("foreign", `${FOREIGN_VERDICT_PREFIX}${key}`, it);
+    if (it?.official === true || hasStrongCaseTitle(it?.title)) continue;
+    consider("relevance", key, it);
   }
-  const keys = [...fresh.keys()];
   const batches = [];
-  for (let i = 0; i < keys.length; i += batchSize) batches.push(keys.slice(i, i + batchSize));
+  for (const [group, { fresh }] of Object.entries(groups)) {
+    const keys = [...fresh.keys()];
+    for (let i = 0; i < keys.length; i += batchSize) batches.push({ group, keys: keys.slice(i, i + batchSize) });
+  }
   const deadline = Date.now() + budgetMs;
   const at = new Date(now).toISOString();
   // 回傳每個標題鍵是否保留。模型對邊界新聞的判斷每次不同：正序、倒序各問一次，兩次都要剔除才剔除；
   // 第一次沒有要剔的就不問第二次（省一半呼叫）。
   // MiniMax 內容審查（HTTP 422 new_sensitive）會擋下整批：對半拆開重問，單則仍被擋就保留並記住，不再重送。
-  const ask = (list) => { stats.calls++; return reviewBatch(list, chatFn); };
-  const judge = async (batchKeys) => {
+  const judge = async (group, batchKeys) => {
+    const { prompt, fresh } = groups[group];
+    const ask = (list) => { stats.calls++; return reviewBatch(list, chatFn, prompt); };
     const batchItems = batchKeys.map((k) => fresh.get(k)[0]);
     try {
       const forward = await ask(batchItems);
@@ -93,7 +114,7 @@ export async function reviewNewsRelevance(items, {
       if (!/new_sensitive/.test(String(e?.message || e))) throw e;
       if (batchKeys.length === 1) { stats.moderated++; return [true]; }
       const mid = Math.ceil(batchKeys.length / 2);
-      return [...await judge(batchKeys.slice(0, mid)), ...await judge(batchKeys.slice(mid))];
+      return [...await judge(group, batchKeys.slice(0, mid)), ...await judge(group, batchKeys.slice(mid))];
     }
   };
   let next = 0;
@@ -105,7 +126,7 @@ export async function reviewNewsRelevance(items, {
       let keeps;
       for (let attempt = 0; !keeps; attempt++) {
         try {
-          keeps = await judge(batch);
+          keeps = await judge(batch.group, batch.keys);
         } catch (e) {
           // 速率限制以分鐘計：等 30、60 秒再試，仍在時間預算內才等。
           const waitMs = 30e3 * (attempt + 1);
@@ -120,10 +141,14 @@ export async function reviewNewsRelevance(items, {
         }
       }
       if (!keeps) continue;
-      batch.forEach((key, i) => {
+      batch.keys.forEach((key, i) => {
         verdicts.set(key, { keep: keeps[i], at });
         stats.reviewed++;
-        if (!keeps[i]) for (const it of fresh.get(key)) dropped.add(it);
+        if (keeps[i]) return;
+        for (const it of groups[batch.group].fresh.get(key)) {
+          dropped.add(it);
+          if (batch.group === "foreign") stats.foreignDropped++; // 以則數計，與 candidates、dropped 一致
+        }
       });
     }
   };

@@ -6,6 +6,7 @@ import {
   titleKey,
   cleanTitle,
   categoryFromItem,
+  isForeignLeadCandidate,
   refreshDomesticNewsCategory,
   refreshBulkInternationalEvent,
   isForeignNonTaiwan,
@@ -1079,6 +1080,66 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem({ ...media("男子涉詐遭起訴 | 國際 - 三立新聞"), description: "警方說明案情", summary: "台北地檢署偵辦" })).toBe(true);
     expect(isRelevantNewsItem(media("Jury convicts man of sparking deadly LA fire",
       { link: undefined, source: { name: "Taipei Times (EN)", recordRef: "https://www.taipeitimes.com/News/world/archives/2026/11/22/2003868192" } }))).toBe(false);
+  });
+
+  it("標題以外國地名開頭、全文無台灣證據的外國案件列為 LLM 複核候選（規則不直接剔除）；台灣案件不列", () => {
+    const media = (title: string, description = "") => ({ ...mk(title, "治安", description), source: "GN 三立綜合治安" });
+    for (const title of ["日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃 商場緊急疏散", "快訊／日本福岡商場旁驚傳刺人！30多歲男濺血昏迷 凶嫌疑持刀在逃",
+      "墨西哥逮捕FBI十大通緝毒梟 爆激烈槍戰", "獨／日本福岡商場旁驚傳刺人！30多歲男濺血昏迷"]) {
+      expect(isForeignLeadCandidate(media(title)), title).toBe(true);
+      expect(isRelevantNewsItem(media(title)), title).toBe(true); // 剔除與否交給 LLM
+    }
+    // 外國地名不在開頭、或全文有台灣證據（含地檢署簡稱、台嫌、疾管署）照收。
+    expect(isForeignLeadCandidate(media("毒品戒癮、老人犯罪怎麼辦？日本學者走進士檢 交流3大議題"))).toBe(false);
+    expect(isForeignLeadCandidate(media("黑吃黑！他策畫綁票取贖1410萬 得手竟私吞逃越南 3共犯全得入監"))).toBe(false);
+    expect(isForeignLeadCandidate(media("連日本警局都敢造假！ 菲國詐騙機房藏2名台嫌"))).toBe(false);
+    expect(isForeignLeadCandidate(media("日本警方逮捕詐騙車手 嫌犯曾在台北活動"))).toBe(false);
+    expect(isForeignLeadCandidate(media("越南籍移工酒後鬥毆", "桃園警方到場逮人"))).toBe(false);
+  });
+
+  it("外國候選不含在台外國人、外國名稱的台灣店家與跨國詐騙（第三方審查重現，減少送審量）", () => {
+    const media = (title: string, hint = "治安") => ({ ...mk(title, hint), source: "GN 綜合治安" });
+    for (const [title, hint] of [
+      // 在台外國人：外國地名後接人稱，或台灣地標、機關。
+      ["日本籍男子西門町醉酒砍傷路人 警方壓制送辦", "治安"],
+      ["菲律賓籍男子中壢持刀搶劫超商 警循線逮人", "治安"],
+      ["日本男大生淡水墜樓身亡 警封鎖現場釐清死因", "治安"],
+      ["美國男國道1號酒駕逆向衝撞 警攔截送辦", "交通"],
+      ["美國籍男子桃機夾帶大麻闖關 航警當場查獲", "治安"],
+      ["越南男涉士林地院前砍人 警火速壓制", "治安"],
+      ["印尼男子信義區夜店外持刀傷人遭逮", "治安"],
+      ["韓國男遊客九份迷途失聯 消防連夜搜救尋獲", "災防"],
+      ["英國男墾丁衝浪失聯 海巡出動橡皮艇搜救", "災防"],
+      // 外國名稱的台灣店家／物品。
+      ["日本料理店深夜大火！消防破門救出受困老闆", "災防"],
+      ["越南河粉店爆酒後鬥毆 男子持刀砍傷友人遭警壓制", "治安"],
+      ["美國學校接獲炸彈恐嚇信 警封鎖校園搜索", "治安"],
+      ["荷蘭村社區深夜火警 消防緊急疏散住戶", "災防"],
+      ["泰國大麻花藏國際包裹闖關 航警循線逮2嫌", "治安"],
+      ["越南走私加熱菸闖關 關務署查扣逾千條送辦", "治安"],
+      // 原始 RSS 項目還沒有 category：依標題判成反詐者沿用反詐豁免。
+      ["緬甸詐騙園區再擴張 誘騙求職者淪豬仔", "治安"],
+      ["泰國詐騙園區爆被害人求救！警追查跨國人蛇集團", "治安"],
+    ]) {
+      expect(isForeignLeadCandidate(media(title, hint)), title).toBe(false);
+    }
+    // 主題豁免、官方來源、資安內文、摘要有台灣證據都不列候選。
+    const title = "日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃";
+    for (const topic of ["資安", "食安", "衛生", "環境", "反詐"]) expect(isForeignLeadCandidate(media(title, topic)), topic).toBe(false);
+    expect(isForeignLeadCandidate({ ...media(title), official: true })).toBe(false);
+    expect(isForeignLeadCandidate({ ...media(title), category: "食安" })).toBe(false);
+    expect(isForeignLeadCandidate({ ...media(title), summary: "嫌犯為台灣籍" })).toBe(false);
+    expect(isForeignLeadCandidate(media("日本電商遭駭客入侵 個資外洩"))).toBe(false);
+    // 檢方、市級簡稱的邊界：外國內容不算台灣證據（避免漏網）。
+    for (const title of [
+      "美國酒駕撞死人案 血液中檢出高濃度毒品",
+      "越南檢方起訴前官員涉貪收賄 查扣巨額現金",
+      "越南市民街頭持刀襲警遭當場擊斃",
+      "泰國東北市長遭槍擊身亡 警方追緝槍手",
+      "美國社交平台嫌犯散布性影像 聯邦檢察官起訴",
+    ]) {
+      expect(isForeignLeadCandidate(media(title)), title).toBe(true);
+    }
   });
 
   it("110／165 只認獨立號碼，不吃文章編號或其他數字的一部分", () => {

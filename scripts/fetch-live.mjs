@@ -39,6 +39,7 @@ import {
   isFigurativeNewsNoise,
   isOverseasLocalNews,
   isRelevantNewsItem,
+  isForeignLeadCandidate,
   buildNewsRelevanceAudit,
   mapBulkInternationalNews,
   mapBulkNews,
@@ -47,7 +48,7 @@ import {
   titleKey as bulkTitleKey,
   dedupeTitleKey,
 } from "./lib/news-bulk.mjs";
-import { readVerdicts, reviewNewsRelevance, serializeVerdicts, VERDICTS_FILE } from "./lib/news-llm-gate.mjs";
+import { FOREIGN_VERDICT_PREFIX, readVerdicts, reviewNewsRelevance, serializeVerdicts, VERDICTS_FILE } from "./lib/news-llm-gate.mjs";
 import { INTL_CACHE_FILE, readIntlCache, serializeIntlCache, updateIntlCache } from "./lib/intl-normalize-cache.mjs";
 import { eventIdFor } from "./lib/event-id.mjs";
 import { buildNewsSourceContribution, eventFeedLabel, formatNewsSourceContributionReport } from "./lib/news-source-contribution.mjs";
@@ -151,6 +152,7 @@ export function buildTwNewsEvents({
   advisoryRetentionDays,
   resolveRetentionDays,
   llmDropKeys,
+  llmForeignDropKeys,
   now = Date.now(),
 } = {}) {
   // 人工審核過的事件不參與同標題合併，避免被同標題轉載蓋掉審核結果。
@@ -172,6 +174,8 @@ export function buildTwNewsEvents({
       // 移民署新聞網轉載全文，舊版閘門曾因內文順帶詞誤收；沿用時依現行閘門重判，不等 5 天到期。
       (!/移民署/.test(event?.source?.name || "") || isRelevantNewsItem(item)) &&
       !llmDropKeys?.has(bulkTitleKey(event?.title)) &&
+      // 外國複核只套用在本身也是外國候選的事件：同標題的食安、官方或摘要有台灣證據者不受影響。
+      !(llmForeignDropKeys?.has(bulkTitleKey(event?.title)) && isForeignLeadCandidate(item)) &&
       shouldRetainTwNewsEvent(event, { retentionDays, advisoryRetentionDays, resolveRetentionDays, now })
     );
   };
@@ -522,6 +526,7 @@ export async function run() {
   let twFeedStatus = [];
   let llmGate;
   let llmDropKeys;
+  let llmForeignDropKeys;
   if (want("twnews")) {
     try {
       const rss = await fetchRssItems({ perFeed: 100, feeds: TW_NEWS_FEEDS, concurrency: 6 });
@@ -552,7 +557,8 @@ export async function run() {
         // 上一輪已收的新聞也一起複核，否則要等保留窗到期才會消失。
         const carriedItems = readOld("domestic.json")
           .filter((e) => e?.source?.datasetId === "tw-news")
-          .map((e) => ({ title: e.title, description: e.summary, official: e.source?.authority === "official" }));
+          .map((e) => ({ title: e.title, description: e.summary, official: e.source?.authority === "official",
+            source: e.source, category: e.category }));
         try {
           const review = await reviewNewsRelevance([...policeUniq, ...carriedItems], {
             verdicts,
@@ -566,7 +572,10 @@ export async function run() {
           console.error(`國內新聞 LLM 複核失敗（照規則結果）：${llmGate.error}`);
         }
         writeJson(VERDICTS_FILE, serializeVerdicts(verdicts));
-        llmDropKeys = new Set([...verdicts].filter(([, v]) => !v.keep).map(([k]) => k));
+        const dropKeys = [...verdicts].filter(([, v]) => !v.keep).map(([k]) => k);
+        llmDropKeys = new Set(dropKeys.filter((k) => !k.startsWith(FOREIGN_VERDICT_PREFIX)));
+        // 外國複核的判斷另存一組：保留窗只對同樣是外國候選的事件套用，不能憑標題波及同名的豁免事件。
+        llmForeignDropKeys = new Set(dropKeys.filter((k) => k.startsWith(FOREIGN_VERDICT_PREFIX)).map((k) => k.slice(FOREIGN_VERDICT_PREFIX.length)));
         console.log(`國內新聞 LLM 複核：${JSON.stringify(llmGate)}`);
       }
       policeUniq.sort((a, b) => (Date.parse(b.pubDate) || 0) - (Date.parse(a.pubDate) || 0));
@@ -693,6 +702,7 @@ export async function run() {
     retentionDays: RETENTION_DAYS,
     advisoryRetentionDays: ADVISORY_RETENTION_DAYS,
     llmDropKeys,
+    llmForeignDropKeys,
     now: nowMs,
   });
   if (status.twnews?.ok && twnews.length) {

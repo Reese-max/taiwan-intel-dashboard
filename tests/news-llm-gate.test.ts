@@ -17,6 +17,36 @@ const chatDropping = (dropTitles: string[]) =>
 const NOW = Date.parse("2026-11-19T00:00:00.000Z");
 
 describe("國內新聞 LLM 複核", () => {
+  it("外國地名開頭的候選即使標題有明確案件字眼也送外國提示詞複核，兩次都剔才剔，鍵加 foreign: 前綴", async () => {
+    const items = [
+      { title: "日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃", hint: "治安", source: "GN 三立綜合治安" },
+      { title: "日本腦炎今年首例致死！醫籲高風險族群速接種", hint: "治安", source: "GN 三立綜合治安" },
+      { title: "日本籍男子西門町醉酒砍傷路人 警方壓制送辦", hint: "治安", source: "GN 三立綜合治安" },
+    ];
+    const prompts: string[] = [];
+    const chatFn = vi.fn(async (messages: Msg[]) => {
+      prompts.push(messages[0].content);
+      return JSON.stringify({ drop: titlesOf(messages).flatMap((t, i) => (t.startsWith("日本福岡") ? [i + 1] : [])) });
+    });
+    const verdicts = new Map();
+    const { dropped, stats } = await reviewNewsRelevance(items, { verdicts, chatFn, now: NOW });
+    // 西門町有台灣地標不列候選；福岡與腦炎送外國複核，模型只剔福岡。
+    const foreignCalls = chatFn.mock.calls.filter((c: Msg[][]) => c[0][0].content.includes("以外國地名開頭"));
+    expect(foreignCalls).toHaveLength(2);
+    expect(titlesOf(foreignCalls[0][0]).sort()).toEqual(["日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃", "日本腦炎今年首例致死！醫籲高風險族群速接種"].sort());
+    expect([...dropped].map((it: { title: string }) => it.title)).toEqual(["日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃"]);
+    expect(stats).toMatchObject({ foreignCandidates: 2, foreignDropped: 1, failedBatches: 0 });
+    expect(verdicts.get(`foreign:${titleKey(items[0].title)}`)).toMatchObject({ keep: false });
+    expect(verdicts.get(`foreign:${titleKey(items[1].title)}`)).toMatchObject({ keep: true });
+
+    // 下一輪快取命中不再呼叫；模型失敗時照規則保留。
+    const again = await reviewNewsRelevance(items, { verdicts, chatFn: vi.fn(), now: NOW });
+    expect([...again.dropped].map((it: { title: string }) => it.title)).toEqual(["日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃"]);
+    expect(again.stats).toMatchObject({ foreignCandidates: 2, foreignDropped: 1, calls: 0 });
+    const failing = await reviewNewsRelevance(items, { verdicts: new Map(), chatFn: vi.fn(async () => { throw new Error("HTTP 500"); }), now: NOW });
+    expect(failing.dropped.size).toBe(0);
+  });
+
   it("LLM verdict cache remains keyed by legacy titleKey, not the new dedupe key", async () => {
     const title = "快訊／某品牌新品上市| 生活焦點| 生活";
     const legacyKey = titleKey(title);

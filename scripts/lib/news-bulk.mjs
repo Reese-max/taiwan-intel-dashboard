@@ -440,6 +440,38 @@ const STRONG_TAIWAN_MARKER_RE = /[台臺]灣|中華民國|[台臺]北|新北|桃
 // 大紀元總站兼報台灣與海外：只在標題有海外地名時剔除，地點不明者保留（不用國籍、「中共」，台灣共諜／外籍嫌犯案也會用）。
 const OVERSEAS_PLACE_HINT_RE = /(?<!和)美(?:國|機場|警)|聯邦調查局|FBI|加國|亞省|卑詩|安省|魁省|多倫多|溫哥華|堪培拉|雪梨|悉尼|墨爾本|紐約|洛杉磯|舊金山|三藩市|夏威夷|檀香山|HPD|中國(?:男子|女子|留學生)|西藏|新疆|香港|澳門|州|郡|斯特/;
 
+// 資安／食安等主題來源刻意保留跨境脈絡，境外判斷不套用。
+const CROSS_BORDER_TOPICS = new Set(["資安", "食安", "衛生", "環境"]);
+const FOREIGN_LEAD_IN_RE = /^(?:\s|【[^】]{0,12}】|《[^》]{0,12}》|\[[^\]]{0,8}\]|(?:快訊|影|獨家?|最新|驚|有片)[／/!！:：\s]*)*/;
+// 外國地名後接人稱（日本籍、越南男、印尼移工）或店家／物品（日本料理、越南河粉、美國學校、泰國大麻）多是在台事件，不當外國主詞。
+const FOREIGN_ADJECTIVE_RE =
+  /^(?:籍|裔|男|女|人|移工|看護|旅客|遊客|學生|留學生|僑生|新娘|配偶|妻|夫|婦|翁|嬤|童|料理|餐廳|餐館|河粉|小吃|美食|菜|店|超市|學校|村|城|商品|貨|製|產|進口|走私|大麻|毒|水果|品牌)/;
+// TAIWAN_MARKER_RE 沒涵蓋的台灣證據：檢方與市級簡稱（排除「檢出」「越南檢方」「越南市民」「東北市長」等外國用法）、台嫌、地標與機關。
+const TAIWAN_EXTRA_EVIDENCE_RE = new RegExp([
+  "(?<![越房])(?:北|士|士林|板橋|新北|桃|竹|新竹|苗|苗栗|中|彰|投|雲|嘉|南|橋|橋頭|雄|高|屏|宜|花|東|澎|金|連)檢(?![舉查測驗出獲方察視討閱])",
+  "高檢署|最高檢(?!舉)|疾管署|食藥署|[台臺我]邊境|[台臺]籍|(?<!平)[台臺]嫌|陸委會|海基會",
+  "(?<![東西南越日])(?:北|桃|竹|中|嘉|南)市(?![民長])|(?<!日)高市(?!早苗|長|市)",
+  "西門町|信義區|北投|士林|九份|墾丁|日月潭|阿里山|國道|[台臺]鐵|高鐵|桃機|松機|小港機場|桃園機場|航警|鐵警|捷警|關務署|海巡|地院|高分院",
+].join("|"));
+
+// 外國犯罪新聞送 LLM 複核的候選：標題以外國地名開頭（主詞是外國）、標題與摘要都沒有台灣證據。
+// 只挑候選、不直接剔除：字串規則分不出「日本腦炎」「韓國烤肉店」這類台灣新聞（2026-11-25 跨家族審查兩輪重現），由 LLM 判斷。
+// 反詐（詐騙園區、打詐借鏡）與資安內文沿用 isForeignNonTaiwan 的既有豁免（07-05 收窄紀錄）。
+export function isForeignLeadCandidate(item) {
+  if (!isDomesticMediaNews(item)) return false;
+  const rawTitle = String(item?.title || "");
+  const fullText = `${rawTitle} ${item?.description || ""} ${item?.summary || ""}`.replace(TAIWAN_NEGATED_CONTEXT_RE, "");
+  // 原始 RSS 項目還沒有 category，依標題即時判類，詐騙園區等反詐新聞才保有豁免。
+  const leadCategory = item?.category || categoryFromItem(rawTitle, item?.hint)?.category;
+  if ([item?.hint, leadCategory].some((t) => CROSS_BORDER_TOPICS.has(t) || t === "反詐") || CYBER_FOREIGN_EXEMPT_RE.test(fullText)) {
+    return false;
+  }
+  const leadTitle = rawTitle.replace(FOREIGN_LEAD_IN_RE, "");
+  const foreignLead = FOREIGN_PLACE_RE.exec(leadTitle);
+  return foreignLead?.index === 0 && !FOREIGN_ADJECTIVE_RE.test(leadTitle.slice(foreignLead[0].length)) &&
+    !TAIWAN_MARKER_RE.test(fullText) && !STRONG_TAIWAN_MARKER_RE.test(fullText) && !TAIWAN_EXTRA_EVIDENCE_RE.test(fullText);
+}
+
 export function isOverseasLocalNews(item) {
   if (!isDomesticMediaNews(item)) return false;
   // 央廣標題自帶欄目；「[國際]」是編輯判定的國際新聞，全文順帶的警政詞不能讓它進國內層（標題寫明台灣關聯者照留）。
@@ -450,7 +482,8 @@ export function isOverseasLocalNews(item) {
   // 資安／食安等主題來源刻意保留跨境脈絡，不套用。
   const link = String(item?.link || item?.source?.recordRef || "");
   const briefText = `${rawTitle} ${item?.description || ""} ${item?.summary || ""}`;
-  if (!["資安", "食安", "衛生", "環境"].includes(item?.hint) && !STRONG_TAIWAN_MARKER_RE.test(briefText) &&
+  const crossBorder = CROSS_BORDER_TOPICS.has(item?.hint);
+  if (!crossBorder && !STRONG_TAIWAN_MARKER_RE.test(briefText) &&
       (/\|\s*(?:國際焦點|國際|全球)\s*-\s*[^|]+$/.test(rawTitle) || /^https:\/\/www\.taipeitimes\.com\/News\/world\//.test(link))) return true;
   // RSS 原始項目把發行者放在頂層 publisherName，source 只是 feed 標籤。
   const publisher = sourceText(item?.publisherName ?? item?.source?.name ?? item?.source?.publisherName ?? item?.source).trim();
