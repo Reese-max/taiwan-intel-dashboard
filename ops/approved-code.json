@@ -1,4 +1,4 @@
 {
-  "sha": "cebda70db9d0a868a5a896ea680d33420ade0489",
-  "note": "Owner approved on 2026-11-25 (merge-and-release flow for the domestic-layer fixes). main cebda70 = #167: the media international-section rule no longer exempts rule-classified 災防 items (only 資安/食安/衛生/環境 keep cross-border news); on current production data main vs head removes 4 foreign disaster stories and adds 0. PR passed test/build-preview/check/verify-preview and cross-family review. Includes previously approved 458d42b (#164) and 6e3d1fb (#162)."
+  "sha": "507ffe08c32ad3af7f63f710d2c380f97dd500a6",
+  "note": "Owner approved on 2026-11-25. main 507ffe0 = #170 (shared key between /api/search and the self-hosted relay; Pages secret GNEWS_RELAY_KEY set for production and preview) + #169 (foreign crime stories reviewed by the existing MiniMax LLM gate with a dedicated prompt; owner chose the LLM approach and accepted the small extra usage). Both PRs passed test/build-preview/check/verify-preview and cross-family review. Includes previously approved cebda70 (#167), 458d42b (#164), 6e3d1fb (#162)."
 }
