@@ -19,6 +19,7 @@ CACHE_SECONDS = 600
 RATE_PER_MINUTE = 60  # shortcut: one global bucket; per-client limits if abuse ever shows up
 UPSTREAM_TIMEOUT = 8
 MAX_BODY = 2_000_000
+CACHE_MAX_BYTES = 32_000_000  # well under the unit's MemoryMax=128M
 UA = "Mozilla/5.0 (compatible; taiwan-intel-dashboard/1.0; +https://taiwan-intel-dashboard.pages.dev)"
 
 _cache: dict[tuple[str, str], tuple[float, bytes]] = {}
@@ -61,8 +62,22 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 OPENER = urllib.request.build_opener(NoRedirect)
 
 
+def cache_put(key: tuple[str, str], now: float, body: bytes) -> None:
+    """Store a response, dropping expired entries, then the oldest until under CACHE_MAX_BYTES."""
+    with _lock:
+        _cache[key] = (now, body)
+        for stale in [k for k, (t, _) in _cache.items() if now - t >= CACHE_SECONDS]:
+            del _cache[stale]
+        total = sum(len(b) for _, b in _cache.values())
+        for oldest in sorted(_cache, key=lambda k: _cache[k][0]):
+            if total <= CACHE_MAX_BYTES:
+                break
+            total -= len(_cache.pop(oldest)[1])
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "gnews-relay"
+    sys_version = ""  # do not advertise the Python version
 
     def _send(self, status: int, body: bytes, ctype: str = "text/plain; charset=utf-8") -> None:
         self.send_response(status)
@@ -97,10 +112,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(502, f"upstream {type(error).__name__}".encode())
         if len(body) > MAX_BODY or b"<rss" not in body[:2000]:
             return self._send(502, b"upstream not rss")
-        with _lock:
-            _cache[key] = (now, body)
-            for stale in [k for k, (t, _) in _cache.items() if now - t >= CACHE_SECONDS]:
-                del _cache[stale]
+        cache_put(key, now, body)
         self._send(200, body, "application/rss+xml; charset=utf-8")
 
     def log_message(self, fmt: str, *args) -> None:  # one line per request, no query text (privacy)
@@ -123,6 +135,15 @@ def self_test() -> None:
     _hits.clear()
     assert all(allow_request(1000.0) for _ in range(RATE_PER_MINUTE)) and not allow_request(1000.0)
     assert allow_request(1061.0)
+    _cache.clear()
+    chunk = b"x" * (CACHE_MAX_BYTES // 2 - 1)
+    for i in range(3):
+        cache_put((f"q{i}", "7"), 2000.0 + i, chunk)
+    assert sum(len(b) for _, b in _cache.values()) <= CACHE_MAX_BYTES
+    assert ("q0", "7") not in _cache and ("q2", "7") in _cache
+    cache_put(("q3", "7"), 2002.0 + CACHE_SECONDS, b"<rss/>")
+    assert list(_cache) == [("q3", "7")]
+    _cache.clear()
     print("self-test ok")
 
 
