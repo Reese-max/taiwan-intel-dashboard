@@ -1081,6 +1081,19 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
       { link: undefined, source: { name: "Taipei Times (EN)", recordRef: "https://www.taipeitimes.com/News/world/archives/2026/11/22/2003868192" } }))).toBe(false);
   });
 
+  it("標題以外國地名開頭、全文無台灣證據的外國案件不進國內層；台灣案件提到外國照收", () => {
+    const media = (title: string, description = "") => ({ ...mk(title, "治安", description), source: "GN 三立綜合治安" });
+    expect(isRelevantNewsItem(media("日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃 商場緊急疏散"))).toBe(false);
+    expect(isRelevantNewsItem(media("快訊／日本福岡商場旁驚傳刺人！30多歲男濺血昏迷 凶嫌疑持刀在逃"))).toBe(false);
+    expect(isRelevantNewsItem(media("墨西哥逮捕FBI十大通緝毒梟 爆激烈槍戰"))).toBe(false);
+    // 外國地名不在開頭、或全文有台灣證據（含地檢署簡稱、台嫌、疾管署）照收。
+    expect(isRelevantNewsItem(media("毒品戒癮、老人犯罪怎麼辦？日本學者走進士檢 交流3大議題"))).toBe(true);
+    expect(isRelevantNewsItem(media("黑吃黑！他策畫綁票取贖1410萬 得手竟私吞逃越南 3共犯全得入監"))).toBe(true);
+    expect(isRelevantNewsItem(media("連日本警局都敢造假！ 菲國詐騙機房藏2名台嫌"))).toBe(true);
+    expect(isRelevantNewsItem(media("日本警方逮捕詐騙車手 嫌犯曾在台北活動"))).toBe(true);
+    expect(isRelevantNewsItem(media("越南籍移工酒後鬥毆", "桃園警方到場逮人"))).toBe(true);
+  });
+
   it("110／165 只認獨立號碼，不吃文章編號或其他數字的一部分", () => {
     expect(isPoliceRelevant("主計總處公布物價", "（編輯：潘羿菁）1151105")).toBe(false);
     expect(isPoliceRelevant("颱風來襲 全台1650戶停電", "")).toBe(false);
@@ -1252,8 +1265,6 @@ describe("isForeignNonTaiwan（bulk domestic 純外國負面閘門）", () => {
       mk("美國豆換巴西豆引食安風暴? 中聯油脂：產季輪換", "食安"), // 台廠食安（食安豁免）
       mk("緬甸三佛塔成電詐園區新據點 陸退伍軍人淪豬仔", "反詐"), // 詐騙園區（反詐豁免、國人相關）
       mk("新加坡修法加重打詐 涉詐最高可處24下鞭刑", "反詐"), // 打詐借鏡（反詐豁免）
-      // 收窄行為：外國一般犯罪（無天災/戰爭/大量傷亡）不再過濾，保留以免誤刪台灣邊案。
-      mk("東京上野餐廳老闆遭殺害棄屍 2共犯判刑30年", "治安"),
       // T8-17 回歸保護：新增地名/語境不可誤殺台灣關聯或台灣本地事件。
       mk("祕魯強震 外交部：目前無國人傷亡", "治安"),
       mk("新竹626豪雨成災 議員質疑整修工程", "災防"),
@@ -1265,6 +1276,8 @@ describe("isForeignNonTaiwan（bulk domestic 純外國負面閘門）", () => {
       expect(isForeignNonTaiwan(item), item.title).toBe(false);
     }
     expect(isForeignNonTaiwan({ title: "南韓酷澎個資外洩", category: "資安" })).toBe(false);
+    // 2026-11-25 負責人決定：外國地名開頭、全文無台灣證據的外國一般犯罪排除（07-05 收窄保留的反例；台灣邊案由上列與「外國地名開頭」測試守住）。
+    expect(isForeignNonTaiwan(mk("東京上野餐廳老闆遭殺害棄屍 2共犯判刑30年", "治安"))).toBe(true);
 
     expect(isRelevantNewsItem(mustKeep[0])).toBe(false);
     expect(isRelevantNewsItem(mustKeep[1])).toBe(true);

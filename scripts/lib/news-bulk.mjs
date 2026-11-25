@@ -440,6 +440,13 @@ const STRONG_TAIWAN_MARKER_RE = /[台臺]灣|中華民國|[台臺]北|新北|桃
 // 大紀元總站兼報台灣與海外：只在標題有海外地名時剔除，地點不明者保留（不用國籍、「中共」，台灣共諜／外籍嫌犯案也會用）。
 const OVERSEAS_PLACE_HINT_RE = /(?<!和)美(?:國|機場|警)|聯邦調查局|FBI|加國|亞省|卑詩|安省|魁省|多倫多|溫哥華|堪培拉|雪梨|悉尼|墨爾本|紐約|洛杉磯|舊金山|三藩市|夏威夷|檀香山|HPD|中國(?:男子|女子|留學生)|西藏|新疆|香港|澳門|州|郡|斯特/;
 
+// 資安／食安等主題來源刻意保留跨境脈絡，境外判斷不套用。
+const CROSS_BORDER_TOPICS = new Set(["資安", "食安", "衛生", "環境"]);
+const FOREIGN_LEAD_IN_RE = /^(?:\s|【[^】]{0,12}】|《[^》]{0,12}》|\[[^\]]{0,8}\]|(?:快訊|影|獨家|最新|驚|有片)[／/!！:：\s]*)*/;
+// TAIWAN_MARKER_RE 沒涵蓋的台灣證據：檢方簡稱（士檢、苗檢）、市級簡稱、台嫌、邊境管制等。
+const TAIWAN_EXTRA_EVIDENCE_RE =
+  /(?:北|士|士林|板橋|新北|桃|竹|新竹|苗|苗栗|中|彰|投|雲|嘉|南|橋|橋頭|雄|高|屏|宜|花|東|澎|金|連)檢|高檢署|最高檢|疾管署|食藥署|[台臺我]邊境|[台臺](?:籍|嫌)|陸委會|海基會|(?:北|桃|竹|中|嘉|南)市|高市(?!早苗)/;
+
 export function isOverseasLocalNews(item) {
   if (!isDomesticMediaNews(item)) return false;
   // 央廣標題自帶欄目；「[國際]」是編輯判定的國際新聞，全文順帶的警政詞不能讓它進國內層（標題寫明台灣關聯者照留）。
@@ -450,8 +457,16 @@ export function isOverseasLocalNews(item) {
   // 資安／食安等主題來源刻意保留跨境脈絡，不套用。
   const link = String(item?.link || item?.source?.recordRef || "");
   const briefText = `${rawTitle} ${item?.description || ""} ${item?.summary || ""}`;
-  if (!["資安", "食安", "衛生", "環境"].includes(item?.hint) && !STRONG_TAIWAN_MARKER_RE.test(briefText) &&
+  const crossBorder = CROSS_BORDER_TOPICS.has(item?.hint);
+  if (!crossBorder && !STRONG_TAIWAN_MARKER_RE.test(briefText) &&
       (/\|\s*(?:國際焦點|國際|全球)\s*-\s*[^|]+$/.test(rawTitle) || /^https:\/\/www\.taipeitimes\.com\/News\/world\//.test(link))) return true;
+  // 標題以外國地名開頭（主詞是外國）且標題、摘要都沒有台灣證據 → 境外案件；外國地名在句中（「日本學者走進士檢」）不算。
+  // 反詐（詐騙園區、打詐借鏡）與資安內文沿用 isForeignNonTaiwan 的既有豁免（07-05 收窄紀錄）。
+  const fullText = briefText.replace(TAIWAN_NEGATED_CONTEXT_RE, "");
+  const leadExempt = [item?.hint, item?.category].some((t) => CROSS_BORDER_TOPICS.has(t) || t === "反詐") ||
+    CYBER_FOREIGN_EXEMPT_RE.test(fullText);
+  if (!leadExempt && FOREIGN_PLACE_RE.exec(rawTitle.replace(FOREIGN_LEAD_IN_RE, ""))?.index === 0 &&
+      !TAIWAN_MARKER_RE.test(fullText) && !TAIWAN_EXTRA_EVIDENCE_RE.test(fullText)) return true;
   // RSS 原始項目把發行者放在頂層 publisherName，source 只是 feed 標籤。
   const publisher = sourceText(item?.publisherName ?? item?.source?.name ?? item?.source?.publisherName ?? item?.source).trim();
   const text = `${item?.title || ""} ${item?.description || ""} ${item?.summary || ""}`;
