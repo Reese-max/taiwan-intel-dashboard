@@ -1097,6 +1097,20 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isForeignLeadCandidate(media("越南籍移工酒後鬥毆", "桃園警方到場逮人"))).toBe(false);
   });
 
+  it("外國城市開頭（福岡、倫敦）也列 LLM 候選；城市後接人稱或在台證據則不列", () => {
+    const media = (title: string) => ({ ...mk(title, "治安"), source: "GN 綜合治安" });
+    for (const title of [
+      "福岡AEON商場附近驚傳砍人！70多歲停車場員工身亡 嫌犯逃逸中",
+      "快訊／福岡AEON商場旁「持刀砍人」 30多歲男重傷昏迷！",
+      "倫敦街頭驚傳隨機砍人！3路人中刀送醫 警逮1嫌",
+      "德州驚傳連續槍擊案 5人中彈死亡",
+      "北海道驚傳地震多人受傷",
+    ]) expect(isForeignLeadCandidate(media(title)), title).toBe(true);
+    for (const title of ["京都男子西門町鬧事遭警壓制", "首爾旅客桃機夾帶毒品遭航警查獲", "北海道鮮乳遭竊 超商店員報警", "沖繩黑糖遭偷 店家報案"]) {
+      expect(isForeignLeadCandidate(media(title)), title).toBe(false);
+    }
+  });
+
   it("外國候選不含在台外國人、外國名稱的台灣店家與跨國詐騙（第三方審查重現，減少送審量）", () => {
     const media = (title: string, hint = "治安") => ({ ...mk(title, hint), source: "GN 綜合治安" });
     for (const [title, hint] of [
