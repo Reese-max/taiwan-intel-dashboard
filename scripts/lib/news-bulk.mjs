@@ -446,6 +446,9 @@ const FOREIGN_LEAD_IN_RE = /^(?:\s|【[^】]{0,12}】|《[^》]{0,12}》|\[[^\]]
 // 外國地名後接人稱（日本籍、越南男、印尼移工）或店家／物品（日本料理、越南河粉、美國學校、泰國大麻）多是在台事件，不當外國主詞。
 const FOREIGN_ADJECTIVE_RE =
   /^(?:籍|裔|男|女|人|移工|看護|旅客|遊客|學生|留學生|僑生|新娘|配偶|妻|夫|婦|翁|嬤|童|料理|餐廳|餐館|河粉|小吃|美食|菜|店|超市|學校|村|城|商品|貨|製|產|進口|走私|大麻|毒|水果|品牌)/;
+// 只用於挑 LLM 候選的外國城市／州（FOREIGN_PLACE_RE 多為國名，福岡、倫敦開頭的外國案件會漏送）；判斷仍由 LLM 做。
+const FOREIGN_CITY_LEAD_RE =
+  /^(?:福岡|京都|名古屋|札幌|橫濱|横濱|神戶|沖繩|北海道|千葉|埼玉|兵庫|廣島|長崎|熊本|仙台|倫敦|巴黎|柏林|羅馬|紐約|洛杉磯|舊金山|芝加哥|西雅圖|波士頓|休士頓|德州|加州|佛州|紐澤西|雪梨|墨爾本|釜山|仁川|芭達雅|普吉|清邁|河內|胡志明市|峴港|峇里|宿霧|吉隆坡|新德里|孟買|莫斯科|杜拜|伊斯坦堡)/;
 // TAIWAN_MARKER_RE 沒涵蓋的台灣證據：檢方與市級簡稱（排除「檢出」「越南檢方」「越南市民」「東北市長」等外國用法）、台嫌、地標與機關。
 const TAIWAN_EXTRA_EVIDENCE_RE = new RegExp([
   "(?<![越房])(?:北|士|士林|板橋|新北|桃|竹|新竹|苗|苗栗|中|彰|投|雲|嘉|南|橋|橋頭|雄|高|屏|宜|花|東|澎|金|連)檢(?![舉查測驗出獲方察視討閱])",
@@ -467,7 +470,7 @@ export function isForeignLeadCandidate(item) {
     return false;
   }
   const leadTitle = rawTitle.replace(FOREIGN_LEAD_IN_RE, "");
-  const foreignLead = FOREIGN_PLACE_RE.exec(leadTitle);
+  const foreignLead = FOREIGN_CITY_LEAD_RE.exec(leadTitle) || FOREIGN_PLACE_RE.exec(leadTitle);
   return foreignLead?.index === 0 && !FOREIGN_ADJECTIVE_RE.test(leadTitle.slice(foreignLead[0].length)) &&
     !TAIWAN_MARKER_RE.test(fullText) && !STRONG_TAIWAN_MARKER_RE.test(fullText) && !TAIWAN_EXTRA_EVIDENCE_RE.test(fullText);
 }
