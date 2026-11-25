@@ -1,4 +1,4 @@
 {
-  "sha": "507ffe08c32ad3af7f63f710d2c380f97dd500a6",
-  "note": "Owner approved on 2026-11-25. main 507ffe0 = #170 (shared key between /api/search and the self-hosted relay; Pages secret GNEWS_RELAY_KEY set for production and preview) + #169 (foreign crime stories reviewed by the existing MiniMax LLM gate with a dedicated prompt; owner chose the LLM approach and accepted the small extra usage). Both PRs passed test/build-preview/check/verify-preview and cross-family review. Includes previously approved cebda70 (#167), 458d42b (#164), 6e3d1fb (#162)."
+  "sha": "fd0c6ac588c4edddc3f1f183eedf756a94e66cc0",
+  "note": "Owner approved on 2026-11-25. main fd0c6ac = #172: foreign city/state leads (福岡, 加州, 紐約…) also go to the LLM foreign review (follow-up to #169; 11 Fukuoka stories remained in production). PR passed test/build-preview/check/verify-preview and cross-family review. Includes previously approved 507ffe0 (#169, #170), cebda70, 458d42b, 6e3d1fb."
 }
