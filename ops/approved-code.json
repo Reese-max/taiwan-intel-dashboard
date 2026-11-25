@@ -1,4 +1,4 @@
 {
-  "sha": "6e3d1fb2401614c7fcb3b244cbf15322984b0873",
-  "note": "Owner approved on 2026-11-25 (chose 合併並走上線流程). main 6e3d1fb = #162: immigration full-text gate, 110/165 digit boundaries, Rti [國際] and media-labelled international sections kept out of the domestic layer, 國人 marker no longer matches foreign nationals, STAT Trade Times feed URL, daily-refresh catch-up when the 30 18 cron is dropped, event-card header wrap on desktop. PR passed test/build-preview/check/verify-preview and 7 rounds of cross-family review. Includes previously approved 2166e91 (#160)."
+  "sha": "",
+  "note": "Owner approved on 2026-11-25 (chose 走自有主機代理 for the off-site search). main  = #164: /api/search goes through the self-hosted Google News relay (ops/gnews-relay, Tailscale Funnel /gnews) because Google rate-limits Cloudflare egress IPs; relay cache capped at 32MB. PR passed test/build-preview/check/verify-preview, preview /api/search returned upstream ok, and two cross-family reviews passed. Includes previously approved 6e3d1fb (#162)."
 }
