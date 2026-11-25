@@ -72,6 +72,14 @@ describe("Google News 站外搜尋端點", () => {
     expect(cache.put).not.toHaveBeenCalled();
   });
 
+  it("有 GNEWS_RELAY_KEY 時以標頭帶給轉發端，沒設定時不送", async () => {
+    await worker.fetch(request(), { ...env, GNEWS_RELAY_KEY: "test-key" });
+    expect(new Headers(upstream.mock.calls[0][1].headers).get("x-relay-key")).toBe("test-key");
+    upstream.mockClear();
+    await worker.fetch(request("q=車禍&days=7"), env);
+    expect(new Headers(upstream.mock.calls[0][1].headers).has("x-relay-key")).toBe(false);
+  });
+
   it("逾時八秒後中止上游請求", async () => {
     vi.useFakeTimers();
     upstream.mockImplementationOnce((_url, { signal }) => new Promise((_resolve, reject) => {

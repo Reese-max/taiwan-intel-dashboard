@@ -4,6 +4,8 @@ Google rate-limits Cloudflare Worker egress IPs (429/503), so the Worker asks th
 relay instead. The upstream is fixed to news.google.com RSS search and the query
 rules mirror static/_worker.js, so this cannot be used to reach any other host.
 """
+import hmac
+import os
 import sys
 import threading
 import time
@@ -14,6 +16,25 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HOST, PORT = "127.0.0.1", 8331
+KEY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "relay.key")
+
+
+def load_key(path: str = KEY_FILE) -> str | None:
+    """Shared key from the Worker (X-Relay-Key). No key file = not enforced yet (staged rollout).
+    A key file that exists but is empty fails closed instead of silently disabling the check."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            key = fh.read().strip()
+    except FileNotFoundError:
+        return None
+    if not key:
+        raise SystemExit(f"{path} exists but is empty; refusing to start without a key")
+    return key
+
+
+def key_ok(expected: str | None, presented: str | None) -> bool:
+    return expected is None or hmac.compare_digest(expected.encode(), (presented or "").encode())
+
 DAYS = {"1", "2", "3", "7", "30"}
 CACHE_SECONDS = 600
 RATE_PER_MINUTE = 60  # shortcut: one global bucket; per-client limits if abuse ever shows up
@@ -91,6 +112,8 @@ class Handler(BaseHTTPRequestHandler):
         url = urllib.parse.urlsplit(self.path)
         if url.path not in ("/rss", "/gnews/rss"):
             return self._send(404, b"not found")
+        if not key_ok(RELAY_KEY, self.headers.get("X-Relay-Key")):
+            return self._send(401, b"unauthorized")
         parsed = validate(urllib.parse.parse_qs(url.query, keep_blank_values=True))
         if not parsed:
             return self._send(400, b"bad query")
@@ -144,8 +167,27 @@ def self_test() -> None:
     cache_put(("q3", "7"), 2002.0 + CACHE_SECONDS, b"<rss/>")
     assert list(_cache) == [("q3", "7")]
     _cache.clear()
+    assert key_ok(None, None) and key_ok(None, "x")
+    assert key_ok("k1", "k1") and not key_ok("k1", "k2") and not key_ok("k1", None) and not key_ok("k1", "")
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        assert load_key(os.path.join(tmp, "no-such.key")) is None
+        empty = os.path.join(tmp, "empty.key")
+        with open(empty, "w", encoding="utf-8") as fh:
+            fh.write(" \n")
+        try:
+            load_key(empty)
+            raise AssertionError("empty key file must fail closed")
+        except SystemExit:
+            pass
+        good = os.path.join(tmp, "good.key")
+        with open(good, "w", encoding="utf-8") as fh:
+            fh.write("k1\n")
+        assert load_key(good) == "k1"
     print("self-test ok")
 
+
+RELAY_KEY = load_key()
 
 if __name__ == "__main__":
     if "--self-test" in sys.argv:
