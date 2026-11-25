@@ -443,12 +443,14 @@ const OVERSEAS_PLACE_HINT_RE = /(?<!和)美(?:國|機場|警)|聯邦調查局|FB
 // 資安／食安等主題來源刻意保留跨境脈絡，境外判斷不套用。
 const CROSS_BORDER_TOPICS = new Set(["資安", "食安", "衛生", "環境"]);
 const FOREIGN_LEAD_IN_RE = /^(?:\s|【[^】]{0,12}】|《[^》]{0,12}》|\[[^\]]{0,8}\]|(?:快訊|影|獨家?|最新|驚|有片)[／/!！:：\s]*)*/;
-// 外國地名後接人稱（日本籍、越南男、印尼移工）或店家／物品（日本料理、越南河粉、美國學校、泰國大麻、北海道鮮乳）多是在台事件，不當外國主詞。
+// 外國地名後接人稱（日本籍、越南男、印尼移工）或店家（日本料理、越南河粉、美國學校）多是在台事件，不送審以省用量；商品詞（北海道牛奶）照送，由 LLM 判斷。
 const FOREIGN_ADJECTIVE_RE =
-  /^(?:籍|裔|男|女|人|移工|看護|旅客|遊客|學生|留學生|僑生|新娘|配偶|妻|夫|婦|翁|嬤|童|料理|餐廳|餐館|河粉|小吃|美食|菜|店|超市|學校|村|城|商品|貨|製|產|進口|走私|大麻|毒|水果|品牌|鮮乳|牛奶|乳品|起司|黑糖|和牛|牛肉|豬肉|海鮮|拉麵|零食|食品|藥妝|保健)/;
+  /^(?:籍|裔|男|女|人|移工|看護|旅客|遊客|學生|留學生|僑生|新娘|配偶|妻|夫|婦|翁|嬤|童|料理|餐廳|餐館|河粉|小吃|美食|菜|店|超市|學校|村|城)/;
 // 只用於挑 LLM 候選的外國城市／州（FOREIGN_PLACE_RE 多為國名，福岡、倫敦開頭的外國案件會漏送）；判斷仍由 LLM 做。
 const FOREIGN_CITY_LEAD_RE =
   /^(?:福岡|京都|名古屋|札幌|橫濱|横濱|神戶|千葉|埼玉|兵庫|北海道|沖繩|廣島|長崎|熊本|仙台|倫敦|巴黎|柏林|羅馬|紐約|洛杉磯|舊金山|芝加哥|西雅圖|波士頓|休士頓|德州|加州|佛州|紐澤西|雪梨|墨爾本|釜山|仁川|芭達雅|普吉|清邁|河內|胡志明市|峴港|峇里|宿霧|吉隆坡|新德里|孟買|莫斯科|杜拜|伊斯坦堡)/;
+const FOREIGN_CITY_ANY_RE = new RegExp(FOREIGN_CITY_LEAD_RE.source.replace(/^^/, ""), "g");
+const FOREIGN_PLACE_ANY_RE = new RegExp(FOREIGN_PLACE_RE.source, "g");
 // TAIWAN_MARKER_RE 沒涵蓋的台灣證據：檢方與市級簡稱（排除「檢出」「越南檢方」「越南市民」「東北市長」等外國用法）、台嫌、地標與機關。
 const TAIWAN_EXTRA_EVIDENCE_RE = new RegExp([
   "(?<![越房])(?:北|士|士林|板橋|新北|桃|竹|新竹|苗|苗栗|中|彰|投|雲|嘉|南|橋|橋頭|雄|高|屏|宜|花|東|澎|金|連)檢(?![舉查測驗出獲方察視討閱])",
@@ -457,10 +459,10 @@ const TAIWAN_EXTRA_EVIDENCE_RE = new RegExp([
   "西門町|信義區|北投|士林|九份|墾丁|日月潭|阿里山|國道|[台臺]鐵|高鐵|桃機|松機|小港機場|桃園機場|航警|鐵警|捷警|關務署|海巡|地院|高分院",
 ].join("|"));
 
-// 外國犯罪新聞送 LLM 複核的候選：標題以外國地名開頭（主詞是外國）、標題與摘要都沒有台灣證據。
+// 外國犯罪新聞送 LLM 複核的候選：標題提到外國地名、標題與摘要都沒有台灣證據。
 // 只挑候選、不直接剔除：字串規則分不出「日本腦炎」「韓國烤肉店」這類台灣新聞（2026-11-25 跨家族審查兩輪重現），由 LLM 判斷。
 // 反詐（詐騙園區、打詐借鏡）與資安內文沿用 isForeignNonTaiwan 的既有豁免（07-05 收窄紀錄）。
-export function isForeignLeadCandidate(item) {
+export function isForeignNewsCandidate(item) {
   if (!isDomesticMediaNews(item)) return false;
   const rawTitle = String(item?.title || "");
   // GN 標題尾「 - 發行者」與摘要裡的同名發行者（奧丁丁新聞等台灣媒體名）不是事件的台灣證據。
@@ -475,9 +477,11 @@ export function isForeignLeadCandidate(item) {
   if ([item?.hint, leadCategory].some((t) => CROSS_BORDER_TOPICS.has(t) || t === "反詐") || CYBER_FOREIGN_EXEMPT_RE.test(fullText)) {
     return false;
   }
+  // 外國地名出現在標題任何位置都可送審（判斷由 LLM 做）；後接人稱或店家詞的那一處不算。
   const leadTitle = rawTitle.replace(FOREIGN_LEAD_IN_RE, "");
-  const foreignLead = FOREIGN_CITY_LEAD_RE.exec(leadTitle) || FOREIGN_PLACE_RE.exec(leadTitle);
-  return foreignLead?.index === 0 && !FOREIGN_ADJECTIVE_RE.test(leadTitle.slice(foreignLead[0].length)) &&
+  const foreignMention = [...leadTitle.matchAll(FOREIGN_CITY_ANY_RE), ...leadTitle.matchAll(FOREIGN_PLACE_ANY_RE)]
+    .some((m) => !FOREIGN_ADJECTIVE_RE.test(leadTitle.slice(m.index + m[0].length)));
+  return foreignMention &&
     !TAIWAN_MARKER_RE.test(fullText) && !STRONG_TAIWAN_MARKER_RE.test(fullText) && !TAIWAN_EXTRA_EVIDENCE_RE.test(fullText);
 }
 
