@@ -1103,6 +1103,8 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isForeignLeadCandidate(item)).toBe(true);
     // 內文真的提到台灣仍不列候選。
     expect(isForeignLeadCandidate({ ...item, description: "印尼工廠大火 台灣外交部關切 奧丁丁新聞 OwlNews" })).toBe(false);
+    // 不像媒體名的尾段不當發行者剝除（審查重現）。
+    expect(isForeignLeadCandidate({ ...mk("福岡AEON賣場驚傳傷人 - 台灣外交部", "治安", "福岡AEON賣場驚傳傷人 台灣外交部"), source: "GN 綜合治安" })).toBe(false);
   });
 
   it("外國城市開頭（福岡、倫敦）也列 LLM 候選；城市後接人稱或在台證據則不列", () => {
