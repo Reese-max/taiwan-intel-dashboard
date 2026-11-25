@@ -137,19 +137,24 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write(f"{self.command} {urllib.parse.urlsplit(self.path).path} {args[1] if len(args) > 1 else ''}\n")
 
 
-def fetch_upstream(url: str, open_fn=None, timeouts=UPSTREAM_TIMEOUTS) -> tuple[bytes | None, str]:
-    """Return (rss body, "") or (None, reason). Retries once on 5xx, 429, timeouts and non-RSS bodies."""
+def fetch_upstream(url: str, open_fn=None, timeouts=UPSTREAM_TIMEOUTS, may_retry=None) -> tuple[bytes | None, str]:
+    """Return (rss body, "") or (None, reason). Retries once on 5xx, timeouts and non-RSS bodies.
+    429 is never retried (it would amplify the rate limit), and a retry must take its own slot from
+    the relay's per-minute budget (may_retry), so upstream calls stay within RATE_PER_MINUTE."""
     open_fn = open_fn or OPENER.open
+    may_retry = may_retry or (lambda: allow_request(time.time()))
     reason = "no attempt"
-    for timeout in timeouts:
+    for attempt, timeout in enumerate(timeouts):
+        if attempt and not may_retry():
+            return None, f"{reason} (retry skipped: relay budget)"
         request = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/rss+xml"})
         try:
             with open_fn(request, timeout=timeout) as response:
                 body = response.read(MAX_BODY + 1)
         except urllib.error.HTTPError as error:
             reason = f"HTTP {error.code}"
-            if error.code < 500 and error.code != 429:
-                return None, reason  # 4xx 重試也一樣
+            if error.code < 500:
+                return None, reason  # 4xx（含 429）重試也一樣，429 重試還會加重限流
             continue
         except Exception as error:  # timeout, DNS, TLS
             reason = type(error).__name__
@@ -220,15 +225,20 @@ def self_test() -> None:
 
     err = lambda code: urllib.error.HTTPError("u", code, "x", None, None)
     fn, calls = opener([err(502), b"<rss>ok</rss>"])
-    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn) == (b"<rss>ok</rss>", "") and calls == [4, 3]
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (b"<rss>ok</rss>", "") and calls == [4, 3]
     fn, calls = opener([TimeoutError(), b"<rss/>"])
-    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn)[0] == b"<rss/>"
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True)[0] == b"<rss/>"
     fn, calls = opener([err(404)])
-    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn) == (None, "HTTP 404") and calls == [4]
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (None, "HTTP 404") and calls == [4]
     fn, calls = opener([err(503), err(503)])
-    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn) == (None, "HTTP 503") and calls == [4, 3]
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (None, "HTTP 503") and calls == [4, 3]
+    fn, calls = opener([err(429), b"<rss/>"])
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (None, "HTTP 429") and calls == [4]
+    fn, calls = opener([err(502), b"<rss/>"])
+    body, why = fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: False)
+    assert body is None and "retry skipped" in why and calls == [4]
     fn, calls = opener([b"<html>", b"<html>"])
-    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn) == (None, "not rss")
+    assert fetch_upstream("https://news.google.com/rss/search?q=x", fn, may_retry=lambda: True) == (None, "not rss")
     print("self-test ok")
 
 
