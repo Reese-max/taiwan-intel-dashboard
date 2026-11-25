@@ -1,4 +1,4 @@
 {
-  "sha": "458d42bc20720fa8a0f764b3db935ba4271e4626",
-  "note": "Owner approved on 2026-11-25 (chose 走自有主機代理 for the off-site search). main 458d42b = #164: /api/search goes through the self-hosted Google News relay (ops/gnews-relay, Tailscale Funnel /gnews) because Google rate-limits Cloudflare egress IPs; relay cache capped at 32MB. PR passed test/build-preview/check/verify-preview, preview /api/search returned upstream ok, and two cross-family reviews passed. Includes previously approved 6e3d1fb (#162)."
+  "sha": "cebda70db9d0a868a5a896ea680d33420ade0489",
+  "note": "Owner approved on 2026-11-25 (merge-and-release flow for the domestic-layer fixes). main cebda70 = #167: the media international-section rule no longer exempts rule-classified 災防 items (only 資安/食安/衛生/環境 keep cross-border news); on current production data main vs head removes 4 foreign disaster stories and adds 0. PR passed test/build-preview/check/verify-preview and cross-family review. Includes previously approved 458d42b (#164) and 6e3d1fb (#162)."
 }
