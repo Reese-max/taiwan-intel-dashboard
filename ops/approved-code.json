@@ -1,4 +1,4 @@
 {
-  "sha": "6414ad37c95f6e0734ef11c1ff68b48e8eddf0bf",
-  "note": "Owner approved on 2026-11-25. main 6414ad3 = #176: foreign-place mentions anywhere in the title (not only the lead) go to the LLM foreign review; prompt adds keep examples (suspect fled abroad, foreign only as comparison, Taiwan shop). Follow-up to #169. PR passed CI and cross-family review. Includes previously approved d4ea472 (#174), fd0c6ac, 507ffe0, cebda70, 458d42b, 6e3d1fb."
+  "sha": "3becd95671164cf393ec8a1c34a9bb844dd7cd7e",
+  "note": "Owner approved on 2026-11-25. main 3becd95 = #178: the LLM gate parses only the leading JSON of a response (trailing explanation allowed, ambiguous or non-JSON responses keep the batch by rule); found by the scheduled production check (one batch failed to parse). Shared extractJson unchanged. PR passed CI and cross-family review. Includes previously approved 6414ad3 (#176), d4ea472, fd0c6ac, 507ffe0, cebda70, 458d42b, 6e3d1fb."
 }
