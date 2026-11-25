@@ -450,7 +450,7 @@ export function isOverseasLocalNews(item) {
   // 資安／食安等主題來源刻意保留跨境脈絡，不套用。
   const link = String(item?.link || item?.source?.recordRef || "");
   const briefText = `${rawTitle} ${item?.description || ""} ${item?.summary || ""}`;
-  if (!TOPIC_RE[item?.hint] && !STRONG_TAIWAN_MARKER_RE.test(briefText) &&
+  if (!["資安", "食安", "衛生", "環境"].includes(item?.hint) && !STRONG_TAIWAN_MARKER_RE.test(briefText) &&
       (/\|\s*(?:國際焦點|國際|全球)\s*-\s*[^|]+$/.test(rawTitle) || /^https:\/\/www\.taipeitimes\.com\/News\/world\//.test(link))) return true;
   // RSS 原始項目把發行者放在頂層 publisherName，source 只是 feed 標籤。
   const publisher = sourceText(item?.publisherName ?? item?.source?.name ?? item?.source?.publisherName ?? item?.source).trim();

@@ -1070,6 +1070,8 @@ describe("isRelevantNewsItem（hint 分派主題漏斗）", () => {
     expect(isRelevantNewsItem(media("黑吃黑！他策畫綁票取贖1410萬得手竟私吞逃越南3共犯全得入監| 社會焦點 - 太報 TaiSounds"))).toBe(true);
     expect(isRelevantNewsItem(media("Man indicted for drunk driving crash", { link: "https://www.taipeitimes.com/News/taiwan/archives/2026/11/23/1" }))).toBe(true);
     expect(isRelevantNewsItem({ ...mk("韓國三星證券遭駭逾8000名客戶個資外洩| 全球財經| 全球 - UDN", "資安"), source: "GN 個資駭客" })).toBe(true);
+    // 災防不在跨境豁免內：規則判成災防的國際版新聞照樣排除（2026-11-25 正式站殘留）。
+    expect(isRelevantNewsItem({ ...mk("烏無人機襲俄貨輪引發火災俄直升機疑侵入芬蘭領空| 國際焦點| 全球 - UDN", "災防"), source: "GN UDN 綜合治安" })).toBe(false);
     // 摘要才有台灣證據也保留；「全國人口」不是台灣標記；保留窗事件的連結在 source.recordRef。
     expect(isRelevantNewsItem({ ...media("男子涉詐遭起訴 | 國際 - 三立新聞"), description: "台北地檢署表示，案件發生於台灣。" })).toBe(true);
     expect(isRelevantNewsItem(media("印度全國人口普查承辦商涉詐遭起訴 | 國際 - UDN"))).toBe(false);
