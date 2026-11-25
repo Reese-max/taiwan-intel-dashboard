@@ -1,4 +1,4 @@
 {
-  "sha": "d4ea472499247fed2d43e5d777a8329f4d3fbc4f",
-  "note": "Owner approved on 2026-11-25. main d4ea472 = #174: GN publisher names (e.g. 奧丁丁新聞) at the title tail are not Taiwan evidence when picking LLM foreign-review candidates (follow-up to #169/#172). PR passed CI and cross-family review. Includes previously approved fd0c6ac (#172), 507ffe0 (#169, #170), cebda70, 458d42b, 6e3d1fb."
+  "sha": "6414ad37c95f6e0734ef11c1ff68b48e8eddf0bf",
+  "note": "Owner approved on 2026-11-25. main 6414ad3 = #176: foreign-place mentions anywhere in the title (not only the lead) go to the LLM foreign review; prompt adds keep examples (suspect fled abroad, foreign only as comparison, Taiwan shop). Follow-up to #169. PR passed CI and cross-family review. Includes previously approved d4ea472 (#174), fd0c6ac, 507ffe0, cebda70, 458d42b, 6e3d1fb."
 }
