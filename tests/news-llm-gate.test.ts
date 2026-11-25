@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 // @ts-expect-error — JS ESM module without types
-import { readVerdicts, reviewNewsRelevance, serializeVerdicts } from "../scripts/lib/news-llm-gate.mjs";
+import { parseDropList, readVerdicts, reviewNewsRelevance, serializeVerdicts } from "../scripts/lib/news-llm-gate.mjs";
 // @ts-expect-error — JS ESM module without types
 import { dedupeTitleKey, titleKey } from "../scripts/lib/title-key.mjs";
 // @ts-expect-error — JS ESM module without types
@@ -15,6 +15,26 @@ const chatDropping = (dropTitles: string[]) =>
     drop: titlesOf(messages).flatMap((title, i) => (dropTitles.includes(title) ? [i + 1] : [])),
   }));
 const NOW = Date.parse("2026-11-19T00:00:00.000Z");
+
+describe("parseDropList", () => {
+  it("一般回應照常解析", () => {
+    expect(parseDropList('{"drop":[1,2]}')).toEqual([1, 2]);
+    expect(parseDropList("[3]")).toEqual([3]);
+    expect(parseDropList('```json\n{"drop":[]}\n```')).toEqual([]);
+    expect(parseDropList('結果：{"drop":[4]}')).toEqual([4]);
+    expect(parseDropList("要剔除：[5,6]")).toEqual([5, 6]);
+  });
+
+  it("drop JSON 後接帶括號的說明仍能解析（2026-11-25 正式站複核批次失敗）", () => {
+    expect(parseDropList('{"drop":[1,2,5]}\n\n說明：第[3]則拿不準 {保留}')).toEqual([1, 2, 5]);
+  });
+
+  it("不從說明文字裡抓不相干的括號段落（跨家族審查重現）", () => {
+    expect(parseDropList('[1] note {"drop":[2]} explanation {x}')).toEqual([2]);
+    expect(() => parseDropList('{"x":"unfinished} then [1]')).toThrow();
+    expect(() => parseDropList("沒有 JSON")).toThrow();
+  });
+});
 
 describe("國內新聞 LLM 複核", () => {
   it("外國地名開頭的候選即使標題有明確案件字眼也送外國提示詞複核，兩次都剔才剔，鍵加 foreign: 前綴", async () => {

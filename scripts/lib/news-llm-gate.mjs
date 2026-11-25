@@ -1,6 +1,6 @@
 // 國內新聞 LLM 複核：規則判為相關、但標題沒有明確案件字眼的新聞，交給 LLM 判斷是否真為事件。
 // 失敗一律保留規則結果（fail-open）；判斷結果依標題鍵跨輪快取，每輪只問新進新聞。
-import { chatVia, extractJson, profileCfg, sleep } from "./llm-client.mjs";
+import { chatVia, profileCfg, sleep } from "./llm-client.mjs";
 import { hasStrongCaseTitle, isForeignNewsCandidate } from "./news-bulk.mjs";
 import { titleKey } from "./title-key.mjs";
 
@@ -36,6 +36,55 @@ export function serializeVerdicts(verdicts) {
   return { version: 1, verdicts: Object.fromEntries([...verdicts].sort(([a], [b]) => a.localeCompare(b))) };
 }
 
+// 只接受 {"drop":[...]} 物件或整段就是陣列；模型在 JSON 後接帶括號的說明時仍可解析（2026-11-25 正式站一批失敗），
+// 但不從說明文字裡抓不相干的括號段落當答案（誤刪風險，跨家族審查重現）。找不到就丟錯，呼叫端照規則保留。
+export function parseDropList(text) {
+  const t = String(text || "").replace(/```(?:json)?\s*([\s\S]*?)```/gi, "$1").trim();
+  try {
+    const whole = JSON.parse(t);
+    if (Array.isArray(whole)) return whole;
+    if (Array.isArray(whole?.drop)) return whole.drop;
+  } catch { /* 不是整段 JSON，往下找 */ }
+  for (let i = t.indexOf("{"); i !== -1; i = t.indexOf("{", i + 1)) {
+    const segment = balancedJsonSegment(t, i);
+    if (!segment) continue;
+    try {
+      const obj = JSON.parse(segment);
+      if (Array.isArray(obj?.drop)) return obj.drop;
+    } catch { /* 不是合法 JSON，換下一個起點 */ }
+  }
+  // 「要剔除：[5,6]」這種沒有物件的回應：全文只有一段陣列時才採用。
+  if (!t.includes("{")) {
+    const start = t.indexOf("[");
+    const segment = start === -1 ? null : balancedJsonSegment(t, start);
+    if (segment && t.indexOf("[", start + segment.length) === -1) {
+      try {
+        const arr = JSON.parse(segment);
+        if (Array.isArray(arr)) return arr;
+      } catch { /* 落到下方錯誤 */ }
+    }
+  }
+  throw new Error(`LLM 回應缺 drop 陣列：${t.slice(0, 120)}`);
+}
+
+function balancedJsonSegment(t, start) {
+  let depth = 0;
+  let inString = false;
+  for (let i = start; i < t.length; i++) {
+    const ch = t[i];
+    if (inString) {
+      if (ch === "\\") i++;
+      else if (ch === '"') inString = false;
+    } else if (ch === '"') inString = true;
+    else if (ch === "[" || ch === "{") depth++;
+    else if (ch === "]" || ch === "}") {
+      depth--;
+      if (depth === 0) return t.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
 async function reviewBatch(batch, chatFn, prompt = SYSTEM_PROMPT) {
   const lines = batch.map((it, i) => {
     const desc = String(it.description || "").replace(/\s+/g, " ").slice(0, 80);
@@ -45,10 +94,7 @@ async function reviewBatch(batch, chatFn, prompt = SYSTEM_PROMPT) {
     [{ role: "system", content: prompt }, { role: "user", content: lines.join("\n") }],
     { maxTokens: 400, temperature: 0 },
   );
-  const parsed = extractJson(String(text || ""));
-  const drop = Array.isArray(parsed) ? parsed : parsed?.drop;
-  if (!Array.isArray(drop)) throw new Error(`LLM 回應缺 drop 陣列：${String(text).slice(0, 120)}`);
-  const ids = new Set(drop.map(Number));
+  const ids = new Set(parseDropList(text).map(Number));
   for (const id of ids) if (!Number.isInteger(id) || id < 1 || id > batch.length) throw new Error(`LLM 回應編號超出範圍：${id}`);
   return ids;
 }
