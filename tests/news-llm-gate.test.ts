@@ -42,6 +42,7 @@ describe("國內新聞 LLM 複核", () => {
     // 下一輪快取命中不再呼叫；模型失敗時照規則保留。
     const again = await reviewNewsRelevance(items, { verdicts, chatFn: vi.fn(), now: NOW });
     expect([...again.dropped].map((it: { title: string }) => it.title)).toEqual(["日本福岡AEON旁男子遇刺亡！兇嫌疑持刀在逃"]);
+    expect(again.stats).toMatchObject({ foreignCandidates: 2, foreignDropped: 1, calls: 0 });
     const failing = await reviewNewsRelevance(items, { verdicts: new Map(), chatFn: vi.fn(async () => { throw new Error("HTTP 500"); }), now: NOW });
     expect(failing.dropped.size).toBe(0);
   });

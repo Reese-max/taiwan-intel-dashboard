@@ -74,7 +74,10 @@ export async function reviewNewsRelevance(items, {
     const cached = verdicts.get(key);
     if (cached) {
       stats.cached++;
-      if (!cached.keep) dropped.add(it);
+      if (!cached.keep) {
+        dropped.add(it);
+        if (group === "foreign") stats.foreignDropped++;
+      }
       return;
     }
     const { fresh } = groups[group];
