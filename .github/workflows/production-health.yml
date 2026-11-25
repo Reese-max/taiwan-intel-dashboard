@@ -1,0 +1,28 @@
+name: 正式站巡檢
+
+# 每 2 小時檢查正式站：資料新鮮度、每日重建不變量（30 小時）、站外搜尋、轉發密鑰、LLM 複核。
+# 失敗時 job 以非零結束，GitHub 依通知設定寄信；不寫入任何資料、不觸發部署。
+on:
+  schedule:
+    - cron: "41 */2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-health
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 巡檢正式站
+        run: node scripts/production-health.mjs
