@@ -23,6 +23,26 @@ describe("production health", () => {
     expect(r.failures.join()).toMatch(/130 分鐘/);
   });
 
+  it("門檻邊界用原始值比較，未來超過 5 分鐘的時間戳算異常（跨家族審查重現）", () => {
+    // 120 分 29 秒：四捨五入後會被當成 120 分而放行
+    expect(evaluateProductionHealth({ ...healthy, provenance: provenance({ generatedAt: "2026-11-26T00:59:31.000Z" }) }).ok).toBe(false);
+    const future = provenance({
+      generatedAt: "2026-11-26T03:06:00.000Z",
+      sources: [{ datasetId: "tfda-noncompliant-food", lastAttemptAt: "2026-11-27T00:00:00.000Z" }],
+    });
+    const r = evaluateProductionHealth({ ...healthy, provenance: future });
+    expect(r.ok).toBe(false);
+    expect(r.failures.join()).toMatch(/未來/);
+    // 時鐘誤差 5 分鐘內照常
+    expect(evaluateProductionHealth({ ...healthy, provenance: provenance({ generatedAt: "2026-11-26T03:04:00.000Z" }) }).ok).toBe(true);
+  });
+
+  it("讀不到 provenance（網路錯誤）算失敗", () => {
+    const r = evaluateProductionHealth({ ...healthy, provenance: null });
+    expect(r.ok).toBe(false);
+    expect(r.failures.join()).toMatch(/時間不明/);
+  });
+
   it("補跑在時窗尾端才跑完（約 32 小時）不誤報", () => {
     // 前一天 12:32Z 手動 daily、當晚 cron 被丟，次晚補跑 20:30Z 派出、21:00Z 前跑完 → 檢查時約 32 小時
     const late = provenance({ sources: [{ datasetId: "tfda-noncompliant-food", lastAttemptAt: "2026-11-24T19:00:00.000Z" }] });
