@@ -23,7 +23,13 @@ describe("production health", () => {
     expect(r.failures.join()).toMatch(/130 分鐘/);
   });
 
-  it("每日來源超過 30 小時沒嘗試算失敗（cron 與補跑都沒發生）", () => {
+  it("補跑在時窗尾端才跑完（約 32 小時）不誤報", () => {
+    // 前一天 12:32Z 手動 daily、當晚 cron 被丟，次晚補跑 20:30Z 派出、21:00Z 前跑完 → 檢查時約 32 小時
+    const late = provenance({ sources: [{ datasetId: "tfda-noncompliant-food", lastAttemptAt: "2026-11-24T19:00:00.000Z" }] });
+    expect(evaluateProductionHealth({ ...healthy, provenance: late }).ok).toBe(true);
+  });
+
+  it("每日來源超過 34 小時沒嘗試算失敗（cron 與補跑都沒發生）", () => {
     const stale = provenance({ sources: [{ datasetId: "tfda-noncompliant-food", lastAttemptAt: "2026-11-24T20:00:00.000Z" }] });
     const r = evaluateProductionHealth({ ...healthy, provenance: stale });
     expect(r.ok).toBe(false);

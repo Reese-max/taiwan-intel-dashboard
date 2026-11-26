@@ -8,7 +8,7 @@ import { resolve } from "node:path";
 export const SITE = "https://taiwan-intel-dashboard.pages.dev";
 export const RELAY = "https://video-mcp-a1.tail930e77.ts.net/gnews";
 const MAX_AGE_MINUTES = 120; // 75 分鐘內由 refresh-watchdog 補觸發；這裡只抓真正停擺
-const DAILY_MAX_HOURS = 30; // 30 18 cron 加上接力補跑時窗；超過代表兩者都沒發生
+const DAILY_MAX_HOURS = 34; // 補跑最晚 20:30Z 才派出、再約 30 分鐘跑完，真實間隔可達約 32 小時；超過 34 代表 cron 與補跑都沒發生
 const DAILY_MARKER_DATASET = "tfda-noncompliant-food";
 
 export function evaluateProductionHealth({ provenance, searchUpstreams, relayStatus, now = Date.now() }) {
