@@ -30,7 +30,7 @@ describe("production health", () => {
   });
 
   it("每日來源超過 34 小時沒嘗試算失敗（cron 與補跑都沒發生）", () => {
-    const stale = provenance({ sources: [{ datasetId: "tfda-noncompliant-food", lastAttemptAt: "2026-11-24T20:00:00.000Z" }] });
+    const stale = provenance({ sources: [{ datasetId: "tfda-noncompliant-food", lastAttemptAt: "2026-11-24T16:00:00.000Z" }] });
     const r = evaluateProductionHealth({ ...healthy, provenance: stale });
     expect(r.ok).toBe(false);
     expect(r.failures.join()).toMatch(/每日重建/);
