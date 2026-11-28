@@ -1,0 +1,377 @@
+{
+  "generatedAt": "2026-11-28T12:31:19.313Z",
+  "windowHours": 24,
+  "windowStart": "2026-11-27T12:31:19.313Z",
+  "note": "以下為待人工判讀候選，不代表已確認錯誤；誤殺候選是被閘門排除的項目，漏網候選是通過閘門的項目。",
+  "population": {
+    "rawUnique": 2116,
+    "accepted": 545,
+    "rejected": 1571
+  },
+  "samples": {
+    "potentialFalseNegatives": [
+      {
+        "title": "民眾黨全壘打！台北市議員「6席全上」 支持者嗨翻：小草繼續茁壯 | 蔣季容 | 新聞 - Storm.mg",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE81WW5WV3lGQ0ZHTlNhS3YzeXdfUlRVdUtCODIyVi1qRXFYX1A1UEMzNFZxWUkyWU84aEZFRDhnNUxlVmViV19aeDlOZ3hQdw?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:31:00 GMT",
+        "source": "GN 風傳媒綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民眾黨全壘打！台北市議員「6席全上」 支持者嗨翻：小草繼續茁壯 | 蔣季容 | 新聞 Storm.mg"
+      },
+      {
+        "title": "AI最新與熱門精選文章 - 今周刊",
+        "link": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE1Qb2hJSjEydHZ6cWY3RGpqV2w1UDg3ZHk0ZnlJSEQwVTFfTUR0ZEJQT1FDaU5WOU8xR0dpNm5HU2NsXzlFVnRLY04wQlJQUVp5N0dVa2xpTQ?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:29:53 GMT",
+        "source": "GN 今周刊詐騙資安",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "AI最新與熱門精選文章 今周刊"
+      },
+      {
+        "title": "今晚惜敗蔣萬安 沈伯洋：你們沒有輸、輸掉選戰的是我自己",
+        "link": "https://newtalk.tw/news/view/2026-11-28/1074306",
+        "pubDate": "Sat, 28 Nov 2026 20:29:49 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 台北市長選戰今（28）晚結果出爐，綠營候選人沈伯洋在敗選感言中向小水滴們喊話，「你們沒有輸，輸掉選戰的是沈伯洋自己。」並表示，雖然今天台北市民沒有選擇自己，但這座城市已經有越來越多的人願意伸出手，「有大家在，台北一定會更好」。沈伯洋表示，14年前曾有人在這樣的夜晚説過，「我們可以哭泣，但不要泄氣；我 延伸閱讀： 現場直擊》沒有選前之夜、迎來「市民日」！沈伯洋全市6站車掃 驚喜遇"
+      },
+      {
+        "title": "承認敗選向賴瑞隆祝福 柯志恩承諾老死在高雄",
+        "link": "https://newtalk.tw/news/view/2026-11-28/1074260",
+        "pubDate": "Sat, 28 Nov 2026 20:28:27 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 高雄市長選情白熱化，今(28)日開票結果也從一開始就緊咬，不過民進黨候選人賴瑞隆逐漸把票數拉開，國民黨候選人柯志恩在落後達10萬票的情況下，於晚間7點40分左右在競選總部宣布承認敗選，並展現氣度祝福賴瑞隆當選高雄市長。開票過程剛開票時，柯志恩一度領先賴瑞隆，讓匯聚在國民黨高雄市黨部的支持者相當振奮， 延伸閱讀： 市長任內最後一次投票 陳其邁：平常心看待選舉 「隆洋之夜」力挺賴瑞"
+      },
+      {
+        "title": "陳亭妃宣布當選 成為台南400年首位女市長",
+        "link": "https://news.ltn.com.tw/news/Tainan/breakingnews/5656666",
+        "pubDate": "Sat, 28 Nov 2026 20:28:24 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨台南市長候選人陳亭妃晚間宣布當選，成為台南400年來首位女市長，她感謝支持者28年來一路相挺，未來全力落實所提出的政見，落實偏鄉弱勢的照顧，以「姐姐市長」的身分，攜手開創...…"
+      },
+      {
+        "title": "綠營桃市長候選人黃世杰承認敗選 將深刻反省持續努力",
+        "link": "https://news.ltn.com.tw/news/Taoyuan/breakingnews/5656667",
+        "pubDate": "Sat, 28 Nov 2026 20:28:11 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "桃園市長選舉結果揭曉，民進黨候選人黃世杰晚間約8點在南區競選總部表示，他尊重市民的選擇，並承擔此次選舉結果，對於自己努力不夠、做得不夠好的地方，將深刻反省，未來會繼續努力，期盼...…"
+      },
+      {
+        "title": "民意永遠是對的！沈伯洋：這場選舉檢討我就好、不要檢討台北人",
+        "link": "https://newtalk.tw/news/view/2026-11-28/1074316",
+        "pubDate": "Sat, 28 Nov 2026 20:28:08 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 民進黨台北市長候選人沈伯洋今（28）日承認敗給台北市長蔣萬安，並表示已經打電話給蔣恭喜連任。沈說，這場選舉要檢討，檢討他就好，不要去檢討台北人，也別檢討沒投給他的人。他強調，民意永遠是對的，這句話，贏的時候要講，輸的時候更要講。沈伯洋今晚在競選總部前舞台發表談話，包括沈競總總幹事吳思瑤，以及現場支持 延伸閱讀： 快訊》預計宣布敗選！沈伯洋晚間7時35分向小水滴發表談話 沈伯洋痛"
+      },
+      {
+        "title": "新竹縣翻天了！ 民進黨鄭朝方自行宣布當選",
+        "link": "https://newtalk.tw/news/view/2026-11-28/1071052",
+        "pubDate": "Sat, 28 Nov 2026 20:28:00 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 九合一選舉今（28）日舉行投開票，新竹縣長選舉部分，根據《TVBS》所統計之計票結果，民主進步黨籍新竹縣長候選人鄭朝方以72,023票，領先中國國民黨新竹縣長候選人徐欣瑩58,472 票，而鄭朝方稍早也自行宣布當選。雖鄭朝方已自行宣布當選，惟最終計票之結果及當選與否，仍依中央選舉委員會公告為準之。 延伸閱讀： 坐輪椅現身選前之夜！ 徐欣瑩悲喊：爭的是每一個人都能公平 不斷更新》"
+      },
+      {
+        "title": "2026新北市長開票即時結果》李四川破100萬！與蘇巧慧領先票差擴大（不斷更新） - TVBS新聞",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9FVEd1QWJUbV9JQXlKSjNSTHduLXdBM0NsZmlTNXpEYkNET0ZKUUNYcHRPZGRETlMtNWFZd19yZzRIRHJlZFY0aFhIZy1JcHl4WEo0?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:28:00 GMT",
+        "source": "GN TVBS 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "2026新北市長開票即時結果》李四川破100萬！與蘇巧慧領先票差擴大（不斷更新） TVBS新聞"
+      },
+      {
+        "title": "他投票誤把「身分證塞進票匭」慌了！網笑翻 曝取回時間點：去監票吧 - TVBS新聞",
+        "link": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE9qR3lHZ2hTdVFVcWRMT0Z1cHRwVDFrcmw1T2RCcVI4Y013MmxndEFpeEp5U0NQRFl4SDRZVllnSUZXdURWTWZtcDZZQ25FQQ?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:28:00 GMT",
+        "source": "GN TVBS 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "他投票誤把「身分證塞進票匭」慌了！網笑翻 曝取回時間點：去監票吧 TVBS新聞"
+      },
+      {
+        "title": "九合一大選 學者：民進黨勝中有敗，國民黨敗中保勝 - 三立新聞",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE1EeGNaNkdyQWVYa05sNTlGVEtQeXRHTW9IQ01qSGFlYmRkcFBrZkkxZ1IzQ2xGZ24zN0tNZ09oXzVQRGdKSVYzWdIBTEFVX3lxTE9LUjEtbGVsTlJfVzhYbzgtdU4wNmQyaDZtZlowcndqMDUyNE95b0ZGSjdlbHNYWXp6T25Fb29sTUFoT0l4MHFYNmV6MFo?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:28:00 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "九合一大選 學者：民進黨勝中有敗，國民黨敗中保勝 三立新聞"
+      },
+      {
+        "title": "前女友發悲觀訊息後失蹤 洪珉基家暴醜聞節外生枝 - Singtaousa",
+        "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxOck1xOVlrZ05QbmlfRXFGc3hLMjZ3T0YwMWdWSll3VnV0UTc0UFRWeExzNVZUeE5aMTRJVjA5UGdGZnl4MUNGbzRsZ2NzcHBvcklGT05kdnEzRW5aanlmMkhsVnhiZGhOWThEbFpzMXNCczlmdlFQOE9FLVNpT3liZ2NBRmtwUWdFZ1BRa0drZ1FMOFp2cVE?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:27:44 GMT",
+        "source": "GN 家暴兒虐",
+        "hint": "治安",
+        "authority": "media",
+        "description": "前女友發悲觀訊息後失蹤 洪珉基家暴醜聞節外生枝 Singtaousa"
+      },
+      {
+        "title": "何欣純預計20:45現身競總 現場「小水滴」看沈伯洋哭成淚人兒",
+        "link": "https://news.ltn.com.tw/news/Taichung/breakingnews/5656662",
+        "pubDate": "Sat, 28 Nov 2026 20:27:12 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "民進黨台中市長候選人何欣純競總設於南屯區五權西路，由於從今天（28日）下午4時開票後，票數一路領先江啟臣，台中市選舉委員會晚間8時開出71萬5000多票，領先對手國民黨台中市長...…"
+      },
+      {
+        "title": "快訊／謝典霖人在看守所！得票衝破1萬張 自行宣布：順利6連霸 - TVBS新聞",
+        "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFBQOGtVSTJMQlR0cU9UbGN1Nm53Unh3Yy1kcm5xMHU5Y09vWWd0ZXdQN0VENW1IQVNhUFR6dVJKMTg2Vm5ETWppMU5hdjl1VzkzVnNN?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:27:00 GMT",
+        "source": "GN TVBS 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "快訊／謝典霖人在看守所！得票衝破1萬張 自行宣布：順利6連霸 TVBS新聞"
+      },
+      {
+        "title": "快訊／新北市長開票落後蘇巧慧8時40分將抵達板二運動場發表談話| 政治 - 三立新聞",
+        "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFBMU2I0aFBmUGZ6YjE5bURlYXpSdGxlTHk4elpyYTdTZTRLZU0tNUpnZXBPS2s4dzdoWEs4a1VLVFh4SWk4M0FGeXE5RnZTdmZUZXlCMm5LLVo?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:27:00 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "快訊／新北市長開票落後蘇巧慧8時40分將抵達板二運動場發表談話| 政治 三立新聞"
+      },
+      {
+        "title": "情況不妙？秦慧珠吐心聲「努力不夠、打法要檢討」：不責怪蔣萬安 - 三立新聞",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE9jUEhjWGJ4VHBsODhac0NzY3pMLVpOQkRtdEZVZFpDVjVmaFZmRFNYRVExNUNGR3VrSkEyUExhQmxuSnpNaW5WcdIBTEFVX3lxTE1tTXd4LXRYS053T2xKWlY4S0cyTzgydTdfWVVhTEYzb2RtUzlSTmp3YzF2V1p0LUJNTDE3cTdEbWtPWDBiUVhfZjZoZmU?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:27:00 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "情況不妙？秦慧珠吐心聲「努力不夠、打法要檢討」：不責怪蔣萬安 三立新聞"
+      },
+      {
+        "title": "彰化變天！國民黨魏平政宣布敗選 談立委補選：沒想過",
+        "link": "https://news.ltn.com.tw/news/Changhua/breakingnews/5656657",
+        "pubDate": "Sat, 28 Nov 2026 20:26:31 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國民黨彰化縣長候選人魏平政，今天（28日）晚間已自行宣布敗選，魏平政強調，美好一戰他已經打過，所有責任他一肩扛。由於民進黨立委陳素月當選縣長，魏平政是否會投入立委補選一事，魏平...…"
+      },
+      {
+        "title": "貓咪卡鐵捲門 新北動保處即刻救援 - Yahoo新聞",
+        "link": "https://news.google.com/rss/articles/CBMiiAJBVV95cUxQcmFvNlEyUkFGSDc1Z1pYV3VPYUJCYWZ3OW1ERWoxanF1akNzNk02cWQ2aGo4WnhDM2dnVzUxc282VlM1SzI4blBrVmRvaGdUUDFZdTRaOXB1aFBKZExubUo0Wi1PUUI0NUFxQ1lTNGFISDZEMS1Xb1NWM3FGMnNDc2JpSUMzT1h3UW8xMDRldVlrczhOS194QzJfWkpOVWhkSXBDUTNFQ01FWUNpZVBMYkFkRU9aNmNrYXdWQ0pkR3h1N1lNSXMzWGNLdEw1TW5kUGhzRVVUdm1obzBZTWplcl9RNG56V0ttNzExS1RTN01RMzZsZDdPSWpHTFA4RUxVYkpYMlJxaHE?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:26:20 GMT",
+        "source": "GN 虐待動物",
+        "hint": "治安",
+        "authority": "media",
+        "description": "貓咪卡鐵捲門 新北動保處即刻救援 Yahoo新聞"
+      },
+      {
+        "title": "2026屏東縣長當選結果／發表敗選感言蘇清泉稱「我們努力不夠」：恭喜周春米連任| 百里侯選戰焦點| 要聞 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiggFBVV95cUxQN25CLVp0NTdhRmpGRFRQT3A4c2ZEX1FIQllTaEVaMTl5YzNBaFlzTTBoWE0xaHlWbUFrcVFIRzdKa2pNVE1idUNMTzRKXzJpMmtFUWw2SXNsYm9WYjFoOE93WkhOQmMxR2lWenlWNHdzMTZobDNnbTdpUGNRSDFVWU9R?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:25:17 GMT",
+        "source": "GN UDN 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "2026屏東縣長當選結果／發表敗選感言蘇清泉稱「我們努力不夠」：恭喜周春米連任| 百里侯選戰焦點| 要聞 UDN"
+      },
+      {
+        "title": "花蓮縣長選舉開票 三腳督拉鋸中！（不斷更新）",
+        "link": "https://news.ltn.com.tw/news/Hualien/breakingnews/5656385",
+        "pubDate": "Sat, 28 Nov 2026 20:25:00 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "首次上稿 16:20更新時間 20:25 2026年九合一地方選舉正在如火如荼開票中，花蓮縣長選情陷入三腳督激戰，由國民黨候選人游淑貞對決無黨籍候選人張峻、魏嘉賢，本報特別...…"
+      }
+    ],
+    "potentialFalsePositives": [
+      {
+        "title": "康體通個資外洩影響九萬人 數字辦介入協助調查並發出保安警示 - www.5news.com.hk",
+        "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOR0tJSTdhNkRUbVZRTGdqVXVJRUU0Qkw2RUloTm9sMklwQjJRYzZySVNqZTdnRnFRNVd5TzdhZmk3TzZtal9zTktIbGxYU0FGZWZTUlRxbWpqTWViSl9Kb192NXlhNHBMOWVtSVlaeUtXSDVsaVc0a09JSFkzZWdYU094UnlFaHRX?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:28:26 GMT",
+        "source": "GN 個資駭客",
+        "hint": "資安",
+        "authority": "media",
+        "description": "康體通個資外洩影響九萬人 數字辦介入協助調查並發出保安警示 www.5news.com.hk"
+      },
+      {
+        "title": "涉每注逾萬選舉賭盤 大組頭收押 - 中華新聞雲／中華日報",
+        "link": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBscVM1OEQ4anEtYTliOURRNDZFQlgzYjA0QUtPYTAtUU51RVNaZmFITlJidkFsaFlYRmtkWFM3QjAyN0hzek05VS1ERjROTzFMNmc?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:27:51 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "涉每注逾萬選舉賭盤 大組頭收押 中華新聞雲／中華日報"
+      },
+      {
+        "title": "加州薩利納斯谷監獄囚犯襲警！ 獄警與14名職員送醫，官方列殺人未遂調查 - VOCO News",
+        "link": "https://news.google.com/rss/articles/CBMid0FVX3lxTFBQUU83enVjZG1sbXdPS0JlX1pvMVhwWFhUQ0hfYU50enEyVEpUaU5Za0NwRmNlZUxYM3poYngzejdFWWRoUUhNOXRORWxiN2NDLVlBVmM0Wl9lRFNVYmtORHkxWl91TE51NUkwSWFObVpJTDBlV1gw?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:24:28 GMT",
+        "source": "GN 襲警妨害公務",
+        "hint": "治安",
+        "authority": "media",
+        "description": "加州薩利納斯谷監獄囚犯襲警！ 獄警與14名職員送醫，官方列殺人未遂調查 VOCO News"
+      },
+      {
+        "title": "台北市長選舉｜蔣介石曾孫蔣萬安連任 挑戰者沈伯洋遭陸全球通緝 - 香港01",
+        "link": "https://news.google.com/rss/articles/CBMiyANBVV95cUxQZzVia0VIa1g5b0JteVZWSkRBbFZEVmxXZnd6alVwMnR2VmFPRUdjb2VwcVAxcVhacWpyWklzV3hFVFo4UER6MTRqZVBrNDZ6bEMyWHZyOTIycU1GUVdJMS1sODF4aWsydmUyQWRwdUl3d2oyc1dFYmxXSE01Y1otWlowM3Z1X01fcjBYelFYSXk4d1B6TGRGVXNyZmV4d05lMndtZ2gzNEtZbWRkeE05Rk9DYy1jazliNHp6WDRGMVR3aUpHQXNUVEtab2dmTXhwMTdMcnVCS2VMWFJZeUNWVFVmQkoyR2lxRVdncUcwdFFQOUJYTElGN1dWRHY5SVVlT0x0eklBNThZWW1qS2Yzd0w5VkJSTlV5RkNzZF9FVTN6dHozdWFMX1RkeUoxdnNkNWdTRUpWTUpwZXhZVlhHTWp6R2djZWFLUVFlYlVKUVNLT2F5NzhUekRxXzVPLWVqOU5aNHRsdUdRMkJCMk1SVGtuRGV4eUlaZHVOcFdUR0YwdGhlMENJQ2RZT0FNMW1GLVBRdzB5c1l1WU9ibEdkR19jZHkzeUwzUXA1OHhrdUtWRWVvTFZBTW1oaXlzU1R0aWlhVEtYNWM?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:19:29 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "台北市長選舉｜蔣介石曾孫蔣萬安連任 挑戰者沈伯洋遭陸全球通緝 香港01"
+      },
+      {
+        "title": "快訊》沈伯洋承認「我輸了」：已經打給蔣萬安恭喜連任",
+        "link": "https://newtalk.tw/news/view/2026-11-28/1074296",
+        "pubDate": "Sat, 28 Nov 2026 20:18:52 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 今（28）日是2026地方大選投開票日，民進黨台北市長候選人沈伯洋承認敗給蔣萬安。沈說，他已經打電話給台北市長蔣萬安，並恭喜蔣連任，也請大家跟著他一起祝福蔣。沈伯洋今晚在競選總部前舞台發表談話，包括沈競總總幹事吳思瑤，以及現場支持者都忍不住落淚。沈伯洋表示，各位小水滴們，還有各位台北市民大家晚安，結 延伸閱讀： 快訊》預計宣布敗選！沈伯洋晚間7時35分向小水滴發表談話 沈伯洋痛"
+      },
+      {
+        "title": "路透看台灣九合一開票：六都藍綠各拿3席 綠營有望搶回台中 - TVBS新聞",
+        "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1RM1lOb1FHQy1pOGFGZ3pLRkpMdS1RejRCaDlDTW1PYm52ZmprQUs0UXRXOEp3bjhKQktFdDVTdk1mVDItS3Azc2pVRWJHSWs?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:15:00 GMT",
+        "source": "GN TVBS 綜合治安 2h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "路透看台灣九合一開票：六都藍綠各拿3席 綠營有望搶回台中 TVBS新聞"
+      },
+      {
+        "title": "【藍白合抗洋流】蔣萬安劫後餘生須記取教訓 連任不能再走回頭老路 - 上報Up Media",
+        "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTFB1ZVZSVjFCS2Q3WGtrdkg2d1hoNkRvcGpSUDJnSmJHYjZSaFRIU2JMVUdRcFdIOHpvclFYYzRyQWt5VERwdkZqYlNpdlVhT2NCLWk2d0g2b2FVaWZaM1QtcXRVRUpWUVUyNmc?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:15:00 GMT",
+        "source": "GN 上報綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "【藍白合抗洋流】蔣萬安劫後餘生須記取教訓 連任不能再走回頭老路 上報Up Media"
+      },
+      {
+        "title": "曾因性侵未遂入獄！「退選里長」王健陞仍獲得1079票 確定落選 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE8wZF9kem5fS2NRSFBxb3UtS0tldzhiblZhcXdRTU5aSGUtUzVDTkpEbmozZERKLV9VNm1HaHVFWWJ5TWU2WkZ4UjJHWDJfalVQRzdGMnNsNC1KbFBzZmfSAUtBVV95cUxNUmRSZXBYcGZndUQyQU9YZFpGc2EzWXVSdFZhS0NtY1dMVk1zalZkOXpRcU1na3l0MlJZcUw1YnV3d3Zic2pUUTJoRWM?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:13:00 GMT",
+        "source": "GN ETtoday 綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "曾因性侵未遂入獄！「退選里長」王健陞仍獲得1079票 確定落選 ETtoday新聞雲"
+      },
+      {
+        "title": "岡本璃奈｜日本格鬥女神家暴男友打臉踢肚 被捕兼無限期停賽 - singtao.ca",
+        "link": "https://news.google.com/rss/articles/CBMiogNBVV95cUxPSG1SSFVhZUxuTTBLQ2J2ZUM5cnl1RWNLM0ZJUGV0d2g1dGdxcHBtUzVyanI4ajN6MjZfS0dmTFNrTDdqelo1MzJwaTV3OUVNWWFJVmFvRzZWUG50TTkySzFTTEN3ajRCNEpYeWtQU1lHb0V3dFFxcEJPUlRlc1dTM3lrRzdodDNTdjRPcmcxVzBWQUUyaFl1WEVLMmhLWjFPYVo2MXFLV3NXSjV2QjE5X3lLeG5MVEZVVUhkRm9RRnR6cnVIU0hBbW1VVHB2MVJGaGVPVmtiVklpd3BUUFM1VFppZk1mcm9hQ3hjUG1wM1hnUzIyVnJkeHJnY0JseVpibVJselphUmlqQ19LZTVMaTNsYWs5dzdSaEN1ZHNCTWo2VkFnLTlOVjI0aU9IcnV5YkFMMFZoM0tLdTk4VVZmVDdZajdOMjFqTlZJS2lldXJFT1V6eEl6VHNrQlFCY2dtMzBraTd6enpaNHRNamRCaTgwekItbkJMcWdqaFZFd0I5aDhzcXRjZkdRdnVlM1c3WmRjMGxHY1lZaG1uTVE4U09n0gGMAUFVX3lxTE9NLWd2dTBSUFo0WFU1anZxRkFlSDVKWTZVRHhYSFZyYjljQngxUUNoX1pKV3JSaF9NaVNOZ2g0VTZoZ0ZqSHEwNkNmdGtJbzlaZnQzLXlISng5eWxBNFpqbjVsdGhibjk0WE1teFpJMURmeGhOeUpaa090dlB2VlphZEp6b2RILVhkV21Y?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:11:15 GMT",
+        "source": "GN 家暴兒虐",
+        "hint": "治安",
+        "authority": "media",
+        "description": "岡本璃奈｜日本格鬥女神家暴男友打臉踢肚 被捕兼無限期停賽 singtao.ca"
+      },
+      {
+        "title": "快訊／澎湖縣長「6搶1」激戰落幕 國民黨陳振中自行宣布當選",
+        "link": "https://www.mirrormedia.mg/story/20261128edi039",
+        "pubDate": "Sat, 28 Nov 2026 20:06:00 +0800",
+        "source": "鏡週刊",
+        "hint": "治安",
+        "authority": "media",
+        "description": ""
+      },
+      {
+        "title": "快訊》藍白合仍不敵王美惠！張啓楷認敗選：2年多拼命比不上王美惠22年深耕",
+        "link": "https://newtalk.tw/news/view/2026-11-28/1074303",
+        "pubDate": "Sat, 28 Nov 2026 20:05:47 +0800",
+        "source": "newtalk 社會",
+        "hint": "治安",
+        "authority": "media",
+        "description": "Newtalk新聞 九合一選舉今（28日）登場，民進黨嘉義市長候選人王美惠一路領先藍白共推的民眾黨嘉義市長候選人張啓楷，張啓楷稍早受訪坦言，很抱歉，讓大家失望了，不過，請大家不要太難過，他非常拼命、「我已經很努力了！」張啓楷認為，自己兩年多前才擔任立委，深耕嘉義的時間不過，雖然去年底民眾黨提名他參選，但經過今年藍白合， 延伸閱讀： 快訊》宜蘭縣長選舉！ 民進黨林國漳自行宣布當選 陳亭妃自行宣布當選"
+      },
+      {
+        "title": "竹縣／新竹縣長3搶1！鄭朝方「竹北經驗」輾壓徐欣瑩 自行宣布當選 - 三立新聞",
+        "link": "https://news.google.com/rss/articles/CBMiSEFVX3lxTFBOb19iUGJtYlVJUTVGRFpkVDlyYXk1UmVaWjMtSWEwbDFFWFlXWUhHTXdWZkRzb2NjLW1wbWVUSU9EUDN6WUVwdtIBTEFVX3lxTFBGVkUzRVlIOTdKV2o5NDdKeENwQ0VFd05HRnA0NzgtUmFpUmY2bFZTVjFPeVd1SUJxMVBJdUFrMWlwcnVaaHBoRmE4RnU?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:05:00 GMT",
+        "source": "GN 三立綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "竹縣／新竹縣長3搶1！鄭朝方「竹北經驗」輾壓徐欣瑩 自行宣布當選 三立新聞"
+      },
+      {
+        "title": "「大里夜市」酒後口角爆肢體衝突！霧峰警啟動快打部隊 4人涉傷害罪送辦-警政時報 - 警政時報",
+        "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE5sNlRDcXd2SWk5WU02MXEteXVxMnBfS0pxMEZzZkRjYzlmejdxUk5HalE2VDhrSUdOZVRWTVh5UEtUR0Vkc1EwSEs1cnpMVGVmTGYwbzRydmxRRVZt?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 12:00:51 GMT",
+        "source": "GN 傷害鬥毆",
+        "hint": "治安",
+        "authority": "media",
+        "description": "「大里夜市」酒後口角爆肢體衝突！霧峰警啟動快打部隊 4人涉傷害罪送辦-警政時報 警政時報"
+      },
+      {
+        "title": "得益於對手受賄選案所困 葉忠倫轉換跑道參選竹南鎮長險勝 - UDN",
+        "link": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBhejNJTVFJSUxNYmtLY1g4UGFZOUR4MHVlLU9pN0sybzRtaU1QNW9BNzdnY0kxQm1LaGhXTDdQZ0tyLTRXZUV5Q2JnXzhKc2d50gFWQVVfeXFMT2VJRjZ3RFBnRXQ0eXpmLU5FYWFvWHFCemJueEIxckJlMVRKSFJ5bGlGQ3lJbjJ4bmRxQjd2dmRRaERLVmFSeUI2MWp3X3pTRFZIVU1OTWc?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 11:59:44 GMT",
+        "source": "GN UDN 綜合治安",
+        "hint": "治安",
+        "authority": "media",
+        "description": "得益於對手受賄選案所困 葉忠倫轉換跑道參選竹南鎮長險勝 UDN"
+      },
+      {
+        "title": "謝典霖在看守所競選！競總宣布當選 母盼交保拚彰化議長6連霸",
+        "link": "https://news.ltn.com.tw/news/Changhua/breakingnews/5656631",
+        "pubDate": "Sat, 28 Nov 2026 19:58:33 +0800",
+        "source": "自由時報 地方",
+        "hint": "治安",
+        "authority": "media",
+        "description": "國民黨籍彰化縣議長謝典霖涉嫌「A公款請吃選舉飯」及巧立名目詐取公款等案，遭羈押禁見72天，在彰化看守所內競選，今（28）日開票，晚間7點20分票數突破1萬票，競選總部施放長達7...…"
+      },
+      {
+        "title": "從9月羈押至今 彰化縣議長謝典霖競總宣布當選 - 聚財網",
+        "link": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFByN0twY0tkTUdhLWN2Z3NaS0kyV3BkTUNnU0VOaV9TY3REVjNSV2prT0tlT2l4UjVpUExuaDZpV3AxZ2UtVEZLNUFMa3c?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 11:58:02 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "從9月羈押至今 彰化縣議長謝典霖競總宣布當選 聚財網"
+      },
+      {
+        "title": "孫宇晨指控 WLFI 詐欺，呼籲交易所下架 WLFI 與 USD1 - 鏈新聞 ABMedia",
+        "link": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE0zaVBIbWpQdzJsZGtXd1dTRjNXVGo1bFlFVHRyTDZlYXo2MWJ3TnFYOVFPb0M3MFZLVTV1UHRQdnAtYTJrQ283YkRNVm54a3VEQkY4VmRfZUlUbmR4enN1ZUxtQVVGQQ?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 11:57:28 GMT",
+        "source": "GN 虛擬資產交易所",
+        "hint": "反詐",
+        "authority": "media",
+        "description": "孫宇晨指控 WLFI 詐欺，呼籲交易所下架 WLFI 與 USD1 鏈新聞 ABMedia"
+      },
+      {
+        "title": "新竹民宅成火藥庫 警破門驚見4長短槍、90子彈 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5Ic2tDdzJQbnpxZFRQSkJSSFUxQXZlSjlaOURiQlJLZVVSc1JpcGV2aG9WcWJkNF9nUGo0ZWFoYWRTOFYyZWtwNEdsSm5SQ2tzWUhIWHllY05Zc25OdWfSAUtBVV95cUxPWkZQZ3VsNFhCb053NUtoOWd5OTFFVEVRa0RrZHlyaVZXbVNlMDB5UkpMeU9kZDNwaG90Vnd0OU1uTUNtUUNtelA1ems?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 11:57:00 GMT",
+        "source": "GN 刀械爆裂物",
+        "hint": "治安",
+        "authority": "media",
+        "description": "新竹民宅成火藥庫 警破門驚見4長短槍、90子彈 ETtoday新聞雲"
+      },
+      {
+        "title": "里長候選人涉性犯罪前科！2人「得票率100％」當選 原因曝光 - ETtoday新聞雲",
+        "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFBrbXo5R19NbXZTS2xQY0xsQk5ZbFU0TXJtT1AwNHpzemJaMFl1YmxZSWtiYlZ0RVUtQzFKN1RwN2kyZzBVaENvSVdzYVl4eFBXZkFGTnBBV2Q0YjEzZUHSAUtBVV95cUxQZGFTbTc2Q0VVZVFHclRJLURkMmplY2F2MFltUTFubG9CRHl4Rm93VGJCczItOThLa3VSazJVVDB2S1p6R0ZuVkl3Tjg?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 11:54:00 GMT",
+        "source": "GN ETtoday 綜合治安 3h",
+        "hint": "治安",
+        "authority": "media",
+        "description": "里長候選人涉性犯罪前科！2人「得票率100％」當選 原因曝光 ETtoday新聞雲"
+      },
+      {
+        "title": "快訊／羈押中自行宣布當選謝典霖「兩個月0行程」照樣6連霸| 生活 - NOWnews今日新聞",
+        "link": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFBkUEplSEdEVXJhaGllYUVPNXl5MmFxMVhYQWtCOVkzclhCWkVwaEM0V0NzZXVVSWZvaHgwMGtIT0U2SXhFMTY3eHdCNkI?oc=5",
+        "pubDate": "Sat, 28 Nov 2026 11:53:47 GMT",
+        "source": "GN 收押通緝",
+        "hint": "治安",
+        "authority": "media",
+        "description": "快訊／羈押中自行宣布當選謝典霖「兩個月0行程」照樣6連霸| 生活 NOWnews今日新聞"
+      }
+    ]
+  }
+}
